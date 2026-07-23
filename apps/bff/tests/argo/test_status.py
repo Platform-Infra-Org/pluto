@@ -34,6 +34,25 @@ def test_pending_fixture_normalizes_to_pending():
     assert find_failed_step(ws) is None
 
 
+def test_retried_then_recovered_step_is_not_reported():
+    # A step failed once, was retried under a Retry node that ultimately Succeeded.
+    # The stale failed attempt must NOT be reported — only the genuine later failure.
+    ws = normalize_status(load_fixture("retry_recovered.json"))
+    failed = find_failed_step(ws)
+    assert failed is not None
+    assert failed.display_name == "deploy-db"  # genuine failure, not the recovered build attempt
+    assert "could not connect to database" in failed.message
+
+
+def test_multi_leaf_failed_picks_earliest_deterministically():
+    # Two parallel failing leaves; the earliest-finished (root-causiest) is reported,
+    # regardless of map/insertion order or node id ordering.
+    ws = normalize_status(load_fixture("multi_leaf_failed.json"))
+    failed = find_failed_step(ws)
+    assert failed is not None
+    assert failed.display_name == "deploy-east"  # finished 13:01:15, before deploy-west 13:03:30
+
+
 def test_normalize_parses_node_tree():
     ws = normalize_status(load_fixture("failed_dag.json"))
     assert ws.name == "deploy-bad-xyz98"

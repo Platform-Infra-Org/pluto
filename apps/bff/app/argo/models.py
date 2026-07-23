@@ -24,6 +24,7 @@ class NodeStatus:
     type: str
     phase: str
     message: str
+    finished_at: str | None = None
     children: list[str] = field(default_factory=list)
 
 

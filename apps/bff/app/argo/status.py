@@ -9,6 +9,9 @@ from __future__ import annotations
 from .models import NodeStatus, WorkflowStatus
 
 FAILED_PHASES = {"Failed", "Error"}
+# Terminal phases that mean a node did NOT ultimately fail. A Retry node in one
+# of these has recovered, so its failed attempt children are stale, not failures.
+NON_FAILED_TERMINAL_PHASES = {"Succeeded", "Skipped", "Omitted"}
 
 
 def normalize_status(raw: dict) -> WorkflowStatus:
@@ -24,6 +27,7 @@ def normalize_status(raw: dict) -> WorkflowStatus:
             type=n.get("type", ""),
             phase=n.get("phase", ""),
             message=n.get("message", ""),
+            finished_at=n.get("finishedAt") or None,
             children=list(n.get("children") or []),
         )
 
@@ -51,14 +55,52 @@ def _has_failed_descendant(node: NodeStatus, nodes: dict[str, NodeStatus]) -> bo
     return False
 
 
-def find_failed_step(ws: WorkflowStatus) -> NodeStatus | None:
-    """Deepest failing leaf: a Failed/Error node with no failed descendant.
+def _recovered_retry_attempt(node_id: str, nodes: dict[str, NodeStatus]) -> bool:
+    """True if node_id sits under a Retry ancestor that ultimately did NOT fail.
 
-    Parent DAG/Steps nodes go Failed when a descendant fails, so we skip any
-    failed node whose subtree still contains a failed node and return the actual
-    leaf step (the pod that ran the container).
+    Argo keeps the failed attempt node at phase=Failed even after a retry
+    succeeds; it hangs under a Retry-type node whose own phase is Succeeded. Such
+    an attempt recovered and must not be reported as the failure.
     """
-    for node in ws.nodes.values():
-        if node.phase in FAILED_PHASES and not _has_failed_descendant(node, ws.nodes):
-            return node
-    return None
+    parent: dict[str, str] = {}
+    for pid, n in nodes.items():
+        for cid in n.children:
+            parent.setdefault(cid, pid)  # first parent wins (attempts have one)
+
+    seen: set[str] = set()
+    cur = parent.get(node_id)
+    while cur is not None and cur not in seen:
+        seen.add(cur)
+        anc = nodes.get(cur)
+        if anc is None:
+            break
+        if anc.type == "Retry" and anc.phase in NON_FAILED_TERMINAL_PHASES:
+            return True
+        cur = parent.get(cur)
+    return False
+
+
+def find_failed_step(ws: WorkflowStatus) -> NodeStatus | None:
+    """The failing leaf step to report to the user.
+
+    A failing leaf is a Failed/Error node with no failed descendant (parent
+    DAG/Steps nodes go Failed when a descendant fails, so they are skipped).
+
+    Two corrections for accuracy:
+    - Exclude stale failed *attempts* that recovered on retry (a Failed node
+      under a Retry ancestor that ultimately Succeeded).
+    - Among genuinely-failing leaves, pick deterministically: earliest
+      finished_at (the root-causiest failure), tiebreaking by node id. Map order
+      is not stable in Argo, so we never rely on it.
+    """
+    candidates = [
+        node
+        for node in ws.nodes.values()
+        if node.phase in FAILED_PHASES
+        and not _has_failed_descendant(node, ws.nodes)
+        and not _recovered_retry_attempt(node.id, ws.nodes)
+    ]
+    if not candidates:
+        return None
+    # Nodes without a finish time sort last (still deterministic via id tiebreak).
+    return min(candidates, key=lambda n: (n.finished_at is None, n.finished_at or "", n.id))

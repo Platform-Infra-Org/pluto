@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "name": "deploy-parallel-def34",
+    "namespace": "platform",
+    "labels": {"request-id": "req-004"}
+  },
+  "status": {
+    "phase": "Failed",
+    "message": "2 children failed",
+    "startedAt": "2026-07-23T13:00:00Z",
+    "finishedAt": "2026-07-23T13:04:00Z",
+    "nodes": {
+      "deploy-parallel-def34": {
+        "id": "deploy-parallel-def34",
+        "name": "deploy-parallel-def34",
+        "displayName": "deploy-parallel-def34",
+        "type": "DAG",
+        "templateName": "deploy-dag",
+        "phase": "Failed",
+        "message": "2 children failed",
+        "children": ["deploy-parallel-def34-aaaaaaaaaa", "deploy-parallel-def34-zzzzzzzzzz"]
+      },
+      "deploy-parallel-def34-aaaaaaaaaa": {
+        "id": "deploy-parallel-def34-aaaaaaaaaa",
+        "name": "deploy-parallel-def34.deploy-west",
+        "displayName": "deploy-west",
+        "type": "Pod",
+        "templateName": "deploy-west",
+        "phase": "Failed",
+        "message": "Error (exit code 1): west region unreachable",
+        "finishedAt": "2026-07-23T13:03:30Z",
+        "children": []
+      },
+      "deploy-parallel-def34-zzzzzzzzzz": {
+        "id": "deploy-parallel-def34-zzzzzzzzzz",
+        "name": "deploy-parallel-def34.deploy-east",
+        "displayName": "deploy-east",
+        "type": "Pod",
+        "templateName": "deploy-east",
+        "phase": "Failed",
+        "message": "Error (exit code 1): east region migration failed",
+        "finishedAt": "2026-07-23T13:01:15Z",
+        "children": []
+      }
+    }
+  }
+}
