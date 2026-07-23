@@ -27,6 +27,16 @@ class Settings(BaseSettings):
     argo_auth_token: str = ""
     argo_verify_tls: bool = True
 
+    # Git resource catalog (E04). Repo is read-only from the app. Secrets from env.
+    git_repo_url: str = ""
+    git_branch: str = "main"
+    git_read_token: str = ""
+    git_webhook_secret: str = ""
+    git_cache_dir: str = ".catalog-cache"
+    # Ownership fallbacks when metadata.ownerTeam is absent: git-path prefix -> team, then default.
+    ownership_path_map: dict[str, str] = {}
+    default_owner_team: str = "platform"
+
     # group-name -> {roles: [...], teams: [...], deny: [...]}. Config-driven (JSON in env),
     # never hardcoding a real customer's directory groups. Sane default for tests only.
     role_group_map: dict[str, dict[str, list[str]]] = {
