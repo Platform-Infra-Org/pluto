@@ -13,6 +13,15 @@ spec:
       labels:
         app: bff
     spec:
+      initContainers:
+        - name: db-migrate
+          image: platform-bff:dev
+          command: ["alembic", "upgrade", "head"]
+          envFrom:
+            - configMapRef:
+                name: platform-config
+            - secretRef:
+                name: platform-secrets
       containers:
         - name: bff
           image: platform-bff:dev
