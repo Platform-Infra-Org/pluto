@@ -1,0 +1,8 @@
+{
+  "metadata": {
+    "name": "deploy-pending-qq01",
+    "namespace": "platform",
+    "labels": {"request-id": "req-003"}
+  },
+  "status": {}
+}

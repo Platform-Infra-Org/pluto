@@ -1,0 +1,54 @@
+{
+  "metadata": {
+    "name": "deploy-bad-xyz98",
+    "namespace": "platform",
+    "labels": {"request-id": "req-002"}
+  },
+  "status": {
+    "phase": "Failed",
+    "message": "child 'deploy-bad-xyz98-3333333333' failed",
+    "startedAt": "2026-07-23T11:00:00Z",
+    "finishedAt": "2026-07-23T11:03:00Z",
+    "nodes": {
+      "deploy-bad-xyz98": {
+        "id": "deploy-bad-xyz98",
+        "name": "deploy-bad-xyz98",
+        "displayName": "deploy-bad-xyz98",
+        "type": "DAG",
+        "templateName": "deploy-dag",
+        "phase": "Failed",
+        "message": "child 'deploy-bad-xyz98-3333333333' failed",
+        "children": ["deploy-bad-xyz98-1111111111"]
+      },
+      "deploy-bad-xyz98-1111111111": {
+        "id": "deploy-bad-xyz98-1111111111",
+        "name": "deploy-bad-xyz98.build",
+        "displayName": "build",
+        "type": "Pod",
+        "templateName": "build",
+        "phase": "Succeeded",
+        "children": ["deploy-bad-xyz98-3333333333", "deploy-bad-xyz98-4444444444"]
+      },
+      "deploy-bad-xyz98-3333333333": {
+        "id": "deploy-bad-xyz98-3333333333",
+        "name": "deploy-bad-xyz98.deploy-db",
+        "displayName": "deploy-db",
+        "type": "Pod",
+        "templateName": "deploy-db",
+        "phase": "Failed",
+        "message": "Error (exit code 1): pg_restore: error: could not connect to database",
+        "children": []
+      },
+      "deploy-bad-xyz98-4444444444": {
+        "id": "deploy-bad-xyz98-4444444444",
+        "name": "deploy-bad-xyz98.deploy-app",
+        "displayName": "deploy-app",
+        "type": "Pod",
+        "templateName": "deploy-app",
+        "phase": "Omitted",
+        "message": "omitted: depends condition not met",
+        "children": []
+      }
+    }
+  }
+}

@@ -20,6 +20,13 @@ class Settings(BaseSettings):
     oidc_groups_claim: str = "groups"
     session_secret: str = "change-me-session-secret"
 
+    # Argo Workflows API (E03). Real token/URL come from env; defaults are test-only.
+    # Empty ARGO_SERVER_URL means "no cluster wired" — integration tests skip on it.
+    argo_server_url: str = ""
+    argo_namespace: str = "platform"
+    argo_auth_token: str = ""
+    argo_verify_tls: bool = True
+
     # group-name -> {roles: [...], teams: [...], deny: [...]}. Config-driven (JSON in env),
     # never hardcoding a real customer's directory groups. Sane default for tests only.
     role_group_map: dict[str, dict[str, list[str]]] = {
