@@ -1,7 +1,7 @@
 // OIDC Authorization Code + PKCE login against Keycloak, plus the auth context.
 // Authorization is enforced by the BFF; everything here is for login + display.
 import { createContext, useContext } from 'react'
-import { UserManager, WebStorageStateStore } from 'oidc-client-ts'
+import { InMemoryWebStorage, UserManager, WebStorageStateStore } from 'oidc-client-ts'
 import { setAccessToken } from './token'
 
 export interface Principal {
@@ -20,7 +20,7 @@ export interface AuthState {
 
 // Lazily constructed so importing this module never touches window/env (e.g. in tests).
 let _um: UserManager | null = null
-function userManager(): UserManager {
+export function userManager(): UserManager {
   if (!_um) {
     _um = new UserManager({
       authority: import.meta.env.VITE_OIDC_ISSUER_URL,
@@ -28,8 +28,9 @@ function userManager(): UserManager {
       redirect_uri: `${window.location.origin}/auth/callback`,
       response_type: 'code',
       scope: 'openid profile groups',
-      // Access token kept in memory only; refresh rides the BFF session cookie.
-      userStore: new WebStorageStateStore({ store: window.sessionStorage }),
+      // Access token kept in memory only (never sessionStorage/localStorage, which
+      // XSS can read); refresh rides the BFF session cookie.
+      userStore: new WebStorageStateStore({ store: new InMemoryWebStorage() }),
     })
   }
   return _um

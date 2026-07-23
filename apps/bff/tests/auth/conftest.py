@@ -43,9 +43,10 @@ def fake_jwks(rsa_private_pem, monkeypatch):
 
 @pytest.fixture
 def make_token(rsa_private_pem):
-    """Factory signing a token with the test key. Override any claim via kwargs."""
+    """Factory signing a token with the test key. Override any claim via kwargs;
+    pass a claim as None to drop it entirely, or kid= to sign under another key id."""
 
-    def _make(**overrides) -> str:
+    def _make(kid: str = KID, **overrides) -> str:
         now = int(time.time())
         claims = {
             "sub": "user-123",
@@ -57,8 +58,9 @@ def make_token(rsa_private_pem):
             settings.oidc_groups_claim: [],
         }
         claims.update(overrides)
+        claims = {k: v for k, v in claims.items() if v is not None}
         return jose_jwt.encode(
-            claims, rsa_private_pem, algorithm="RS256", headers={"kid": KID}
+            claims, rsa_private_pem, algorithm="RS256", headers={"kid": kid}
         )
 
     return _make
