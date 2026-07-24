@@ -26,7 +26,14 @@ def _rbac_permitted(principal: Principal, req: Request) -> bool:
 
 
 def can_approve(principal: Principal, req: Request) -> bool:
-    """May `principal` approve `req`, given its resolved policy mode?"""
+    """May `principal` approve `req`? The `kind` selects the approver rule.
+
+    SERVICE_ONBOARDING is gatekept by `platform-admin` (not the owner team), and
+    a service owner can never self-approve their own onboarding (separation of
+    duties). RESOURCE_CHANGE uses the per-resource policy below.
+    """
+    if req.kind == "SERVICE_ONBOARDING":
+        return ADMIN_ROLE in principal.roles and principal.sub != req.requester
     mode = req.approval_policy.get("mode")
     if mode == RBAC:
         return _rbac_permitted(principal, req)  # requester allowed (self-service)
