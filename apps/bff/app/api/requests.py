@@ -19,6 +19,7 @@ from app.db import get_session
 from app.execution.runner import schedule_execution
 from app.models.request import Request, RequestEvent
 from app.models.resource import ResourceIndex
+from app.notifications import events
 from app.requests import authz
 from app.requests.policy import RBAC, definition_default, resolve_policy
 from app.requests.schema_forms import PayloadInvalid, is_stale, validate_payload
@@ -153,6 +154,11 @@ async def submit_request(
     session.add(req)
     await session.commit()
     await session.refresh(req, ["events"])
+    # Notify: still pending -> owner-team approvers; auto-approved (RBAC) -> requester.
+    if req.state == "PENDING_APPROVAL":
+        await events.notify_safe(events.request_submitted, session, req)
+    elif req.state == "APPROVED":
+        await events.notify_safe(events.request_approved, session, req)
     return _dump(req)
 
 
@@ -231,6 +237,7 @@ async def approve_request(
     await session.commit()
     await session.refresh(req, ["events"])
     if req.state == "APPROVED":
+        await events.notify_safe(events.request_approved, session, req)
         schedule_execution(req.id)  # close the loop: submit + watch (gated on Argo config)
     return _dump(req)
 
@@ -251,6 +258,7 @@ async def reject_request(
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     await session.commit()
     await session.refresh(req, ["events"])
+    await events.notify_safe(events.request_rejected, session, req)
     return _dump(req)
 
 
@@ -273,5 +281,6 @@ async def bypass_request(
     await session.commit()
     await session.refresh(req, ["events"])
     if req.state == "APPROVED":
+        await events.notify_safe(events.request_approved, session, req)
         schedule_execution(req.id)  # bypass also reaches APPROVED -> execute
     return _dump(req)
