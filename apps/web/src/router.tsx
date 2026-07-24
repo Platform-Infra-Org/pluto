@@ -6,39 +6,19 @@ import { MyRequests } from './app/routes/requests/mine'
 import { NewRequest } from './app/routes/requests/new'
 import { ApprovalQueue } from './app/routes/requests/queue'
 import { RequestDetail } from './app/routes/requests/detail'
-import { NotificationBell } from './app/notifications/bell'
 import { NotificationsPage } from './app/notifications/page'
 import { BuilderCanvas } from './app/builder/canvas'
 import { MyDefinitions } from './app/services/mine'
 import { OnboardingQueue } from './app/services/onboarding-queue'
 import { AdminDashboard } from './app/admin/shell'
 import { AuthCallback } from './app/routes/auth-callback'
-import { login, logout, useAuth } from './lib/auth'
+import { NavBar } from './app/nav'
 
-function AuthControl() {
-  const { principal } = useAuth()
-  return principal ? (
-    <div className="flex items-center gap-2 text-sm">
-      <span>{principal.username}</span>
-      <button className="underline" onClick={() => logout()}>
-        Logout
-      </button>
-    </div>
-  ) : (
-    <button className="text-sm underline" onClick={() => login()}>
-      Login
-    </button>
-  )
-}
-
-// Root layout: a thin top bar holding the live notification bell, over the routes.
+// Root layout: the persistent role-aware nav shell over every route.
 function RootLayout() {
   return (
     <>
-      <header className="flex items-center justify-end gap-4 border-b px-4 py-2">
-        <AuthControl />
-        <NotificationBell />
-      </header>
+      <NavBar />
       <Outlet />
     </>
   )
