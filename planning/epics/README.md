@@ -28,6 +28,12 @@ answered.
 | [E08](E08-service-builder.md) | Service Request Builder & onboarding + server-backed fields | E05, E06 | 10 |
 | [E09](E09-hardening.md) | **Admin dashboard over everything** + hardening (audit, resilience, observability, a11y) | E05–E08 | 08 |
 
+## Feature epics (built on E01–E09)
+
+| Set | Title | Design |
+|-----|-------|--------|
+| [composable-builder/](composable-builder/README.md) | **Composable Service Builder** — graph editor that generates Argo WorkflowTemplates (CB01–CB05) | [11](../11-composable-service-builder.md) |
+
 ## Dependency graph
 
 ```
