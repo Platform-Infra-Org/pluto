@@ -30,6 +30,16 @@ def require_role(role: str) -> Callable[..., Awaitable[Principal]]:
     return dep
 
 
+async def writer_principal(
+    principal: Principal = Depends(current_principal),
+) -> Principal:
+    """current_principal for mutating endpoints: the read-only `auditor` role is
+    refused (separation of duties — an auditor changes nothing)."""
+    if "auditor" in principal.roles:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "auditor is read-only")
+    return principal
+
+
 def require_any(*roles: str) -> Callable[..., Awaitable[Principal]]:
     wanted = set(roles)
 

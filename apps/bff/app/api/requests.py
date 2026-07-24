@@ -12,7 +12,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.auth.deps import current_principal
+from app.auth.deps import current_principal, writer_principal
 from app.auth.principal import Principal
 from app.catalog.ownership import resolve_owner_team
 from app.db import get_session
@@ -109,7 +109,7 @@ async def _load(session: AsyncSession, request_id: int) -> Request:
 @router.post("", status_code=status.HTTP_201_CREATED)
 async def submit_request(
     body: SubmitBody,
-    principal: Principal = Depends(current_principal),
+    principal: Principal = Depends(writer_principal),
     session: AsyncSession = Depends(get_session),
 ) -> dict:
     resource: ResourceIndex | None = None

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 
-from app.auth.deps import current_principal
+from app.auth.deps import current_principal, writer_principal
 from app.auth.principal import Principal
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -49,7 +49,7 @@ async def groups_field(
 async def upload_field(
     request: Request,
     filename: str,
-    _: Principal = Depends(current_principal),
+    _: Principal = Depends(writer_principal),
 ) -> dict:
     """Store an uploaded file in the artifact repo; return only its reference.
 
