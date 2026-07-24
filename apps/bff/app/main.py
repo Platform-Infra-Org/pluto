@@ -8,8 +8,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import admin, audit, blocks, catalog, fields, me, requests, services, workflow_status
+from app.blocks.seed import seed_builtins
 from app.catalog.git_sync import sync_repo
 from app.config import settings
+from app.db import async_session_factory
 from app.execution.reconcile import reconcile_on_startup
 from app.notifications import sse
 from app.obs.telemetry import setup_telemetry
@@ -75,6 +77,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         await sse.fanout.start()  # LISTEN for cross-replica notification fan-out
     except Exception:  # noqa: BLE001 — degrade to REST-only if PG LISTEN is down
         log.exception("notification fan-out failed to start")
+    try:
+        # Seed the v1 built-in function blocks (idempotent, CB01). ponytail: a
+        # startup upsert, not a migration data-step — re-runs skip existing names.
+        async with async_session_factory() as s:
+            await seed_builtins(s)
+    except Exception:  # noqa: BLE001 — never block startup on seeding
+        log.exception("block seeding failed")
     try:
         yield
     finally:
