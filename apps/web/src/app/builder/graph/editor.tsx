@@ -99,6 +99,7 @@ export function GraphEditor() {
 
   const [graphs, setGraphs] = useState<GraphsJson>(INITIAL)
   const [active, setActive] = useState<Verb>('create')
+  const [subTab, setSubTab] = useState<'graph' | 'fields'>('graph')
   const [selected, setSelected] = useState<string | null>(null)
   const [defId, setDefId] = useState<number | null>(null)
 
@@ -162,23 +163,45 @@ export function GraphEditor() {
 
       <VerbTabs graphs={graphs} active={active} onActive={setActive} onChange={setGraphs} />
 
-      <RequestFields graph={graph} onChange={setGraph} />
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[16rem_1fr_20rem]">
-        <Card className="p-3">
-          <Palette onAdd={addBlock} />
-        </Card>
-        <GraphCanvas
-          graph={graph}
-          blocks={blocks}
-          onChange={setGraph}
-          onSelect={setSelected}
-          onDropBlock={(name) => addBlock(map[name])}
-        />
-        <Card className="p-3">
-          <Inspector graph={graph} selected={selected} blocks={blocks} onChange={setGraph} />
-        </Card>
+      {/* Sub-tabs within the active verb: the graph canvas vs. the request fields. */}
+      <div role="tablist" aria-label="Editor section" className="flex gap-1 border-b border-border">
+        {(['graph', 'fields'] as const).map((t) => (
+          <button
+            key={t}
+            role="tab"
+            type="button"
+            aria-selected={subTab === t}
+            onClick={() => setSubTab(t)}
+            className={`-mb-px border-b-2 px-3 py-1.5 text-sm ${
+              subTab === t
+                ? 'border-primary font-medium text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {t === 'graph' ? 'Graph' : 'Request fields'}
+          </button>
+        ))}
       </div>
+
+      {subTab === 'fields' ? (
+        <RequestFields graph={graph} onChange={setGraph} />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[16rem_1fr_20rem]">
+          <Card className="p-3">
+            <Palette onAdd={addBlock} />
+          </Card>
+          <GraphCanvas
+            graph={graph}
+            blocks={blocks}
+            onChange={setGraph}
+            onSelect={setSelected}
+            onDropBlock={(name) => addBlock(map[name])}
+          />
+          <Card className="p-3">
+            <Inspector graph={graph} selected={selected} blocks={blocks} onChange={setGraph} />
+          </Card>
+        </div>
+      )}
 
       <Card className="p-4">
         <GraphPreview graphs={graphs} />

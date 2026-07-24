@@ -16,33 +16,44 @@ import type { NodeJson, ServiceGraphJson } from '@/lib/graph'
 import { DRAG_MIME } from './palette'
 import { byName, canConnect, connect, removeNode } from './wiring'
 
-// A graph node with a labelled input handle (left) per manifest input and an
-// output handle (right) per declared output — the ports the owner wires.
+// A graph node: a header, then two columns — inputs (left) and outputs (right).
+// Each port's Handle is absolutely positioned inside its own label row, so the
+// connection dot lines up exactly with the input/output it represents.
 function BlockNode({ data }: NodeProps) {
   const d = data as { label: string; kind: string; inputs: string[]; outputs: string[] }
   return (
-    <div className="min-w-32 rounded-md border border-border bg-card px-3 py-2 text-xs shadow-sm">
-      <div className="font-medium">
+    <div className="min-w-44 rounded-md border border-border bg-card text-xs shadow-sm">
+      <div className="border-b border-border px-3 py-1.5 font-medium">
         {d.label} <span className="text-muted-foreground">({d.kind})</span>
       </div>
-      {d.inputs.map((name, i) => (
-        <Handle
-          key={`in-${name}`}
-          id={name}
-          type="target"
-          position={Position.Left}
-          style={{ top: 28 + i * 14 }}
-        />
-      ))}
-      {d.outputs.map((name, i) => (
-        <Handle
-          key={`out-${name}`}
-          id={name}
-          type="source"
-          position={Position.Right}
-          style={{ top: 28 + i * 14 }}
-        />
-      ))}
+      <div className="flex justify-between gap-6 py-1.5">
+        <div className="flex flex-col">
+          {d.inputs.map((name) => (
+            <div key={`in-${name}`} className="relative flex h-6 items-center pl-3 pr-2">
+              <Handle
+                id={name}
+                type="target"
+                position={Position.Left}
+                style={{ position: 'absolute', left: 0, top: '50%' }}
+              />
+              <span className="text-muted-foreground">{name}</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-col items-end">
+          {d.outputs.map((name) => (
+            <div key={`out-${name}`} className="relative flex h-6 items-center pl-2 pr-3">
+              <span className="text-muted-foreground">{name}</span>
+              <Handle
+                id={name}
+                type="source"
+                position={Position.Right}
+                style={{ position: 'absolute', right: 0, top: '50%' }}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

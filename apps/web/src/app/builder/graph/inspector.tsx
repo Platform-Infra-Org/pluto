@@ -33,6 +33,14 @@ function decodeBinding(value: string): Binding | null {
   return lit('')
 }
 
+// Parse the values out of an `enum[A,B,C]` type string; null for non-enum types.
+function enumValues(type: string | undefined): string[] | null {
+  const m = type?.match(/^enum\[(.*)\]$/)
+  return m ? m[1].split(',').map((s) => s.trim()).filter(Boolean) : null
+}
+
+const selectClass = 'w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm'
+
 // Right inspector: bind inputs, edit config, name outputs, and mark exactly one
 // node `main`. Every edit routes through the pure ops in wiring.ts.
 export function Inspector({
@@ -109,13 +117,28 @@ export function Inspector({
                 ))}
                 <option value="literal">literal…</option>
               </select>
-              {node.input_bindings[inp.name]?.kind === 'literal' && (
-                <Input
-                  aria-label={`${inp.name} literal`}
-                  value={String((node.input_bindings[inp.name] as { value: unknown }).value ?? '')}
-                  onChange={(e) => onChange(setBinding(graph, node.id, inp.name, lit(e.target.value)))}
-                />
-              )}
+              {node.input_bindings[inp.name]?.kind === 'literal' &&
+                (enumValues(inp.type) ? (
+                  <select
+                    aria-label={`${inp.name} literal`}
+                    className={selectClass}
+                    value={String((node.input_bindings[inp.name] as { value: unknown }).value ?? '')}
+                    onChange={(e) => onChange(setBinding(graph, node.id, inp.name, lit(e.target.value)))}
+                  >
+                    <option value="">— choose —</option>
+                    {enumValues(inp.type)!.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    aria-label={`${inp.name} literal`}
+                    value={String((node.input_bindings[inp.name] as { value: unknown }).value ?? '')}
+                    onChange={(e) => onChange(setBinding(graph, node.id, inp.name, lit(e.target.value)))}
+                  />
+                ))}
             </label>
           )
         })}
@@ -123,15 +146,36 @@ export function Inspector({
 
       <Card className="space-y-2 p-3">
         <div className="text-xs font-medium text-muted-foreground">Config</div>
-        {['method', 'url'].map((key) => (
-          <Input
-            key={key}
-            aria-label={`config ${key}`}
-            placeholder={key}
-            value={String(node.config[key] ?? '')}
-            onChange={(e) => onChange(setConfig(graph, node.id, key, e.target.value))}
-          />
-        ))}
+        {['method', 'url'].map((key) => {
+          // Render each config field by its manifest type: an enum (e.g. api-call
+          // `method`) becomes a choice box; everything else is a text input.
+          const opts = enumValues(block?.manifest.inputs.find((i) => i.name === key)?.type)
+          const value = String(node.config[key] ?? '')
+          return opts ? (
+            <select
+              key={key}
+              aria-label={`config ${key}`}
+              className={selectClass}
+              value={value}
+              onChange={(e) => onChange(setConfig(graph, node.id, key, e.target.value))}
+            >
+              <option value="">— {key} —</option>
+              {opts.map((o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <Input
+              key={key}
+              aria-label={`config ${key}`}
+              placeholder={key}
+              value={value}
+              onChange={(e) => onChange(setConfig(graph, node.id, key, e.target.value))}
+            />
+          )
+        })}
       </Card>
 
       {node.kind === 'main' && (

@@ -28,7 +28,7 @@ const ITEM = {
     form_schema: { type: 'object', properties: {} },
     ui_schema: {},
     workflow_binding: {},
-    approval_policy: { mode: 'SINGLE' },
+    approval_policy: { mode: 'SINGLE' as const },
     git_path: 'resources/app-database/',
     status: 'PENDING_ONBOARDING' as const,
     version: 2,
