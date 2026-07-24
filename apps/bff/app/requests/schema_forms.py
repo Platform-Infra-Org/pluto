@@ -37,7 +37,7 @@ def validate_payload(resource_type: str, action: str, payload: dict) -> None:
         raise PayloadInvalid(exc.message) from exc
 
 
-def is_stale(req: Request, current_git_sha: str) -> bool:
+def is_stale(req: Request, current_git_sha: str | None) -> bool:
     """True if the resource moved in Git since submit (base_git_sha != current).
 
     CREATE requests carry no base sha and are never stale. (Pure function: the
