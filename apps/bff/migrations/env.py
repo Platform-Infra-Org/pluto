@@ -13,6 +13,7 @@ from app.models.base import Base
 
 # Import model modules so their tables register on Base.metadata for autogenerate.
 from app.models import resource as _resource  # noqa: F401,E402
+from app.models import request as _request  # noqa: F401,E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
