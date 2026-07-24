@@ -18,13 +18,14 @@ from collections import defaultdict
 from collections.abc import AsyncIterator, Callable
 
 import asyncpg  # type: ignore[import-untyped]
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sse_starlette.sse import EventSourceResponse
 
 from app.auth.deps import current_principal
-from app.auth.principal import Principal
+from app.auth.jwt import AuthError, verify_token
+from app.auth.principal import Principal, build_principal
 from app.config import settings
 from app.db import get_session
 from app.notifications import service
@@ -128,10 +129,29 @@ def _keys(principal: Principal) -> list[str]:
 router = APIRouter(prefix="/api/notifications")
 
 
+async def _stream_principal(
+    request: Request, access_token: str | None = None
+) -> Principal:
+    """Auth for SSE: native EventSource can't set an Authorization header, so the
+    stream also accepts the bearer token as an `access_token` query param."""
+    header = request.headers.get("authorization", "")
+    if header.lower().startswith("bearer "):
+        token = header.split(" ", 1)[1]
+    elif access_token:
+        token = access_token
+    else:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "missing bearer token")
+    try:
+        claims = await verify_token(token)
+    except AuthError as exc:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid token") from exc
+    return build_principal(claims)
+
+
 @router.get("/stream")
 async def stream(
     request: Request,
-    principal: Principal = Depends(current_principal),
+    principal: Principal = Depends(_stream_principal),
     session: AsyncSession = Depends(get_session),
 ) -> EventSourceResponse:
     keys = _keys(principal)

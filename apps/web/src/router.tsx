@@ -1,12 +1,26 @@
-import { createRootRoute, createRoute, createRouter, useParams } from '@tanstack/react-router'
+import { createRootRoute, createRoute, createRouter, Outlet, useParams } from '@tanstack/react-router'
 import { HomePage } from './app/routes/home'
 import { ResourceDetail } from './app/routes/resources/detail'
 import { ResourceList } from './app/routes/resources/list'
 import { MyRequests } from './app/routes/requests/mine'
 import { ApprovalQueue } from './app/routes/requests/queue'
 import { RequestDetail } from './app/routes/requests/detail'
+import { NotificationBell } from './app/notifications/bell'
+import { NotificationsPage } from './app/notifications/page'
 
-const rootRoute = createRootRoute()
+// Root layout: a thin top bar holding the live notification bell, over the routes.
+function RootLayout() {
+  return (
+    <>
+      <header className="flex items-center justify-end border-b px-4 py-2">
+        <NotificationBell />
+      </header>
+      <Outlet />
+    </>
+  )
+}
+
+const rootRoute = createRootRoute({ component: RootLayout })
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -54,6 +68,12 @@ const requestDetailRoute = createRoute({
   component: RequestDetailPage,
 })
 
+const notificationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/notifications',
+  component: NotificationsPage,
+})
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   resourcesRoute,
@@ -61,6 +81,7 @@ const routeTree = rootRoute.addChildren([
   myRequestsRoute,
   approvalQueueRoute,
   requestDetailRoute,
+  notificationsRoute,
 ])
 
 export const router = createRouter({ routeTree })
