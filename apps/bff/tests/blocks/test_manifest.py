@@ -2,7 +2,13 @@
 
 import pytest
 
-from app.blocks.manifest import ManifestError, is_assignable, parse_manifest, parse_type
+from app.blocks.manifest import (
+    ManifestError,
+    is_assignable,
+    manifest_from_dict,
+    parse_manifest,
+    parse_type,
+)
 
 # Block-style YAML: type strings like `enum[...]` / `map<string,T>` contain `,`
 # and `[]`, which are special inside YAML flow `{}` — so manifests use block style.
@@ -126,6 +132,36 @@ outputs: []
 """
     with pytest.raises(ManifestError):
         parse_manifest(bad)
+
+
+def test_entrypoint_parsed_and_defaults():
+    # An Argo block runs templateRef {name: <WorkflowTemplate>, template: <entrypoint>}.
+    m = parse_manifest("""
+kind: FunctionBlock
+metadata: {name: fx, category: builtin}
+template: {ref: fn-x, entrypoint: main}
+inputs: []
+outputs: []
+""")
+    assert m.template_ref == "fn-x"
+    assert m.entrypoint == "main"
+    # default is "run" when omitted.
+    assert parse_manifest(JSON_EXTRACTOR_YAML).entrypoint == "run"
+
+
+def test_entrypoint_round_trips_through_dict():
+    m = parse_manifest("""
+kind: FunctionBlock
+metadata: {name: fx, category: builtin}
+template: {ref: fn-x, entrypoint: main}
+inputs: []
+outputs: []
+""")
+    d = m.as_dict()
+    assert d["entrypoint"] == "main"
+    assert manifest_from_dict(d).entrypoint == "main"
+    # default when the dict omits it (older stored manifests).
+    assert manifest_from_dict({"name": "y", "template_ref": "fn-y"}).entrypoint == "run"
 
 
 def test_assignability():

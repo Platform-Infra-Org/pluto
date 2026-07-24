@@ -89,7 +89,8 @@ class IOField:
 class BlockManifest:
     name: str
     category: str
-    template_ref: str
+    template_ref: str  # the Argo WorkflowTemplate that runs this block
+    entrypoint: str = "run"  # the template within that WorkflowTemplate (templateRef.template)
     inputs: list[IOField] = field(default_factory=list)
     outputs: list[IOField] = field(default_factory=list)
     icon: str = ""
@@ -106,6 +107,7 @@ class BlockManifest:
             "category": self.category,
             "icon": self.icon,
             "template_ref": self.template_ref,
+            "entrypoint": self.entrypoint,
             "inputs": [io(f) for f in self.inputs],
             "outputs": [io(f) for f in self.outputs],
             "ui": self.ui,
@@ -123,6 +125,7 @@ def manifest_from_dict(d: dict) -> BlockManifest:
         name=d["name"],
         category=d.get("category", ""),
         template_ref=d.get("template_ref", ""),
+        entrypoint=d.get("entrypoint") or "run",
         inputs=[io(f) for f in d.get("inputs", [])],
         outputs=[io(f) for f in d.get("outputs", [])],
         icon=d.get("icon", ""),
@@ -166,7 +169,9 @@ def parse_manifest(yaml_str: str) -> BlockManifest:
         raise ManifestError("metadata.name is required")
 
     template = doc.get("template") or {}
-    template_ref = template.get("ref") if isinstance(template, dict) else None
+    if not isinstance(template, dict):
+        template = {}
+    template_ref = template.get("ref")
     if not template_ref:
         raise ManifestError("template.ref is required")
 
@@ -175,6 +180,7 @@ def parse_manifest(yaml_str: str) -> BlockManifest:
         category=meta.get("category", ""),
         icon=meta.get("icon", ""),
         template_ref=template_ref,
+        entrypoint=template.get("entrypoint") or "run",
         inputs=_fields(doc.get("inputs"), "inputs"),
         outputs=_fields(doc.get("outputs"), "outputs"),
         ui=doc.get("ui") or {},

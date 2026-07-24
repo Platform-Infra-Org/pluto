@@ -160,6 +160,21 @@ async def test_admin_post_manifest_json_form(client):
     assert types["channel"] == "string" and types["method"] == "enum[GET,POST]"
 
 
+async def test_manifest_json_carries_entrypoint(client):
+    """The form posts template_ref (WorkflowTemplate) + entrypoint (template within)."""
+    c, holder = client
+    holder["principal"] = ADMIN
+    mj = {"name": "sv", "template_ref": "fn-sv", "entrypoint": "main", "inputs": [], "outputs": []}
+    r = await c.post("/api/blocks", json={"manifest_json": mj})
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["entrypoint"] == "main"
+    assert body["manifest"]["entrypoint"] == "main"
+    # default when omitted.
+    r2 = await c.post("/api/blocks", json={"manifest_json": {"name": "sv2", "template_ref": "fn-sv2"}})
+    assert r2.json()["entrypoint"] == "run"
+
+
 async def test_manifest_json_missing_required_422(client):
     c, holder = client
     holder["principal"] = ADMIN

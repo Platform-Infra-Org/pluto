@@ -31,6 +31,7 @@ def _dump(b) -> dict:
         "kind": "function",
         "category": b.category,
         "template_ref": b.template_ref,
+        "entrypoint": (b.manifest or {}).get("entrypoint", "run"),
         "manifest": b.manifest,
         "created_by": b.created_by,
     }
