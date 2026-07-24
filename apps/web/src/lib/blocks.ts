@@ -11,6 +11,7 @@ export interface BlockManifestDto {
   category: string
   icon: string
   template_ref: string
+  entrypoint?: string
   inputs: IOFieldDto[]
   outputs: IOFieldDto[]
   ui: Record<string, unknown>
@@ -39,11 +40,17 @@ export interface BlockFormManifest {
   name: string
   category: string
   icon: string
-  template_ref: string
+  template_ref: string // the Argo WorkflowTemplate that runs the block
+  entrypoint: string // the template within that WorkflowTemplate (default "run")
   inputs: { name: string; type: string; required: boolean }[]
   outputs: { name: string; type: string }[]
 }
 
 export function onboardBlockForm(manifest_json: BlockFormManifest) {
   return apiFetch<Block>('/blocks', { method: 'POST', body: JSON.stringify({ manifest_json }) })
+}
+
+// Edit an existing block: PUT upserts a new version (pin-until-migrated).
+export function editBlock(manifest_json: BlockFormManifest) {
+  return apiFetch<Block>('/blocks', { method: 'PUT', body: JSON.stringify({ manifest_json }) })
 }
