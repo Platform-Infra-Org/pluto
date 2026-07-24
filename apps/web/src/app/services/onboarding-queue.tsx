@@ -6,6 +6,35 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
+// A generated artifact the admin reviews before approving. It is *printed* here
+// for copy/download — the platform team commits it to Git; the BFF never writes Git.
+function GeneratedArtifact({ label, filename, content }: { label: string; filename: string; content: string }) {
+  return (
+    <div>
+      <div className="mb-1 flex items-center gap-2">
+        <span className="text-xs font-medium text-muted-foreground">{label}</span>
+        <button
+          type="button"
+          className="text-xs text-primary underline"
+          aria-label={`copy ${label}`}
+          onClick={() => navigator.clipboard?.writeText(content)}
+        >
+          Copy
+        </button>
+        <a
+          className="text-xs text-primary underline"
+          aria-label={`download ${label}`}
+          download={filename}
+          href={`data:text/plain;charset=utf-8,${encodeURIComponent(content)}`}
+        >
+          Download
+        </a>
+      </div>
+      <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs whitespace-pre">{content}</pre>
+    </div>
+  )
+}
+
 // Admin onboarding queue: each pending request shows the form preview, the
 // workflow binding + parameter map, and the approval policy, with approve/reject.
 function QueueRow({ item, onDone }: { item: OnboardingItem; onDone: () => void }) {
@@ -31,6 +60,20 @@ function QueueRow({ item, onDone }: { item: OnboardingItem; onDone: () => void }
             <div className="rounded-md border border-border bg-muted/30 p-3">
               <SchemaForm schema={d.form_schema} uiSchema={d.ui_schema} value={value} onChange={setValue} />
             </div>
+            {d.generated?.workflow_template_yaml && (
+              <GeneratedArtifact
+                label="WorkflowTemplate"
+                filename={`${d.name}.workflowtemplate.yaml`}
+                content={d.generated.workflow_template_yaml}
+              />
+            )}
+            {d.generated?.build_json_j2 && (
+              <GeneratedArtifact
+                label="build-json.j2"
+                filename={`${d.name}.build-json.j2`}
+                content={d.generated.build_json_j2}
+              />
+            )}
           </>
         )}
         <Input

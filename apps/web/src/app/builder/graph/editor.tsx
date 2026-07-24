@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/lib/auth'
 import { fetchBlocks, type Block } from '@/lib/blocks'
+import { createDefinition, editDefinition } from '@/lib/services'
 import type { GraphsJson, ServiceGraphJson, Verb } from '@/lib/graph'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -99,6 +100,28 @@ export function GraphEditor() {
   const [graphs, setGraphs] = useState<GraphsJson>(INITIAL)
   const [active, setActive] = useState<Verb>('create')
   const [selected, setSelected] = useState<string | null>(null)
+  const [defId, setDefId] = useState<number | null>(null)
+
+  // Save & submit: ensure a DRAFT definition exists, then POST the composed graphs
+  // to the BFF, which regenerates the artifacts (CB02) and re-enters onboarding.
+  // The BFF forks a bumped version on a non-DRAFT definition (pin-until-migrated).
+  const save = useMutation({
+    mutationFn: async () => {
+      let id = defId
+      if (id == null) {
+        const d = await createDefinition({
+          name: graphs.name,
+          form_schema: { type: 'object', properties: {} },
+          ui_schema: {},
+          workflow_binding: {},
+          approval_policy: { mode: 'SINGLE' },
+        })
+        id = d.id
+        setDefId(id)
+      }
+      return editDefinition(id, graphs)
+    },
+  })
 
   if (!hasRole('service-owner'))
     return <p className="mx-auto max-w-lg px-4 py-8 text-sm text-destructive">Service owner access required.</p>
@@ -118,6 +141,23 @@ export function GraphEditor() {
           value={graphs.name}
           onChange={(e) => setGraphs((gs) => ({ ...gs, name: e.target.value }))}
         />
+        <Button
+          type="button"
+          disabled={!graphs.name.trim() || save.isPending}
+          onClick={() => save.mutate()}
+        >
+          Save &amp; submit for onboarding
+        </Button>
+        {save.isSuccess && (
+          <span className="text-sm text-muted-foreground">
+            Submitted for onboarding (v{save.data.version}, request #{save.data.request_id}).
+          </span>
+        )}
+        {save.isError && (
+          <span role="alert" className="text-sm text-destructive">
+            {(save.error as Error).message}
+          </span>
+        )}
       </div>
 
       <VerbTabs graphs={graphs} active={active} onActive={setActive} onChange={setGraphs} />

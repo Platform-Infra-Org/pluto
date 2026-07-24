@@ -14,6 +14,8 @@ export interface ServiceDefinition {
   git_path: string
   status: 'DRAFT' | 'PENDING_ONBOARDING' | 'ACTIVE' | 'RETIRED'
   version: number
+  // CB04: the regenerated artifacts printed for the platform team to commit to Git.
+  generated?: { build_json_j2: string; workflow_template_yaml: string }
 }
 
 export interface NewDefinition {
@@ -37,6 +39,15 @@ export function submitDefinition(id: number) {
   return apiFetch<{ request_id: number; state: string }>(`/services/definitions/${id}/submit`, {
     method: 'POST',
   })
+}
+
+// CB04: save the composed per-verb graphs (regenerate on the BFF) and re-enter
+// onboarding. A non-DRAFT definition forks a new bumped version (pin-until-migrated).
+export function editDefinition(id: number, graphs: unknown) {
+  return apiFetch<{ version: number; request_id: number; definition: ServiceDefinition }>(
+    `/services/definitions/${id}/edit`,
+    { method: 'POST', body: JSON.stringify({ graphs }) },
+  )
 }
 
 export function fetchMyDefinitions() {
