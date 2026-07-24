@@ -11,6 +11,8 @@ from app.config import settings
 from app.db import get_session
 from app.main import app
 from app.models.base import Base
+from app.models.group import Group  # noqa: F401 register tables
+from app.models.project import Project  # noqa: F401 register tables
 from app.models.request import Request, RequestEvent  # noqa: F401 register tables
 from app.models.resource import ResourceIndex  # noqa: F401 register tables
 from app.services.definition import ServiceDefinition  # noqa: F401 register tables
@@ -29,7 +31,8 @@ async def session():
         await conn.execute(
             text(
                 "TRUNCATE request_event, request, resource_index, "
-                "service_definition, option_source RESTART IDENTITY"
+                "service_definition, option_source, group_registry, project "
+                "RESTART IDENTITY"
             )
         )
     factory = async_sessionmaker(engine, expire_on_commit=False)

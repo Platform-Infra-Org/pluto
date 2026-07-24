@@ -22,6 +22,8 @@ ADMIN_ROUTES = [
     "/api/admin/rbac",
     "/api/admin/ownership",
     "/api/admin/option-sources",
+    "/api/admin/groups",
+    "/api/admin/projects",
 ]
 
 
@@ -71,6 +73,11 @@ async def test_every_admin_route_is_403_for_non_admin(client):
             assert (
                 r.status_code == 403
             ), f"onboarding {action} for {principal.sub} -> {r.status_code}"
+
+        r = await c.post("/api/admin/groups/import", content='["g"]')
+        assert r.status_code == 403, f"groups import for {principal.sub} -> {r.status_code}"
+        r = await c.post("/api/admin/projects", json={"name": "p", "group_name": "g"})
+        assert r.status_code == 403, f"create project for {principal.sub} -> {r.status_code}"
 
 
 async def test_overview_tiles(client):

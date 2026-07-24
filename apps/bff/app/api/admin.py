@@ -6,16 +6,23 @@ epics' models/services (requests, catalog, service definitions, option sources)
 — they never duplicate that logic, and the BFF still never writes Git.
 """
 
+import csv
+import io
+import json
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from starlette.requests import Request as HttpRequest
 
 from app.auth.deps import require_role
 from app.auth.principal import Principal
 from app.config import settings
 from app.db import get_session
+from app.models.group import Group
+from app.models.project import Project
 from app.models.request import Request
 from app.models.resource import ResourceIndex
 from app.requests import authz
@@ -241,3 +248,129 @@ async def reject_onboarding(
     await session.commit()
     d = await onboarding.return_to_owner(session, req)
     return {"state": req.state, "definition_status": d.status}
+
+
+# --- F3: local groups registry (import) + projects mapped to a group ---------
+
+
+def _dump_group(g: Group) -> dict:
+    return {"id": g.id, "name": g.name, "source": g.source, "description": g.description}
+
+
+def _dump_project(p: Project) -> dict:
+    return {"id": p.id, "name": p.name, "group_name": p.group_name, "description": p.description}
+
+
+def _parse_group_import(raw: str, fmt: str | None) -> list[dict]:
+    """Parse a JSON or CSV import body into ``[{name, description}]``.
+
+    JSON: ``["a", "b"]`` or ``[{"name": ..., "description": ...}]``.
+    CSV: a ``name`` column, optional ``description``.
+    Detection: explicit ``fmt`` wins, else sniff (a leading ``[``/``{`` is JSON).
+    Raises ``ValueError`` on anything malformed so the caller returns 422.
+    """
+    text = raw.strip()
+    if not text:
+        raise ValueError("empty import body")
+    is_json = fmt == "json" or (fmt != "csv" and text[0] in "[{")
+    out: list[dict] = []
+    if is_json:
+        data = json.loads(text)  # raises ValueError subclass on bad JSON
+        if not isinstance(data, list):
+            raise ValueError("JSON import must be an array")
+        for item in data:
+            name: object
+            if isinstance(item, str):
+                name, desc = item, None
+            elif isinstance(item, dict):
+                name, desc = item.get("name"), item.get("description")
+            else:
+                raise ValueError("each item must be a string or an object")
+            if not isinstance(name, str) or not name.strip():
+                raise ValueError("each group needs a non-empty name")
+            out.append({"name": name.strip(), "description": desc})
+        return out
+    reader = csv.DictReader(io.StringIO(text))
+    if not reader.fieldnames or "name" not in reader.fieldnames:
+        raise ValueError("CSV import needs a 'name' column")
+    for row in reader:
+        name = (row.get("name") or "").strip()
+        if not name:
+            raise ValueError("CSV row is missing a name")
+        out.append({"name": name, "description": (row.get("description") or None)})
+    return out
+
+
+@router.get("/groups")
+async def list_groups(session: AsyncSession = Depends(get_session)) -> dict:
+    """The local groups registry (imported + any other locally-tracked groups)."""
+    rows = (await session.execute(select(Group).order_by(Group.name))).scalars()
+    return {"items": [_dump_group(g) for g in rows]}
+
+
+@router.post("/groups/import")
+async def import_groups(
+    request: HttpRequest,
+    format: str | None = None,
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Import groups from an uploaded JSON or CSV body; upsert by name (idempotent).
+
+    Returns ``{imported, skipped}``. Malformed input is a 422, never a 500.
+    """
+    raw = (await request.body()).decode("utf-8", "replace")
+    try:
+        parsed = _parse_group_import(raw, format)
+    except ValueError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+    existing = set((await session.execute(select(Group.name))).scalars())
+    imported = skipped = 0
+    for item in parsed:
+        if item["name"] in existing:  # idempotent: skip names already present (incl. dupes in body)
+            skipped += 1
+            continue
+        session.add(Group(name=item["name"], source="import", description=item["description"]))
+        existing.add(item["name"])
+        imported += 1
+    await session.commit()
+    return {"imported": imported, "skipped": skipped}
+
+
+class ProjectBody(BaseModel):
+    name: str = Field(min_length=1)
+    group_name: str = Field(min_length=1)  # non-empty; may be an LDAP-native group not in the registry
+    description: str | None = None
+
+
+@router.get("/projects")
+async def list_projects(session: AsyncSession = Depends(get_session)) -> dict:
+    """All projects and the group each maps to."""
+    rows = (await session.execute(select(Project).order_by(Project.name))).scalars()
+    return {"items": [_dump_project(p) for p in rows]}
+
+
+@router.post("/projects", status_code=status.HTTP_201_CREATED)
+async def create_project(
+    body: ProjectBody, session: AsyncSession = Depends(get_session)
+) -> dict:
+    """Create a project mapping to a group. 409 on duplicate name. The group need
+    not be in the local registry (LDAP-native); ``group_known`` flags whether it is.
+    """
+    if await session.scalar(select(Project).where(Project.name == body.name)):
+        raise HTTPException(status.HTTP_409_CONFLICT, "project name already exists")
+    known = await session.scalar(select(Group).where(Group.name == body.group_name))
+    project = Project(name=body.name, group_name=body.group_name, description=body.description)
+    session.add(project)
+    await session.commit()
+    return {**_dump_project(project), "group_known": known is not None}
+
+
+@router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_project(
+    project_id: int, session: AsyncSession = Depends(get_session)
+) -> None:
+    project = await session.get(Project, project_id)
+    if project is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "project not found")
+    await session.delete(project)
+    await session.commit()
