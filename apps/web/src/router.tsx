@@ -62,16 +62,25 @@ const approvalQueueRoute = createRoute({
 })
 
 function NewRequestPage() {
-  const { type } = newRequestRoute.useSearch()
-  return <NewRequest resourceType={type} />
+  const { type, action, resourceId } = newRequestRoute.useSearch()
+  return (
+    <NewRequest
+      resourceType={type}
+      action={action}
+      resourceId={resourceId > 0 ? resourceId : null}
+    />
+  )
 }
+
+type NewRequestSearch = { type: string; action: 'CREATE' | 'UPDATE' | 'DELETE'; resourceId: number }
 
 const newRequestRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/requests/new',
-  validateSearch: (s: Record<string, unknown>): { type: string } => ({
-    type: String(s.type ?? ''),
-  }),
+  validateSearch: (s: Record<string, unknown>): NewRequestSearch => {
+    const action = s.action === 'UPDATE' || s.action === 'DELETE' ? s.action : 'CREATE'
+    return { type: String(s.type ?? ''), action, resourceId: Number(s.resourceId ?? 0) || 0 }
+  },
   component: NewRequestPage,
 })
 

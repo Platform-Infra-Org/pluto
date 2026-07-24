@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { Search } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { fetchResources } from '@/lib/catalog'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { buttonVariants } from '@/components/ui/button'
 import { StatusBadge } from '@/components/ui/badge'
 import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table'
 
@@ -30,14 +31,23 @@ export function ResourceList() {
           <h1 className="text-2xl font-semibold tracking-tight">My Resources</h1>
           <p className="text-sm text-muted-foreground">Catalog resources you own or can view.</p>
         </div>
-        <div className="relative w-full sm:w-72">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            className="pl-9"
-            placeholder="Filter resources…"
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-          />
+        <div className="flex w-full items-center gap-3 sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              className="pl-9"
+              placeholder="Filter resources…"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            />
+          </div>
+          <Link
+            to="/requests/new"
+            search={{ type: '', action: 'CREATE', resourceId: 0 }}
+            className={buttonVariants() + ' shrink-0'}
+          >
+            <Plus className="h-4 w-4" /> New request
+          </Link>
         </div>
       </div>
 
