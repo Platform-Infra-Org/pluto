@@ -33,20 +33,24 @@ export function addNode(graph: ServiceGraphJson, block: Block, id?: string): Ser
   return { ...graph, nodes: [...graph.nodes, node] }
 }
 
+const dropRefsTo = (id: string) => (m: Record<string, Binding>) =>
+  Object.fromEntries(Object.entries(m).filter(([, b]) => !(b.kind === 'output' && b.node === id)))
+
 export function removeNode(graph: ServiceGraphJson, id: string): ServiceGraphJson {
+  const drop = dropRefsTo(id)
   return {
     ...graph,
     nodes: graph.nodes
       .filter((n) => n.id !== id)
-      // drop any bindings that referenced the removed node
-      .map((n) => ({
-        ...n,
-        input_bindings: Object.fromEntries(
-          Object.entries(n.input_bindings).filter(
-            ([, b]) => !(b.kind === 'output' && b.node === id),
-          ),
-        ),
-      })),
+      // drop any bindings that referenced the removed node (inputs + main config.body)
+      .map((n) => {
+        const body = n.config.body as Record<string, Binding> | undefined
+        return {
+          ...n,
+          input_bindings: drop(n.input_bindings),
+          config: body ? { ...n.config, body: drop(body) } : n.config,
+        }
+      }),
   }
 }
 
@@ -73,6 +77,35 @@ export function setBinding(
 
 export function setConfig(graph: ServiceGraphJson, id: string, key: string, value: unknown): ServiceGraphJson {
   return patch(graph, id, (n) => ({ ...n, config: { ...n.config, [key]: value } }))
+}
+
+// Bind one field of the main node's payload `config.body` (bodyField -> binding).
+// Writes to config.body (what the generator's _payload consumes), NOT input_bindings.
+// Passing null clears the field.
+export function setBodyBinding(
+  graph: ServiceGraphJson,
+  id: string,
+  field: string,
+  binding: Binding | null,
+): ServiceGraphJson {
+  return patch(graph, id, (n) => {
+    const body = { ...((n.config.body as Record<string, Binding>) ?? {}) }
+    if (binding === null) delete body[field]
+    else body[field] = binding
+    return { ...n, config: { ...n.config, body } }
+  })
+}
+
+// --- Request-field editor ops (graph.request_fields = field -> CB01 type string).
+
+export function setRequestField(graph: ServiceGraphJson, name: string, type: string): ServiceGraphJson {
+  return { ...graph, request_fields: { ...graph.request_fields, [name]: type } }
+}
+
+export function removeRequestField(graph: ServiceGraphJson, name: string): ServiceGraphJson {
+  const request_fields = { ...graph.request_fields }
+  delete request_fields[name]
+  return { ...graph, request_fields }
 }
 
 export function setOutputs(graph: ServiceGraphJson, id: string, outputs: string[]): ServiceGraphJson {

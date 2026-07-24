@@ -1,9 +1,18 @@
+import { useState } from 'react'
 import type { Block } from '@/lib/blocks'
 import { lit, outRef, ref, type Binding, type ServiceGraphJson } from '@/lib/graph'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
-import { byName, markMain, missingRequired, setBinding, setConfig, setOutputs } from './wiring'
+import {
+  byName,
+  markMain,
+  missingRequired,
+  setBinding,
+  setBodyBinding,
+  setConfig,
+  setOutputs,
+} from './wiring'
 
 // Encode/decode a binding as a <select> value so the owner can pick the source of
 // each input: a request field, another node's output, or a literal.
@@ -37,6 +46,7 @@ export function Inspector({
   blocks: Block[]
   onChange: (g: ServiceGraphJson) => void
 }) {
+  const [newField, setNewField] = useState('')
   const node = graph.nodes.find((n) => n.id === selected)
   if (!node) return <p className="text-sm text-muted-foreground">Select a node to edit it.</p>
 
@@ -123,6 +133,75 @@ export function Inspector({
           />
         ))}
       </Card>
+
+      {node.kind === 'main' && (
+        <Card className="space-y-3 p-3">
+          <div className="text-xs font-medium text-muted-foreground">
+            Payload body (field → source)
+          </div>
+          {Object.entries((node.config.body as Record<string, Binding>) ?? {}).map(([field, b]) => (
+            <label key={field} className="block space-y-1">
+              <span>{field}</span>
+              <div className="flex gap-2">
+                <select
+                  aria-label={`body ${field}`}
+                  className="w-full rounded-md border border-input bg-transparent px-2 py-1 text-sm"
+                  value={bindingValue(b)}
+                  onChange={(e) => onChange(setBodyBinding(graph, node.id, field, decodeBinding(e.target.value)))}
+                >
+                  <option value="">— unbound —</option>
+                  {requestSources.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                  {outputSources.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                  <option value="literal">literal…</option>
+                </select>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  aria-label={`remove body ${field}`}
+                  onClick={() => onChange(setBodyBinding(graph, node.id, field, null))}
+                >
+                  ×
+                </Button>
+              </div>
+              {b?.kind === 'literal' && (
+                <Input
+                  aria-label={`body ${field} literal`}
+                  value={String((b as { value: unknown }).value ?? '')}
+                  onChange={(e) => onChange(setBodyBinding(graph, node.id, field, lit(e.target.value)))}
+                />
+              )}
+            </label>
+          ))}
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault()
+              const name = newField.trim()
+              if (name) onChange(setBodyBinding(graph, node.id, name, lit('')))
+              setNewField('')
+            }}
+          >
+            <Input
+              aria-label="new body field"
+              placeholder="body field name"
+              value={newField}
+              onChange={(e) => setNewField(e.target.value)}
+            />
+            <Button type="submit" size="sm" variant="outline">
+              add
+            </Button>
+          </form>
+        </Card>
+      )}
 
       <Card className="space-y-2 p-3">
         <div className="text-xs font-medium text-muted-foreground">Outputs (comma-separated)</div>

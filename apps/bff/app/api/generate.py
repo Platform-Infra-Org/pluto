@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.deps import current_principal
 from app.auth.principal import Principal
 from app.blocks import registry
+from app.blocks.manifest import ManifestError
 from app.db import get_session
 from app.generator.generate import GenerationError, generate
 from app.generator.graph import parse_graphs
@@ -32,12 +33,16 @@ async def generate_preview(
     session: AsyncSession = Depends(get_session),
 ) -> dict:
     blocks = await registry.load_manifests(session)
-    graphs = parse_graphs(body.graphs)
     try:
+        # parse_graphs is inside the guard: malformed free-form JSON must surface as
+        # errors[] (200), never a 500 (the editor posts partial graphs while editing).
+        graphs = parse_graphs(body.graphs)
         gen = generate(graphs, blocks)
     except GenerationError as exc:
         errors = [str(e) for e in exc.errors] or [str(exc)]
         return {"build_json_j2": "", "workflow_template_yaml": "", "errors": errors}
+    except (KeyError, ValueError, TypeError, AttributeError, ManifestError) as exc:
+        return {"build_json_j2": "", "workflow_template_yaml": "", "errors": [str(exc)]}
     return {
         "build_json_j2": gen.build_json_j2,
         "workflow_template_yaml": gen.workflow_template_yaml,

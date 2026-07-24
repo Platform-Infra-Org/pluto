@@ -1,7 +1,18 @@
 import { describe, expect, it } from 'vitest'
 import type { Block } from '@/lib/blocks'
-import type { ServiceGraphJson } from '@/lib/graph'
-import { addNode, byName, canConnect, connect, isAssignable, parseType } from './wiring'
+import { outRef, ref, type ServiceGraphJson } from '@/lib/graph'
+import {
+  addNode,
+  byName,
+  canConnect,
+  connect,
+  isAssignable,
+  parseType,
+  removeNode,
+  removeRequestField,
+  setBodyBinding,
+  setRequestField,
+} from './wiring'
 
 const apiCall: Block = {
   name: 'api-call',
@@ -89,5 +100,66 @@ describe('wiring (type-aware)', () => {
       nodes: g.nodes.map((n) => (n.id === 'main' ? { ...n, outputs: ['response'] } : n)),
     }
     expect(canConnect(blocks, g2, 'main', 'response', 'network', 'region')).toBe(false)
+  })
+})
+
+describe('request fields', () => {
+  const g: ServiceGraphJson = { nodes: [], request_fields: {} }
+
+  it('adds a named request field with a type', () => {
+    const next = setRequestField(g, 'app_name', 'string')
+    expect(next.request_fields).toEqual({ app_name: 'string' })
+    expect(g.request_fields).toEqual({}) // pure
+  })
+
+  it('removes a request field', () => {
+    const two = setRequestField(setRequestField(g, 'a', 'string'), 'b', 'number')
+    expect(removeRequestField(two, 'a').request_fields).toEqual({ b: 'number' })
+  })
+})
+
+describe('main node body binding (writes config.body, not input_bindings)', () => {
+  const g: ServiceGraphJson = {
+    request_fields: { app_name: 'string' },
+    nodes: [{ id: 'main', block: 'api-call', kind: 'main', config: {}, input_bindings: {}, outputs: [] }],
+  }
+
+  it('binds a body field to a request field under config.body', () => {
+    const next = setBodyBinding(g, 'main', 'name', ref('app_name'))
+    const main = next.nodes.find((n) => n.id === 'main')!
+    expect(main.config.body).toEqual({ name: { kind: 'request', field: 'app_name' } })
+    expect(main.input_bindings).toEqual({}) // NOT input_bindings
+    expect(g.nodes[0].config.body).toBeUndefined() // pure
+  })
+
+  it('clears a body field when passed null', () => {
+    const withBody = setBodyBinding(g, 'main', 'name', ref('app_name'))
+    expect((setBodyBinding(withBody, 'main', 'name', null).nodes[0].config.body)).toEqual({})
+  })
+})
+
+describe('removeNode', () => {
+  const g: ServiceGraphJson = {
+    request_fields: {},
+    nodes: [
+      { id: 'net', block: 'network', kind: 'dependency', config: {}, input_bindings: {}, outputs: ['subnet_id'] },
+      {
+        id: 'main',
+        block: 'api-call',
+        kind: 'main',
+        config: { body: { subnet: outRef('net', 'subnet_id') } },
+        input_bindings: { url: outRef('net', 'subnet_id') },
+        outputs: [],
+      },
+    ],
+  }
+
+  it('removes the node and cleans dangling bindings to it (input_bindings + config.body)', () => {
+    const next = removeNode(g, 'net')
+    expect(next.nodes.map((n) => n.id)).toEqual(['main'])
+    const main = next.nodes[0]
+    expect(main.input_bindings).toEqual({}) // dangling OutRef dropped
+    expect(main.config.body).toEqual({}) // dangling body OutRef dropped
+    expect(g.nodes).toHaveLength(2) // pure
   })
 })

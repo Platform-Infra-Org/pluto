@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/lib/auth'
 import { fetchBlocks, type Block } from '@/lib/blocks'
 import type { GraphsJson, ServiceGraphJson, Verb } from '@/lib/graph'
+import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { GraphCanvas } from './canvas'
@@ -11,9 +12,81 @@ import { Palette } from './palette'
 import { GraphPreview } from './preview'
 import { VerbTabs } from './verb-tabs'
 import { emptyGraph } from './verbs'
-import { addNode, byName } from './wiring'
+import { addNode, byName, removeRequestField, setRequestField } from './wiring'
 
 const INITIAL: GraphsJson = { name: '', create: emptyGraph() }
+
+const FIELD_TYPES = ['string', 'number', 'boolean', 'json', 'enum']
+
+// The owner declares the service's request fields (name + type). These populate
+// graph.request_fields so the inspector's `request.<field>` sources appear and the
+// generated payload can bind body fields to request values.
+function RequestFields({
+  graph,
+  onChange,
+}: {
+  graph: ServiceGraphJson
+  onChange: (g: ServiceGraphJson) => void
+}) {
+  const [name, setName] = useState('')
+  const [type, setType] = useState('string')
+  return (
+    <Card className="space-y-2 p-3">
+      <div className="text-xs font-medium text-muted-foreground">Request fields</div>
+      <div className="flex flex-wrap gap-2">
+        {Object.entries(graph.request_fields).map(([f, t]) => (
+          <span key={f} className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-0.5 text-xs">
+            {f} <span className="text-muted-foreground">: {t}</span>
+            <button
+              type="button"
+              aria-label={`remove ${f}`}
+              className="text-muted-foreground hover:text-destructive"
+              onClick={() => onChange(removeRequestField(graph, f))}
+            >
+              ×
+            </button>
+          </span>
+        ))}
+        {Object.keys(graph.request_fields).length === 0 && (
+          <span className="text-xs text-muted-foreground">none yet</span>
+        )}
+      </div>
+      <form
+        className="flex flex-wrap items-center gap-2"
+        onSubmit={(e) => {
+          e.preventDefault()
+          const n = name.trim()
+          // ponytail: bare "enum" isn't a full CB01 type; richer enum[values] editing is CB04.
+          if (n) onChange(setRequestField(graph, n, type))
+          setName('')
+        }}
+      >
+        <Input
+          aria-label="request field name"
+          placeholder="field name"
+          className="max-w-[12rem]"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <select
+          aria-label="request field type"
+          className="rounded-md border border-input bg-transparent px-2 py-1 text-sm"
+          value={type}
+          onChange={(e) => setType(e.target.value)}
+        >
+          {FIELD_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+        <Button type="submit" size="sm" variant="outline">
+          add field
+        </Button>
+      </form>
+    </Card>
+  )
+}
 
 // The graph editor (CB03): palette + canvas + inspector + per-verb tabs + live
 // server-side preview. Service-owner-only (display gate; the BFF re-enforces it).
@@ -48,6 +121,8 @@ export function GraphEditor() {
       </div>
 
       <VerbTabs graphs={graphs} active={active} onActive={setActive} onChange={setGraphs} />
+
+      <RequestFields graph={graph} onChange={setGraph} />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[16rem_1fr_20rem]">
         <Card className="p-3">

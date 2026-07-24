@@ -14,7 +14,7 @@ import '@xyflow/react/dist/style.css'
 import type { Block } from '@/lib/blocks'
 import type { NodeJson, ServiceGraphJson } from '@/lib/graph'
 import { DRAG_MIME } from './palette'
-import { byName, canConnect, connect } from './wiring'
+import { byName, canConnect, connect, removeNode } from './wiring'
 
 // A graph node with a labelled input handle (left) per manifest input and an
 // output handle (right) per declared output — the ports the owner wires.
@@ -111,6 +111,16 @@ export function GraphCanvas({
     [map, graph, onChange],
   )
 
+  // Delete key / RF delete affordance -> drop the node (and any bindings to it) from
+  // the graph JSON so it stays removed. removeNode cleans dangling refs.
+  const onNodesDelete = useCallback(
+    (deleted: Node[]) => {
+      onChange(deleted.reduce((g, n) => removeNode(g, n.id), graph))
+      onSelect(null)
+    },
+    [graph, onChange, onSelect],
+  )
+
   return (
     <div className="h-[520px] rounded-md border border-border">
       <ReactFlow
@@ -118,6 +128,7 @@ export function GraphCanvas({
         edges={rfEdges}
         nodeTypes={nodeTypes}
         onConnect={onConnect}
+        onNodesDelete={onNodesDelete}
         onNodeClick={(_, n) => onSelect(n.id)}
         onPaneClick={() => onSelect(null)}
         onDragOver={(e) => {
