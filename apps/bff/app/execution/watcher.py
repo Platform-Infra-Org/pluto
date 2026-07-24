@@ -37,6 +37,8 @@ async def watch_request(
     reindex: Callable[[], Awaitable] = sync_repo,
 ) -> Request:
     """Watch `req`'s workflow to a terminal phase and record the outcome."""
+    if req.workflow_ref is None:
+        raise ValueError("request has no workflow_ref to watch")
     ref = _parse_ref(req.workflow_ref)
 
     ws: WorkflowStatus | None = None

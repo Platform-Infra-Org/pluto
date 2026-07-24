@@ -58,3 +58,24 @@ export function approveRequest(id: number, body: { note?: string; confirm_stale?
 export function rejectRequest(id: number, body: { note?: string } = {}) {
   return apiFetch<ChangeRequest>(`/requests/${id}/reject`, { method: 'POST', body: JSON.stringify(body) })
 }
+
+export interface WorkflowNode {
+  id: string
+  name: string
+  display_name: string
+  type: string
+  phase: string
+  message: string
+  children: string[]
+  failed: boolean
+}
+
+export interface RequestStatus {
+  phase: string
+  nodes: WorkflowNode[]
+  failed_step: { node: string | null; message: string; phase: string } | null
+}
+
+export function fetchRequestStatus(id: number) {
+  return apiFetch<RequestStatus>(`/requests/${id}/status`)
+}

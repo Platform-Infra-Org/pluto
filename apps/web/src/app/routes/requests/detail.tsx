@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchRequest } from '@/lib/requests'
 import { DiffView } from './diff'
+import { WorkflowStatusView } from './status'
 
 // Request detail — the diff, resolved policy, and full append-only audit history.
 export function RequestDetail({ id }: { id: number }) {
@@ -29,6 +30,13 @@ export function RequestDetail({ id }: { id: number }) {
         <h2 className="font-medium mb-2">Change</h2>
         <DiffView resourceId={data.resource_id} proposed={data.payload} />
       </section>
+
+      {data.workflow_ref && (
+        <section>
+          <h2 className="font-medium mb-2">Execution</h2>
+          <WorkflowStatusView id={data.id} />
+        </section>
+      )}
 
       <section>
         <h2 className="font-medium mb-2">Audit history</h2>
