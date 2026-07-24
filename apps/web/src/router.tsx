@@ -1,6 +1,8 @@
 import { createRootRoute, createRoute, createRouter, Outlet, useParams } from '@tanstack/react-router'
 import { HomePage } from './app/routes/home'
 import { ResourceDetail } from './app/routes/resources/detail'
+import { ResourceEdit } from './app/routes/resources/edit'
+import { ImportEntity } from './app/routes/resources/import'
 import { ResourceList } from './app/routes/resources/list'
 import { MyRequests } from './app/routes/requests/mine'
 import { NewRequest } from './app/routes/requests/new'
@@ -49,6 +51,23 @@ const resourceDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/resources/$resourceId',
   component: ResourceDetailPage,
+})
+
+function ResourceEditPage() {
+  const { resourceId } = useParams({ from: '/resources/$resourceId/edit' })
+  return <ResourceEdit id={Number(resourceId)} />
+}
+
+const resourceEditRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/resources/$resourceId/edit',
+  component: ResourceEditPage,
+})
+
+const importEntityRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/resources/import',
+  component: ImportEntity,
 })
 
 const myRequestsRoute = createRoute({
@@ -149,7 +168,9 @@ const authCallbackRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   homeRoute,
   resourcesRoute,
+  importEntityRoute,
   resourceDetailRoute,
+  resourceEditRoute,
   myRequestsRoute,
   newRequestRoute,
   approvalQueueRoute,

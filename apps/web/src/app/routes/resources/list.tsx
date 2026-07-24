@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, Upload } from 'lucide-react'
 import { fetchResources } from '@/lib/catalog'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -41,6 +41,12 @@ export function ResourceList() {
               onChange={(e) => setFilter(e.target.value)}
             />
           </div>
+          <Link
+            to="/resources/import"
+            className={buttonVariants({ variant: 'outline' }) + ' shrink-0'}
+          >
+            <Upload className="h-4 w-4" /> Import entity
+          </Link>
           <Link
             to="/requests/new"
             search={{ type: '', action: 'CREATE', resourceId: 0 }}
