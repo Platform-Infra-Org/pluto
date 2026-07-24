@@ -104,3 +104,37 @@ async def test_upload_endpoint_stores_and_returns_reference(monkeypatch):
 def test_default_allowed_types_cover_configs_not_binaries():
     assert "application/json" in upload.DEFAULT_ALLOWED_TYPES
     assert "application/x-dosexec" not in upload.DEFAULT_ALLOWED_TYPES
+
+
+async def test_upload_endpoint_rejects_oversized_content_length_before_reading_body(
+    monkeypatch,
+):
+    """Content-Length over the limit -> 413 without ever buffering the body or
+    touching the store (memory-DoS guard, pre-check before `request.body()`)."""
+    from httpx import ASGITransport, AsyncClient
+
+    from app.api import fields as fields_api
+    from app.auth.deps import current_principal
+    from app.auth.principal import Principal
+    from app.config import settings
+    from app.main import app
+
+    store = FakeStore()
+    monkeypatch.setattr(fields_api, "_store_factory", lambda: store)
+    monkeypatch.setattr(settings, "artifact_max_upload_mb", 1)
+    app.dependency_overrides[current_principal] = lambda: Principal(
+        sub="u", username="u", groups=[], roles=set(), teams=set()
+    )
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as c:
+        r = await c.post(
+            "/api/fields/upload?filename=big.bin",
+            content=b"x",  # tiny actual body — only the header should matter
+            headers={
+                "Content-Type": "application/octet-stream",
+                "Content-Length": str(2 * 1024 * 1024),
+            },
+        )
+        assert r.status_code == 413
+    app.dependency_overrides.clear()
+    assert store.objects == {}  # store never touched

@@ -17,6 +17,7 @@ from app.argo.models import WorkflowAlreadyExists, WorkflowRef
 from app.config import settings
 from app.execution.binding import Binding, map_params, resolve_binding
 from app.models.request import Request
+from app.models.resource import ResourceIndex
 from app.requests.state import transition
 from app.services import definition as service_def
 
@@ -35,8 +36,19 @@ async def on_approved(req: Request, argo: _Argo, session) -> Request:
         return req  # already submitted + committed — fast path
 
     # Binding from the resource type's ServiceDefinition (E08); fall back to the
-    # static default when the type has no onboarded definition yet.
-    bound = await service_def.effective_binding(session, req.resource_type, req.action)
+    # static default when the type has no onboarded definition yet. Pin-until-
+    # migrated: mirrors submit-time schema/policy pinning (app/api/requests.py) —
+    # an existing resource's edit/delete resolves the definition version it was
+    # created under, not whatever is latest by execution time.
+    resource = (
+        await session.get(ResourceIndex, req.resource_id)
+        if req.resource_id is not None
+        else None
+    )
+    pinned = resource.definition_version if resource else None
+    bound = await service_def.effective_binding(
+        session, req.resource_type, req.action, pinned
+    )
     binding = (
         Binding(template_ref=bound["template_ref"], param_map=bound.get("param_map", {}))
         if bound and bound.get("template_ref")

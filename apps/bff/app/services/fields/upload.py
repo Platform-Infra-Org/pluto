@@ -75,7 +75,7 @@ class S3ArtifactStore:
     """boto3-backed store for the Argo artifact bucket. DEFERRED (no S3 here)."""
 
     def __init__(self) -> None:
-        import boto3  # lazy: only needed on the live path
+        import boto3  # type: ignore[import-untyped]  # lazy: only needed on the live path
 
         self._bucket = settings.artifact_s3_bucket
         self._s3 = boto3.client(

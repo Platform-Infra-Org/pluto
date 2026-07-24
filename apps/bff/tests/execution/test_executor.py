@@ -3,6 +3,8 @@
 import pytest
 
 from app.execution.executor import on_approved
+from app.models.resource import ResourceIndex
+from app.services.definition import ServiceDefinition
 
 from .conftest import make_approved
 
@@ -114,3 +116,50 @@ async def test_on_approved_crash_window_does_not_double_execute(session):
     assert len(argo.created) == 1  # but only one workflow exists
     assert out.state == "EXECUTING"
     assert out.workflow_ref == f"platform/req-{req.id}"
+
+
+async def test_on_approved_resolves_the_resource_pinned_binding_not_latest(session):
+    """Pin-until-migrated: a resource created under v1 must execute v1's binding,
+    even though v2 (the latest) has since been onboarded with a different template."""
+    from .conftest import FakeArgo
+
+    session.add_all(
+        [
+            ServiceDefinition(
+                name="database",
+                workflow_binding={
+                    "update": {"template_ref": "resource-change-v1", "param_map": {}}
+                },
+                status="ACTIVE",
+                version=1,
+            ),
+            ServiceDefinition(
+                name="database",
+                workflow_binding={
+                    "update": {"template_ref": "resource-change-v2", "param_map": {}}
+                },
+                status="ACTIVE",
+                version=2,
+            ),
+        ]
+    )
+    resource = ResourceIndex(
+        type="database",
+        name="pg-prod",
+        owner_team="payments",
+        git_path="resources/database/pg-prod.json",
+        git_sha="abc",
+        payload={"spec": {}},
+        definition_version=1,  # pinned to v1 at creation time
+    )
+    session.add(resource)
+    await session.commit()
+    await session.refresh(resource)
+
+    argo = FakeArgo()
+    req = await make_approved(session, resource_id=resource.id)
+
+    out = await on_approved(req, argo, session)
+
+    assert argo.submits[0]["template"] == "resource-change-v1"
+    assert out.state == "EXECUTING"

@@ -55,7 +55,19 @@ async def upload_field(
 
     Raw-body upload (Content-Type header = the file's type) so we need no
     multipart dependency. Enforces size + allowed types at the boundary.
+
+    Content-Length is checked BEFORE buffering the body, so an oversized upload
+    is rejected without ever reading it into memory (DoS guard). The post-read
+    check in `store_upload` stays as defense in depth for chunked/absent
+    Content-Length.
     """
+    max_bytes = settings.artifact_max_upload_mb * 1024 * 1024
+    content_length = request.headers.get("content-length")
+    if content_length is not None and int(content_length) > max_bytes:
+        raise HTTPException(
+            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            f"upload exceeds {settings.artifact_max_upload_mb} MB",
+        )
     content = await request.body()
     content_type = request.headers.get("content-type", "application/octet-stream")
     try:
