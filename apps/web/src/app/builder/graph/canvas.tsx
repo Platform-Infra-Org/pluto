@@ -1,10 +1,11 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import {
   Background,
   Controls,
   Handle,
   Position,
   ReactFlow,
+  useNodesState,
   type Connection,
   type Edge,
   type Node,
@@ -109,8 +110,17 @@ export function GraphCanvas({
   onDropBlock: (blockName: string) => void
 }) {
   const map = useMemo(() => byName(blocks), [blocks])
-  const rfNodes = useMemo(() => layout(graph.nodes, map), [graph.nodes, map])
+  const [rfNodes, setRfNodes, onNodesChange] = useNodesState<Node>([])
   const rfEdges = useMemo(() => outRefEdges(graph), [graph])
+
+  // Reconcile the React Flow node list when the graph changes (add/remove/relabel),
+  // preserving any positions the user has dragged this session so nodes stay put.
+  useEffect(() => {
+    setRfNodes((prev) => {
+      const pos = new Map(prev.map((n) => [n.id, n.position]))
+      return layout(graph.nodes, map).map((n) => ({ ...n, position: pos.get(n.id) ?? n.position }))
+    })
+  }, [graph.nodes, map, setRfNodes])
 
   const onConnect = useCallback(
     (c: Connection) => {
@@ -133,12 +143,13 @@ export function GraphCanvas({
   )
 
   return (
-    <div className="h-[520px] rounded-md border border-border">
+    <div className="h-full min-h-[520px] overflow-hidden rounded-md border border-border bg-background">
       <ReactFlow
         nodes={rfNodes}
         edges={rfEdges}
         nodeTypes={nodeTypes}
         onConnect={onConnect}
+        onNodesChange={onNodesChange}
         onNodesDelete={onNodesDelete}
         onNodeClick={(_, n) => onSelect(n.id)}
         onPaneClick={() => onSelect(null)}

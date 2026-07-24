@@ -121,3 +121,56 @@ body {
 * {
   border-color: var(--border);
 }
+
+/* React Flow — themed to the active motif (light/dark + accent) so the canvas,
+   controls, edges, handles and the attribution tag never render white-on-white. */
+.react-flow {
+  --xy-background-color-default: var(--background);
+  --xy-background-pattern-color-default: var(--border);
+  --xy-node-background-color-default: var(--card);
+  --xy-node-color-default: var(--card-foreground);
+  --xy-node-border-default: 1px solid var(--border);
+  --xy-node-boxshadow-hover-default: 0 0 0 1px var(--ring);
+  --xy-node-boxshadow-selected-default: 0 0 0 2px var(--ring);
+  --xy-edge-stroke-default: var(--muted-foreground);
+  --xy-edge-stroke-selected-default: var(--primary);
+  --xy-connectionline-stroke-default: var(--primary);
+  --xy-handle-background-color-default: var(--primary);
+  --xy-handle-border-color-default: var(--background);
+  --xy-attribution-background-color-default: transparent;
+  --xy-controls-button-background-color-default: var(--card);
+  --xy-controls-button-background-color-hover-default: var(--accent);
+  --xy-controls-button-color-default: var(--foreground);
+  --xy-controls-button-color-hover-default: var(--foreground);
+  --xy-controls-button-border-color-default: var(--border);
+}
+.react-flow__attribution,
+.react-flow__attribution a {
+  color: var(--muted-foreground);
+}
+.react-flow__controls {
+  box-shadow: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* Explicitly theme the React Flow control buttons + attribution tag (their
+   default CSS is white/hardcoded and doesn't pick up the variables above). */
+.react-flow__controls-button {
+  background-color: var(--card) !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--foreground) !important;
+}
+.react-flow__controls-button:hover {
+  background-color: var(--accent) !important;
+}
+.react-flow__controls-button svg {
+  fill: var(--foreground) !important;
+}
+.react-flow__attribution {
+  background: transparent !important;
+}
+.react-flow__attribution a {
+  color: var(--muted-foreground) !important;
+}
