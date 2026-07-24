@@ -76,6 +76,51 @@ async def resolve(
     return await session.scalar(stmt.limit(1))
 
 
+# --- E05/E06 seam formalization -------------------------------------------
+# These replace the config stubs (`policy.definition_default`,
+# `schema_forms.type_schema`, `binding.resolve_binding`) by reading the resource
+# type's ACTIVE (or pinned) ServiceDefinition. Each falls back to the old default
+# when no definition is onboarded yet, so dynamic types still work pre-onboarding.
+
+_DEFAULT_PAYLOAD_SCHEMA: dict = {
+    "type": "object",
+    "required": ["spec"],
+    "properties": {"spec": {"type": "object"}},
+}
+
+
+async def effective_policy(
+    session: AsyncSession, resource_type: str, version: int | None = None
+) -> dict:
+    """The type's default approval policy from its definition, else SINGLE."""
+    d = await resolve(session, resource_type, version)
+    return d.approval_policy if d and d.approval_policy else {"mode": "SINGLE"}
+
+
+async def payload_schema(
+    session: AsyncSession, resource_type: str, version: int | None = None
+) -> dict:
+    """JSON Schema for the request payload: the form schema wrapped under `spec`."""
+    d = await resolve(session, resource_type, version)
+    if not d or not d.form_schema:
+        return _DEFAULT_PAYLOAD_SCHEMA
+    return {
+        "type": "object",
+        "required": ["spec"],
+        "properties": {"spec": d.form_schema},
+    }
+
+
+async def effective_binding(
+    session: AsyncSession, resource_type: str, action: str, version: int | None = None
+) -> dict | None:
+    """The workflow binding for one action from the definition, else None."""
+    d = await resolve(session, resource_type, version)
+    if not d or not d.workflow_binding:
+        return None
+    return d.workflow_binding.get(action.lower())
+
+
 async def retire(session: AsyncSession, resource_type: str) -> None:
     """Retire a type. Blocked (409) while any resource of the type still exists."""
     live = await session.scalar(

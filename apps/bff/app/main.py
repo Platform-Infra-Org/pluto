@@ -7,7 +7,7 @@ from collections.abc import AsyncIterator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import catalog, me, requests, workflow_status
+from app.api import catalog, me, requests, services, workflow_status
 from app.catalog.git_sync import sync_repo
 from app.config import settings
 from app.notifications import sse
@@ -86,6 +86,7 @@ app.add_middleware(
 app.include_router(me.router)
 app.include_router(catalog.router)
 app.include_router(requests.router)
+app.include_router(services.router)
 app.include_router(workflow_status.router)
 app.include_router(sse.router)
 

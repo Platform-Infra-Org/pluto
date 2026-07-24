@@ -15,9 +15,10 @@ from typing import Protocol
 
 from app.argo.models import WorkflowAlreadyExists, WorkflowRef
 from app.config import settings
-from app.execution.binding import map_params, resolve_binding
+from app.execution.binding import Binding, map_params, resolve_binding
 from app.models.request import Request
 from app.requests.state import transition
+from app.services import definition as service_def
 
 
 class _Argo(Protocol):
@@ -33,7 +34,14 @@ async def on_approved(req: Request, argo: _Argo, session) -> Request:
     if req.workflow_ref is not None:
         return req  # already submitted + committed — fast path
 
-    binding = resolve_binding(req.resource_type, req.action)
+    # Binding from the resource type's ServiceDefinition (E08); fall back to the
+    # static default when the type has no onboarded definition yet.
+    bound = await service_def.effective_binding(session, req.resource_type, req.action)
+    binding = (
+        Binding(template_ref=bound["template_ref"], param_map=bound.get("param_map", {}))
+        if bound and bound.get("template_ref")
+        else resolve_binding(req.resource_type, req.action)
+    )
     source = {
         "action": req.action,
         "resource_type": req.resource_type,

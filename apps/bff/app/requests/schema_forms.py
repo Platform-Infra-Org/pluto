@@ -27,12 +27,18 @@ def type_schema(resource_type: str) -> dict:
     return _DEFAULT_SCHEMA
 
 
-def validate_payload(resource_type: str, action: str, payload: dict) -> None:
-    """Validate a CREATE/UPDATE payload; DELETE only needs a target, so skip."""
+def validate_payload(
+    resource_type: str, action: str, payload: dict, schema: dict | None = None
+) -> None:
+    """Validate a CREATE/UPDATE payload; DELETE only needs a target, so skip.
+
+    `schema` is the resolved per-type/version schema from the ServiceDefinition
+    (E08); callers without one fall back to the minimal default.
+    """
     if action == "DELETE":
         return
     try:
-        jsonschema.validate(payload, type_schema(resource_type))
+        jsonschema.validate(payload, schema or type_schema(resource_type))
     except jsonschema.ValidationError as exc:
         raise PayloadInvalid(exc.message) from exc
 

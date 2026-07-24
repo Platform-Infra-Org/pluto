@@ -3,6 +3,7 @@ import { HomePage } from './app/routes/home'
 import { ResourceDetail } from './app/routes/resources/detail'
 import { ResourceList } from './app/routes/resources/list'
 import { MyRequests } from './app/routes/requests/mine'
+import { NewRequest } from './app/routes/requests/new'
 import { ApprovalQueue } from './app/routes/requests/queue'
 import { RequestDetail } from './app/routes/requests/detail'
 import { NotificationBell } from './app/notifications/bell'
@@ -57,6 +58,20 @@ const approvalQueueRoute = createRoute({
   component: ApprovalQueue,
 })
 
+function NewRequestPage() {
+  const { type } = newRequestRoute.useSearch()
+  return <NewRequest resourceType={type} />
+}
+
+const newRequestRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/requests/new',
+  validateSearch: (s: Record<string, unknown>): { type: string } => ({
+    type: String(s.type ?? ''),
+  }),
+  component: NewRequestPage,
+})
+
 function RequestDetailPage() {
   const { requestId } = useParams({ from: '/requests/$requestId' })
   return <RequestDetail id={Number(requestId)} />
@@ -79,6 +94,7 @@ const routeTree = rootRoute.addChildren([
   resourcesRoute,
   resourceDetailRoute,
   myRequestsRoute,
+  newRequestRoute,
   approvalQueueRoute,
   requestDetailRoute,
   notificationsRoute,

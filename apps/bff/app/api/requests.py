@@ -21,9 +21,10 @@ from app.models.request import Request, RequestEvent
 from app.models.resource import ResourceIndex
 from app.notifications import events
 from app.requests import authz
-from app.requests.policy import RBAC, definition_default, resolve_policy
+from app.requests.policy import RBAC, ApprovalPolicy, resolve_policy
 from app.requests.schema_forms import PayloadInvalid, is_stale, validate_payload
 from app.requests.state import IllegalTransition, add_approval, transition
+from app.services import definition as service_def
 
 router = APIRouter(prefix="/api/requests")
 
@@ -118,15 +119,21 @@ async def submit_request(
             raise HTTPException(status.HTTP_404_NOT_FOUND, "target resource not found")
 
     # Policy + ownership resolved at submit from the resource's own JSON (override)
-    # falling back to the Service Definition default (E08 seam -> SINGLE).
+    # falling back to the Service Definition default (E08). Pin-until-migrated: an
+    # UPDATE/DELETE validates against the resource's pinned definition version.
     resource_payload = resource.payload if resource else body.payload
     owner_team = (
         resource.owner_team if resource else resolve_owner_team(body.payload, "")
     )
-    policy = resolve_policy(resource_payload, definition_default(body.resource_type))
+    pinned = resource.definition_version if resource else None
+    default_policy = ApprovalPolicy.from_dict(
+        await service_def.effective_policy(session, body.resource_type, pinned)
+    )
+    policy = resolve_policy(resource_payload, default_policy)
+    schema = await service_def.payload_schema(session, body.resource_type, pinned)
 
     try:
-        validate_payload(body.resource_type, body.action, body.payload)
+        validate_payload(body.resource_type, body.action, body.payload, schema)
     except PayloadInvalid as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
 
