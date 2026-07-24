@@ -38,3 +38,8 @@ def test_cycle_rejected():
 def test_unknown_block_rejected():
     errs = validate(fixtures.unknown_block(), fixtures.blocks())
     assert any("nope-service" in str(e) for e in errs), _msgs(errs)
+
+
+def test_dangling_out_ref_rejected():
+    errs = validate(fixtures.dangling_node(), fixtures.blocks())
+    assert any("ghost" in str(e) for e in errs), _msgs(errs)

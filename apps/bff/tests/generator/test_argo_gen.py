@@ -13,7 +13,7 @@ GOLDEN = Path(__file__).parent / "golden"
 
 
 def _emit(graphs):
-    return emit_workflow_template(graphs.name, graphs.defined(), fixtures.blocks())
+    return emit_workflow_template(graphs.name, graphs.defined())
 
 
 def _tasks(doc, verb):

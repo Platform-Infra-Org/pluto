@@ -163,6 +163,24 @@ def cyclic() -> ServiceGraph:
     return ServiceGraph(nodes=[main, a, b])
 
 
+def dangling_node() -> ServiceGraph:
+    # main body binds to an OutRef whose node does not exist in the graph
+    return ServiceGraph(
+        nodes=[
+            Node(
+                id="main",
+                block="api-call",
+                kind=Kind.MAIN,
+                config={
+                    "method": "POST",
+                    "url": "https://db.api/x",
+                    "body": {"ghost_ref": OutRef("ghost", "id")},
+                },
+            )
+        ],
+    )
+
+
 def unknown_block() -> ServiceGraph:
     return ServiceGraph(
         nodes=[
@@ -255,6 +273,7 @@ __all__ = [
     "bad_type_wire",
     "blocks",
     "cyclic",
+    "dangling_node",
     "missing_required",
     "two_mains",
     "unknown_block",

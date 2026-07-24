@@ -19,7 +19,6 @@ import json
 
 import yaml
 
-from app.blocks.manifest import BlockManifest
 from app.generator.graph import (
     Kind,
     Node,
@@ -93,6 +92,9 @@ def _node_task(graph: ServiceGraph, node: Node) -> dict:
             },
         }
     # internal api-call
+    # ponytail: internals wire from render-0 only; internal-to-internal data wiring
+    # (an internal consuming another internal/dep output via input_bindings) is not
+    # emitted in v1 — add when a fixture needs it.
     return {
         "name": node.id,
         "depends": "render-0",
@@ -172,15 +174,7 @@ def build_workflow_template(name: str, defined: list[tuple[str, ServiceGraph]]) 
     }
 
 
-def emit_workflow_template(
-    name: str,
-    defined: list[tuple[str, ServiceGraph]],
-    blocks: dict[str, BlockManifest] | None = None,
-) -> str:
-    """Serialize the single per-service WorkflowTemplate to deterministic YAML.
-
-    `blocks` is accepted for signature symmetry with the rest of the generator;
-    the emit itself needs only the graphs (validation already used the blocks).
-    """
+def emit_workflow_template(name: str, defined: list[tuple[str, ServiceGraph]]) -> str:
+    """Serialize the single per-service WorkflowTemplate to deterministic YAML."""
     doc = build_workflow_template(name, defined)
     return yaml.safe_dump(doc, sort_keys=False, default_flow_style=False, width=1000)

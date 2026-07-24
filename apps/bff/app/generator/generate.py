@@ -49,5 +49,5 @@ def generate(graphs: Graphs, blocks: dict[str, BlockManifest]) -> Generated:
 
     by_verb = {verb: emit_jinja(graph) for verb, graph in defined}
     primary = by_verb.get("create") or next(iter(by_verb.values()))
-    yaml = emit_workflow_template(graphs.name, defined, blocks)
+    yaml = emit_workflow_template(graphs.name, defined)
     return Generated(build_json_j2=primary, workflow_template_yaml=yaml, build_json_by_verb=by_verb)

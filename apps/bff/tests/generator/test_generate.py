@@ -53,11 +53,13 @@ def test_two_level_dependency_namespaces_without_collision():
     assert "name: B\n" in a.workflow_template_yaml
     assert "template: create" in a.workflow_template_yaml
 
-    # namespacing by path prefix: C's output as seen from A's root is distinct from
-    # B's own output at A's root — no collision even though both outputs are named "id"
-    b_at_a = "mapping.children.B.outputs.id"
-    c_at_a = "mapping.children.B." + "mapping.children.C.outputs.id"
-    assert b_at_a != c_at_a
+
+def test_dangling_out_ref_raises_not_keyerror():
+    bad = fixtures.app_database(create=True)
+    bad.create = fixtures.dangling_node()
+    with pytest.raises(GenerationError) as exc:
+        generate(bad, fixtures.blocks())
+    assert "ghost" in str(exc.value)
 
 
 def test_no_verbs_defined_raises():

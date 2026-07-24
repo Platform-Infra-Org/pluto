@@ -45,8 +45,19 @@ def validate(graph: ServiceGraph, blocks: dict[str, BlockManifest]) -> list[Vali
         _check_required(node, manifest, errs)
         _check_types(graph, node, manifest, blocks, ids, errs)
 
+    _check_refs(graph, errs)
     _check_acyclic(graph, errs)
     return errs
+
+
+def _check_refs(graph: ServiceGraph, errs: list[ValidationError]) -> None:
+    """Every OutRef (input bindings + main body) must target a real node — else a
+    dangling/typo'd wire slips past validation and KeyErrors at emit time."""
+    ids = {n.id for n in graph.nodes}
+    for node in graph.nodes:
+        for dep in node_dep_ids(node):
+            if dep not in ids:
+                errs.append(ValidationError(f"binds to unknown node {dep!r}", node.id))
 
 
 def _check_required(node: Node, manifest: BlockManifest, errs: list[ValidationError]) -> None:
