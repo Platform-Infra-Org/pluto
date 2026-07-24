@@ -20,7 +20,7 @@ import httpx
 
 from app.config import settings
 
-from .models import WorkflowRef, WorkflowStatus
+from .models import WorkflowAlreadyExists, WorkflowRef, WorkflowStatus
 from .status import normalize_status
 
 TERMINAL_PHASES = {"Succeeded", "Failed", "Error"}
@@ -64,31 +64,42 @@ class ArgoClient:
         template: str,
         parameters: dict[str, str],
         labels: dict[str, str],
+        name: str | None = None,
     ) -> WorkflowRef:
         """Submit a workflow from a WorkflowTemplate.
 
         Argo's /submit body wraps everything under a top-level object (namespace +
         resourceKind/resourceName + submitOptions) rather than bare params [R caveat].
-        An idempotency `request-id` label is auto-added if the caller omits it, so a
-        retry carries the same id and doesn't double-execute.
+
+        Idempotency is via a deterministic `submitOptions.name`: when the caller
+        passes `name`, the same request always maps to the same workflow name, so
+        Argo rejects a duplicate submit with 409 AlreadyExists (raised here as
+        WorkflowAlreadyExists) instead of creating a second workflow. Without a
+        name, the template's `generateName` mints a fresh (non-idempotent) name.
+        The `request-id` label is metadata for querying only — NOT the dedup key.
         """
         labels = dict(labels)
         labels.setdefault("request-id", str(uuid.uuid4()))
+        submit_options: dict[str, Any] = {
+            "parameters": [f"{k}={v}" for k, v in parameters.items()],
+            "labels": ",".join(f"{k}={v}" for k, v in labels.items()),
+        }
+        if name is not None:
+            submit_options["name"] = name
         body: dict[str, Any] = {
             "namespace": self.namespace,
             "resourceKind": "WorkflowTemplate",
             "resourceName": template,
-            "submitOptions": {
-                "parameters": [f"{k}={v}" for k, v in parameters.items()],
-                "labels": ",".join(f"{k}={v}" for k, v in labels.items()),
-            },
+            "submitOptions": submit_options,
         }
         resp = await self._client.post(
             f"/api/v1/workflows/{self.namespace}/submit", json=body
         )
+        if resp.status_code == 409:
+            raise WorkflowAlreadyExists(name or "")
         resp.raise_for_status()
-        name = (resp.json().get("metadata") or {}).get("name", "")
-        return WorkflowRef(namespace=self.namespace, name=name)
+        ret_name = (resp.json().get("metadata") or {}).get("name", "")
+        return WorkflowRef(namespace=self.namespace, name=ret_name)
 
     async def get(self, ref: WorkflowRef) -> WorkflowStatus:
         resp = await self._client.get(

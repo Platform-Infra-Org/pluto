@@ -39,9 +39,9 @@ class FakeArgo:
         self.get_status = get_status
         self.submits: list[dict] = []
 
-    async def submit(self, template, parameters, labels):
+    async def submit(self, template, parameters, labels, name=None):
         self.submits.append(
-            {"template": template, "parameters": parameters, "labels": labels}
+            {"template": template, "parameters": parameters, "labels": labels, "name": name}
         )
         return self.ref
 

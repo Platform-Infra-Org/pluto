@@ -68,6 +68,34 @@ async def test_submit_request_shape():
 
 
 @pytest.mark.anyio
+async def test_submit_sets_deterministic_name_not_generate_name():
+    seen: dict = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["body"] = json.loads(request.content)
+        return httpx.Response(200, json={"metadata": {"name": "req-42"}})
+
+    client = _client(handler)
+    await client.submit(template="t", parameters={}, labels={}, name="req-42")
+
+    opts = seen["body"]["submitOptions"]
+    assert opts["name"] == "req-42"  # deterministic name = idempotency key
+    assert "generateName" not in opts  # not a random name
+
+
+@pytest.mark.anyio
+async def test_submit_raises_already_exists_on_409():
+    from app.argo.models import WorkflowAlreadyExists
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(409, json={"message": "workflows.argoproj.io already exists"})
+
+    client = _client(handler)
+    with pytest.raises(WorkflowAlreadyExists):
+        await client.submit(template="t", parameters={}, labels={}, name="req-42")
+
+
+@pytest.mark.anyio
 async def test_submit_preserves_caller_request_id():
     seen: dict = {}
 

@@ -6,6 +6,13 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 
+class WorkflowAlreadyExists(Exception):
+    """Argo rejected a submit (HTTP 409) because a workflow with the requested
+    deterministic name already exists. This IS the idempotency signal: a retry
+    of an already-submitted request lands here instead of creating a second
+    workflow. Carries the conflicting name."""
+
+
 @dataclass(frozen=True)
 class WorkflowRef:
     """Identifies a submitted workflow. Stored on the Request as workflow_ref."""
