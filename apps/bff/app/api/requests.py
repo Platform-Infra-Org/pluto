@@ -16,6 +16,7 @@ from app.auth.deps import current_principal
 from app.auth.principal import Principal
 from app.catalog.ownership import resolve_owner_team
 from app.db import get_session
+from app.execution.runner import schedule_execution
 from app.models.request import Request, RequestEvent
 from app.models.resource import ResourceIndex
 from app.requests import authz
@@ -229,6 +230,8 @@ async def approve_request(
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     await session.commit()
     await session.refresh(req, ["events"])
+    if req.state == "APPROVED":
+        schedule_execution(req.id)  # close the loop: submit + watch (gated on Argo config)
     return _dump(req)
 
 
@@ -269,4 +272,6 @@ async def bypass_request(
         raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
     await session.commit()
     await session.refresh(req, ["events"])
+    if req.state == "APPROVED":
+        schedule_execution(req.id)  # bypass also reaches APPROVED -> execute
     return _dump(req)
