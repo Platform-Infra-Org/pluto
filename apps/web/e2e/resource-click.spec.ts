@@ -17,7 +17,7 @@ test('clicking a resource opens its detail (token survives nav)', async ({ page 
   await loginAs(page, 'requester')
 
   // Go to Resources via the in-app nav link (real click).
-  await page.getByRole('link', { name: 'Resources' }).click()
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Resources' }).click()
   await expect(page.getByRole('heading', { name: 'My Resources' })).toBeVisible()
 
   // Click the first resource name (a real client-side <Link> click).
