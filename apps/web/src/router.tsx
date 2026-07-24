@@ -11,6 +11,7 @@ import { BuilderCanvas } from './app/builder/canvas'
 import { MyDefinitions } from './app/services/mine'
 import { OnboardingQueue } from './app/services/onboarding-queue'
 import { AdminDashboard } from './app/admin/shell'
+import { BlockOnboard } from './app/blocks/onboard'
 import { AuthCallback } from './app/routes/auth-callback'
 import { NavBar } from './app/nav'
 
@@ -125,6 +126,12 @@ const adminRoute = createRoute({
   component: AdminDashboard,
 })
 
+const blocksRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/blocks',
+  component: BlockOnboard,
+})
+
 const authCallbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/auth/callback',
@@ -144,6 +151,7 @@ const routeTree = rootRoute.addChildren([
   myDefinitionsRoute,
   onboardingQueueRoute,
   adminRoute,
+  blocksRoute,
   authCallbackRoute,
 ])
 

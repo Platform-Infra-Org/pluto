@@ -72,6 +72,11 @@ export function NavBar() {
                 </Link>
               )}
               {hasRole('platform-admin') && (
+                <Link to="/blocks" className={linkClass} activeProps={activeLinkProps}>
+                  Blocks
+                </Link>
+              )}
+              {hasRole('platform-admin') && (
                 <Link to="/admin" className={linkClass} activeProps={activeLinkProps}>
                   Admin
                 </Link>
