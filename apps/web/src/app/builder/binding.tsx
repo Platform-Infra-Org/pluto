@@ -1,4 +1,8 @@
+import { Input } from '@/components/ui/input'
 import type { ApprovalPolicy, PolicyMode, WorkflowBinding } from './schema'
+
+const selectClass =
+  'mt-1 h-9 w-full rounded-md border border-input bg-background px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
 
 const MODES: PolicyMode[] = ['SINGLE', 'N_OF_M', 'RBAC']
 
@@ -17,24 +21,24 @@ export function BindingPanel({
   onPolicy: (p: ApprovalPolicy) => void
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 border-t border-border pt-4">
       <label className="block">
         <span className="text-sm font-medium">Create WorkflowTemplate</span>
-        <input
+        <Input
           aria-label="template ref"
-          className="border rounded px-2 py-1 w-full"
+          className="mt-1"
           value={binding.create?.template_ref ?? ''}
           onChange={(e) =>
             onBinding({ create: { template_ref: e.target.value, param_map: binding.create?.param_map ?? {} } })
           }
         />
       </label>
-      <div className="flex gap-2 items-end">
-        <label className="block">
+      <div className="flex items-end gap-2">
+        <label className="block flex-1">
           <span className="text-sm font-medium">Approval policy</span>
           <select
             aria-label="policy mode"
-            className="border rounded px-2 py-1 w-full"
+            className={selectClass}
             value={policy.mode}
             onChange={(e) => onPolicy({ mode: e.target.value as PolicyMode, n: policy.n })}
           >
@@ -48,11 +52,11 @@ export function BindingPanel({
         {policy.mode === 'N_OF_M' && (
           <label className="block">
             <span className="text-sm font-medium">n</span>
-            <input
+            <Input
               aria-label="policy n"
               type="number"
               min={1}
-              className="border rounded px-2 py-1 w-20"
+              className="mt-1 w-20"
               value={policy.n ?? 2}
               onChange={(e) => onPolicy({ mode: 'N_OF_M', n: Number(e.target.value) })}
             />

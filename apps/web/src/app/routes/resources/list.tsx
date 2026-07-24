@@ -1,7 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
+import { Search } from 'lucide-react'
 import { fetchResources } from '@/lib/catalog'
+import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { StatusBadge } from '@/components/ui/badge'
+import { Table, TBody, TD, TH, THead, TR } from '@/components/ui/table'
 
 // My Resources — RBAC/ownership filtering is enforced by the BFF; this list only
 // renders what the caller is allowed to see, plus a client-side text filter.
@@ -19,52 +24,66 @@ export function ResourceList() {
   )
 
   return (
-    <div className="p-8 space-y-4">
-      <h1 className="text-2xl font-semibold">My Resources</h1>
-      <input
-        className="border rounded px-3 py-1.5 w-64"
-        placeholder="Filter resources…"
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-      />
-      {isLoading && <p>Loading…</p>}
-      {isError && <p className="text-red-600">Failed to load resources.</p>}
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">My Resources</h1>
+          <p className="text-sm text-muted-foreground">Catalog resources you own or can view.</p>
+        </div>
+        <div className="relative w-full sm:w-72">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            className="pl-9"
+            placeholder="Filter resources…"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {isError && <p className="text-sm text-destructive">Failed to load resources.</p>}
       {!isLoading && !isError && (
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="text-left border-b">
-              <th className="py-2 pr-4">Name</th>
-              <th className="py-2 pr-4">Type</th>
-              <th className="py-2 pr-4">Owner team</th>
-              <th className="py-2 pr-4">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.map((r) => (
-              <tr key={r.id} className="border-b">
-                <td className="py-2 pr-4">
-                  {/* client-side nav — a full-page anchor would reload the SPA and drop the in-memory token */}
-                  <Link
-                    to="/resources/$resourceId"
-                    params={{ resourceId: String(r.id) }}
-                    className="text-blue-600 hover:underline"
-                  >
-                    {r.name}
-                  </Link>
-                </td>
-                <td className="py-2 pr-4">{r.type}</td>
-                <td className="py-2 pr-4">{r.owner_team}</td>
-                <td className="py-2 pr-4">
-                  {r.status === 'invalid' ? (
-                    <span className="text-amber-600 font-medium">invalid</span>
-                  ) : (
-                    r.status
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <Card>
+          <Table>
+            <THead>
+              <TR className="hover:bg-transparent">
+                <TH>Name</TH>
+                <TH>Type</TH>
+                <TH>Owner team</TH>
+                <TH>Status</TH>
+              </TR>
+            </THead>
+            <TBody>
+              {shown.map((r) => (
+                <TR key={r.id}>
+                  <TD>
+                    {/* client-side nav — a full-page anchor would reload the SPA and drop the in-memory token */}
+                    <Link
+                      to="/resources/$resourceId"
+                      params={{ resourceId: String(r.id) }}
+                      className="font-medium text-primary hover:underline"
+                    >
+                      {r.name}
+                    </Link>
+                  </TD>
+                  <TD className="text-muted-foreground">{r.type}</TD>
+                  <TD className="text-muted-foreground">{r.owner_team}</TD>
+                  <TD>
+                    <StatusBadge status={r.status} />
+                  </TD>
+                </TR>
+              ))}
+              {shown.length === 0 && (
+                <TR className="hover:bg-transparent">
+                  <TD className="py-8 text-center text-muted-foreground" colSpan={4}>
+                    No resources match your filter.
+                  </TD>
+                </TR>
+              )}
+            </TBody>
+          </Table>
+        </Card>
       )}
     </div>
   )

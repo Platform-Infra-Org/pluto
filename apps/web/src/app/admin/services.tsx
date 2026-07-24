@@ -7,13 +7,17 @@ import {
   type AdminDefinition,
   type AdminRequest,
 } from '@/lib/admin'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { StatusBadge } from '@/components/ui/badge'
 import { DataTable, type Column } from './table'
 
 const DEF_COLUMNS: Column<AdminDefinition>[] = [
-  { key: 'name', header: 'Name', cell: (d) => d.name },
+  { key: 'name', header: 'Name', cell: (d) => <span className="font-medium">{d.name}</span> },
   { key: 'team', header: 'Team', cell: (d) => d.owner_team },
   { key: 'version', header: 'Version', cell: (d) => `v${d.version}` },
-  { key: 'status', header: 'Status', cell: (d) => d.status },
+  { key: 'status', header: 'Status', cell: (d) => <StatusBadge status={d.status} /> },
 ]
 
 function OnboardingRow({ item, onDone }: { item: AdminRequest; onDone: () => void }) {
@@ -21,24 +25,26 @@ function OnboardingRow({ item, onDone }: { item: AdminRequest; onDone: () => voi
   const approve = useMutation({ mutationFn: () => approveOnboarding(item.id, note), onSuccess: onDone })
   const reject = useMutation({ mutationFn: () => rejectOnboarding(item.id, note), onSuccess: onDone })
   return (
-    <li className="border rounded p-3 flex flex-wrap items-center gap-2">
-      <span className="font-medium">
-        #{item.id} {item.resource_type}
-      </span>
-      <span className="text-sm text-gray-500">by {item.requester}</span>
-      <input
-        aria-label={`review note for onboarding ${item.id}`}
-        placeholder="note"
-        className="border rounded px-2 py-1 flex-1 min-w-40"
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-      />
-      <button type="button" className="bg-green-700 text-white rounded px-3 py-1" onClick={() => approve.mutate()}>
-        Approve
-      </button>
-      <button type="button" className="bg-red-600 text-white rounded px-3 py-1" onClick={() => reject.mutate()}>
-        Reject
-      </button>
+    <li>
+      <Card className="flex flex-wrap items-center gap-2 p-3">
+        <span className="font-medium">
+          #{item.id} {item.resource_type}
+        </span>
+        <span className="text-sm text-muted-foreground">by {item.requester}</span>
+        <Input
+          aria-label={`review note for onboarding ${item.id}`}
+          placeholder="note"
+          className="min-w-40 flex-1"
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+        />
+        <Button type="button" variant="success" size="sm" onClick={() => approve.mutate()}>
+          Approve
+        </Button>
+        <Button type="button" variant="destructive" size="sm" onClick={() => reject.mutate()}>
+          Reject
+        </Button>
+      </Card>
     </li>
   )
 }
@@ -53,16 +59,16 @@ export function AdminServices() {
   const refresh = () => qc.invalidateQueries({ queryKey: ['admin-services'] })
   return (
     <section aria-labelledby="services-heading" className="space-y-4">
-      <h2 id="services-heading" className="text-xl font-semibold">
+      <h2 id="services-heading" className="text-lg font-semibold tracking-tight">
         Services
       </h2>
-      {isLoading && <p>Loading…</p>}
-      {isError && <p className="text-red-600">Failed to load services.</p>}
+      {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {isError && <p className="text-sm text-destructive">Failed to load services.</p>}
       {data && (
         <>
-          <h3 className="font-medium">Onboarding queue</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">Onboarding queue</h3>
           {data.onboarding_queue.length === 0 ? (
-            <p className="text-gray-500">Nothing pending.</p>
+            <p className="text-sm text-muted-foreground">Nothing pending.</p>
           ) : (
             <ul className="space-y-2">
               {data.onboarding_queue.map((i) => (
@@ -70,7 +76,7 @@ export function AdminServices() {
               ))}
             </ul>
           )}
-          <h3 className="font-medium">Definitions</h3>
+          <h3 className="text-sm font-medium text-muted-foreground">Definitions</h3>
           <DataTable
             caption="All service definitions"
             columns={DEF_COLUMNS}

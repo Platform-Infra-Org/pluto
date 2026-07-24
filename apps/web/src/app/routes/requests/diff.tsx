@@ -11,16 +11,16 @@ export function DiffView({ resourceId, proposed }: { resourceId: number | null; 
   })
 
   return (
-    <div className="grid grid-cols-2 gap-3 text-xs">
+    <div className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2">
       <div>
-        <div className="font-medium mb-1">Current</div>
-        <pre className="bg-gray-50 border rounded p-2 overflow-auto">
+        <div className="mb-1 font-medium text-muted-foreground">Current</div>
+        <pre className="overflow-auto rounded-md border border-border bg-muted/40 p-2">
           {resourceId == null ? '(new resource)' : JSON.stringify(current?.payload ?? {}, null, 2)}
         </pre>
       </div>
       <div>
-        <div className="font-medium mb-1">Proposed</div>
-        <pre className="bg-amber-50 border rounded p-2 overflow-auto">
+        <div className="mb-1 font-medium text-primary">Proposed</div>
+        <pre className="overflow-auto rounded-md border border-primary/30 bg-primary/5 p-2">
           {JSON.stringify(proposed, null, 2)}
         </pre>
       </div>

@@ -1,12 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchMyDefinitions } from '@/lib/services'
-
-const STATUS_COLOR: Record<string, string> = {
-  DRAFT: 'text-gray-500',
-  PENDING_ONBOARDING: 'text-amber-600',
-  ACTIVE: 'text-green-700',
-  RETIRED: 'text-red-600',
-}
+import { Card } from '@/components/ui/card'
+import { StatusBadge } from '@/components/ui/badge'
 
 // My service definitions with status (DRAFT / PENDING_ONBOARDING / ACTIVE / RETIRED).
 export function MyDefinitions() {
@@ -16,19 +11,27 @@ export function MyDefinitions() {
   })
   const items = data?.items ?? []
   return (
-    <div className="p-8 space-y-4">
-      <h1 className="text-2xl font-semibold">My Service Definitions</h1>
-      {isLoading && <p>Loading…</p>}
-      {isError && <p className="text-red-600">Failed to load definitions.</p>}
-      {!isLoading && items.length === 0 && <p className="text-gray-500">No definitions yet.</p>}
+    <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">My Service Definitions</h1>
+        <p className="text-sm text-muted-foreground">Resource types you maintain.</p>
+      </div>
+      {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {isError && <p className="text-sm text-destructive">Failed to load definitions.</p>}
+      {!isLoading && items.length === 0 && (
+        <Card className="p-8 text-center text-sm text-muted-foreground">No definitions yet.</Card>
+      )}
       <ul className="space-y-2">
         {items.map((d) => (
-          <li key={d.id} className="border rounded p-3 text-sm flex justify-between">
-            <span>
-              {d.name} <span className="text-gray-400">v{d.version}</span>
-              <span className="ml-2 text-gray-500">{d.owner_team}</span>
-            </span>
-            <span className={`font-medium ${STATUS_COLOR[d.status] ?? ''}`}>{d.status}</span>
+          <li key={d.id}>
+            <Card className="flex items-center justify-between gap-3 p-4 text-sm">
+              <span>
+                <span className="font-medium">{d.name}</span>{' '}
+                <span className="text-muted-foreground">v{d.version}</span>
+                <span className="ml-2 text-muted-foreground">{d.owner_team}</span>
+              </span>
+              <StatusBadge status={d.status} />
+            </Card>
           </li>
         ))}
       </ul>

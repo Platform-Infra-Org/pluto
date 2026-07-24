@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useAuth } from '@/lib/auth'
+import { cn } from '@/lib/utils'
 import { AdminOverview } from './overview'
 import { AdminRequests } from './requests'
 import { AdminServices } from './services'
@@ -25,30 +26,36 @@ export function AdminDashboard() {
   const { hasRole, isLoading } = useAuth()
   const [panel, setPanel] = useState<PanelKey>('overview')
 
-  if (isLoading) return <div className="p-8">Loading…</div>
+  if (isLoading) return <div className="mx-auto max-w-7xl px-4 py-8 text-muted-foreground">Loading…</div>
   if (!hasRole('platform-admin'))
     return (
-      <div className="p-8">
-        <h1 className="text-2xl font-semibold">Admin</h1>
-        <p role="alert" className="text-red-700">
+      <div className="mx-auto max-w-7xl space-y-2 px-4 py-8 sm:px-6">
+        <h1 className="text-2xl font-semibold tracking-tight">Admin</h1>
+        <p role="alert" className="text-sm text-destructive">
           You need the platform-admin role to view this dashboard.
         </p>
       </div>
     )
 
   return (
-    <div className="p-8 space-y-6">
-      <h1 className="text-2xl font-semibold">Admin dashboard</h1>
-      <nav aria-label="Admin sections" className="flex flex-wrap gap-2 border-b pb-2">
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Admin dashboard</h1>
+        <p className="text-sm text-muted-foreground">Platform-wide operations and configuration.</p>
+      </div>
+      <nav aria-label="Admin sections" className="flex flex-wrap gap-1 border-b border-border pb-2">
         {(Object.keys(PANELS) as PanelKey[]).map((key) => (
           <button
             key={key}
             type="button"
             aria-current={panel === key ? 'page' : undefined}
             onClick={() => setPanel(key)}
-            className={`rounded px-3 py-1 ${
-              panel === key ? 'bg-blue-700 text-white' : 'bg-gray-100'
-            }`}
+            className={cn(
+              'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+              panel === key
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+            )}
           >
             {PANELS[key].label}
           </button>

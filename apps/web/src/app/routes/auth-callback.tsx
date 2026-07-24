@@ -14,5 +14,9 @@ export function AuthCallback() {
       .finally(() => navigate({ to: '/' }))
   }, [navigate, refresh])
 
-  return <div>Signing in…</div>
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">
+      Signing in…
+    </div>
+  )
 }

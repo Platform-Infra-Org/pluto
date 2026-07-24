@@ -12,23 +12,26 @@ export function NotificationDropdown({
   return (
     <div
       role="menu"
-      className="absolute right-0 mt-2 w-80 rounded border bg-white shadow-lg z-10"
+      className="absolute right-0 z-30 mt-2 w-80 overflow-hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-lg"
     >
-      <div className="flex items-center justify-between border-b p-2">
-        <span className="text-sm font-medium">Notifications</span>
-        <button onClick={onMarkAllRead} className="text-xs text-blue-600 hover:underline">
+      <div className="flex items-center justify-between border-b border-border px-3 py-2">
+        <span className="text-sm font-semibold">Notifications</span>
+        <button onClick={onMarkAllRead} className="text-xs font-medium text-primary hover:underline">
           Mark all read
         </button>
       </div>
       {recent.length === 0 ? (
-        <p className="p-4 text-sm text-gray-500">No notifications.</p>
+        <p className="p-6 text-center text-sm text-muted-foreground">No notifications.</p>
       ) : (
-        <ul>
+        <ul className="max-h-96 overflow-auto">
           {recent.map((n) => {
             const inner = (
-              <div className={`border-b p-2 text-sm ${n.read_at ? 'text-gray-500' : 'font-medium'}`}>
-                <div>{n.title}</div>
-                {n.body && <div className="text-xs text-gray-400">{n.body}</div>}
+              <div className="border-b border-border px-3 py-2.5 text-sm">
+                <div className="flex items-center gap-2">
+                  {!n.read_at && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />}
+                  <span className={n.read_at ? 'text-muted-foreground' : 'font-medium'}>{n.title}</span>
+                </div>
+                {n.body && <div className="mt-0.5 text-xs text-muted-foreground">{n.body}</div>}
               </div>
             )
             return (
@@ -37,7 +40,7 @@ export function NotificationDropdown({
                   <Link
                     to="/requests/$requestId"
                     params={{ requestId: String(n.request_id) }}
-                    className="block hover:bg-gray-50"
+                    className="block transition-colors hover:bg-accent"
                   >
                     {inner}
                   </Link>
@@ -51,7 +54,7 @@ export function NotificationDropdown({
       )}
       <Link
         to="/notifications"
-        className="block border-t p-2 text-center text-xs text-blue-600 hover:underline"
+        className="block border-t border-border px-3 py-2 text-center text-xs font-medium text-primary hover:underline"
       >
         View all
       </Link>

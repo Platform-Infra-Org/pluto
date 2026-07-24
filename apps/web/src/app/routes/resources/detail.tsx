@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchHistory, fetchResource } from '@/lib/catalog'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatusBadge } from '@/components/ui/badge'
 
 // Resource detail: parsed fields, owner team, current Git SHA, raw JSON, and
 // change history from git log. An in-flight-request badge is deferred to E05.
@@ -13,38 +15,56 @@ export function ResourceDetail({ id }: { id: number }) {
     queryFn: () => fetchHistory(id),
   })
 
-  if (isLoading) return <p className="p-8">Loading…</p>
-  if (isError || !data) return <p className="p-8 text-red-600">Resource not found.</p>
+  if (isLoading) return <p className="mx-auto max-w-4xl px-4 py-8 text-sm text-muted-foreground">Loading…</p>
+  if (isError || !data)
+    return <p className="mx-auto max-w-4xl px-4 py-8 text-sm text-destructive">Resource not found.</p>
 
   return (
-    <div className="p-8 space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{data.name}</h1>
-        <p className="text-sm text-gray-500">
-          {data.type} · owned by {data.owner_team} · {data.git_sha.slice(0, 8)}
-          {data.status === 'invalid' && <span className="ml-2 text-amber-600 font-medium">invalid</span>}
+    <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6">
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight">{data.name}</h1>
+          {data.status === 'invalid' && <StatusBadge status="invalid" />}
+        </div>
+        <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{data.type}</span>
+          <span>· owned by {data.owner_team} ·</span>
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{data.git_sha.slice(0, 8)}</code>
         </p>
       </div>
 
-      <section>
-        <h2 className="font-medium mb-2">Raw JSON</h2>
-        <pre className="bg-gray-50 border rounded p-3 text-xs overflow-auto">
-          {JSON.stringify(data.payload, null, 2)}
-        </pre>
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>Raw JSON</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <pre className="overflow-auto rounded-md border border-border bg-muted/40 p-3 text-xs">
+            {JSON.stringify(data.payload, null, 2)}
+          </pre>
+        </CardContent>
+      </Card>
 
-      <section>
-        <h2 className="font-medium mb-2">History</h2>
-        <ul className="text-sm space-y-1">
-          {(history ?? []).map((h) => (
-            <li key={h.sha} className="flex gap-2">
-              <code className="text-gray-500">{h.sha.slice(0, 8)}</code>
-              <span>{h.message}</span>
-              <span className="text-gray-400">— {h.author}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-2 text-sm">
+            {(history ?? []).map((h) => (
+              <li key={h.sha} className="flex flex-wrap items-baseline gap-2">
+                <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                  {h.sha.slice(0, 8)}
+                </code>
+                <span>{h.message}</span>
+                <span className="text-muted-foreground">— {h.author}</span>
+              </li>
+            ))}
+            {(history ?? []).length === 0 && (
+              <li className="text-muted-foreground">No history yet.</li>
+            )}
+          </ul>
+        </CardContent>
+      </Card>
     </div>
   )
 }

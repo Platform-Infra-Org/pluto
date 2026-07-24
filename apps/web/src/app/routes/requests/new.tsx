@@ -26,8 +26,14 @@ export function NewRequest({
     queryFn: () => apiFetch<TypeSchema>(`/services/type-schema/${resourceType}`),
   })
 
-  if (isLoading) return <p className="p-8">Loading form…</p>
-  if (isError || !data) return <p className="p-8 text-red-600">Failed to load the form schema.</p>
+  if (isLoading)
+    return <p className="mx-auto max-w-lg px-4 py-8 text-sm text-muted-foreground">Loading form…</p>
+  if (isError || !data)
+    return (
+      <p className="mx-auto max-w-lg px-4 py-8 text-sm text-destructive">
+        Failed to load the form schema.
+      </p>
+    )
 
   return (
     <RequestForm

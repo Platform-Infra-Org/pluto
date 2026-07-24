@@ -22,17 +22,17 @@ export function WorkflowStatusView({ id }: { id: number }) {
     refetchInterval: (q) => (TERMINAL.has(q.state.data?.phase ?? '') ? false : 2000),
   })
 
-  if (isLoading) return <p className="p-8">Loading status…</p>
-  if (isError || !data) return <p className="p-8 text-red-600">Status unavailable.</p>
+  if (isLoading) return <p className="text-sm text-muted-foreground">Loading status…</p>
+  if (isError || !data) return <p className="text-sm text-destructive">Status unavailable.</p>
 
   return (
     <div className="space-y-3">
-      <p className="text-sm text-gray-500">
-        Workflow phase: <span className="font-medium">{data.phase}</span>
+      <p className="text-sm text-muted-foreground">
+        Workflow phase: <span className="font-medium text-foreground">{data.phase}</span>
       </p>
 
       {data.nodes.length === 0 ? (
-        <p className="text-sm text-gray-400">No steps yet.</p>
+        <p className="text-sm text-muted-foreground">No steps yet.</p>
       ) : (
         <ul className="space-y-1">
           {data.nodes.map((n) => (
@@ -50,22 +50,22 @@ function StepRow({ node }: { node: WorkflowNode }) {
     return (
       <li
         role="alert"
-        className="rounded border border-red-300 bg-red-50 p-2 text-sm text-red-800"
+        className="rounded-md border border-destructive/40 bg-destructive/10 p-2.5 text-sm text-destructive"
       >
         <div className="flex gap-2 font-medium">
           <span>{icon}</span>
           <span>{node.display_name}</span>
-          <span className="text-red-500">({node.phase})</span>
+          <span className="opacity-70">({node.phase})</span>
         </div>
-        {node.message && <p className="mt-1 text-red-700">{node.message}</p>}
+        {node.message && <p className="mt-1 text-foreground/70">{node.message}</p>}
       </li>
     )
   }
   return (
-    <li className="flex gap-2 p-2 text-sm">
-      <span className="text-gray-400">{icon}</span>
+    <li className="flex gap-2 rounded-md p-2 text-sm">
+      <span className="text-muted-foreground">{icon}</span>
       <span>{node.display_name}</span>
-      <span className="text-gray-400">({node.phase})</span>
+      <span className="text-muted-foreground">({node.phase})</span>
     </li>
   )
 }

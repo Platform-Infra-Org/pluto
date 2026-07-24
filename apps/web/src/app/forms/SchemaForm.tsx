@@ -35,6 +35,11 @@ export interface WidgetProps {
 
 export type Widget = (props: WidgetProps) => ReactNode
 
+// Shared control styling (token-based) so form fields match the design system.
+const controlClass =
+  'mt-1 flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm ' +
+  'placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-ring'
+
 function coerce(type: string | undefined, raw: string): unknown {
   if (type === 'number' || type === 'integer') return raw === '' ? '' : Number(raw)
   if (type === 'boolean') return raw === 'true'
@@ -70,14 +75,14 @@ export function SchemaForm({
           <label key={name} className="block">
             <span className="text-sm font-medium">
               {spec.title ?? name}
-              {required.includes(name) && <span className="text-red-600"> *</span>}
+              {required.includes(name) && <span className="text-destructive"> *</span>}
             </span>
             {widget ? (
               widget({ name, spec, value: value[name], onChange: (v) => set(name, v) })
             ) : spec.enum ? (
               <select
                 aria-label={name}
-                className="border rounded px-2 py-1 w-full"
+                className={controlClass}
                 value={String(value[name] ?? '')}
                 onChange={(e) => set(name, e.target.value)}
               >
@@ -92,6 +97,7 @@ export function SchemaForm({
               <input
                 aria-label={name}
                 type="checkbox"
+                className="mt-1 block h-4 w-4 rounded border-input accent-[var(--primary)]"
                 checked={Boolean(value[name])}
                 onChange={(e) => set(name, e.target.checked)}
               />
@@ -99,17 +105,17 @@ export function SchemaForm({
               <input
                 aria-label={name}
                 type={spec.type === 'number' || spec.type === 'integer' ? 'number' : 'text'}
-                className="border rounded px-2 py-1 w-full"
+                className={controlClass}
                 value={String(value[name] ?? '')}
                 onChange={(e) => set(name, coerce(spec.type, e.target.value))}
               />
             )}
             {(uiSchema?.[name]?.['ui:help'] ?? spec.description) && (
-              <span className="text-xs text-gray-500">
+              <span className="mt-1 block text-xs text-muted-foreground">
                 {uiSchema?.[name]?.['ui:help'] ?? spec.description}
               </span>
             )}
-            {errors?.[name] && <span className="text-xs text-red-600">{errors[name]}</span>}
+            {errors?.[name] && <span className="mt-1 block text-xs text-destructive">{errors[name]}</span>}
           </label>
         )
       })}

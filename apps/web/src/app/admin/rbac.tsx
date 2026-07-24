@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchOwnership, fetchRbac, putOwnership } from '@/lib/admin'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { DataTable, type Column } from './table'
 
 interface RbacRow {
@@ -11,7 +13,7 @@ interface RbacRow {
 }
 
 const RBAC_COLUMNS: Column<RbacRow>[] = [
-  { key: 'group', header: 'Group', cell: (r) => r.group },
+  { key: 'group', header: 'Group', cell: (r) => <span className="font-medium">{r.group}</span> },
   { key: 'roles', header: 'Roles', cell: (r) => r.roles || '—' },
   { key: 'teams', header: 'Teams', cell: (r) => r.teams || '—' },
   { key: 'deny', header: 'Deny', cell: (r) => r.deny || '—' },
@@ -44,10 +46,10 @@ export function AdminRbac() {
 
   return (
     <section aria-labelledby="rbac-heading" className="space-y-4">
-      <h2 id="rbac-heading" className="text-xl font-semibold">
+      <h2 id="rbac-heading" className="text-lg font-semibold tracking-tight">
         RBAC &amp; ownership
       </h2>
-      <h3 className="font-medium">Role-group map</h3>
+      <h3 className="text-sm font-medium text-muted-foreground">Role-group map</h3>
       <DataTable
         caption="Group to roles and teams mapping"
         columns={RBAC_COLUMNS}
@@ -55,7 +57,7 @@ export function AdminRbac() {
         rowKey={(r) => r.group}
         empty="No mappings configured."
       />
-      <h3 className="font-medium">Ownership</h3>
+      <h3 className="text-sm font-medium text-muted-foreground">Ownership</h3>
       <form
         className="flex items-end gap-2"
         onSubmit={(e) => {
@@ -63,18 +65,16 @@ export function AdminRbac() {
           save.mutate()
         }}
       >
-        <label className="text-sm">
-          Default owner team
-          <input
-            className="border rounded px-2 py-1 block"
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Default owner team</span>
+          <Input
+            className="w-56"
             value={defaultTeam}
             onChange={(e) => setEdited(e.target.value)}
           />
         </label>
-        <button type="submit" className="bg-blue-700 text-white rounded px-4 py-1.5">
-          Save
-        </button>
-        {save.isSuccess && <span className="text-green-700 text-sm">Saved.</span>}
+        <Button type="submit">Save</Button>
+        {save.isSuccess && <span className="text-sm text-success">Saved.</span>}
       </form>
     </section>
   )
