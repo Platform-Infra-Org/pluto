@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: fn-api-call
+spec:
+  templates:
+    - name: run
+      inputs:
+        parameters:
+          - name: method
+          - name: url
+          - name: body
+            default: "null"
+          - name: headers
+            default: "null"
+      container:
+        image: platform/cb05-runtime:latest
+        command: [python, -m, fn.cli]
+        args:
+          - api-call
+          - |
+            {"method": "{{inputs.parameters.method}}",
+             "url": "{{inputs.parameters.url}}",
+             "body": {{inputs.parameters.body}},
+             "headers": {{inputs.parameters.headers}}}
+      outputs:
+        parameters:
+          - name: status
+            valueFrom: { path: /tmp/outputs/status }
+          - name: response
+            valueFrom: { path: /tmp/outputs/response }
