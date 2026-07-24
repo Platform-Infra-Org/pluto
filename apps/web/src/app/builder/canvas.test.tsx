@@ -9,6 +9,7 @@ function renderWithRole(roles: string[]) {
     principal: { sub: 'u', username: 'u', groups: [], roles, teams: ['payments'] },
     isLoading: false,
     hasRole: (r) => roles.includes(r),
+    refresh: async () => {},
   }
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(

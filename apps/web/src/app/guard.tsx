@@ -1,6 +1,7 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { apiFetch } from '../lib/api'
-import { AuthContext, login, useAuth, type Principal } from '../lib/auth'
+import { AuthContext, login, useAuth, userManager, type Principal } from '../lib/auth'
+import { setAccessToken } from '../lib/token'
 
 // Loads the current principal from the BFF (/api/me — the server is the gate)
 // and exposes it via context. Roles here drive display only.
@@ -8,17 +9,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [principal, setPrincipal] = useState<Principal | null>(null)
   const [isLoading, setLoading] = useState(true)
 
-  useEffect(() => {
-    apiFetch<Principal>('/me')
-      .then(setPrincipal)
-      .catch(() => setPrincipal(null))
-      .finally(() => setLoading(false))
+  // Restore the in-memory access token from the persisted OIDC user (so a
+  // client-side navigation after login carries the Bearer), then load /me.
+  const refresh = useCallback(async () => {
+    const user = await userManager().getUser().catch(() => null)
+    if (user && !user.expired) setAccessToken(user.access_token ?? null)
+    try {
+      setPrincipal(await apiFetch<Principal>('/me'))
+    } catch {
+      setPrincipal(null)
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    // setState here runs only after awaits inside refresh(), never synchronously.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void refresh()
+  }, [refresh])
 
   const hasRole = (role: string) => !!principal?.roles.includes(role)
 
   return (
-    <AuthContext.Provider value={{ principal, isLoading, hasRole }}>
+    <AuthContext.Provider value={{ principal, isLoading, hasRole, refresh }}>
       {children}
     </AuthContext.Provider>
   )

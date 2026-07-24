@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider } from '@tanstack/react-router'
 import './index.css'
+import { AuthProvider } from './app/guard'
 import { router } from './router'
 
 const queryClient = new QueryClient()
@@ -10,7 +11,9 @@ const queryClient = new QueryClient()
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
     </QueryClientProvider>
   </StrictMode>,
 )

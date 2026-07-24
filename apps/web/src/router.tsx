@@ -12,12 +12,31 @@ import { BuilderCanvas } from './app/builder/canvas'
 import { MyDefinitions } from './app/services/mine'
 import { OnboardingQueue } from './app/services/onboarding-queue'
 import { AdminDashboard } from './app/admin/shell'
+import { AuthCallback } from './app/routes/auth-callback'
+import { login, logout, useAuth } from './lib/auth'
+
+function AuthControl() {
+  const { principal } = useAuth()
+  return principal ? (
+    <div className="flex items-center gap-2 text-sm">
+      <span>{principal.username}</span>
+      <button className="underline" onClick={() => logout()}>
+        Logout
+      </button>
+    </div>
+  ) : (
+    <button className="text-sm underline" onClick={() => login()}>
+      Login
+    </button>
+  )
+}
 
 // Root layout: a thin top bar holding the live notification bell, over the routes.
 function RootLayout() {
   return (
     <>
-      <header className="flex items-center justify-end border-b px-4 py-2">
+      <header className="flex items-center justify-end gap-4 border-b px-4 py-2">
+        <AuthControl />
         <NotificationBell />
       </header>
       <Outlet />
@@ -117,6 +136,12 @@ const adminRoute = createRoute({
   component: AdminDashboard,
 })
 
+const authCallbackRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/auth/callback',
+  component: AuthCallback,
+})
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   resourcesRoute,
@@ -130,6 +155,7 @@ const routeTree = rootRoute.addChildren([
   myDefinitionsRoute,
   onboardingQueueRoute,
   adminRoute,
+  authCallbackRoute,
 ])
 
 export const router = createRouter({ routeTree })

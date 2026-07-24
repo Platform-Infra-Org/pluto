@@ -16,6 +16,7 @@ export interface AuthState {
   principal: Principal | null
   isLoading: boolean
   hasRole: (role: string) => boolean
+  refresh: () => Promise<void>
 }
 
 // Lazily constructed so importing this module never touches window/env (e.g. in tests).
@@ -27,7 +28,9 @@ export function userManager(): UserManager {
       client_id: import.meta.env.VITE_OIDC_CLIENT_ID_SPA,
       redirect_uri: `${window.location.origin}/auth/callback`,
       response_type: 'code',
-      scope: 'openid profile groups',
+      // `groups` claim comes from a client-level mapper, not a scope, so we don't
+      // request a `groups` scope (Keycloak rejects unregistered scope names).
+      scope: 'openid profile',
       // Access token kept in memory only (never sessionStorage/localStorage, which
       // XSS can read); refresh rides the BFF session cookie.
       userStore: new WebStorageStateStore({ store: new InMemoryWebStorage() }),
