@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 
 from app.auth.deps import current_principal, require_role
 from app.auth.principal import Principal
+from app.blocks import drift, registry
 from app.db import get_session
 from app.models.request import Request
 from app.requests import authz
@@ -120,7 +121,13 @@ async def list_definitions(
     if mine or "platform-admin" not in principal.roles:
         stmt = stmt.where(ServiceDefinition.owner_team.in_(list(principal.teams) or [""]))
     rows = list((await session.execute(stmt)).scalars())
-    return {"items": [_dump_def(d) for d in rows]}
+    latest = {b["name"]: b["version"] for b in await registry.list_blocks(session)}
+
+    def _dump_with_drift(d: ServiceDefinition) -> dict:
+        drifted = drift.drift_against(d, latest)
+        return {**_dump_def(d), "drift": [vars(x) for x in drifted]}
+
+    return {"items": [_dump_with_drift(d) for d in rows]}
 
 
 async def _own_definition(
