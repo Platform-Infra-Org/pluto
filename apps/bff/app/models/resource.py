@@ -25,6 +25,9 @@ class ResourceIndex(Base):
     git_sha: Mapped[str]
     payload: Mapped[dict] = mapped_column(JSONB)
     status: Mapped[str] = mapped_column(default="active")
+    # E08 pin-until-migrated: the ServiceDefinition version this resource was
+    # created under; it keeps validating/rendering against that version.
+    definition_version: Mapped[int] = mapped_column(default=1)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )

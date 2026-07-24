@@ -27,6 +27,18 @@ class Settings(BaseSettings):
     argo_auth_token: str = ""
     argo_verify_tls: bool = True
 
+    # Keycloak Admin API (E08 groups picker). Base URL of the admin REST API; the
+    # BFF authenticates as its confidential client. Browser never hits this.
+    keycloak_admin_base_url: str = ""
+
+    # Argo artifact repository (S3/MinIO), reused for E08 file uploads — no separate
+    # bucket. Secrets from env. Empty endpoint => "no object store wired" (live DEFERRED).
+    artifact_s3_endpoint: str = ""
+    artifact_s3_bucket: str = "argo-artifacts"
+    artifact_s3_access_key: str = ""
+    artifact_s3_secret_key: str = ""
+    artifact_max_upload_mb: int = 10
+
     # Git resource catalog (E04). Repo is read-only from the app. Secrets from env.
     git_repo_url: str = ""
     git_branch: str = "main"
@@ -45,6 +57,8 @@ class Settings(BaseSettings):
         "auditors": {"roles": ["auditor"]},
         "owners-payments": {"teams": ["payments"]},
         "owners-search": {"teams": ["search"]},
+        # E08 service-owner capability: author Service Definitions + submit onboarding.
+        "owners-payments-svc": {"teams": ["payments"], "roles": ["service-owner"]},
     }
 
     @property

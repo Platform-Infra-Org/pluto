@@ -15,6 +15,8 @@ from app.models.base import Base
 from app.models import resource as _resource  # noqa: F401,E402
 from app.models import request as _request  # noqa: F401,E402
 from app.notifications import model as _notification  # noqa: F401,E402
+from app.services import definition as _definition  # noqa: F401,E402
+from app.services.fields import option_source as _option_source  # noqa: F401,E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
