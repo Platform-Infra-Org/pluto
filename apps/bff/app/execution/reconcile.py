@@ -47,7 +47,14 @@ async def fail_stuck_requests(
     max_seconds: int | None = None,
     now: datetime | None = None,
 ) -> int:
-    """Flip EXECUTING requests older than the max duration to FAILED. Returns count."""
+    """Flip EXECUTING requests older than the max duration to FAILED. Returns count.
+
+    ponytail: this only updates our DB row — it does NOT terminate the actual
+    Argo workflow. So on timeout the workflow may keep running and still
+    succeed (commit to Git) after we've already recorded FAILED, leaving DB and
+    Git out of sync. The correct fix is to call Argo's terminate API here (add
+    it to ArgoClient); deferred because it needs a live cluster to test against.
+    """
     max_seconds = settings.max_execution_seconds if max_seconds is None else max_seconds
     now = now or datetime.now(UTC)
     cutoff = now - timedelta(seconds=max_seconds)

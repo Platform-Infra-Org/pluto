@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import axe from 'axe-core'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import * as admin from '@/lib/admin'
@@ -30,6 +30,22 @@ beforeEach(() => {
     option_source_staleness: 0,
     invalid_catalog_files: 0,
   })
+  vi.mocked(admin.fetchAdminWorkflows).mockResolvedValue({
+    items: [
+      {
+        id: 1, kind: 'RESOURCE_CHANGE', action: 'UPDATE', resource_type: 'database',
+        owner_team: 'payments', requester: 'bob', state: 'SUCCEEDED',
+        workflow_ref: 'platform/wf-1', failure: null, created_at: null,
+      },
+      {
+        id: 2, kind: 'RESOURCE_CHANGE', action: 'DELETE', resource_type: 'topic',
+        owner_team: 'search', requester: 'dan', state: 'FAILED',
+        workflow_ref: 'platform/wf-2',
+        failure: { node: 'commit', message: 'boom', phase: 'Failed' },
+        created_at: null,
+      },
+    ],
+  })
 })
 
 describe('admin dashboard accessibility', () => {
@@ -41,6 +57,20 @@ describe('admin dashboard accessibility', () => {
       </QueryClientProvider>,
     )
     await screen.findByText('Pending approval')
+    const violations = await noSeriousViolations(container)
+    expect(violations, JSON.stringify(violations.map((v) => v.id))).toHaveLength(0)
+  })
+
+  it('workflows table (DataTable grid) has no critical/serious axe violations', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const { container } = render(
+      <QueryClientProvider client={qc}>
+        <AdminDashboard />
+      </QueryClientProvider>,
+    )
+    await screen.findByText('Pending approval')
+    fireEvent.click(screen.getByRole('button', { name: 'Workflows' }))
+    await screen.findByText('platform/wf-1')
     const violations = await noSeriousViolations(container)
     expect(violations, JSON.stringify(violations.map((v) => v.id))).toHaveLength(0)
   })

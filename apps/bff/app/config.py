@@ -30,7 +30,9 @@ class Settings(BaseSettings):
     argo_auth_token: str = ""
     argo_verify_tls: bool = True
     # Resilience: an EXECUTING request older than this is force-FAILED (E09).
-    max_execution_seconds: int = 3600
+    # 24h default — a healthy workflow can legitimately run past 1h; only flag
+    # ones stuck far longer than any real workflow should take.
+    max_execution_seconds: int = 86400
 
     # Keycloak Admin API (E08 groups picker). Base URL of the admin REST API; the
     # BFF authenticates as its confidential client. Browser never hits this.

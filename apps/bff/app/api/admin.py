@@ -7,7 +7,7 @@ epics' models/services (requests, catalog, service definitions, option sources)
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -33,7 +33,7 @@ class NoteBody(BaseModel):
 
 class OwnershipBody(BaseModel):
     path_map: dict[str, str]
-    default_team: str
+    default_team: str = Field(min_length=1)
 
 
 def _dump_request(req: Request) -> dict:

@@ -61,6 +61,17 @@ async def test_every_admin_route_is_403_for_non_admin(client):
             r = await c.get(route)
             assert r.status_code == 403, f"{route} for {principal.sub} -> {r.status_code}"
 
+        r = await c.put(
+            "/api/admin/ownership", json={"path_map": {}, "default_team": "x"}
+        )
+        assert r.status_code == 403, f"PUT ownership for {principal.sub} -> {r.status_code}"
+
+        for action in ("approve", "reject"):
+            r = await c.post(f"/api/admin/services/onboarding/1/{action}", json={})
+            assert (
+                r.status_code == 403
+            ), f"onboarding {action} for {principal.sub} -> {r.status_code}"
+
 
 async def test_overview_tiles(client):
     c, holder, session = client
@@ -133,6 +144,13 @@ async def test_editing_ownership_changes_routing(client):
     })
     assert r.status_code == 201
     assert r.json()["owner_team"] == "search"  # routing followed the edited map
+
+
+async def test_ownership_rejects_empty_default_team(client):
+    c, holder, session = client
+    holder["principal"] = ADMIN
+    r = await c.put("/api/admin/ownership", json={"path_map": {}, "default_team": ""})
+    assert r.status_code == 422
 
 
 async def test_admin_onboarding_approve(client):

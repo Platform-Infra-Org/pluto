@@ -23,7 +23,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sse_starlette.sse import EventSourceResponse
 
-from app.auth.deps import current_principal
+from app.auth.deps import current_principal, writer_principal
 from app.auth.jwt import AuthError, verify_token
 from app.auth.principal import Principal, build_principal
 from app.config import settings
@@ -208,7 +208,7 @@ class ReadBody(BaseModel):
 @router.post("/read")
 async def mark_read(
     body: ReadBody,
-    principal: Principal = Depends(current_principal),
+    principal: Principal = Depends(writer_principal),
     session: AsyncSession = Depends(get_session),
 ) -> dict:
     keys = _keys(principal)
