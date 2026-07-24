@@ -63,11 +63,14 @@ def _dump_def(d: ServiceDefinition) -> dict:
 @router.get("/overview")
 async def overview(session: AsyncSession = Depends(get_session)) -> dict:
     """Health tiles aggregated across every subsystem."""
-    by_state = dict(
-        (await session.execute(
-            select(Request.state, func.count()).group_by(Request.state)
-        )).all()
-    )
+    by_state: dict[str, int] = {
+        state_: count
+        for state_, count in (
+            await session.execute(
+                select(Request.state, func.count()).group_by(Request.state)
+            )
+        ).all()
+    }
     pending_onboarding = await session.scalar(
         select(func.count()).select_from(Request).where(
             Request.kind == "SERVICE_ONBOARDING", Request.state == "PENDING_APPROVAL"
