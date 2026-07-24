@@ -10,8 +10,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.auth.deps import current_principal
 from app.auth.principal import Principal
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.config import settings
+from app.db import get_session
 from app.services.fields import groups, upload
+from app.services.fields.option_source import OptionSource
 
 router = APIRouter(prefix="/api/fields")
 
@@ -70,3 +74,20 @@ async def upload_field(
         raise HTTPException(
             status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, str(exc)
         ) from exc
+
+
+@router.get("/options/{source_id}")
+async def options_field(
+    source_id: int,
+    _: Principal = Depends(current_principal),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Serve a dynamic-choice field's options from the cache (never live)."""
+    src = await session.get(OptionSource, source_id)
+    if src is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "option source not found")
+    return {
+        "items": src.cached_options,
+        "status": src.last_status,  # 'stale' surfaces a flaky upstream to admins
+        "last_synced_at": src.last_synced_at.isoformat() if src.last_synced_at else None,
+    }

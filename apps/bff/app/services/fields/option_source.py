@@ -14,7 +14,7 @@ import os
 from datetime import UTC, datetime
 
 import httpx
-from sqlalchemy import UniqueConstraint, select
+from sqlalchemy import DateTime, UniqueConstraint, select
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column
@@ -38,7 +38,9 @@ class OptionSource(Base):
     mapping: Mapped[dict] = mapped_column(JSONB, default=dict)
     refresh_interval: Mapped[int] = mapped_column(default=MIN_REFRESH_SECONDS)
     cached_options: Mapped[list] = mapped_column(JSONB, default=list)
-    last_synced_at: Mapped[datetime | None] = mapped_column(default=None)
+    last_synced_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), default=None
+    )
     last_status: Mapped[str] = mapped_column(default="pending")  # ok | stale | pending
 
 
@@ -121,6 +123,32 @@ async def refresh(
         source.last_status = "stale"  # keep serving cached_options (last-good)
     await session.commit()
     return source
+
+
+async def poll_once(session: AsyncSession, client: httpx.AsyncClient) -> int:
+    """Refresh every source whose interval has elapsed. Returns how many ran."""
+    due = await due_sources(session)
+    for src in due:
+        await refresh(session, src, client)
+    return len(due)
+
+
+async def poll_loop(interval: int = MIN_REFRESH_SECONDS) -> None:
+    """Background poller. ponytail: a plain sleep loop like the catalog reconcile
+    loop — swap for a real scheduler only if per-source timing precision matters."""
+    import asyncio
+    import logging
+
+    from app.db import async_session_factory
+
+    log = logging.getLogger(__name__)
+    while True:
+        await asyncio.sleep(interval)
+        try:
+            async with async_session_factory() as session, httpx.AsyncClient() as client:
+                await poll_once(session, client)
+        except Exception:  # noqa: BLE001 — never let the poller die
+            log.exception("option-source poll failed")
 
 
 async def due_sources(session: AsyncSession) -> list[OptionSource]:

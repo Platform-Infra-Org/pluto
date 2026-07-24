@@ -11,6 +11,7 @@ from app.api import catalog, fields, me, requests, services, workflow_status
 from app.catalog.git_sync import sync_repo
 from app.config import settings
 from app.notifications import sse
+from app.services.fields.option_source import poll_loop
 
 log = logging.getLogger(__name__)
 
@@ -58,6 +59,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     task = None
     if settings.git_repo_url:
         task = asyncio.create_task(_reconcile_loop())
+    poller = asyncio.create_task(poll_loop())  # dynamic-choice option-source refresh
     try:
         await sse.fanout.start()  # LISTEN for cross-replica notification fan-out
     except Exception:  # noqa: BLE001 — degrade to REST-only if PG LISTEN is down
@@ -66,10 +68,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         yield
     finally:
         await sse.fanout.stop()
-        if task:
-            task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await task
+        for t in (task, poller):
+            if t:
+                t.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await t
 
 
 app = FastAPI(title="Platform BFF", lifespan=lifespan)
