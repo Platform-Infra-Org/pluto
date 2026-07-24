@@ -47,9 +47,11 @@ class BypassBody(BaseModel):
     reason: str = ""
 
 
-def _dump(req: Request) -> dict:
+def _dump(req: Request, principal: Principal | None = None) -> dict:
     return {
         "id": req.id,
+        # Display-only signal for the SPA; the transition endpoints re-check authz.
+        "can_approve": authz.can_approve(principal, req) if principal else False,
         "kind": req.kind,
         "action": req.action,
         "resource_type": req.resource_type,
@@ -156,7 +158,7 @@ async def list_requests(
     rows = list((await session.execute(stmt)).scalars())
     if queue:
         rows = [r for r in rows if authz.can_approve(principal, r)]
-    return {"items": [_dump(r) for r in rows]}
+    return {"items": [_dump(r, principal) for r in rows]}
 
 
 @router.get("/{request_id}")
@@ -165,7 +167,7 @@ async def get_request(
     principal: Principal = Depends(current_principal),
     session: AsyncSession = Depends(get_session),
 ) -> dict:
-    return _dump(await _load(session, request_id))
+    return _dump(await _load(session, request_id), principal)
 
 
 async def _reject_if_stale(session: AsyncSession, req: Request, confirm: bool) -> None:

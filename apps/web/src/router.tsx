@@ -2,6 +2,9 @@ import { createRootRoute, createRoute, createRouter, useParams } from '@tanstack
 import { HomePage } from './app/routes/home'
 import { ResourceDetail } from './app/routes/resources/detail'
 import { ResourceList } from './app/routes/resources/list'
+import { MyRequests } from './app/routes/requests/mine'
+import { ApprovalQueue } from './app/routes/requests/queue'
+import { RequestDetail } from './app/routes/requests/detail'
 
 const rootRoute = createRootRoute()
 
@@ -28,7 +31,37 @@ const resourceDetailRoute = createRoute({
   component: ResourceDetailPage,
 })
 
-const routeTree = rootRoute.addChildren([homeRoute, resourcesRoute, resourceDetailRoute])
+const myRequestsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/requests',
+  component: MyRequests,
+})
+
+const approvalQueueRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/requests/queue',
+  component: ApprovalQueue,
+})
+
+function RequestDetailPage() {
+  const { requestId } = useParams({ from: '/requests/$requestId' })
+  return <RequestDetail id={Number(requestId)} />
+}
+
+const requestDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/requests/$requestId',
+  component: RequestDetailPage,
+})
+
+const routeTree = rootRoute.addChildren([
+  homeRoute,
+  resourcesRoute,
+  resourceDetailRoute,
+  myRequestsRoute,
+  approvalQueueRoute,
+  requestDetailRoute,
+])
 
 export const router = createRouter({ routeTree })
 
