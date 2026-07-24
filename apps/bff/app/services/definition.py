@@ -41,6 +41,11 @@ class ServiceDefinition(Base):
     workflow_binding: Mapped[dict] = mapped_column(JSONB, default=dict)
     # {mode: SINGLE|N_OF_M|RBAC, n?}
     approval_policy: Mapped[dict] = mapped_column(JSONB, default=dict)
+    # CB04: per-verb composed graphs {create?,update?,delete?} (only defined verbs),
+    # the regenerated artifacts, and the block versions each node was wired against.
+    graphs: Mapped[dict] = mapped_column(JSONB, default=dict)
+    generated: Mapped[dict] = mapped_column(JSONB, default=dict)  # {build_json_j2, workflow_template_yaml}
+    block_versions: Mapped[dict] = mapped_column(JSONB, default=dict)  # {block_name: pinned_version}
     git_path: Mapped[str] = mapped_column(default="")
     status: Mapped[str] = mapped_column(default=DRAFT)
     version: Mapped[int] = mapped_column(default=1)
