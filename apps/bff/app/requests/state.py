@@ -16,6 +16,10 @@ _EDGES: dict[tuple[str, str], str] = {
     ("PENDING_APPROVAL", "approve"): "APPROVED",
     ("PENDING_APPROVAL", "reject"): "REJECTED",
     ("PENDING_APPROVAL", "discard"): "DISCARDED",
+    # Execution (E06): approval -> Argo submit -> terminal.
+    ("APPROVED", "execute"): "EXECUTING",
+    ("EXECUTING", "succeed"): "SUCCEEDED",
+    ("EXECUTING", "fail"): "FAILED",
 }
 
 

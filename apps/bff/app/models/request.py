@@ -30,6 +30,8 @@ class Request(Base):
     # [{approver_id, at, note}]
     approvals: Mapped[list] = mapped_column(JSONB, default=list)
     workflow_ref: Mapped[str | None] = mapped_column(default=None)  # set in E06
+    # {node, message, phase} of the failed workflow step (E06); null unless FAILED.
+    failure: Mapped[dict | None] = mapped_column(JSONB, default=None)
     base_git_sha: Mapped[str | None] = mapped_column(default=None)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
