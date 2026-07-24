@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { fetchMyRequests } from '@/lib/requests'
 
 // My requests — the requester's own requests with live state.
@@ -18,9 +19,13 @@ export function MyRequests() {
       <ul className="space-y-2">
         {items.map((r) => (
           <li key={r.id} className="border rounded p-3 text-sm">
-            <a href={`/requests/${r.id}`} className="text-blue-600 hover:underline">
+            <Link
+              to="/requests/$requestId"
+              params={{ requestId: String(r.id) }}
+              className="text-blue-600 hover:underline"
+            >
               #{r.id} {r.action} {r.resource_type}
-            </a>
+            </Link>
             <span className="ml-2 text-gray-500">{r.owner_team}</span>
             <span className="ml-2 font-medium">{r.state}</span>
             <span className="ml-2 text-gray-400">{r.approval_policy.mode}</span>

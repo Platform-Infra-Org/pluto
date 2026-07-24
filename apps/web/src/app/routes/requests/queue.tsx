@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { ApiError } from '@/lib/api'
 import { approveRequest, fetchQueue, rejectRequest, type ChangeRequest } from '@/lib/requests'
@@ -28,9 +29,13 @@ function QueueItem({ req }: { req: ChangeRequest }) {
   return (
     <li className="border rounded p-4 space-y-3">
       <div className="text-sm">
-        <a href={`/requests/${req.id}`} className="text-blue-600 hover:underline font-medium">
+        <Link
+          to="/requests/$requestId"
+          params={{ requestId: String(req.id) }}
+          className="text-blue-600 hover:underline font-medium"
+        >
           #{req.id} {req.action} {req.resource_type}
-        </a>
+        </Link>
         <span className="ml-2 text-gray-500">by {req.requester}</span>
         <span className="ml-2 text-gray-400">
           {req.approval_policy.mode}

@@ -1,4 +1,5 @@
-import { notificationLink, type Notification } from '@/lib/notifications'
+import { Link } from '@tanstack/react-router'
+import { type Notification } from '@/lib/notifications'
 
 export function NotificationDropdown({
   items,
@@ -24,7 +25,6 @@ export function NotificationDropdown({
       ) : (
         <ul>
           {recent.map((n) => {
-            const link = notificationLink(n)
             const inner = (
               <div className={`border-b p-2 text-sm ${n.read_at ? 'text-gray-500' : 'font-medium'}`}>
                 <div>{n.title}</div>
@@ -33,10 +33,14 @@ export function NotificationDropdown({
             )
             return (
               <li key={n.id}>
-                {link ? (
-                  <a href={link} className="block hover:bg-gray-50">
+                {n.request_id != null ? (
+                  <Link
+                    to="/requests/$requestId"
+                    params={{ requestId: String(n.request_id) }}
+                    className="block hover:bg-gray-50"
+                  >
                     {inner}
-                  </a>
+                  </Link>
                 ) : (
                   inner
                 )}
@@ -45,12 +49,12 @@ export function NotificationDropdown({
           })}
         </ul>
       )}
-      <a
-        href="/notifications"
+      <Link
+        to="/notifications"
         className="block border-t p-2 text-center text-xs text-blue-600 hover:underline"
       >
         View all
-      </a>
+      </Link>
     </div>
   )
 }

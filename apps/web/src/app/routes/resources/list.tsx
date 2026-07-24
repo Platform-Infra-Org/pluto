@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { fetchResources } from '@/lib/catalog'
 
@@ -42,10 +43,14 @@ export function ResourceList() {
             {shown.map((r) => (
               <tr key={r.id} className="border-b">
                 <td className="py-2 pr-4">
-                  {/* ponytail: plain anchor = full-page nav; swap for <Link> if client-side nav matters */}
-                  <a href={`/resources/${r.id}`} className="text-blue-600 hover:underline">
+                  {/* client-side nav — a full-page anchor would reload the SPA and drop the in-memory token */}
+                  <Link
+                    to="/resources/$resourceId"
+                    params={{ resourceId: String(r.id) }}
+                    className="text-blue-600 hover:underline"
+                  >
                     {r.name}
-                  </a>
+                  </Link>
                 </td>
                 <td className="py-2 pr-4">{r.type}</td>
                 <td className="py-2 pr-4">{r.owner_team}</td>

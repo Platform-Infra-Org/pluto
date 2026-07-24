@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { renderWithRouter } from '@/test-router'
 import type { Notification } from '@/lib/notifications'
 import { NotificationBell } from './bell'
 import * as hook from './useNotifications'
@@ -14,15 +15,15 @@ function notif(id: number, over: Partial<Notification> = {}): Notification {
 }
 
 describe('NotificationBell', () => {
-  it('shows the unread badge and opens the dropdown with deep links', () => {
+  it('shows the unread badge and opens the dropdown with deep links', async () => {
     const markAllRead = vi.fn()
     vi.mocked(hook.useNotifications).mockReturnValue({
       items: [notif(7)], unread: 3, markAllRead,
     })
-    render(<NotificationBell />)
+    renderWithRouter(<NotificationBell />, ["/requests/$requestId", "/notifications"])
 
-    // Badge reflects unread count.
-    expect(screen.getByLabelText('3 unread')).toHaveTextContent('3')
+    // Badge reflects unread count (await the router's first paint).
+    expect(await screen.findByLabelText('3 unread')).toHaveTextContent('3')
 
     // Dropdown is closed until the bell is clicked.
     expect(screen.queryByRole('menu')).not.toBeInTheDocument()
@@ -36,11 +37,13 @@ describe('NotificationBell', () => {
     expect(markAllRead).toHaveBeenCalledOnce()
   })
 
-  it('hides the badge when there is nothing unread', () => {
+  it('hides the badge when there is nothing unread', async () => {
     vi.mocked(hook.useNotifications).mockReturnValue({
       items: [], unread: 0, markAllRead: vi.fn(),
     })
-    render(<NotificationBell />)
+    renderWithRouter(<NotificationBell />, ["/requests/$requestId", "/notifications"])
+    // Wait for the bell to mount, then assert no unread badge.
+    expect(await screen.findByLabelText('Notifications')).toBeInTheDocument()
     expect(screen.queryByLabelText(/unread/)).not.toBeInTheDocument()
   })
 })
