@@ -12,7 +12,6 @@ from dataclasses import dataclass
 
 from app.blocks.manifest import BlockManifest, IOType, is_assignable
 from app.generator.graph import (
-    Kind,
     Node,
     OutRef,
     Ref,

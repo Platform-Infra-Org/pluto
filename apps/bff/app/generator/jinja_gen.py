@@ -17,7 +17,9 @@ import re
 from dataclasses import dataclass
 
 from app.generator.graph import (
+    Binding,
     Kind,
+    Lit,
     Node,
     OutRef,
     Ref,
@@ -69,12 +71,13 @@ def _url(template: str) -> object:
     return _Expr("{{ (" + " ~ ".join(segs) + ") | tojson }}")
 
 
-def _binding(graph: ServiceGraph, binding: object) -> object:
+def _binding(graph: ServiceGraph, binding: Binding) -> object:
     if isinstance(binding, Ref):
         return _request(binding.field)
     if isinstance(binding, OutRef):
         return _placeholder(out_path(graph, binding))
-    return binding.value  # Lit
+    assert isinstance(binding, Lit)
+    return binding.value
 
 
 def _payload(graph: ServiceGraph, main: Node) -> dict:

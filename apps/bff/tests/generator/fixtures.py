@@ -172,8 +172,83 @@ def unknown_block() -> ServiceGraph:
     )
 
 
+def _leaf_service(name: str) -> ServiceGraph:
+    """A service with just a main POST call, exposing output `id` (a leaf/dep)."""
+    return ServiceGraph(
+        nodes=[
+            Node(
+                id="main",
+                block="api-call",
+                kind=Kind.MAIN,
+                config={
+                    "method": "POST",
+                    "url": f"https://{name}.api/{name}",
+                    "body": {"env": Ref("env")},
+                },
+                outputs=["id"],
+            )
+        ],
+        request_fields={"env": STR},
+    )
+
+
+def _service_on(name: str, dep: str) -> ServiceGraph:
+    """A service that depends on `dep` (a service block) and wires dep.id into its
+    main body — its main also exposes output `id`."""
+    return ServiceGraph(
+        nodes=[
+            Node(
+                id="main",
+                block="api-call",
+                kind=Kind.MAIN,
+                config={
+                    "method": "POST",
+                    "url": f"https://{name}.api/{name}",
+                    "body": {"env": Ref("env"), "parent_id": OutRef(dep, "id")},
+                },
+                outputs=["id"],
+            ),
+            Node(
+                id=dep,
+                block=dep,
+                kind=Kind.DEPENDENCY,
+                action="create",
+                input_bindings={"env": Ref("env")},
+                outputs=["id"],
+            ),
+        ],
+        request_fields={"env": STR},
+    )
+
+
+def chain_blocks() -> dict[str, BlockManifest]:
+    """Blocks for the A->B->C chain: api-call plus service blocks B and C, each with
+    input env:string and output id:string."""
+    out = blocks()
+    for svc in ("B", "C"):
+        out[svc] = BlockManifest(
+            name=svc,
+            category="service",
+            template_ref=svc,
+            inputs=[IOField("env", STR, required=True)],
+            outputs=[IOField("id", STR)],
+        )
+    return out
+
+
+def chain_abc() -> dict[str, Graphs]:
+    """A depends on B depends on C (2-level dependency), each its own service."""
+    return {
+        "A": Graphs(name="A", create=_service_on("A", "B")),
+        "B": Graphs(name="B", create=_service_on("B", "C")),
+        "C": Graphs(name="C", create=_leaf_service("C")),
+    }
+
+
 __all__ = [
     "Lit",
+    "chain_abc",
+    "chain_blocks",
     "app_database",
     "app_database_create",
     "app_database_delete",
