@@ -7,6 +7,7 @@ Definition default. Definitions come from E08; until then a config/stub lookup.
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+from typing import TypeGuard
 
 SINGLE = "SINGLE"
 N_OF_M = "N_OF_M"
@@ -26,7 +27,20 @@ class ApprovalPolicy:
 
     @classmethod
     def from_dict(cls, d: dict) -> "ApprovalPolicy":
-        return cls(mode=d["mode"], n=d.get("n"))
+        mode, n = d["mode"], d.get("n")
+        _require_valid(mode, n)
+        return cls(mode=mode, n=n)
+
+
+def _valid_n(n: object) -> TypeGuard[int]:
+    # bool is an int subclass; reject it so `True`/`False` can't pose as a quorum.
+    return isinstance(n, int) and not isinstance(n, bool) and n >= 1
+
+
+def _require_valid(mode: str, n: object) -> None:
+    """Fail closed: N_OF_M without a valid integer n >= 1 is malformed."""
+    if mode == N_OF_M and not _valid_n(n):
+        raise ValueError(f"N_OF_M requires an integer n >= 1, got {n!r}")
 
 
 # Convenience constructor used across tests/callers.
@@ -47,7 +61,11 @@ def resolve_policy(resource_payload: dict, definition: ApprovalPolicy) -> Approv
     """Resource `metadata.approvalPolicy` override wins over the definition default."""
     override = (resource_payload.get("metadata") or {}).get("approvalPolicy")
     if override:
-        return ApprovalPolicy.from_dict(override)
+        try:
+            return ApprovalPolicy.from_dict(override)
+        except (ValueError, KeyError, TypeError):
+            pass  # malformed override -> fall back to the definition default
+    _require_valid(definition.mode, definition.n)  # a malformed default is fatal
     return definition
 
 
@@ -71,7 +89,9 @@ def is_satisfied(
     if policy.mode == SINGLE:
         return len(distinct) >= 1
     if policy.mode == N_OF_M:
-        return len(distinct) >= (policy.n or 0)
+        if not _valid_n(policy.n):
+            return False  # fail closed: malformed quorum is never satisfied
+        return len(distinct) >= policy.n
     if policy.mode == RBAC:
         return requester_can_approve or len(distinct) >= 1
     raise ValueError(f"unknown approval mode: {policy.mode}")

@@ -56,6 +56,8 @@ def add_approval(
     Authorization (who may approve, separation of duties) is enforced upstream
     in `authz.can_approve` — this is the pure state helper.
     """
+    if req.state != "PENDING_APPROVAL":
+        raise IllegalTransition(f"cannot approve from {req.state}")
     if approver not in {a["approver_id"] for a in req.approvals}:
         req.approvals = req.approvals + [
             {"approver_id": approver, "at": datetime.now(UTC).isoformat(), "note": note}

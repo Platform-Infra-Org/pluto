@@ -8,7 +8,7 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -24,6 +24,18 @@ from app.requests.schema_forms import PayloadInvalid, is_stale, validate_payload
 from app.requests.state import IllegalTransition, add_approval, transition
 
 router = APIRouter(prefix="/api/requests")
+
+# Roles that see every request regardless of team/requester.
+_AUDIT_ROLES = {"platform-admin", "auditor"}
+
+
+def _can_see(principal: Principal, req: Request) -> bool:
+    """Read visibility: own request, owner-team member, or admin/auditor."""
+    return (
+        req.requester == principal.sub
+        or req.owner_team in principal.teams
+        or bool(_AUDIT_ROLES & principal.roles)
+    )
 
 
 class SubmitBody(BaseModel):
@@ -155,6 +167,14 @@ async def list_requests(
         stmt = stmt.where(Request.requester == principal.sub)
     elif queue:
         stmt = stmt.where(Request.state == "PENDING_APPROVAL")
+    elif not (_AUDIT_ROLES & principal.roles):
+        # Default view: own requests or ones owned by a team the caller is on.
+        stmt = stmt.where(
+            or_(
+                Request.requester == principal.sub,
+                Request.owner_team.in_(list(principal.teams)),
+            )
+        )
     rows = list((await session.execute(stmt)).scalars())
     if queue:
         rows = [r for r in rows if authz.can_approve(principal, r)]
@@ -167,14 +187,25 @@ async def get_request(
     principal: Principal = Depends(current_principal),
     session: AsyncSession = Depends(get_session),
 ) -> dict:
-    return _dump(await _load(session, request_id), principal)
+    req = await _load(session, request_id)
+    # 404 (not 403) for requests the caller may not see — don't reveal existence.
+    if not _can_see(principal, req):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "request not found")
+    return _dump(req, principal)
 
 
 async def _reject_if_stale(session: AsyncSession, req: Request, confirm: bool) -> None:
     if req.resource_id is None:
         return
     resource = await session.get(ResourceIndex, req.resource_id)
-    current_sha = resource.git_sha if resource else req.base_git_sha
+    if resource is None:
+        # Target vanished from the index — cannot be approved as "fresh", and
+        # confirm_stale must not override a resource that no longer exists.
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "target resource no longer exists; cannot approve",
+        )
+    current_sha = resource.git_sha
     if is_stale(req, current_sha) and not confirm:
         raise HTTPException(
             status.HTTP_409_CONFLICT, "request is stale; re-confirm to approve"

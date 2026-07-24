@@ -20,6 +20,7 @@ REQUESTER = Principal(sub="bob", username="bob", groups=[], roles={"requester"},
 APPROVER = Principal(sub="alice", username="alice", groups=[], roles={"requester"}, teams={"payments"})
 OUTSIDER = Principal(sub="mallory", username="mallory", groups=[], roles={"requester"}, teams={"search"})
 ADMIN = Principal(sub="adm", username="adm", groups=[], roles={"platform-admin"}, teams=set())
+AUDITOR = Principal(sub="aud", username="aud", groups=[], roles={"auditor"}, teams=set())
 
 
 async def _seed(session, *, policy=None, sha="sha1"):
@@ -150,3 +151,80 @@ async def test_stale_approval_blocked_until_confirmed(client):
     assert stale.status_code == 409  # stale — needs re-confirm
     ok = await c.post(f"/api/requests/{req_id}/approve", json={"confirm_stale": True})
     assert ok.status_code == 200 and ok.json()["state"] == "APPROVED"
+
+
+# Fix 2: cross-team disclosure — read endpoints are scoped.
+async def test_default_list_scoped_to_visible_set(client):
+    c, holder, session = client
+    rid = await _seed(session)
+    holder["principal"] = REQUESTER
+    req_id = (await _submit(c, rid)).json()["id"]
+
+    # Outsider (different team, not requester) sees nothing in the default list.
+    holder["principal"] = OUTSIDER
+    assert (await c.get("/api/requests")).json()["items"] == []
+    # Owner-team member does see it.
+    holder["principal"] = APPROVER
+    assert req_id in {x["id"] for x in (await c.get("/api/requests")).json()["items"]}
+    # Auditor sees all.
+    holder["principal"] = AUDITOR
+    assert req_id in {x["id"] for x in (await c.get("/api/requests")).json()["items"]}
+
+
+async def test_detail_404_for_outsider(client):
+    c, holder, session = client
+    rid = await _seed(session)
+    holder["principal"] = REQUESTER
+    req_id = (await _submit(c, rid)).json()["id"]
+
+    holder["principal"] = OUTSIDER
+    assert (await c.get(f"/api/requests/{req_id}")).status_code == 404
+    holder["principal"] = APPROVER  # owner team
+    assert (await c.get(f"/api/requests/{req_id}")).status_code == 200
+    holder["principal"] = AUDITOR
+    assert (await c.get(f"/api/requests/{req_id}")).status_code == 200
+    holder["principal"] = ADMIN
+    assert (await c.get(f"/api/requests/{req_id}")).status_code == 200
+
+
+# Fix 1: malformed N_OF_M override does not approve with a single approver.
+async def test_malformed_n_of_m_override_falls_back_to_single(client):
+    c, holder, session = client
+    # Override lacks `n` -> rejected, falls back to SINGLE default (still needs 1 approver).
+    rid = await _seed(session, policy={"mode": "N_OF_M"})
+    holder["principal"] = REQUESTER
+    r = await _submit(c, rid)
+    assert r.status_code == 201
+    assert r.json()["approval_policy"]["mode"] == "SINGLE"
+
+
+# Fix 4: approve/reject on a non-PENDING_APPROVAL request -> 409.
+async def test_approve_already_approved_is_409(client):
+    c, holder, session = client
+    rid = await _seed(session)
+    holder["principal"] = REQUESTER
+    req_id = (await _submit(c, rid)).json()["id"]
+    holder["principal"] = APPROVER
+    assert (await c.post(f"/api/requests/{req_id}/approve", json={})).status_code == 200
+    # Second approve on an APPROVED request must not append/return 200.
+    again = await c.post(f"/api/requests/{req_id}/approve", json={})
+    assert again.status_code == 409
+    assert (await c.post(f"/api/requests/{req_id}/reject", json={})).status_code == 409
+
+
+# Fix 5: target resource vanished from the index -> not approvable as fresh.
+async def test_missing_resource_blocks_approval(client):
+    c, holder, session = client
+    rid = await _seed(session)
+    holder["principal"] = REQUESTER
+    req_id = (await _submit(c, rid)).json()["id"]
+
+    await session.execute(ResourceIndex.__table__.delete().where(ResourceIndex.id == rid))
+    await session.commit()
+
+    holder["principal"] = APPROVER
+    gone = await c.post(f"/api/requests/{req_id}/approve", json={})
+    assert gone.status_code == 409
+    # Even confirm_stale must not force a fresh approval of a vanished resource.
+    forced = await c.post(f"/api/requests/{req_id}/approve", json={"confirm_stale": True})
+    assert forced.status_code == 409

@@ -1,8 +1,42 @@
 """Task 2a: approval policy resolution + evaluation."""
 
-from app.requests.policy import P, definition_default, is_satisfied, resolve_policy
+import pytest
+
+from app.requests.policy import (
+    ApprovalPolicy,
+    P,
+    definition_default,
+    is_satisfied,
+    resolve_policy,
+)
 
 def_single = P("SINGLE")
+
+
+def test_n_of_m_missing_n_is_never_satisfied():
+    # Fail closed: a malformed N_OF_M must not be satisfied by any approvers.
+    assert not is_satisfied(P("N_OF_M", n=None), ["alice"], False)
+    assert not is_satisfied(P("N_OF_M", n=0), [], False)
+    assert not is_satisfied(P("N_OF_M", n=0), ["alice"], False)
+
+
+def test_from_dict_rejects_malformed_n_of_m():
+    for bad in ({"mode": "N_OF_M"}, {"mode": "N_OF_M", "n": 0}, {"mode": "N_OF_M", "n": "x"}):
+        with pytest.raises(ValueError):
+            ApprovalPolicy.from_dict(bad)
+
+
+def test_resolve_malformed_override_falls_back_to_default():
+    # A malformed N_OF_M override is rejected and the definition default is used.
+    resolved = resolve_policy(
+        {"metadata": {"approvalPolicy": {"mode": "N_OF_M"}}}, def_single
+    )
+    assert resolved.mode == "SINGLE"
+
+
+def test_resolve_raises_when_default_itself_malformed():
+    with pytest.raises(ValueError):
+        resolve_policy({"spec": {}}, P("N_OF_M", n=None))
 
 
 def test_single_needs_one():

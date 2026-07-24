@@ -1,15 +1,24 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
+import { ApiError } from '@/lib/api'
 import { approveRequest, fetchQueue, rejectRequest, type ChangeRequest } from '@/lib/requests'
 import { DiffView } from './diff'
 
 function QueueItem({ req }: { req: ChangeRequest }) {
   const qc = useQueryClient()
   const [note, setNote] = useState('')
+  const [stale, setStale] = useState(false)
   const refresh = () => qc.invalidateQueries({ queryKey: ['approval-queue'] })
   const approve = useMutation({
-    mutationFn: () => approveRequest(req.id, { note, confirm_stale: true }),
-    onSuccess: refresh,
+    // First attempt omits confirm_stale; a stale resource re-confirms explicitly.
+    mutationFn: (confirmStale: boolean) => approveRequest(req.id, { note, confirm_stale: confirmStale }),
+    onSuccess: () => {
+      setStale(false)
+      refresh()
+    },
+    onError: (err) => {
+      if (err instanceof ApiError && err.status === 409) setStale(true)
+    },
   })
   const reject = useMutation({
     mutationFn: () => rejectRequest(req.id, { note }),
@@ -39,7 +48,7 @@ function QueueItem({ req }: { req: ChangeRequest }) {
             onChange={(e) => setNote(e.target.value)}
           />
           <button
-            onClick={() => approve.mutate()}
+            onClick={() => approve.mutate(false)}
             disabled={approve.isPending}
             className="bg-green-600 text-white rounded px-3 py-1 text-sm disabled:opacity-50"
           >
@@ -51,6 +60,21 @@ function QueueItem({ req }: { req: ChangeRequest }) {
             className="bg-red-600 text-white rounded px-3 py-1 text-sm disabled:opacity-50"
           >
             Reject
+          </button>
+        </div>
+      )}
+      {req.can_approve && stale && (
+        <div className="flex items-center gap-2 rounded border border-amber-400 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <span role="alert">
+            This resource changed in Git since the request was submitted — the diff above may be
+            stale. Review again before approving.
+          </span>
+          <button
+            onClick={() => approve.mutate(true)}
+            disabled={approve.isPending}
+            className="ml-auto bg-amber-600 text-white rounded px-3 py-1 text-sm disabled:opacity-50"
+          >
+            Approve anyway
           </button>
         </div>
       )}
