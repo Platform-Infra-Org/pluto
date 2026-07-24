@@ -25,7 +25,10 @@ class ScopeRequired(Exception):
 
 
 async def list_groups(
-    scope: str | None, *, requester_groups: list[str], client: httpx.AsyncClient
+    scope: str | None,
+    *,
+    requester_groups: list[str],
+    client: httpx.AsyncClient | None = None,
 ) -> list[dict]:
     """Return scoped Keycloak groups as `[{id?, name, path}, ...]`.
 
@@ -44,6 +47,8 @@ async def list_groups(
         prefix = scope.split(":", 1)[1].strip()
         if not prefix:
             raise ScopeRequired("empty prefix would return the whole directory")
+        if client is None:
+            raise ValueError("prefix scope requires a Keycloak admin client")
         resp = await client.get(
             "/groups", params={"search": prefix, "max": MAX_RESULTS}
         )

@@ -1,6 +1,8 @@
 """Upsert/query the resource catalog index. Git is authoritative; this is cache."""
 
-from sqlalchemy import delete, select
+from typing import cast
+
+from sqlalchemy import CursorResult, delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -45,8 +47,12 @@ async def upsert(
 
 async def delete_missing(session: AsyncSession, seen_paths: set[str]) -> int:
     """Delete index rows whose git_path is no longer present in the repo."""
-    result = await session.execute(
-        delete(ResourceIndex).where(ResourceIndex.git_path.not_in(seen_paths))
+    # session.execute is typed Result; DELETE always yields a CursorResult with rowcount.
+    result = cast(
+        "CursorResult",
+        await session.execute(
+            delete(ResourceIndex).where(ResourceIndex.git_path.not_in(seen_paths))
+        ),
     )
     return result.rowcount or 0
 

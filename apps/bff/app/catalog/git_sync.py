@@ -75,6 +75,7 @@ def _type_and_name(rel_path: str) -> tuple[str, str]:
 def _collect(repo: Repo) -> list[dict]:
     """Walk the resources tree, parse each JSON, resolve owner/type/sha/status.
     Pure/blocking — call via to_thread."""
+    assert repo.working_tree_dir is not None  # bare repos never reach the sync path
     root = Path(repo.working_tree_dir)
     out: list[dict] = []
     res_root = root / RESOURCES_DIR
@@ -83,6 +84,7 @@ def _collect(repo: Repo) -> list[dict]:
     for file in sorted(res_root.rglob("*.json")):
         rel = file.relative_to(root).as_posix()
         raw = file.read_text()
+        error: str | None
         try:
             payload = json.loads(raw)
         except json.JSONDecodeError as exc:

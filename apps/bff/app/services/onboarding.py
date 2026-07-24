@@ -55,7 +55,10 @@ async def submit_onboarding(
 
 
 async def _definition_of(session: AsyncSession, req: Request) -> ServiceDefinition:
-    return await session.get(ServiceDefinition, req.payload["definition_id"])
+    d = await session.get(ServiceDefinition, req.payload["definition_id"])
+    if d is None:
+        raise ValueError(f"definition {req.payload['definition_id']} not found")
+    return d
 
 
 async def activate(session: AsyncSession, req: Request) -> ServiceDefinition:
