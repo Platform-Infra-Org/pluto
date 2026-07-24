@@ -1,7 +1,7 @@
 // Pure graph-editing + type-checking helpers (the testable heart of the canvas).
 // React Flow interactions call these; the logic itself is DOM-free and unit-tested.
 import type { Block, IOFieldDto } from '@/lib/blocks'
-import { outRef, type Kind, type NodeJson, type ServiceGraphJson } from '@/lib/graph'
+import { outRef, type Binding, type Kind, type NodeJson, type ServiceGraphJson } from '@/lib/graph'
 
 export function byName(blocks: Block[]): Record<string, Block> {
   return Object.fromEntries(blocks.map((b) => [b.name, b]))
@@ -48,6 +48,55 @@ export function removeNode(graph: ServiceGraphJson, id: string): ServiceGraphJso
         ),
       })),
   }
+}
+
+// --- Inspector node ops (bindings / config / outputs / main flag), all immutable.
+
+function patch(graph: ServiceGraphJson, id: string, fn: (n: NodeJson) => NodeJson): ServiceGraphJson {
+  return { ...graph, nodes: graph.nodes.map((n) => (n.id === id ? fn(n) : n)) }
+}
+
+// Bind one input (request field | node output | literal). Passing null clears it.
+export function setBinding(
+  graph: ServiceGraphJson,
+  id: string,
+  input: string,
+  binding: Binding | null,
+): ServiceGraphJson {
+  return patch(graph, id, (n) => {
+    const input_bindings = { ...n.input_bindings }
+    if (binding === null) delete input_bindings[input]
+    else input_bindings[input] = binding
+    return { ...n, input_bindings }
+  })
+}
+
+export function setConfig(graph: ServiceGraphJson, id: string, key: string, value: unknown): ServiceGraphJson {
+  return patch(graph, id, (n) => ({ ...n, config: { ...n.config, [key]: value } }))
+}
+
+export function setOutputs(graph: ServiceGraphJson, id: string, outputs: string[]): ServiceGraphJson {
+  return patch(graph, id, (n) => ({ ...n, outputs }))
+}
+
+// Mark exactly one node `main` (design §4): the previous main reverts to internal.
+export function markMain(graph: ServiceGraphJson, id: string): ServiceGraphJson {
+  return {
+    ...graph,
+    nodes: graph.nodes.map((n) => {
+      if (n.id === id) return { ...n, kind: 'main' }
+      if (n.kind === 'main') return { ...n, kind: 'internal' }
+      return n
+    }),
+  }
+}
+
+// Required inputs neither bound nor set in config (mirrors validate._check_required).
+export function missingRequired(block: Block | undefined, node: NodeJson): string[] {
+  if (!block) return []
+  return block.manifest.inputs
+    .filter((f) => f.required && !(f.name in node.input_bindings) && !(f.name in node.config))
+    .map((f) => f.name)
 }
 
 // --- Type system mirror of CB01 manifest.is_assignable (bff app/blocks/manifest.py).
