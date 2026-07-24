@@ -1,0 +1,12 @@
+{
+  "apiVersion": "platform/v1",
+  "kind": "Bucket",
+  "metadata": {
+    "name": "payments-exports",
+    "ownerTeam": "payments"
+  },
+  "spec": {
+    "region": "eu-west-1",
+    "versioning": true
+  }
+}

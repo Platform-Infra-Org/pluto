@@ -4,6 +4,13 @@ __pycache__/
 .venv/
 dist/
 .env
+.env.integration
+# Public dev-only VITE_* SPA config (no secrets) — shipped so `pnpm dev` runs out of the box.
+!apps/web/.env
+.catalog-cache/
+.catalog-seed/
+.bff.log
+.bff.pid
 .superpowers/
 *.egg-info/
 .pytest_cache/

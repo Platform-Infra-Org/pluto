@@ -1,0 +1,14 @@
+{
+  "apiVersion": "platform/v1",
+  "kind": "Database",
+  "metadata": {
+    "name": "payments-primary",
+    "ownerTeam": "payments"
+  },
+  "spec": {
+    "engine": "postgres",
+    "version": "16",
+    "size": "large",
+    "region": "eu-west-1"
+  }
+}

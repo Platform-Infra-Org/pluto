@@ -1,0 +1,13 @@
+{
+  "apiVersion": "platform/v1",
+  "kind": "Database",
+  "metadata": {
+    "name": "search-index",
+    "ownerTeam": "search"
+  },
+  "spec": {
+    "engine": "elasticsearch",
+    "version": "8",
+    "size": "medium"
+  }
+}
