@@ -95,6 +95,22 @@ class BlockManifest:
     icon: str = ""
     ui: dict = field(default_factory=dict)
 
+    def as_dict(self) -> dict:
+        """JSON-serializable form stored as the `manifest` jsonb + API payload."""
+
+        def io(f: IOField) -> dict:
+            return {"name": f.name, "type": str(f.type), "required": f.required}
+
+        return {
+            "name": self.name,
+            "category": self.category,
+            "icon": self.icon,
+            "template_ref": self.template_ref,
+            "inputs": [io(f) for f in self.inputs],
+            "outputs": [io(f) for f in self.outputs],
+            "ui": self.ui,
+        }
+
 
 def _fields(raw: object, where: str) -> list[IOField]:
     if raw is None:
