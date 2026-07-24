@@ -1,19 +1,123 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------ *
+ * Design tokens. Light = :root, dark = :root[data-theme="dark"].
+ * Accent schemes override --primary / --primary-foreground / --ring /
+ * --accent via :root[data-accent="<name>"] (indigo is the default,
+ * baked into :root so a missing attribute still looks right).
+ * ------------------------------------------------------------------ */
 :root {
   --background: #ffffff;
-  --foreground: #0a0a0a;
+  --foreground: #0b0d12;
+  --card: #ffffff;
+  --card-foreground: #0b0d12;
+  --popover: #ffffff;
+  --popover-foreground: #0b0d12;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #1f2430;
+  --muted: #f4f5f7;
+  --muted-foreground: #667085;
+  --accent: #eef2ff;
+  --accent-foreground: #3730a3;
+  --destructive: #dc2626;
+  --border: #e6e8ec;
+  --input: #e6e8ec;
+  --ring: #4f46e5;
+  --radius: 0.625rem;
+
+  /* semantic status hues (shared by both modes, tuned per mode below) */
+  --success: #16a34a;
+  --success-foreground: #ffffff;
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #fafafa;
-  }
+:root[data-theme="dark"] {
+  --background: #0a0c10;
+  --foreground: #e7e9ee;
+  --card: #12151b;
+  --card-foreground: #e7e9ee;
+  --popover: #12151b;
+  --popover-foreground: #e7e9ee;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+  --secondary: #1b1f27;
+  --secondary-foreground: #d3d7de;
+  --muted: #171a21;
+  --muted-foreground: #97a0af;
+  --accent: #1c2030;
+  --accent-foreground: #c7d2fe;
+  --destructive: #f04444;
+  --border: #232833;
+  --input: #2a2f3a;
+  --ring: #6366f1;
+
+  --success: #22c55e;
+  --warning: #f59e0b;
+}
+
+/* ---- Accent schemes (light) ---- */
+:root[data-accent="emerald"] { --primary: #059669; --primary-foreground: #ffffff; --ring: #059669; --accent: #ecfdf5; --accent-foreground: #065f46; }
+:root[data-accent="rose"]    { --primary: #e11d48; --primary-foreground: #ffffff; --ring: #e11d48; --accent: #fff1f2; --accent-foreground: #9f1239; }
+:root[data-accent="amber"]   { --primary: #d97706; --primary-foreground: #ffffff; --ring: #d97706; --accent: #fffbeb; --accent-foreground: #92400e; }
+:root[data-accent="violet"]  { --primary: #7c3aed; --primary-foreground: #ffffff; --ring: #7c3aed; --accent: #f5f3ff; --accent-foreground: #5b21b6; }
+:root[data-accent="indigo"]  { --primary: #4f46e5; --primary-foreground: #ffffff; --ring: #4f46e5; --accent: #eef2ff; --accent-foreground: #3730a3; }
+
+/* ---- Accent schemes (dark: brighter primaries, muted accent surfaces) ---- */
+:root[data-theme="dark"][data-accent="emerald"] { --primary: #10b981; --ring: #10b981; --accent: #0f2a22; --accent-foreground: #a7f3d0; }
+:root[data-theme="dark"][data-accent="rose"]    { --primary: #f43f5e; --ring: #f43f5e; --accent: #2c1720; --accent-foreground: #fecdd3; }
+:root[data-theme="dark"][data-accent="amber"]   { --primary: #f59e0b; --ring: #f59e0b; --accent: #2a2113; --accent-foreground: #fde68a; }
+:root[data-theme="dark"][data-accent="violet"]  { --primary: #8b5cf6; --ring: #8b5cf6; --accent: #231a33; --accent-foreground: #ddd6fe; }
+:root[data-theme="dark"][data-accent="indigo"]  { --primary: #6366f1; --ring: #6366f1; --accent: #1c2030; --accent-foreground: #c7d2fe; }
+
+/* Map tokens into Tailwind v4 so bg-background / text-muted-foreground / etc. work. */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --font-sans: "Inter var", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+html {
+  color-scheme: light dark;
 }
 
 body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  border-color: var(--border);
 }
