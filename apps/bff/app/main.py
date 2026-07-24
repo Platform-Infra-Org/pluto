@@ -4,8 +4,9 @@ import logging
 import re
 from collections.abc import AsyncIterator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from app.api import (
     admin,
@@ -115,6 +116,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def _unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Any unhandled error is caught by Starlette's outermost ServerErrorMiddleware,
+    which sits OUTSIDE CORSMiddleware — so its 500 would carry no CORS headers and the
+    browser reports "NetworkError when attempting to fetch resource" instead of an HTTP
+    500. Re-attach the CORS headers here so the SPA sees a real, handleable error."""
+    log.exception("unhandled error on %s %s", request.method, request.url.path)
+    origin = request.headers.get("origin")
+    allowed = settings.cors_origins
+    headers: dict[str, str] = {}
+    if origin and ("*" in allowed or origin in allowed):
+        headers["Access-Control-Allow-Origin"] = origin  # echo (credentials can't use "*")
+        headers["Access-Control-Allow-Credentials"] = "true"
+        headers["Vary"] = "Origin"
+    return JSONResponse({"detail": "Internal Server Error"}, status_code=500, headers=headers)
 
 
 app.include_router(me.router)
