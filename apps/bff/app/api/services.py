@@ -14,6 +14,7 @@ from sqlalchemy.orm import selectinload
 from app.auth.deps import current_principal, require_role
 from app.auth.principal import Principal
 from app.blocks import drift, registry
+from app.blocks.manifest import ManifestError
 from app.db import get_session
 from app.models.request import Request
 from app.requests import authz
@@ -189,6 +190,8 @@ async def edit_definition(
     try:
         await compose.save_graphs(session, target, body.graphs)
     except GenerationError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+    except (KeyError, ValueError, TypeError, AttributeError, ManifestError) as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
     req = await onboarding.submit_onboarding(session, target, principal.sub)
     return {"version": target.version, "request_id": req.id, "definition": _dump_def(target)}

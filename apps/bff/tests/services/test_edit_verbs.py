@@ -153,3 +153,25 @@ async def test_edit_requires_owning_team(client):
     r = await c.post(f"/api/services/definitions/{d['id']}/edit",
                      json={"graphs": {"name": "svc", "create": _create_graph()}})
     assert r.status_code == 403
+
+
+async def test_non_generation_error_returns_clean_422(client):
+    """A graph that passes validation but raises KeyError etc during generation returns 4xx, not 500."""
+    c, holder, session = client
+    holder["principal"] = OWNER
+    d = (await c.post("/api/services/definitions", json={
+        "name": "svc", "owner_team": "payments"})).json()
+    # set-value node marked as main passes validation but raises KeyError on emit (no config["method"])
+    bad_graph = {
+        "request_fields": {"val": "string"},
+        "nodes": [{
+            "id": "main", "block": "set-value", "kind": "main",
+            "config": {"expr": "test"},
+            "input_bindings": {}
+        }]
+    }
+    r = await c.post(f"/api/services/definitions/{d['id']}/edit",
+                     json={"graphs": {"name": "svc", "create": bad_graph}})
+    assert r.status_code == 422, f"expected 422, got {r.status_code}: {r.text}"
+    # No new version row was created (still only v1).
+    assert await service_def.next_version(session, "svc") == 2
