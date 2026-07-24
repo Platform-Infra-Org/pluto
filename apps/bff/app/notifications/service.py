@@ -31,25 +31,23 @@ async def notify(
     title: str,
     body: str = "",
 ) -> Notification:
-    """Persist a notification and push it over Postgres NOTIFY (fires on commit)."""
+    """Persist a notification, then push an id-only Postgres NOTIFY.
+
+    Persist-then-push, in two commits: the row is committed (durable) FIRST, so a
+    failed push can never roll it back. The NOTIFY payload is id-only (Postgres
+    caps NOTIFY at 8000 bytes; title/body are unbounded) — the fan-out listener
+    re-selects the full row by id. The push is best-effort: if it raises, the row
+    already exists and the REST inbox/replay still delivers it.
+    """
     n = Notification(
         user_id=user_id, type=type, request_id=request_id, title=title, body=body
     )
     session.add(n)
-    await session.flush()  # assign n.id before we reference it in the payload
-    payload = json.dumps(
-        {
-            "id": n.id,
-            "user_id": user_id,
-            "type": type,
-            "request_id": request_id,
-            "title": title,
-            "body": body,
-            "read_at": None,
-        }
-    )
-    # NOTIFY is buffered by Postgres and delivered to LISTENers only at COMMIT,
-    # which is exactly persist-then-push: no push without a durable row.
+    await session.commit()  # durable first — the row is the system of record
+
+    # Small, bounded payload: just the id (routing key) so the listener can
+    # re-select the row. Delivered to LISTENers only at COMMIT.
+    payload = json.dumps({"id": n.id, "user_id": user_id})
     await session.execute(
         text("SELECT pg_notify(:chan, :payload)"),
         {"chan": CHANNEL, "payload": payload},

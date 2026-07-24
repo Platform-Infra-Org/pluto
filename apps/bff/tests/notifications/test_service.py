@@ -1,11 +1,34 @@
 """Task 1: notification persistence + list + read-state."""
 
 import pytest
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from app.notifications import service
 from app.notifications.model import Notification
 
 pytestmark = pytest.mark.anyio
+
+
+async def test_notify_persists_row_even_if_push_fails(session, monkeypatch):
+    # Row is committed BEFORE the pg_notify push. A failed push must not roll it
+    # back (persist-then-push). Fail only the pg_notify SELECT, not the INSERT.
+    orig_execute = session.execute
+
+    async def boom(stmt, *a, **k):
+        if "pg_notify" in str(stmt):
+            raise RuntimeError("NOTIFY payload too large")
+        return await orig_execute(stmt, *a, **k)
+
+    monkeypatch.setattr(session, "execute", boom)
+
+    with pytest.raises(RuntimeError):
+        await service.notify(session, "alice", "APPROVAL_NEEDED", 7, "t", "b")
+
+    # Prove durability on a fresh connection: the row committed regardless.
+    factory = async_sessionmaker(session.bind, expire_on_commit=False)
+    async with factory() as s2:
+        rows = await service.list_notifications(s2, "alice")
+    assert [n.request_id for n in rows] == [7]
 
 
 async def test_notify_persists_a_row(session):

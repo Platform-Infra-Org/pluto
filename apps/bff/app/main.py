@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+import re
 from collections.abc import AsyncIterator
 
 from fastapi import FastAPI
@@ -12,6 +13,33 @@ from app.config import settings
 from app.notifications import sse
 
 log = logging.getLogger(__name__)
+
+# The SSE token rides in the query string (EventSource can't set headers), so it
+# lands in uvicorn/proxy access logs and error traces. Redact it there.
+# ponytail: cookie-based SSE auth once the BFF session endpoint exists (E02 gap)
+# removes the token from the URL and makes this filter unnecessary.
+_ACCESS_TOKEN_RE = re.compile(r"(access_token=)[^&\s\"']+")
+
+
+class RedactAccessTokenFilter(logging.Filter):
+    """Rewrites `access_token=<value>` -> `access_token=REDACTED` in log lines."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        redacted = _ACCESS_TOKEN_RE.sub(r"\1REDACTED", msg)
+        if redacted != msg:
+            record.msg = redacted
+            record.args = ()
+        return True
+
+
+def _install_log_redaction() -> None:
+    f = RedactAccessTokenFilter()
+    for name in ("uvicorn.access", "uvicorn.error"):
+        logging.getLogger(name).addFilter(f)
+
+
+_install_log_redaction()
 
 
 async def _reconcile_loop(interval: int = 300) -> None:

@@ -20,17 +20,19 @@ from collections.abc import AsyncIterator, Callable
 import asyncpg  # type: ignore[import-untyped]
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sse_starlette.sse import EventSourceResponse
 
 from app.auth.deps import current_principal
 from app.auth.jwt import AuthError, verify_token
 from app.auth.principal import Principal, build_principal
 from app.config import settings
-from app.db import get_session
+from app.db import async_session_factory, get_session
 from app.notifications import service
 from app.notifications.model import Notification
 from app.notifications.service import CHANNEL
+
+SessionFactory = async_sessionmaker[AsyncSession]
 
 log = logging.getLogger(__name__)
 
@@ -45,9 +47,11 @@ def _dsn() -> str:
 class Fanout:
     """LISTENs on the notifications channel and dispatches to per-key queues."""
 
-    def __init__(self) -> None:
+    def __init__(self, session_factory: SessionFactory | None = None) -> None:
         self._conn: asyncpg.Connection | None = None
         self._subs: dict[str, set[asyncio.Queue]] = defaultdict(set)
+        # Used to re-select the full row from an id-only NOTIFY payload.
+        self._session_factory = session_factory or async_session_factory
 
     async def start(self) -> None:
         self._conn = await asyncpg.connect(_dsn())
@@ -58,14 +62,24 @@ class Fanout:
             await self._conn.close()
             self._conn = None
 
-    def _on_notify(self, _conn, _pid, _channel, payload: str) -> None:
+    async def _on_notify(self, _conn, _pid, _channel, payload: str) -> None:
+        # asyncpg schedules coroutine listeners as tasks. Payload is id-only, so
+        # re-select the full row (short-lived session) before delivering it.
         try:
             data = json.loads(payload)
         except ValueError:
             log.warning("bad notify payload: %r", payload)
             return
-        for q in list(self._subs.get(data.get("user_id"), ())):
-            q.put_nowait(data)
+        subs = list(self._subs.get(data.get("user_id"), ()))
+        if not subs:
+            return
+        async with self._session_factory() as s:
+            n = await s.get(Notification, data.get("id"))
+        if n is None:  # row vanished (deleted) between NOTIFY and re-select
+            return
+        row = _row(n)
+        for q in subs:
+            q.put_nowait(row)
 
     def subscribe(self, keys: list[str]) -> asyncio.Queue:
         q: asyncio.Queue = asyncio.Queue()
@@ -102,16 +116,25 @@ def _row(n: Notification) -> dict:
 async def event_stream(
     fan: Fanout,
     keys: list[str],
-    session: AsyncSession,
+    session_factory: SessionFactory,
     disconnected: Callable[[], bool],
 ) -> AsyncIterator[dict]:
-    """Replay unread rows (persist-then-push), then stream live pushes."""
+    """Replay unread rows (persist-then-push), then stream live pushes.
+
+    The replay borrows a pooled session only for its one SELECT and releases it
+    before the (possibly hours-long) live LISTEN loop — the loop holds no pooled
+    connection, so open streams can't exhaust the DB pool. Live delivery rides
+    the fan-out's own dedicated asyncpg LISTEN connection.
+    """
     q = fan.subscribe(keys)
     try:
         # Oldest-first so the client renders history in order; de-dups by id.
-        unread = await service.list_notifications(session, keys, unread_only=True)
-        for n in reversed(unread):
-            yield _sse(_row(n))
+        async with session_factory() as session:
+            unread = await service.list_notifications(session, keys, unread_only=True)
+            rows = [_row(n) for n in reversed(unread)]
+        # Session released here — the live loop below never touches the pool.
+        for row in rows:
+            yield _sse(row)
         while not disconnected():
             try:
                 data = await asyncio.wait_for(q.get(), timeout=_PING_SECONDS)
@@ -152,13 +175,15 @@ async def _stream_principal(
 async def stream(
     request: Request,
     principal: Principal = Depends(_stream_principal),
-    session: AsyncSession = Depends(get_session),
 ) -> EventSourceResponse:
+    # No Depends(get_session): a request-scoped session would pin a pooled
+    # connection for the whole (open-ended) SSE lifetime and exhaust the pool.
+    # event_stream borrows a short-lived session from the factory for replay only.
     keys = _keys(principal)
     # sse-starlette cancels the generator (running its `finally`) on client
     # disconnect, so the loop itself never needs to poll for it.
     return EventSourceResponse(
-        event_stream(fanout, keys, session, disconnected=lambda: False)
+        event_stream(fanout, keys, async_session_factory, disconnected=lambda: False)
     )
 
 
