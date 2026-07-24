@@ -1,10 +1,11 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Pencil, Trash2 } from 'lucide-react'
 import { fetchHistory, fetchResource } from '@/lib/catalog'
+import { submitRequest } from '@/lib/requests'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/badge'
-import { buttonVariants } from '@/components/ui/button'
+import { Button, buttonVariants } from '@/components/ui/button'
 
 // Resource detail: parsed fields, owner team, current Git SHA, raw JSON, and
 // change history from git log. An in-flight-request badge is deferred to E05.
@@ -16,6 +17,10 @@ export function ResourceDetail({ id }: { id: number }) {
   const { data: history } = useQuery({
     queryKey: ['resource-history', id],
     queryFn: () => fetchHistory(id),
+  })
+  const del = useMutation({
+    mutationFn: () =>
+      submitRequest({ action: 'DELETE', resource_type: data!.type, resource_id: id, payload: {} }),
   })
 
   if (isLoading) return <p className="mx-auto max-w-4xl px-4 py-8 text-sm text-muted-foreground">Loading…</p>
@@ -36,24 +41,37 @@ export function ResourceDetail({ id }: { id: number }) {
             <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{data.git_sha.slice(0, 8)}</code>
           </p>
         </div>
-        {/* Trigger a change request against this resource (routes to its owner team). */}
+        {/* Edit/Delete both open a change request routed to the owner team — never applied here. */}
         <div className="flex shrink-0 gap-2">
           <Link
-            to="/requests/new"
-            search={{ type: data.type, action: 'UPDATE', resourceId: id }}
+            to="/resources/$resourceId/edit"
+            params={{ resourceId: String(id) }}
             className={buttonVariants({ variant: 'outline', size: 'sm' })}
           >
-            <Pencil className="h-4 w-4" /> Request update
+            <Pencil className="h-4 w-4" /> Edit
           </Link>
-          <Link
-            to="/requests/new"
-            search={{ type: data.type, action: 'DELETE', resourceId: id }}
-            className={buttonVariants({ variant: 'outline', size: 'sm' })}
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={del.isPending || del.isSuccess}
+            onClick={() => {
+              if (window.confirm(`Send a delete request for ${data.name} to ${data.owner_team} for approval?`))
+                del.mutate()
+            }}
           >
-            <Trash2 className="h-4 w-4" /> Request delete
-          </Link>
+            <Trash2 className="h-4 w-4" /> Delete
+          </Button>
         </div>
       </div>
+
+      {del.isSuccess && (
+        <Card className="border-success/40 bg-success/5">
+          <CardContent className="pt-5 text-sm text-success">
+            Delete request #{del.data.id} submitted for approval to {del.data.owner_team}.
+          </CardContent>
+        </Card>
+      )}
+      {del.isError && <p className="text-sm text-destructive">Delete request failed.</p>}
 
       <Card>
         <CardHeader>
