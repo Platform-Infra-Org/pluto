@@ -32,7 +32,8 @@ export function userManager(): UserManager {
       // request a `groups` scope (Keycloak rejects unregistered scope names).
       scope: 'openid profile',
       // Access token kept in memory only (never sessionStorage/localStorage, which
-      // XSS can read); refresh rides the BFF session cookie.
+      // XSS can read). There's no BFF session/refresh endpoint: a full page reload
+      // loses the token and requires re-login (accepted limitation).
       userStore: new WebStorageStateStore({ store: new InMemoryWebStorage() }),
     })
   }

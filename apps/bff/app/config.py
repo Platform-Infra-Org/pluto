@@ -21,7 +21,6 @@ class Settings(BaseSettings):
     oidc_client_id_bff: str = "platform-bff"
     oidc_client_secret_bff: str = "change-me"
     oidc_groups_claim: str = "groups"
-    session_secret: str = "change-me-session-secret"
 
     # Argo Workflows API (E03). Real token/URL come from env; defaults are test-only.
     # Empty ARGO_SERVER_URL means "no cluster wired" — integration tests skip on it.
