@@ -1,0 +1,18 @@
+
+> web@0.0.0 dev /Users/adelin/Projects/Platform/new-ui/apps/web
+> vite
+
+
+  [32m[1mVITE[22m v8.1.5[39m  [2mready in [0m[1m289[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+[2m11:28:51 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m11:29:12 PM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m2:24:53 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/guard.tsx, /src/app/routes/auth-callback.tsx, /src/app/routes/home.tsx, /src/app/builder/canvas.tsx, /src/app/builder/graph/editor.tsx, /src/app/admin/shell.tsx, /src/app/blocks/onboard.tsx, /src/app/nav.tsx, /src/index.css[22m
+[2m2:25:23 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/app/builder/graph/editor.tsx, /src/app/blocks/onboard.tsx, /src/app/builder/graph/palette.tsx, /src/app/builder/graph/canvas.tsx, /src/app/builder/graph/preview.tsx, /src/app/builder/graph/inspector.tsx[22m
+[2m2:26:10 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/blocks/onboard.tsx, /src/index.css[22m
+[2m2:26:24 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/app/builder/canvas.tsx, /src/app/builder/graph/editor.tsx, /src/app/services/mine.tsx, /src/app/services/onboarding-queue.tsx[22m
+[2m2:26:36 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/routes/requests/new.tsx, /src/index.css[22m
+[2m2:26:44 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/routes/requests/new.tsx, /src/index.css[22m
+[2m2:27:25 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m

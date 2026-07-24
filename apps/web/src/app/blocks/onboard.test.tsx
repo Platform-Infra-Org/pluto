@@ -36,7 +36,7 @@ const SET_VALUE = {
 
 beforeEach(() => {
   vi.mocked(blocks.fetchBlocks).mockResolvedValue({ items: [SET_VALUE] })
-  vi.mocked(blocks.onboardBlock).mockResolvedValue({ ...SET_VALUE, name: 'api-call' })
+  vi.mocked(blocks.onboardBlockForm).mockResolvedValue({ ...SET_VALUE, name: 'api-call' })
 })
 
 describe('BlockOnboard', () => {
@@ -44,7 +44,7 @@ describe('BlockOnboard', () => {
     authValue = { hasRole: () => false, isLoading: false }
     renderPage()
     expect(screen.getByRole('alert')).toHaveTextContent(/platform-admin/i)
-    expect(screen.queryByRole('textbox', { name: /manifest/i })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('block name')).not.toBeInTheDocument()
   })
 
   it('lists existing blocks with typed IO for an admin', async () => {
@@ -52,31 +52,39 @@ describe('BlockOnboard', () => {
     renderPage()
     expect(await screen.findByText('set-value')).toBeInTheDocument()
     expect(screen.getByText('fn-set-value')).toBeInTheDocument()
-    // typed IO surfaced
     expect(screen.getByText(/expr/)).toBeInTheDocument()
   })
 
-  it('submits a pasted manifest and shows it in the list', async () => {
+  it('builds a manifest from the form and submits it (manifest_json, not YAML)', async () => {
     authValue = { hasRole: (r: string) => r === 'platform-admin', isLoading: false }
     renderPage()
     await screen.findByText('set-value')
-    const ta = screen.getByRole('textbox', { name: /manifest/i })
-    fireEvent.change(ta, { target: { value: 'kind: FunctionBlock' } })
-    fireEvent.click(screen.getByRole('button', { name: /onboard/i }))
+    fireEvent.change(screen.getByLabelText('block name'), { target: { value: 'slack-notify' } })
+    fireEvent.change(screen.getByLabelText('template ref'), { target: { value: 'fn-slack-notify' } })
+    fireEvent.change(screen.getByLabelText('Inputs 0 name'), { target: { value: 'channel' } })
+    fireEvent.change(screen.getByLabelText('Inputs 0 type'), { target: { value: 'string' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create block' }))
     await waitFor(() =>
-      expect(blocks.onboardBlock).toHaveBeenCalledWith('kind: FunctionBlock'),
+      expect(blocks.onboardBlockForm).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'slack-notify',
+          template_ref: 'fn-slack-notify',
+          inputs: [{ name: 'channel', type: 'string', required: true }],
+        }),
+      ),
     )
   })
 
-  it('shows the validation error when the manifest is invalid', async () => {
+  it('shows the validation error when the block is rejected', async () => {
     authValue = { hasRole: (r: string) => r === 'platform-admin', isLoading: false }
-    vi.mocked(blocks.onboardBlock).mockRejectedValueOnce(new Error("unknown type: 'widget'"))
+    vi.mocked(blocks.onboardBlockForm).mockRejectedValueOnce(new Error("unknown type: 'widget'"))
     renderPage()
     await screen.findByText('set-value')
-    fireEvent.change(screen.getByRole('textbox', { name: /manifest/i }), {
-      target: { value: 'bad: yaml' },
-    })
-    fireEvent.click(screen.getByRole('button', { name: /onboard/i }))
+    fireEvent.change(screen.getByLabelText('block name'), { target: { value: 'x' } })
+    fireEvent.change(screen.getByLabelText('template ref'), { target: { value: 'fn-x' } })
+    fireEvent.change(screen.getByLabelText('Inputs 0 type'), { target: { value: 'widget' } })
+    fireEvent.change(screen.getByLabelText('Inputs 0 name'), { target: { value: 'a' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Create block' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(/widget/i)
   })
 })

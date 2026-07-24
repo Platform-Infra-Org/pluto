@@ -134,3 +134,35 @@ async def test_upsert_bumps_version(client):
     holder["principal"] = COMPOSER
     listed = [b for b in (await c.get("/api/blocks")).json()["items"] if b["name"] == "set-value"]
     assert len(listed) == 1 and listed[0]["version"] == 2
+
+
+async def test_admin_post_manifest_json_form(client):
+    """The 'new block' form posts a structured manifest_json (not raw YAML)."""
+    c, holder = client
+    holder["principal"] = ADMIN
+    mj = {
+        "name": "slack-notify",
+        "category": "custom",
+        "icon": "bell",
+        "template_ref": "fn-slack-notify",
+        "inputs": [
+            {"name": "channel", "type": "string", "required": True},
+            {"name": "method", "type": "enum[GET,POST]", "required": False},
+        ],
+        "outputs": [{"name": "ok", "type": "boolean"}],
+    }
+    r = await c.post("/api/blocks", json={"manifest_json": mj})
+    assert r.status_code == 201, r.text
+    body = r.json()
+    assert body["name"] == "slack-notify"
+    assert body["manifest"]["template_ref"] == "fn-slack-notify"
+    types = {f["name"]: f["type"] for f in body["manifest"]["inputs"]}
+    assert types["channel"] == "string" and types["method"] == "enum[GET,POST]"
+
+
+async def test_manifest_json_missing_required_422(client):
+    c, holder = client
+    holder["principal"] = ADMIN
+    # no template_ref -> rejected, not a 500
+    r = await c.post("/api/blocks", json={"manifest_json": {"name": "x", "inputs": [], "outputs": []}})
+    assert r.status_code == 422, r.text

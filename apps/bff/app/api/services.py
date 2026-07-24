@@ -83,6 +83,22 @@ async def get_type_schema(
     }
 
 
+@router.get("/available")
+async def available_types(
+    _: Principal = Depends(current_principal),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Resource types available to request = every ACTIVE ServiceDefinition (any
+    team). This is what the "New request" type picker lists, so a type becomes
+    requestable the moment an admin approves its onboarding."""
+    stmt = select(ServiceDefinition).where(ServiceDefinition.status == service_def.ACTIVE)
+    rows = list((await session.execute(stmt)).scalars())
+    latest: dict[str, dict] = {}
+    for d in sorted(rows, key=lambda x: x.version):  # keep the newest per name
+        latest[d.name] = {"name": d.name, "category": d.category, "owner_team": d.owner_team}
+    return {"items": sorted(latest.values(), key=lambda x: x["name"])}
+
+
 @router.post("/definitions", status_code=status.HTTP_201_CREATED)
 async def create_definition(
     body: DefinitionBody,

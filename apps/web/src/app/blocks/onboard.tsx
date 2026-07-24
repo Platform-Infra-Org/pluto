@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Plus, Trash2 } from 'lucide-react'
 import { useAuth } from '@/lib/auth'
-import { fetchBlocks, onboardBlock, type Block } from '@/lib/blocks'
+import { fetchBlocks, onboardBlockForm, type Block, type BlockFormManifest } from '@/lib/blocks'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 // One row per registered block: its kind + template ref + typed IO. This is the
 // palette CB02/CB03 build on, so surfacing the types here is the whole point.
@@ -26,20 +28,159 @@ function BlockRow({ block }: { block: Block }) {
   )
 }
 
-// Platform block-onboarding screen (design §9): paste a block manifest YAML ->
+type IORow = { name: string; type: string; required: boolean }
+
+// Editable list of typed input/output rows (name + type + optional required).
+function IORows({
+  label,
+  rows,
+  onChange,
+  withRequired,
+}: {
+  label: string
+  rows: IORow[]
+  onChange: (rows: IORow[]) => void
+  withRequired: boolean
+}) {
+  const set = (i: number, patch: Partial<IORow>) =>
+    onChange(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)))
+  return (
+    <div className="space-y-2">
+      <div className="text-xs font-medium text-muted-foreground">{label}</div>
+      {rows.map((r, i) => (
+        <div key={i} className="flex flex-wrap items-center gap-2">
+          <Input
+            aria-label={`${label} ${i} name`}
+            placeholder="name"
+            className="w-32"
+            value={r.name}
+            onChange={(e) => set(i, { name: e.target.value })}
+          />
+          <Input
+            aria-label={`${label} ${i} type`}
+            placeholder="string | enum[A,B] | secretRef"
+            className="w-56"
+            value={r.type}
+            onChange={(e) => set(i, { type: e.target.value })}
+          />
+          {withRequired && (
+            <label className="flex items-center gap-1 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                aria-label={`${label} ${i} required`}
+                checked={r.required}
+                onChange={(e) => set(i, { required: e.target.checked })}
+              />
+              required
+            </label>
+          )}
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            aria-label={`remove ${label} ${i}`}
+            onClick={() => onChange(rows.filter((_, j) => j !== i))}
+          >
+            <Trash2 />
+          </Button>
+        </div>
+      ))}
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={() => onChange([...rows, { name: '', type: withRequired ? 'string' : 'json', required: false }])}
+      >
+        <Plus className="h-4 w-4" /> Add {label.toLowerCase().replace(/s$/, '')}
+      </Button>
+    </div>
+  )
+}
+
+// The "new block" form: platform-admins fill fields instead of hand-writing YAML.
+// It builds a structured manifest and posts it (manifest_json) — the BFF validates.
+function NewBlockForm({
+  onCreate,
+  error,
+  pending,
+}: {
+  onCreate: (m: BlockFormManifest) => void
+  error?: string
+  pending: boolean
+}) {
+  const [name, setName] = useState('')
+  const [templateRef, setTemplateRef] = useState('')
+  const [category, setCategory] = useState('custom')
+  const [icon, setIcon] = useState('box')
+  const [inputs, setInputs] = useState<IORow[]>([{ name: '', type: 'string', required: true }])
+  const [outputs, setOutputs] = useState<IORow[]>([{ name: '', type: 'json', required: false }])
+
+  const clean = (rows: IORow[]) =>
+    rows.filter((r) => r.name.trim()).map((r) => ({ name: r.name.trim(), type: r.type.trim() || 'string', required: r.required }))
+
+  return (
+    <Card className="space-y-4 p-4">
+      <div className="text-sm font-medium">New function block</div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Name *</span>
+          <Input aria-label="block name" placeholder="slack-notify" value={name} onChange={(e) => setName(e.target.value)} />
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">WorkflowTemplate ref *</span>
+          <Input aria-label="template ref" placeholder="fn-slack-notify" value={templateRef} onChange={(e) => setTemplateRef(e.target.value)} />
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Category</span>
+          <Input aria-label="category" value={category} onChange={(e) => setCategory(e.target.value)} />
+        </label>
+        <label className="space-y-1 text-sm">
+          <span className="text-muted-foreground">Icon</span>
+          <Input aria-label="icon" value={icon} onChange={(e) => setIcon(e.target.value)} />
+        </label>
+      </div>
+
+      <IORows label="Inputs" rows={inputs} onChange={setInputs} withRequired />
+      <IORows label="Outputs" rows={outputs} onChange={setOutputs} withRequired={false} />
+
+      <p className="text-xs text-muted-foreground">
+        Types: string · number · boolean · json · enum[A,B] · map&lt;string,T&gt; · jsonpath · secretRef.
+      </p>
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      <Button
+        type="button"
+        disabled={!name.trim() || !templateRef.trim() || pending}
+        onClick={() =>
+          onCreate({
+            name: name.trim(),
+            category: category.trim() || 'custom',
+            icon: icon.trim() || 'box',
+            template_ref: templateRef.trim(),
+            inputs: clean(inputs),
+            outputs: clean(outputs).map(({ name: n, type }) => ({ name: n, type, required: false })),
+          })
+        }
+      >
+        Create block
+      </Button>
+    </Card>
+  )
+}
+
+// Platform block-onboarding screen (design §9): a form builds the block manifest ->
 // validated via POST /api/blocks (the BFF is the authz + validation gate) -> the
 // block joins the registry list. Admin-only; the server enforces it too.
 export function BlockOnboard() {
   const { hasRole, isLoading } = useAuth()
   const qc = useQueryClient()
-  const [manifest, setManifest] = useState('')
   const { data } = useQuery({ queryKey: ['blocks'], queryFn: fetchBlocks })
   const onboard = useMutation({
-    mutationFn: () => onboardBlock(manifest),
-    onSuccess: () => {
-      setManifest('')
-      void qc.invalidateQueries({ queryKey: ['blocks'] })
-    },
+    mutationFn: (m: BlockFormManifest) => onboardBlockForm(m),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: ['blocks'] }),
   })
 
   if (isLoading) return <div className="mx-auto max-w-4xl px-4 py-8 text-muted-foreground">Loading…</div>
@@ -59,32 +200,15 @@ export function BlockOnboard() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Function Blocks</h1>
         <p className="text-sm text-muted-foreground">
-          Onboard a reusable block from its manifest (YAML). Type system: string · number · boolean ·
-          json · enum[…] · map&lt;string,T&gt; · jsonpath · secretRef.
+          Register a reusable block: its Argo WorkflowTemplate ref and its typed inputs/outputs.
         </p>
       </div>
 
-      <Card className="space-y-3 p-4">
-        <label htmlFor="manifest" className="text-sm font-medium">
-          Block manifest (YAML)
-        </label>
-        <textarea
-          id="manifest"
-          aria-label="manifest"
-          className="min-h-48 w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          placeholder={'kind: FunctionBlock\nmetadata:\n  name: my-block\n  category: builtin\ntemplate:\n  ref: fn-my-block\ninputs: []\noutputs: []'}
-          value={manifest}
-          onChange={(e) => setManifest(e.target.value)}
-        />
-        {onboard.isError && (
-          <p role="alert" className="text-sm text-destructive">
-            {(onboard.error as Error).message}
-          </p>
-        )}
-        <Button type="button" onClick={() => onboard.mutate()} disabled={!manifest.trim() || onboard.isPending}>
-          Onboard block
-        </Button>
-      </Card>
+      <NewBlockForm
+        onCreate={(m) => onboard.mutate(m)}
+        error={onboard.isError ? (onboard.error as Error).message : undefined}
+        pending={onboard.isPending}
+      />
 
       <div>
         <h2 className="mb-2 text-lg font-medium">Registered blocks</h2>

@@ -27,6 +27,8 @@ export function userManager(): UserManager {
       authority: import.meta.env.VITE_OIDC_ISSUER_URL,
       client_id: import.meta.env.VITE_OIDC_CLIENT_ID_SPA,
       redirect_uri: `${window.location.origin}/auth/callback`,
+      // After a Keycloak logout, return the user to the app home page.
+      post_logout_redirect_uri: `${window.location.origin}/`,
       response_type: 'code',
       // `groups` claim comes from a client-level mapper, not a scope, so we don't
       // request a `groups` scope (Keycloak rejects unregistered scope names).

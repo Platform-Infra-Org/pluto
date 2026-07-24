@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { apiFetch } from '@/lib/api'
 import { fetchResources } from '@/lib/catalog'
+import { fetchAvailableTypes } from '@/lib/services'
 import type { JsonSchema, UiSchema } from '@/app/forms/SchemaForm'
 import { Card, CardContent } from '@/components/ui/card'
 import { buttonVariants } from '@/components/ui/button'
@@ -17,10 +18,17 @@ interface TypeSchema {
 }
 
 // When no type is chosen, let the user pick which kind of resource to request.
-// Types are the distinct kinds present in the catalog they can see.
+// Types = every ACTIVE service definition (so a just-approved onboarding shows up
+// immediately) unioned with the kinds already present in the catalog.
 function TypePicker() {
-  const { data } = useQuery({ queryKey: ['resources'], queryFn: () => fetchResources() })
-  const types = Array.from(new Set((data?.items ?? []).map((r) => r.type))).sort()
+  const { data: resources } = useQuery({ queryKey: ['resources'], queryFn: () => fetchResources() })
+  const { data: available } = useQuery({ queryKey: ['available-types'], queryFn: fetchAvailableTypes })
+  const types = Array.from(
+    new Set([
+      ...(available?.items ?? []).map((t) => t.name),
+      ...(resources?.items ?? []).map((r) => r.type),
+    ]),
+  ).sort()
 
   return (
     <div className="mx-auto max-w-lg space-y-6 px-4 py-8 sm:px-6">

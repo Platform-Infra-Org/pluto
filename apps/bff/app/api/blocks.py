@@ -13,14 +13,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.auth.deps import current_principal, require_role
 from app.auth.principal import Principal
 from app.blocks import registry
-from app.blocks.manifest import ManifestError, parse_manifest
+from app.blocks.manifest import ManifestError, manifest_from_dict, parse_manifest
 from app.db import get_session
 
 router = APIRouter(prefix="/api/blocks")
 
 
 class BlockBody(BaseModel):
-    manifest: str  # block manifest YAML
+    manifest: str | None = None  # block manifest YAML (raw authoring form)
+    manifest_json: dict | None = None  # structured manifest (from the "new block" form)
 
 
 def _dump(b) -> dict:
@@ -37,8 +38,15 @@ def _dump(b) -> dict:
 
 async def _upsert(body: BlockBody, principal: Principal, session: AsyncSession) -> dict:
     try:
-        manifest = parse_manifest(body.manifest)
-    except ManifestError as exc:
+        if body.manifest_json is not None:
+            manifest = manifest_from_dict(body.manifest_json)
+            if not manifest.name.strip() or not manifest.template_ref.strip():
+                raise ManifestError("name and template_ref are required")
+        elif body.manifest:
+            manifest = parse_manifest(body.manifest)
+        else:
+            raise ManifestError("provide either `manifest` (YAML) or `manifest_json`")
+    except (ManifestError, KeyError, ValueError, TypeError) as exc:
         raise HTTPException(422, str(exc)) from exc
     block = await registry.upsert_block(session, manifest, created_by=principal.sub)
     return _dump(block)

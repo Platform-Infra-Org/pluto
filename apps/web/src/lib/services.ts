@@ -54,6 +54,19 @@ export function fetchMyDefinitions() {
   return apiFetch<{ items: ServiceDefinition[] }>('/services/definitions?mine=1')
 }
 
+// Resource types available to request = every ACTIVE ServiceDefinition (any team).
+// Populates the "New request" type picker, so an approved onboarding is immediately
+// requestable even before any resource of that type exists.
+export interface AvailableType {
+  name: string
+  category: string
+  owner_team: string
+}
+
+export function fetchAvailableTypes() {
+  return apiFetch<{ items: AvailableType[] }>('/services/available')
+}
+
 export interface OnboardingItem {
   request_id: number
   requester: string
