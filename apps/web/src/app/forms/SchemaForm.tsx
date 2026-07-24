@@ -17,6 +17,7 @@ export interface FieldSpec {
 }
 
 export interface JsonSchema {
+  type?: string
   properties?: Record<string, FieldSpec>
   required?: string[]
 }

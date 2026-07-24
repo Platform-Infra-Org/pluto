@@ -8,6 +8,9 @@ import { ApprovalQueue } from './app/routes/requests/queue'
 import { RequestDetail } from './app/routes/requests/detail'
 import { NotificationBell } from './app/notifications/bell'
 import { NotificationsPage } from './app/notifications/page'
+import { BuilderCanvas } from './app/builder/canvas'
+import { MyDefinitions } from './app/services/mine'
+import { OnboardingQueue } from './app/services/onboarding-queue'
 
 // Root layout: a thin top bar holding the live notification bell, over the routes.
 function RootLayout() {
@@ -89,6 +92,24 @@ const notificationsRoute = createRoute({
   component: NotificationsPage,
 })
 
+const builderRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/builder',
+  component: BuilderCanvas,
+})
+
+const myDefinitionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/services',
+  component: MyDefinitions,
+})
+
+const onboardingQueueRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/services/onboarding',
+  component: OnboardingQueue,
+})
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   resourcesRoute,
@@ -98,6 +119,9 @@ const routeTree = rootRoute.addChildren([
   approvalQueueRoute,
   requestDetailRoute,
   notificationsRoute,
+  builderRoute,
+  myDefinitionsRoute,
+  onboardingQueueRoute,
 ])
 
 export const router = createRouter({ routeTree })
