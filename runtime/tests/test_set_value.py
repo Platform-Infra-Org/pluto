@@ -7,6 +7,7 @@ Python eval — reusing the already-present jinja2 dep.
 from __future__ import annotations
 
 import pytest
+from jinja2.exceptions import SecurityError
 
 from fn.set_value import set_value
 
@@ -28,9 +29,15 @@ def test_no_args() -> None:
 
 
 def test_no_arbitrary_eval() -> None:
-    # the sandbox blocks dunder access — no escape to the type/class hierarchy
-    # (a plain eval would return `tuple`; the sandbox yields None).
-    assert set_value("().__class__", {}) is not tuple
+    # the sandbox blocks dunder access — no escape to the type/class hierarchy.
+    # classic payloads raise SecurityError.
+    with pytest.raises(SecurityError):
+        set_value("().__class__.__bases__[0].__subclasses__()")
+    with pytest.raises(SecurityError):
+        set_value("x.__init__.__globals__", {"x": lambda: None})
+    # benign expressions still evaluate correctly (sandbox works, not just broken).
+    assert set_value("1 + 1") == 2
+    assert set_value("'hello' ~ ' ' ~ 'world'") == "hello world"
 
 
 if __name__ == "__main__":
