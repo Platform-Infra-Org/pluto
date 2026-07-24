@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Block } from '@/lib/blocks'
-import { lit, outRef, ref, type Binding, type InputValue, type ServiceGraphJson } from '@/lib/graph'
+import { isBinding, lit, outRef, ref, type Binding, type InputValue, type ServiceGraphJson } from '@/lib/graph'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
@@ -143,8 +143,11 @@ export function Inspector({
     label: `request.${f}`,
   }))
 
+  // A map input's value is a {key: Binding} record — anything that isn't itself a
+  // Binding. Use isBinding (not `'kind' in v`) so a map key literally named "kind"
+  // doesn't make the sub-editor render empty.
   const asMap = (v: InputValue | undefined): Record<string, Binding> =>
-    v && !('kind' in v) ? (v as Record<string, Binding>) : {}
+    !v || isBinding(v) ? {} : (v as Record<string, Binding>)
 
   return (
     <div className="space-y-4 text-sm">
