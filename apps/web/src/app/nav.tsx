@@ -71,6 +71,11 @@ export function NavBar() {
                   Service Builder
                 </Link>
               )}
+              {hasRole('service-owner') && (
+                <Link to="/builder/graph" className={linkClass} activeProps={activeLinkProps}>
+                  Graph Editor
+                </Link>
+              )}
               {hasRole('platform-admin') && (
                 <Link to="/blocks" className={linkClass} activeProps={activeLinkProps}>
                   Blocks

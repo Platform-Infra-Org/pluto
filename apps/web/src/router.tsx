@@ -8,6 +8,7 @@ import { ApprovalQueue } from './app/routes/requests/queue'
 import { RequestDetail } from './app/routes/requests/detail'
 import { NotificationsPage } from './app/notifications/page'
 import { BuilderCanvas } from './app/builder/canvas'
+import { GraphEditor } from './app/builder/graph/editor'
 import { MyDefinitions } from './app/services/mine'
 import { OnboardingQueue } from './app/services/onboarding-queue'
 import { AdminDashboard } from './app/admin/shell'
@@ -108,6 +109,13 @@ const builderRoute = createRoute({
   component: BuilderCanvas,
 })
 
+// CB03 graph editor — a sub-route so the E08 form builder (/builder) stays reachable.
+const graphEditorRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/builder/graph',
+  component: GraphEditor,
+})
+
 const myDefinitionsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/services',
@@ -148,6 +156,7 @@ const routeTree = rootRoute.addChildren([
   requestDetailRoute,
   notificationsRoute,
   builderRoute,
+  graphEditorRoute,
   myDefinitionsRoute,
   onboardingQueueRoute,
   adminRoute,
