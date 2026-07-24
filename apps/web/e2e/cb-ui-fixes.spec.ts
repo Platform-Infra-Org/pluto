@@ -24,8 +24,10 @@ test('graph editor UI fixes: aligned handles, enum choice box, request-fields su
   await expect(node.getByText('response', { exact: true })).toBeVisible()
   await node.click()
 
-  // Fix 2: the enum `method` config is a choice box (select) with the enum options.
-  const method = page.getByLabel('config method')
+  // Fix 2: inputs are unified — `method` is a single input in the Inputs section.
+  // Bind it to a literal, and the enum type surfaces a choice box (select) with the options.
+  await page.getByLabel('bind method').selectOption('literal')
+  const method = page.getByLabel('method literal')
   await expect(method).toBeVisible()
   await expect(method.locator('option', { hasText: 'POST' })).toHaveCount(1)
   await expect(method.locator('option', { hasText: 'DELETE' })).toHaveCount(1)

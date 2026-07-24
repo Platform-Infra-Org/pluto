@@ -1,7 +1,15 @@
 // Pure graph-editing + type-checking helpers (the testable heart of the canvas).
 // React Flow interactions call these; the logic itself is DOM-free and unit-tested.
 import type { Block, IOFieldDto } from '@/lib/blocks'
-import { outRef, type Binding, type Kind, type NodeJson, type ServiceGraphJson } from '@/lib/graph'
+import {
+  isBinding,
+  outRef,
+  type Binding,
+  type InputValue,
+  type Kind,
+  type NodeJson,
+  type ServiceGraphJson,
+} from '@/lib/graph'
 
 export function byName(blocks: Block[]): Record<string, Block> {
   return Object.fromEntries(blocks.map((b) => [b.name, b]))
@@ -26,42 +34,45 @@ export function addNode(graph: ServiceGraphJson, block: Block, id?: string): Ser
     block: block.name,
     kind: defaultKind(block),
     action: block.kind === 'service' ? 'create' : null,
-    config: {},
     input_bindings: {},
     outputs: block.manifest.outputs.map((o) => o.name),
   }
   return { ...graph, nodes: [...graph.nodes, node] }
 }
 
-const dropRefsTo = (id: string) => (m: Record<string, Binding>) =>
-  Object.fromEntries(Object.entries(m).filter(([, b]) => !(b.kind === 'output' && b.node === id)))
+const points = (b: Binding, id: string) => b.kind === 'output' && b.node === id
+
+// Drop every OutRef to `id` from one node's input_bindings — a scalar binding is
+// removed outright, a map-shaped input keeps the input but loses the pointing entries.
+function dropRefsTo(input_bindings: Record<string, InputValue>, id: string): Record<string, InputValue> {
+  return Object.fromEntries(
+    Object.entries(input_bindings)
+      .map(([name, v]): [string, InputValue] =>
+        isBinding(v)
+          ? [name, v]
+          : [name, Object.fromEntries(Object.entries(v).filter(([, b]) => !points(b, id)))],
+      )
+      .filter(([, v]) => !(isBinding(v) && points(v, id))),
+  )
+}
 
 export function removeNode(graph: ServiceGraphJson, id: string): ServiceGraphJson {
-  const drop = dropRefsTo(id)
   return {
     ...graph,
     nodes: graph.nodes
       .filter((n) => n.id !== id)
-      // drop any bindings that referenced the removed node (inputs + main config.body)
-      .map((n) => {
-        const body = n.config.body as Record<string, Binding> | undefined
-        return {
-          ...n,
-          input_bindings: drop(n.input_bindings),
-          config: body ? { ...n.config, body: drop(body) } : n.config,
-        }
-      }),
+      .map((n) => ({ ...n, input_bindings: dropRefsTo(n.input_bindings, id) })),
   }
 }
 
-// --- Inspector node ops (bindings / config / outputs / main flag), all immutable.
+// --- Inspector node ops (bindings / outputs / main flag), all immutable.
 
 function patch(graph: ServiceGraphJson, id: string, fn: (n: NodeJson) => NodeJson): ServiceGraphJson {
   return { ...graph, nodes: graph.nodes.map((n) => (n.id === id ? fn(n) : n)) }
 }
 
-// Bind one input (request field | node output | literal). Passing null clears it.
-export function setBinding(
+// Bind one scalar input (request field | node output | literal). Passing null clears it.
+export function setInput(
   graph: ServiceGraphJson,
   id: string,
   input: string,
@@ -75,24 +86,21 @@ export function setBinding(
   })
 }
 
-export function setConfig(graph: ServiceGraphJson, id: string, key: string, value: unknown): ServiceGraphJson {
-  return patch(graph, id, (n) => ({ ...n, config: { ...n.config, [key]: value } }))
-}
-
-// Bind one field of the main node's payload `config.body` (bodyField -> binding).
-// Writes to config.body (what the generator's _payload consumes), NOT input_bindings.
-// Passing null clears the field.
-export function setBodyBinding(
+// Set one key of a map-shaped input (`body`/`rules`): input_bindings[input] = {key: Binding}.
+// Passing null clears the key (the input map stays, possibly empty).
+export function setInputMapEntry(
   graph: ServiceGraphJson,
   id: string,
-  field: string,
+  input: string,
+  key: string,
   binding: Binding | null,
 ): ServiceGraphJson {
   return patch(graph, id, (n) => {
-    const body = { ...((n.config.body as Record<string, Binding>) ?? {}) }
-    if (binding === null) delete body[field]
-    else body[field] = binding
-    return { ...n, config: { ...n.config, body } }
+    const current = n.input_bindings[input]
+    const map = { ...(isBinding(current) ? {} : (current ?? {})) }
+    if (binding === null) delete map[key]
+    else map[key] = binding
+    return { ...n, input_bindings: { ...n.input_bindings, [input]: map } }
   })
 }
 
@@ -124,11 +132,11 @@ export function markMain(graph: ServiceGraphJson, id: string): ServiceGraphJson 
   }
 }
 
-// Required inputs neither bound nor set in config (mirrors validate._check_required).
+// Required inputs with no binding under input_bindings (mirrors validate._check_required).
 export function missingRequired(block: Block | undefined, node: NodeJson): string[] {
   if (!block) return []
   return block.manifest.inputs
-    .filter((f) => f.required && !(f.name in node.input_bindings) && !(f.name in node.config))
+    .filter((f) => f.required && !(f.name in node.input_bindings))
     .map((f) => f.name)
 }
 

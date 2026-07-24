@@ -16,13 +16,23 @@ export const ref = (field: string): Ref => ({ kind: 'request', field })
 export const outRef = (node: string, output: string): OutRef => ({ kind: 'output', node, output })
 export const lit = (value: unknown): Lit => ({ kind: 'literal', value })
 
+// An input's stored value: a scalar Binding, or a map-shaped input (api-call `body`,
+// json-extractor `rules`) as {key: Binding}. Unified model — every input lives under
+// input_bindings; there is no separate literal `config`.
+export type InputValue = Binding | Record<string, Binding>
+
+const BINDING_KINDS = new Set(['request', 'output', 'literal'])
+// A scalar Binding vs a map-shaped input value (its arbitrary keys hold Bindings).
+export function isBinding(v: InputValue | undefined): v is Binding {
+  return !!v && BINDING_KINDS.has((v as Binding).kind)
+}
+
 export interface NodeJson {
   id: string
   block: string // function-block name OR dependency service name
   kind: Kind
   action?: Verb | null // dependency nodes: create | update | delete
-  config: Record<string, unknown> // literal config; `body` values are Bindings
-  input_bindings: Record<string, Binding>
+  input_bindings: Record<string, InputValue>
   outputs: string[]
 }
 

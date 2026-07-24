@@ -13,7 +13,7 @@ import {
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import type { Block } from '@/lib/blocks'
-import type { NodeJson, ServiceGraphJson } from '@/lib/graph'
+import { isBinding, type NodeJson, type ServiceGraphJson } from '@/lib/graph'
 import { DRAG_MIME } from './palette'
 import { byName, canConnect, connect, removeNode } from './wiring'
 
@@ -63,21 +63,23 @@ const nodeTypes = { block: BlockNode }
 
 function outRefEdges(graph: ServiceGraphJson): Edge[] {
   const edges: Edge[] = []
-  const push = (b: unknown, target: string, input: string) => {
-    const bind = b as { kind?: string; node?: string; output?: string }
-    if (bind?.kind === 'output' && bind.node)
+  const push = (b: { kind?: string; node?: string; output?: string }, target: string, input: string) => {
+    if (b?.kind === 'output' && b.node)
       edges.push({
-        id: `${bind.node}.${bind.output}->${target}.${input}`,
-        source: bind.node,
-        sourceHandle: bind.output,
+        id: `${b.node}.${b.output}->${target}.${input}`,
+        source: b.node,
+        sourceHandle: b.output,
         target,
         targetHandle: input,
       })
   }
+  // Draw an edge for every OutRef, whether it's a scalar input binding or an entry
+  // of a map-shaped input (body/rules) — the target handle is always the input name.
   for (const n of graph.nodes) {
-    for (const [input, b] of Object.entries(n.input_bindings)) push(b, n.id, input)
-    const body = (n.config.body ?? {}) as Record<string, unknown>
-    for (const [k, b] of Object.entries(body)) push(b, n.id, k)
+    for (const [input, v] of Object.entries(n.input_bindings)) {
+      if (isBinding(v)) push(v, n.id, input)
+      else for (const b of Object.values(v)) push(b, n.id, input)
+    }
   }
   return edges
 }

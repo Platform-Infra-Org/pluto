@@ -10,7 +10,7 @@ import {
   parseType,
   removeNode,
   removeRequestField,
-  setBodyBinding,
+  setInputMapEntry,
   setRequestField,
 } from './wiring'
 
@@ -76,8 +76,8 @@ describe('wiring (type-aware)', () => {
   const g: ServiceGraphJson = {
     request_fields: {},
     nodes: [
-      { id: 'network', block: 'network', kind: 'dependency', config: {}, input_bindings: {}, outputs: ['subnet_id'] },
-      { id: 'main', block: 'api-call', kind: 'main', config: {}, input_bindings: {}, outputs: [] },
+      { id: 'network', block: 'network', kind: 'dependency', input_bindings: {}, outputs: ['subnet_id'] },
+      { id: 'main', block: 'api-call', kind: 'main', input_bindings: {}, outputs: [] },
     ],
   }
 
@@ -118,23 +118,22 @@ describe('request fields', () => {
   })
 })
 
-describe('main node body binding (writes config.body, not input_bindings)', () => {
+describe('main node body binding (a map-shaped input under input_bindings)', () => {
   const g: ServiceGraphJson = {
     request_fields: { app_name: 'string' },
-    nodes: [{ id: 'main', block: 'api-call', kind: 'main', config: {}, input_bindings: {}, outputs: [] }],
+    nodes: [{ id: 'main', block: 'api-call', kind: 'main', input_bindings: {}, outputs: [] }],
   }
 
-  it('binds a body field to a request field under config.body', () => {
-    const next = setBodyBinding(g, 'main', 'name', ref('app_name'))
+  it('binds a body key to a request field as input_bindings.body[key]', () => {
+    const next = setInputMapEntry(g, 'main', 'body', 'name', ref('app_name'))
     const main = next.nodes.find((n) => n.id === 'main')!
-    expect(main.config.body).toEqual({ name: { kind: 'request', field: 'app_name' } })
-    expect(main.input_bindings).toEqual({}) // NOT input_bindings
-    expect(g.nodes[0].config.body).toBeUndefined() // pure
+    expect(main.input_bindings.body).toEqual({ name: { kind: 'request', field: 'app_name' } })
+    expect(g.nodes[0].input_bindings.body).toBeUndefined() // pure
   })
 
-  it('clears a body field when passed null', () => {
-    const withBody = setBodyBinding(g, 'main', 'name', ref('app_name'))
-    expect((setBodyBinding(withBody, 'main', 'name', null).nodes[0].config.body)).toEqual({})
+  it('clears a body key when passed null (the body map stays)', () => {
+    const withBody = setInputMapEntry(g, 'main', 'body', 'name', ref('app_name'))
+    expect(setInputMapEntry(withBody, 'main', 'body', 'name', null).nodes[0].input_bindings.body).toEqual({})
   })
 })
 
@@ -142,24 +141,23 @@ describe('removeNode', () => {
   const g: ServiceGraphJson = {
     request_fields: {},
     nodes: [
-      { id: 'net', block: 'network', kind: 'dependency', config: {}, input_bindings: {}, outputs: ['subnet_id'] },
+      { id: 'net', block: 'network', kind: 'dependency', input_bindings: {}, outputs: ['subnet_id'] },
       {
         id: 'main',
         block: 'api-call',
         kind: 'main',
-        config: { body: { subnet: outRef('net', 'subnet_id') } },
-        input_bindings: { url: outRef('net', 'subnet_id') },
+        input_bindings: { url: outRef('net', 'subnet_id'), body: { subnet: outRef('net', 'subnet_id') } },
         outputs: [],
       },
     ],
   }
 
-  it('removes the node and cleans dangling bindings to it (input_bindings + config.body)', () => {
+  it('removes the node and cleans dangling OutRefs to it (scalar + map-shaped inputs)', () => {
     const next = removeNode(g, 'net')
     expect(next.nodes.map((n) => n.id)).toEqual(['main'])
     const main = next.nodes[0]
-    expect(main.input_bindings).toEqual({}) // dangling OutRef dropped
-    expect(main.config.body).toEqual({}) // dangling body OutRef dropped
+    expect(main.input_bindings.url).toBeUndefined() // dangling scalar OutRef dropped
+    expect(main.input_bindings.body).toEqual({}) // dangling body OutRef dropped, map kept
     expect(g.nodes).toHaveLength(2) // pure
   })
 })

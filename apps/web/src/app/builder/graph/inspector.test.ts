@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Block } from '@/lib/blocks'
 import { ref, type ServiceGraphJson } from '@/lib/graph'
-import { markMain, missingRequired, setBinding, setOutputs } from './wiring'
+import { markMain, missingRequired, setInput, setOutputs } from './wiring'
 
 const apiCall: Block = {
   name: 'api-call',
@@ -24,8 +24,8 @@ const apiCall: Block = {
 const graph: ServiceGraphJson = {
   request_fields: { host: 'string' },
   nodes: [
-    { id: 'a', block: 'api-call', kind: 'main', config: { method: 'GET' }, input_bindings: {}, outputs: [] },
-    { id: 'b', block: 'api-call', kind: 'internal', config: { method: 'GET', url: 'x' }, input_bindings: {}, outputs: [] },
+    { id: 'a', block: 'api-call', kind: 'main', input_bindings: { method: { kind: 'literal', value: 'GET' } }, outputs: [] },
+    { id: 'b', block: 'api-call', kind: 'internal', input_bindings: { method: { kind: 'literal', value: 'GET' }, url: { kind: 'literal', value: 'x' } }, outputs: [] },
   ],
 }
 
@@ -33,7 +33,7 @@ describe('inspector node ops', () => {
   it('binding a required input clears its error', () => {
     const node = graph.nodes[0] // `url` required, unbound
     expect(missingRequired(apiCall, node)).toContain('url')
-    const g = setBinding(graph, 'a', 'url', ref('host'))
+    const g = setInput(graph, 'a', 'url', ref('host'))
     const bound = g.nodes.find((n) => n.id === 'a')!
     expect(bound.input_bindings.url).toEqual({ kind: 'request', field: 'host' })
     expect(missingRequired(apiCall, bound)).not.toContain('url')
