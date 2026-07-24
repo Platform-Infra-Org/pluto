@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import admin, audit, catalog, fields, me, requests, services, workflow_status
 from app.catalog.git_sync import sync_repo
 from app.config import settings
+from app.execution.reconcile import reconcile_on_startup
 from app.notifications import sse
 from app.services.fields.option_source import poll_loop
 
@@ -60,6 +61,14 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if settings.git_repo_url:
         task = asyncio.create_task(_reconcile_loop())
     poller = asyncio.create_task(poll_loop())  # dynamic-choice option-source refresh
+    if settings.argo_server_url:
+        # Re-attach watchers to in-flight requests + time out stuck ones (E09 Task 3).
+        # ponytail: one-shot at startup; a continuous stuck-sweep loop only if a
+        # workflow can get stuck without a restart to trigger reconcile.
+        try:
+            await reconcile_on_startup()
+        except Exception:  # noqa: BLE001 — never block startup on reconcile
+            log.exception("startup reconcile failed")
     try:
         await sse.fanout.start()  # LISTEN for cross-replica notification fan-out
     except Exception:  # noqa: BLE001 — degrade to REST-only if PG LISTEN is down
