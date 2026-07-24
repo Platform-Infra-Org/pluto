@@ -132,6 +132,18 @@ async def test_invalid_graph_edit_rejected_no_version_created(client):
     assert await service_def.next_version(session, "svc") == 2
 
 
+async def test_zero_verbs_rejected(client):
+    c, holder, session = client
+    holder["principal"] = OWNER
+    d = (await c.post("/api/services/definitions", json={
+        "name": "svc", "owner_team": "payments"})).json()
+    r = await c.post(f"/api/services/definitions/{d['id']}/edit",
+                     json={"graphs": {"name": "svc"}})
+    assert r.status_code == 422, r.text
+    # No new version row was created (still only v1).
+    assert await service_def.next_version(session, "svc") == 2
+
+
 async def test_edit_requires_owning_team(client):
     c, holder, session = client
     holder["principal"] = OWNER
