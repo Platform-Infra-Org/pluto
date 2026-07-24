@@ -11,6 +11,7 @@ import { NotificationsPage } from './app/notifications/page'
 import { BuilderCanvas } from './app/builder/canvas'
 import { MyDefinitions } from './app/services/mine'
 import { OnboardingQueue } from './app/services/onboarding-queue'
+import { AdminDashboard } from './app/admin/shell'
 
 // Root layout: a thin top bar holding the live notification bell, over the routes.
 function RootLayout() {
@@ -110,6 +111,12 @@ const onboardingQueueRoute = createRoute({
   component: OnboardingQueue,
 })
 
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/admin',
+  component: AdminDashboard,
+})
+
 const routeTree = rootRoute.addChildren([
   homeRoute,
   resourcesRoute,
@@ -122,6 +129,7 @@ const routeTree = rootRoute.addChildren([
   builderRoute,
   myDefinitionsRoute,
   onboardingQueueRoute,
+  adminRoute,
 ])
 
 export const router = createRouter({ routeTree })
