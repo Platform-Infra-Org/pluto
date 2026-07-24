@@ -112,6 +112,24 @@ class BlockManifest:
         }
 
 
+def manifest_from_dict(d: dict) -> BlockManifest:
+    """Inverse of `BlockManifest.as_dict` — rebuild a manifest from stored/registry
+    JSON (type strings back into `IOType`). Used to feed the generator."""
+
+    def io(f: dict) -> IOField:
+        return IOField(name=f["name"], type=parse_type(f["type"]), required=bool(f.get("required")))
+
+    return BlockManifest(
+        name=d["name"],
+        category=d.get("category", ""),
+        template_ref=d.get("template_ref", ""),
+        inputs=[io(f) for f in d.get("inputs", [])],
+        outputs=[io(f) for f in d.get("outputs", [])],
+        icon=d.get("icon", ""),
+        ui=d.get("ui") or {},
+    )
+
+
 def _fields(raw: object, where: str) -> list[IOField]:
     if raw is None:
         return []

@@ -91,6 +91,56 @@ class Graphs:
         return [(v, g) for v, g in pairs if g is not None]
 
 
+def parse_binding(v: object) -> Binding:
+    """Deserialize one tagged binding from graph JSON (CB03 wire shape).
+
+    ``{"kind":"request","field":..}`` / ``{"kind":"output","node":..,"output":..}``
+    / ``{"kind":"literal","value":..}``. Anything untagged is treated as a literal.
+    """
+    if isinstance(v, dict) and v.get("kind") == "request":
+        return Ref(v["field"])
+    if isinstance(v, dict) and v.get("kind") == "output":
+        return OutRef(v["node"], v["output"])
+    if isinstance(v, dict) and v.get("kind") == "literal":
+        return Lit(v["value"])
+    return Lit(v)
+
+
+def _parse_config(config: dict) -> dict:
+    """Config is literal, except `body` values (main node) are bindings."""
+    out = dict(config)
+    if isinstance(config.get("body"), dict):
+        out["body"] = {k: parse_binding(v) for k, v in config["body"].items()}
+    return out
+
+
+def _parse_node(d: dict) -> Node:
+    return Node(
+        id=d["id"],
+        block=d["block"],
+        kind=Kind(d["kind"]),
+        action=d.get("action"),
+        config=_parse_config(d.get("config") or {}),
+        input_bindings={k: parse_binding(v) for k, v in (d.get("input_bindings") or {}).items()},
+        outputs=list(d.get("outputs") or []),
+    )
+
+
+def _parse_service_graph(d: dict) -> ServiceGraph:
+    from app.blocks.manifest import parse_type
+
+    return ServiceGraph(
+        nodes=[_parse_node(n) for n in d.get("nodes") or []],
+        request_fields={k: parse_type(t) for k, t in (d.get("request_fields") or {}).items()},
+    )
+
+
+def parse_graphs(d: dict) -> Graphs:
+    """Deserialize the graph JSON the editor POSTs into the generator's `Graphs`."""
+    verbs = {v: _parse_service_graph(d[v]) for v in ("create", "update", "delete") if d.get(v)}
+    return Graphs(name=d.get("name", ""), **verbs)
+
+
 def node_dep_ids(node: Node) -> set[str]:
     """The node ids this node depends on (via OutRef bindings + main body refs)."""
     deps = {b.node for b in node.input_bindings.values() if isinstance(b, OutRef)}

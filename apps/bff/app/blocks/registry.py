@@ -10,13 +10,18 @@ from __future__ import annotations
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.blocks.manifest import BlockManifest, is_assignable
+from app.blocks.manifest import BlockManifest, is_assignable, manifest_from_dict
 from app.blocks.model import FunctionBlock
 from app.blocks.service_block import derive_service_block
 from app.services.definition import ACTIVE, ServiceDefinition
 
 # Re-exported: the type-compatibility check the graph editor/generator wire against.
-__all__ = ["is_assignable", "list_blocks", "get_block", "upsert_block"]
+__all__ = ["is_assignable", "list_blocks", "get_block", "upsert_block", "load_manifests"]
+
+
+async def load_manifests(session: AsyncSession) -> dict[str, BlockManifest]:
+    """Palette as `{name: BlockManifest}` — the shape the generator validates against."""
+    return {b["name"]: manifest_from_dict(b["manifest"]) for b in await list_blocks(session)}
 
 
 async def upsert_block(
