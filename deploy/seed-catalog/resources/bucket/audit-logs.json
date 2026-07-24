@@ -1,0 +1,34 @@
+{
+  "apiVersion": "platform/v1",
+  "kind": "Bucket",
+  "metadata": {
+    "name": "audit-logs",
+    "ownerTeam": "search"
+  },
+  "spec": {
+    "region": "eu-west-1",
+    "versioning": true,
+    "retentionDays": 365
+  },
+  "payload": {
+    "method": "POST",
+    "url": "https://storage.api/buckets",
+    "body": {
+      "name": "audit-logs",
+      "region": "eu-west-1",
+      "versioning": true,
+      "policy_arn": "<<mapping.internals.grant_read.outputs.policy_arn>>"
+    }
+  },
+  "mapping": {
+    "children": {},
+    "internals": {
+      "grant_read": {
+        "type": "api-call",
+        "request": { "method": "POST", "url": "https://iam.api/policies" },
+        "extract": { "policy_arn": "$.arn" },
+        "outputs": { "policy_arn": null }
+      }
+    }
+  }
+}
