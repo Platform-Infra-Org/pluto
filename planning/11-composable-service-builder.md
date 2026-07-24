@@ -101,7 +101,9 @@ request fields the service needs, outputs = what its workflow emits (declared on
 
 ## 4. The service graph (what owners compose) **[decided]**
 
-A DAG of node instances. Each node:
+The owner composes **one graph per verb they choose to support** (any non-empty subset of
+create/update/delete — see §7). Each verb's graph is independent and fully re-editable later; the
+model below applies to a single verb's graph. A DAG of node instances. Each node:
 
 ```
 Node {
@@ -235,10 +237,10 @@ substitutes it. The builder generates this file from the owner's field mappings.
 3. **Render #1** → placeholders resolved. Repeat waves until `payload` has no `<<…>>`.
 4. Execute the **main call** with the resolved `payload`.
 
-**Recursion:** a child service's own `build-json.j2` is nested under `mapping.children.<name>` — the
-generator composes the parent template by inlining each child's `mapping` subtree (or, at runtime,
-the child's WorkflowTemplate produces that subtree). Child placeholders are namespaced by their path
-prefix so they never collide with the parent's.
+**Recursion** **[decided]**: a child service runs as its **own sub-workflow via `templateRef`**
+(§7) and produces its `mapping.children.<name>` subtree at runtime — the parent does not inline the
+child's graph. Child placeholders are namespaced by their path prefix so they never collide with the
+parent's. (Build-time inlining is a possible later optimization, not v1.)
 
 ---
 
@@ -301,18 +303,24 @@ spec:
         arguments: { parameters: [{ name: payload,
           value: "{{tasks.render-1.outputs.parameters.payload}}" }] }
 
-  - name: update    # same pipeline; main verb = PUT
+  - name: update    # only emitted if the owner defined an update graph; its OWN composed DAG
     dag: { tasks: [ ... ] }
-  - name: delete    # same pipeline; main verb = DELETE
+  - name: delete    # only emitted if the owner defined a delete graph; its OWN composed DAG
     dag: { tasks: [ ... ] }
 ```
 
-**Generator algorithm:** graph → validate (DAG, types) → topological sort → group nodes into
-**waves** (nodes whose inputs are all satisfiable become a wave) → emit a `render-N` between waves
-that feeds the next wave's `resolved` values → the wave containing `main` ends at `main-call`.
-`update`/`delete` reuse the pipeline with a different main verb/body. **Output is printed to the
-screen; the platform team commits it to the correct Git repo** ([1](01-architecture.md): the
-workflow remains the sole Git writer at runtime — the builder only *prints* the templates). **[decided]**
+**Verbs are opt-in and independently composed** **[decided]**: `spec.templates` contains a template
+**only for each verb the owner chose to support** (any non-empty subset of create/update/delete),
+and **each verb is its own graph** — `delete` may look nothing like `create`. A service can support
+just `create`, or `create`+`delete`, etc.
+
+**Generator algorithm (run per defined verb):** graph → validate (DAG, types) → topological sort →
+group nodes into **waves** (nodes whose inputs are all satisfiable become a wave) → emit a `render-N`
+between waves that feeds the next wave's `resolved` values → the wave containing `main` ends at
+`main-call`. Each verb's graph compiles independently into its own template within the single object.
+**Output is printed to the screen; the platform team commits it to the correct Git repo**
+([1](01-architecture.md): the workflow remains the sole Git writer at runtime — the builder only
+*prints* the templates). **[decided]**
 
 ---
 
@@ -352,12 +360,17 @@ New function blocks are added by the platform team registering more manifests �
 - **`FunctionBlock`** registry (new table/entity): `name, category, template_ref, inputs[], outputs[],
   ui`, authored by platform-admins.
 - **`ServiceDefinition`** (extends [10](10-service-request-builder.md)) gains:
-  - `graph { nodes[], edges[] }` — the composed DAG.
-  - `generated { workflow_template_yaml, build_json_j2 }` — the printed output (regenerated on save).
+  - `graphs { create?, update?, delete? }` — **one composed DAG per supported verb** (only the verbs
+    the owner defined are present; each independently editable).
+  - `generated { workflow_template_yaml, build_json_j2 }` — the printed output (one `WorkflowTemplate`
+    object with a template per defined verb; regenerated on save).
   - Existing `form_schema`, `approval_policy`, `owner_team`, versioning stay.
-- **Generator** — a **pure backend module** `graph → { build_json_j2, workflow_template_yaml }`,
-  unit-testable against the printed contracts in §6–§7 (deterministic; no side effects). This is the
-  heart and gets the most test coverage.
+- **Full editability** **[decided]**: an owner may reopen a definition anytime to edit any verb's
+  graph, or **add/remove supported verbs**. Every change re-enters onboarding approval and **bumps
+  the version** (pin-until-migrated) — existing resources keep resolving against their pinned version.
+- **Generator** — a **pure backend module** `graphs → { build_json_j2, workflow_template_yaml }`
+  (runs per verb, assembles one object), unit-testable against the printed contracts in §6–§7
+  (deterministic; no side effects). This is the heart and gets the most test coverage.
 - **Onboarding** unchanged in shape ([10](10-service-request-builder.md)): owner composes → submits
   `SERVICE_ONBOARDING` → **admin approves** (now also reviewing the generated YAML) → the definition
   goes ACTIVE and its generated templates are printed for Git. The BFF still never writes Git.
@@ -409,18 +422,30 @@ Each phase gets its own epic + implementation plan (as with E01–E09).
 
 ---
 
-## 14. Open questions (for review)
+## 14. Resolved decisions **[decided]**
 
-- **Secrets in api-calls:** function-block inputs of type `secretRef` resolve from where — a vault,
-  Argo secret, or Keycloak-scoped? (Leaning: `secretRef` → a name resolved by `fn-api-call` from a
-  cluster Secret; never inlined in the big JSON.)
-- **Recursion resolution:** does a child service execute as its own sub-workflow (its template
-  produces the `mapping.children.<name>` subtree at runtime), or does the generator **inline** the
-  child's graph into the parent at build time? (Recommend runtime sub-workflow via `templateRef` —
-  matches §7 and reuses the real templates; inlining is a later optimization.)
-- **Update/delete field mapping:** do `update`/`delete` reuse the same graph with a different main
-  verb, or can owners define per-verb graphs? (Default: shared graph, per-verb main node; allow
-  per-verb override later.)
-- **Versioning of function blocks:** when a `fn-*` block's IO changes, how are services that use it
-  revalidated? (Pin block version in the node; flag drift on the definition — mirrors
-  pin-until-migrated from [10](10-service-request-builder.md).)
+All four brainstorm open questions are now settled:
+
+- **Secrets in api-calls:** a `secretRef`-typed input holds a **name**; `fn-api-call` resolves it
+  from a **Kubernetes/Argo cluster Secret** at execution time. Secrets are **never inlined** into the
+  big JSON or the printed WorkflowTemplate — only the reference name appears. (External vault /
+  Keycloak-scoped tokens are a later option, not v1.)
+- **Recursion:** a child service runs as its **own sub-workflow via `templateRef`** and produces its
+  `mapping.children.<name>` subtree at runtime. This reuses the real dependency templates and lets a
+  dependency's changes propagate automatically; build-time inlining is a possible later optimization,
+  not v1.
+- **Per-verb graphs + opt-in verbs + editability:** each supported verb has its **own independently
+  composed graph** (create/update/delete can look completely different). A service **chooses which
+  verbs it supports** — any non-empty subset of {create, update, delete} (e.g. create-only, or
+  create+delete). Owners can **return later and change anything** — edit a verb's graph, or add /
+  remove verbs. Each such change goes through the normal onboarding-approval path and **bumps the
+  definition version** (pin-until-migrated, [10](10-service-request-builder.md)), so existing
+  resources keep resolving against the version they were created under.
+- **Function-block versioning:** each node **pins the block version** it was wired against. A new
+  block version does not silently break services — the definition is flagged as **drifted** and the
+  owner re-validates/re-onboards (mirrors pin-until-migrated).
+
+## 15. Remaining smaller questions (non-blocking)
+
+- Concrete `secretRef` naming convention and which namespace's Secrets `fn-api-call` may read.
+- Whether the drift flag is computed lazily (on next open) or proactively (a background check).
