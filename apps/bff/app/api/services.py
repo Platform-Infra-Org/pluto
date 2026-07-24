@@ -17,9 +17,10 @@ from app.db import get_session
 from app.models.request import Request
 from app.requests import authz
 from app.requests.state import IllegalTransition, add_approval, transition
-from app.services import definition as service_def
+from app.generator.generate import GenerationError
+from app.services import compose, definition as service_def
 from app.services import onboarding
-from app.services.definition import ServiceDefinition
+from app.services.definition import DRAFT, ServiceDefinition
 
 router = APIRouter(prefix="/api/services")
 
@@ -37,6 +38,10 @@ class DefinitionBody(BaseModel):
 
 class NoteBody(BaseModel):
     note: str | None = None
+
+
+class EditBody(BaseModel):
+    graphs: dict  # full per-verb graph set (CB03 wire shape); replaces the current graphs
 
 
 def _dump_def(d: ServiceDefinition) -> dict:
@@ -141,6 +146,45 @@ async def submit_definition(
         raise HTTPException(status.HTTP_409_CONFLICT, f"cannot submit from {d.status}")
     req = await onboarding.submit_onboarding(session, d, principal.sub)
     return {"request_id": req.id, "definition_status": d.status, "state": req.state}
+
+
+@router.post("/definitions/{definition_id}/edit")
+async def edit_definition(
+    definition_id: int,
+    body: EditBody,
+    principal: Principal = Depends(require_role("service-owner")),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Compose/edit a definition's per-verb graphs, then resubmit for onboarding.
+
+    A still-DRAFT definition is edited in place. A definition that already went
+    through onboarding (ACTIVE/PENDING/RETIRED) **forks a new bumped version**
+    (pin-until-migrated: existing resources keep resolving their pinned version).
+    Verbs are opt-in — `graphs` is the full new set (add/remove a verb by including
+    or omitting it). Every edit regenerates (CB02) and re-enters SERVICE_ONBOARDING.
+    """
+    src = await _own_definition(session, definition_id, principal)
+    if src.status == DRAFT:
+        target = src
+    else:
+        target = ServiceDefinition(
+            name=src.name,
+            category=src.category,
+            owner_team=src.owner_team,
+            form_schema=src.form_schema,
+            ui_schema=src.ui_schema,
+            workflow_binding=src.workflow_binding,
+            approval_policy=src.approval_policy,
+            git_path=src.git_path,
+            status=DRAFT,
+            version=await service_def.next_version(session, src.name),
+        )
+    try:
+        await compose.save_graphs(session, target, body.graphs)
+    except GenerationError as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+    req = await onboarding.submit_onboarding(session, target, principal.sub)
+    return {"version": target.version, "request_id": req.id, "definition": _dump_def(target)}
 
 
 async def _load_onboarding(session: AsyncSession, request_id: int) -> Request:

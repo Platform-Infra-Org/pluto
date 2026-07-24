@@ -35,9 +35,11 @@ async def save_graphs(
     palette = await registry.list_blocks(session)
     manifests = await registry.load_manifests(session)
 
-    # generate() raises GenerationError on an invalid graph -> nothing persisted.
+    # generate() raises GenerationError on an invalid graph -> nothing persisted
+    # (this runs before session.add below, so a fresh/forked defn is never inserted).
     gen = generate(parse_graphs(graphs), manifests)
 
+    session.add(defn)
     defn.graphs = graphs
     defn.generated = {
         "build_json_j2": gen.build_json_j2,
