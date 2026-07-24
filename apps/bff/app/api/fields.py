@@ -6,16 +6,18 @@ underlying system (Keycloak / object store / external API).
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.auth.deps import current_principal
 from app.auth.principal import Principal
-from app.services.fields import groups
+from app.config import settings
+from app.services.fields import groups, upload
 
 router = APIRouter(prefix="/api/fields")
 
-# Indirection so tests can swap the Keycloak admin client for a mock transport.
+# Indirection so tests can swap the Keycloak admin client / artifact store.
 _kc_client_factory = groups.admin_client
+_store_factory = upload.default_store
 
 
 @router.get("/groups")
@@ -37,3 +39,34 @@ async def groups_field(
         if client is not None:
             await client.aclose()
     return {"items": items}
+
+
+@router.post("/upload", status_code=status.HTTP_201_CREATED)
+async def upload_field(
+    request: Request,
+    filename: str,
+    _: Principal = Depends(current_principal),
+) -> dict:
+    """Store an uploaded file in the artifact repo; return only its reference.
+
+    Raw-body upload (Content-Type header = the file's type) so we need no
+    multipart dependency. Enforces size + allowed types at the boundary.
+    """
+    content = await request.body()
+    content_type = request.headers.get("content-type", "application/octet-stream")
+    try:
+        return upload.store_upload(
+            filename,
+            content,
+            content_type,
+            store=_store_factory(),
+            max_mb=settings.artifact_max_upload_mb,
+        )
+    except upload.UploadTooLarge as exc:
+        raise HTTPException(
+            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, str(exc)
+        ) from exc
+    except upload.UploadTypeNotAllowed as exc:
+        raise HTTPException(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, str(exc)
+        ) from exc
