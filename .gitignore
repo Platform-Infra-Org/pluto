@@ -17,3 +17,7 @@ dist/
 .ruff_cache/
 .mypy_cache/
 .DS_Store
+
+# Playwright
+/apps/web/test-results/
+/apps/web/playwright-report/
