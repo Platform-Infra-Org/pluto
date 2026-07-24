@@ -60,8 +60,8 @@ async def client(session):
 
 def _main(method, url):
     return {"id": "main", "block": "api-call", "kind": "main",
-            "config": {"method": method, "url": url,
-                       "body": {"name": {"kind": "request", "field": "app_name"}}}}
+            "input_bindings": {"method": method, "url": url,
+                               "body": {"name": {"kind": "request", "field": "app_name"}}}}
 
 
 def _create_graph():
@@ -161,13 +161,13 @@ async def test_non_generation_error_returns_clean_422(client):
     holder["principal"] = OWNER
     d = (await c.post("/api/services/definitions", json={
         "name": "svc", "owner_team": "payments"})).json()
-    # set-value node marked as main passes validation but raises KeyError on emit (no config["method"])
+    # set-value node marked as main passes validation (expr bound) but raises KeyError
+    # on emit — _payload reads input_bindings["method"], which set-value has no notion of.
     bad_graph = {
         "request_fields": {"val": "string"},
         "nodes": [{
             "id": "main", "block": "set-value", "kind": "main",
-            "config": {"expr": "test"},
-            "input_bindings": {}
+            "input_bindings": {"expr": "test"}
         }]
     }
     r = await c.post(f"/api/services/definitions/{d['id']}/edit",

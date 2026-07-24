@@ -80,16 +80,41 @@ def _binding(graph: ServiceGraph, binding: Binding) -> object:
     return binding.value
 
 
+def _scalar(graph: ServiceGraph, node: Node, name: str) -> object:
+    """Resolve a scalar input binding to its emitted value."""
+    binding = node.input_bindings[name]
+    assert not isinstance(binding, dict), f"{name} is a map-shaped input, not a scalar"
+    return _binding(graph, binding)
+
+
+def _url_value(graph: ServiceGraph, node: Node) -> object:
+    """Resolve the `url` input, applying `_url()` templating when it is a literal
+    string (a Ref/OutRef resolves to a Jinja expression left untouched)."""
+    value = _scalar(graph, node, "url")
+    return _url(value) if isinstance(value, str) else value
+
+
+def _map_input(graph: ServiceGraph, node: Node, name: str) -> dict:
+    """Resolve a map-shaped input (`body`/`rules`) to ``{key: emitted value}``."""
+    value = node.input_bindings.get(name, {})
+    assert isinstance(value, dict)
+    return {k: _binding(graph, b) for k, b in value.items()}
+
+
 def _payload(graph: ServiceGraph, main: Node) -> dict:
-    body = {k: _binding(graph, b) for k, b in main.config.get("body", {}).items()}
-    return {"method": main.config["method"], "url": _url(main.config["url"]), "body": body}
+    return {
+        "method": _scalar(graph, main, "method"),
+        "url": _url_value(graph, main),
+        "body": _map_input(graph, main, "body"),
+    }
 
 
 def _child(graph: ServiceGraph, dep: Node) -> dict:
     return {
         "service": dep.block,
         "action": dep.action,
-        "inputs": {k: _binding(graph, b) for k, b in dep.input_bindings.items()},
+        # dependency inputs are scalar bindings (a dep never takes a map-shaped input).
+        "inputs": {k: _binding(graph, b) for k, b in dep.input_bindings.items() if not isinstance(b, dict)},
         "outputs": {o: _placeholder(out_path(graph, OutRef(dep.id, o))) for o in dep.outputs},
         "mapping": {"children": {}, "internals": {}},
     }
@@ -98,11 +123,11 @@ def _child(graph: ServiceGraph, dep: Node) -> dict:
 def _internal(graph: ServiceGraph, call: Node, extractor: Node | None) -> dict:
     entry: dict = {
         "type": "api-call",
-        "request": {"method": call.config["method"], "url": _url(call.config["url"])},
+        "request": {"method": _scalar(graph, call, "method"), "url": _url_value(graph, call)},
     }
     owner = extractor or call
     if extractor is not None:
-        entry["extract"] = extractor.config.get("rules", {})
+        entry["extract"] = _map_input(graph, extractor, "rules")
     entry["outputs"] = {
         o: _placeholder(f"mapping.internals.{path_key(call.id)}.outputs.{o}")
         for o in owner.outputs

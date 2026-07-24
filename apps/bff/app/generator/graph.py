@@ -45,6 +45,10 @@ class Lit:
 
 
 Binding = Ref | OutRef | Lit
+# An input's stored value: a scalar `Binding`, or a map-shaped input (api-call
+# `body`, json-extractor `rules`) as `{key: Binding}`. Unified model — every input
+# lives under `Node.input_bindings`; there is no separate literal `config`.
+InputValue = Binding | dict[str, Binding]
 
 
 @dataclass
@@ -53,8 +57,7 @@ class Node:
     block: str  # function-block name OR dependency service name
     kind: Kind
     action: str | None = None  # for dependency nodes: create | update | delete
-    config: dict = field(default_factory=dict)  # literal config (method, url, rules, body)
-    input_bindings: dict[str, Binding] = field(default_factory=dict)
+    input_bindings: dict[str, InputValue] = field(default_factory=dict)
     outputs: list[str] = field(default_factory=list)
 
 
@@ -106,12 +109,23 @@ def parse_binding(v: object) -> Binding:
     return Lit(v)
 
 
-def _parse_config(config: dict) -> dict:
-    """Config is literal, except `body` values (main node) are bindings."""
-    out = dict(config)
-    if isinstance(config.get("body"), dict):
-        out["body"] = {k: parse_binding(v) for k, v in config["body"].items()}
-    return out
+_BINDING_KINDS = {"request", "output", "literal"}
+
+
+def parse_input(v: object) -> InputValue:
+    """Deserialize one input value: a tagged scalar `Binding`, or a map-shaped input
+    (``body``/``rules``) — a dict of arbitrary keys whose values are bindings.
+
+    A scalar binding is a dict tagged with ``kind`` in {request,output,literal}; any
+    other dict is a map<key,Binding>. ponytail: a literal whose *value* is a plain
+    dict must be written tagged (``{"kind":"literal","value":{...}}``) to avoid being
+    read as a map — the only inputs stored as bare dicts are body/rules.
+    """
+    if isinstance(v, dict) and v.get("kind") in _BINDING_KINDS:
+        return parse_binding(v)
+    if isinstance(v, dict):
+        return {k: parse_binding(vv) for k, vv in v.items()}
+    return parse_binding(v)
 
 
 def _parse_node(d: dict) -> Node:
@@ -120,8 +134,7 @@ def _parse_node(d: dict) -> Node:
         block=d["block"],
         kind=Kind(d["kind"]),
         action=d.get("action"),
-        config=_parse_config(d.get("config") or {}),
-        input_bindings={k: parse_binding(v) for k, v in (d.get("input_bindings") or {}).items()},
+        input_bindings={k: parse_input(v) for k, v in (d.get("input_bindings") or {}).items()},
         outputs=list(d.get("outputs") or []),
     )
 
@@ -141,14 +154,20 @@ def parse_graphs(d: dict) -> Graphs:
     return Graphs(name=d.get("name", ""), **verbs)
 
 
+def out_refs(value: InputValue) -> list[OutRef]:
+    """Every OutRef inside one input value — the value itself if scalar, or all its
+    entries if map-shaped (body/rules)."""
+    if isinstance(value, OutRef):
+        return [value]
+    if isinstance(value, dict):
+        return [b for b in value.values() if isinstance(b, OutRef)]
+    return []
+
+
 def node_dep_ids(node: Node) -> set[str]:
-    """The node ids this node depends on (via OutRef bindings + main body refs)."""
-    deps = {b.node for b in node.input_bindings.values() if isinstance(b, OutRef)}
-    if node.kind is Kind.MAIN:
-        for b in node.config.get("body", {}).values():
-            if isinstance(b, OutRef):
-                deps.add(b.node)
-    return deps
+    """The node ids this node depends on — every OutRef across all input bindings
+    (scalars and map-shaped body/rules values alike)."""
+    return {r.node for v in node.input_bindings.values() for r in out_refs(v)}
 
 
 def path_key(node_id: str) -> str:

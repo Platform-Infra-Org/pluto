@@ -39,14 +39,18 @@ def blocks() -> dict[str, BlockManifest]:
 
 def app_database_create() -> ServiceGraph:
     """The §4 worked example — request app_name/size/region; dep network.create;
-    internal api-call GET accounts -> json-extractor; main api-call POST."""
+    internal api-call GET accounts -> json-extractor; main api-call POST.
+
+    Every input lives under `input_bindings` (unified model): scalars as a single
+    `Binding`, the `body`/`rules` maps as `{key: Binding}`.
+    """
     main = Node(
         id="main",
         block="api-call",
         kind=Kind.MAIN,
-        config={
-            "method": "POST",
-            "url": "https://db.api/databases",
+        input_bindings={
+            "method": Lit("POST"),
+            "url": Lit("https://db.api/databases"),
             "body": {
                 "name": Ref("app_name"),
                 "size": Ref("size"),
@@ -68,15 +72,20 @@ def app_database_create() -> ServiceGraph:
         id="lookup-account",
         block="api-call",
         kind=Kind.INTERNAL,
-        config={"method": "GET", "url": "https://accounts.api/accounts?name={app_name}"},
+        input_bindings={
+            "method": Lit("GET"),
+            "url": Lit("https://accounts.api/accounts?name={app_name}"),
+        },
         outputs=["response"],
     )
     extract = Node(
         id="extract-account",
         block="json-extractor",
         kind=Kind.INTERNAL,
-        config={"rules": {"account_id": "$.items[0].id"}},
-        input_bindings={"source": OutRef("lookup-account", "response")},
+        input_bindings={
+            "source": OutRef("lookup-account", "response"),
+            "rules": {"account_id": Lit("$.items[0].id")},
+        },
         outputs=["account_id"],
     )
     return ServiceGraph(
@@ -92,9 +101,9 @@ def app_database_delete() -> ServiceGraph:
         id="main",
         block="api-call",
         kind=Kind.MAIN,
-        config={
-            "method": "DELETE",
-            "url": "https://db.api/databases/{app_name}",
+        input_bindings={
+            "method": Lit("DELETE"),
+            "url": Lit("https://db.api/databases/{app_name}"),
             "body": {"name": Ref("app_name")},
         },
     )
@@ -114,14 +123,21 @@ def app_database(create=True, delete=False) -> Graphs:
 
 def two_mains() -> ServiceGraph:
     g = app_database_create()
-    g.nodes.append(Node(id="main2", block="api-call", kind=Kind.MAIN, config={"method": "POST", "url": "x"}))
+    g.nodes.append(
+        Node(
+            id="main2",
+            block="api-call",
+            kind=Kind.MAIN,
+            input_bindings={"method": Lit("POST"), "url": Lit("x")},
+        )
+    )
     return g
 
 
 def missing_required() -> ServiceGraph:
-    # api-call node with no url (required) and not in config
+    # api-call node with no url (required) and no binding for it
     return ServiceGraph(
-        nodes=[Node(id="main", block="api-call", kind=Kind.MAIN, config={"method": "GET"})]
+        nodes=[Node(id="main", block="api-call", kind=Kind.MAIN, input_bindings={"method": Lit("GET")})]
     )
 
 
@@ -133,8 +149,7 @@ def bad_type_wire() -> ServiceGraph:
                 id="main",
                 block="api-call",
                 kind=Kind.MAIN,
-                config={"method": "GET"},
-                input_bindings={"url": Ref("count")},
+                input_bindings={"method": Lit("GET"), "url": Ref("count")},
             )
         ],
         request_fields={"count": parse_type("number")},
@@ -147,19 +162,22 @@ def cyclic() -> ServiceGraph:
         id="a",
         block="json-extractor",
         kind=Kind.INTERNAL,
-        config={"rules": {}},
-        input_bindings={"source": OutRef("b", "extracted")},
+        input_bindings={"source": OutRef("b", "extracted"), "rules": {}},
         outputs=["extracted"],
     )
     b = Node(
         id="b",
         block="json-extractor",
         kind=Kind.INTERNAL,
-        config={"rules": {}},
-        input_bindings={"source": OutRef("a", "extracted")},
+        input_bindings={"source": OutRef("a", "extracted"), "rules": {}},
         outputs=["extracted"],
     )
-    main = Node(id="main", block="api-call", kind=Kind.MAIN, config={"method": "GET", "url": "x"})
+    main = Node(
+        id="main",
+        block="api-call",
+        kind=Kind.MAIN,
+        input_bindings={"method": Lit("GET"), "url": Lit("x")},
+    )
     return ServiceGraph(nodes=[main, a, b])
 
 
@@ -171,9 +189,9 @@ def dangling_node() -> ServiceGraph:
                 id="main",
                 block="api-call",
                 kind=Kind.MAIN,
-                config={
-                    "method": "POST",
-                    "url": "https://db.api/x",
+                input_bindings={
+                    "method": Lit("POST"),
+                    "url": Lit("https://db.api/x"),
                     "body": {"ghost_ref": OutRef("ghost", "id")},
                 },
             )
@@ -184,7 +202,12 @@ def dangling_node() -> ServiceGraph:
 def unknown_block() -> ServiceGraph:
     return ServiceGraph(
         nodes=[
-            Node(id="main", block="api-call", kind=Kind.MAIN, config={"method": "GET", "url": "x"}),
+            Node(
+                id="main",
+                block="api-call",
+                kind=Kind.MAIN,
+                input_bindings={"method": Lit("GET"), "url": Lit("x")},
+            ),
             Node(id="dep", block="nope-service", kind=Kind.DEPENDENCY, action="create"),
         ]
     )
@@ -198,9 +221,9 @@ def _leaf_service(name: str) -> ServiceGraph:
                 id="main",
                 block="api-call",
                 kind=Kind.MAIN,
-                config={
-                    "method": "POST",
-                    "url": f"https://{name}.api/{name}",
+                input_bindings={
+                    "method": Lit("POST"),
+                    "url": Lit(f"https://{name}.api/{name}"),
                     "body": {"env": Ref("env")},
                 },
                 outputs=["id"],
@@ -219,9 +242,9 @@ def _service_on(name: str, dep: str) -> ServiceGraph:
                 id="main",
                 block="api-call",
                 kind=Kind.MAIN,
-                config={
-                    "method": "POST",
-                    "url": f"https://{name}.api/{name}",
+                input_bindings={
+                    "method": Lit("POST"),
+                    "url": Lit(f"https://{name}.api/{name}"),
                     "body": {"env": Ref("env"), "parent_id": OutRef(dep, "id")},
                 },
                 outputs=["id"],

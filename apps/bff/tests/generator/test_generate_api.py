@@ -59,12 +59,11 @@ def _main_node(**over):
         "id": "main",
         "block": "api-call",
         "kind": "main",
-        "config": {
+        "input_bindings": {
             "method": "POST",
             "url": "https://db.api/databases",
             "body": {"name": {"kind": "request", "field": "app_name"}},
         },
-        "input_bindings": {},
         "outputs": [],
     }
     node.update(over)
@@ -100,8 +99,8 @@ async def test_invalid_graph_returns_errors_no_partial_yaml(client):
 
 
 async def test_main_body_binding_renders_request_value(client):
-    # config.body binds `name -> request.app_name`; the rendered payload.body.name
-    # must resolve to the request value (proves body is NOT empty and flows via config.body).
+    # input_bindings.body binds `name -> request.app_name`; the rendered payload.body.name
+    # must resolve to the request value (proves the body map flows via input_bindings).
     r = await client.post("/api/services/generate", json={"graphs": _graphs([_main_node()])})
     assert r.status_code == 200, r.text
     tpl = Environment().from_string(r.json()["build_json_j2"])

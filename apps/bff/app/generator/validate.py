@@ -64,7 +64,9 @@ def _check_required(node: Node, manifest: BlockManifest, errs: list[ValidationEr
     for inp in manifest.inputs:
         if not inp.required:
             continue
-        if inp.name not in node.input_bindings and inp.name not in node.config:
+        # Unified model: a required input is satisfied when it has a binding under
+        # input_bindings (a map-shaped input counts as bound even when its map is empty).
+        if inp.name not in node.input_bindings:
             errs.append(ValidationError(f"required input {inp.name!r} is unbound", node.id))
 
 
@@ -91,6 +93,8 @@ def _check_types(
     errs: list[ValidationError],
 ) -> None:
     for name, binding in node.input_bindings.items():
+        if isinstance(binding, dict):  # map-shaped input (body/rules) — permissive, skip
+            continue
         dst = _input_type(manifest, name)
         if dst is None:  # not a declared input -> nothing to type-check
             continue

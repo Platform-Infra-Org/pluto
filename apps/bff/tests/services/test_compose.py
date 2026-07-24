@@ -38,8 +38,8 @@ def _main(**over):
         "id": "main",
         "block": "api-call",
         "kind": "main",
-        "config": {"method": "POST", "url": "https://db.api/x",
-                   "body": {"name": {"kind": "request", "field": "app_name"}}},
+        "input_bindings": {"method": "POST", "url": "https://db.api/x",
+                           "body": {"name": {"kind": "request", "field": "app_name"}}},
     }
     node.update(over)
     return node

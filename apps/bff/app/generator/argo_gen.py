@@ -21,10 +21,12 @@ import yaml
 
 from app.generator.graph import (
     Kind,
+    Lit,
     Node,
     OutRef,
     ServiceGraph,
     out_path,
+    out_refs,
     path_key,
 )
 from app.generator.waves import waves
@@ -77,6 +79,9 @@ def _node_task(graph: ServiceGraph, node: Node) -> dict:
     if node.block == "json-extractor":
         src = node.input_bindings["source"]
         assert isinstance(src, OutRef)
+        rules = node.input_bindings.get("rules", {})
+        assert isinstance(rules, dict)
+        literal_rules = {k: b.value for k, b in rules.items() if isinstance(b, Lit)}
         return {
             "name": node.id,
             "depends": src.node,
@@ -87,7 +92,7 @@ def _node_task(graph: ServiceGraph, node: Node) -> dict:
                         "source",
                         f"{{{{tasks.{src.node}.outputs.parameters.{src.output}}}}}",
                     ),
-                    _param("rules", json.dumps(node.config.get("rules", {}))),
+                    _param("rules", json.dumps(literal_rules)),
                 ]
             },
         }
@@ -115,12 +120,11 @@ def _producers(graph: ServiceGraph) -> list[tuple[str, str, str]]:
     payload references — in body order (deterministic), de-duplicated."""
     seen: set[str] = set()
     out: list[tuple[str, str, str]] = []
-    for binding in graph.main.config.get("body", {}).values():
-        if isinstance(binding, OutRef):
-            path = out_path(graph, binding)
-            if path not in seen:
-                seen.add(path)
-                out.append((path, binding.node, binding.output))
+    for binding in out_refs(graph.main.input_bindings.get("body", {})):
+        path = out_path(graph, binding)
+        if path not in seen:
+            seen.add(path)
+            out.append((path, binding.node, binding.output))
     return out
 
 
