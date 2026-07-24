@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import catalog, me, requests, workflow_status
 from app.catalog.git_sync import sync_repo
 from app.config import settings
+from app.notifications import sse
 
 log = logging.getLogger(__name__)
 
@@ -30,8 +31,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     if settings.git_repo_url:
         task = asyncio.create_task(_reconcile_loop())
     try:
+        await sse.fanout.start()  # LISTEN for cross-replica notification fan-out
+    except Exception:  # noqa: BLE001 — degrade to REST-only if PG LISTEN is down
+        log.exception("notification fan-out failed to start")
+    try:
         yield
     finally:
+        await sse.fanout.stop()
         if task:
             task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
@@ -53,6 +59,7 @@ app.include_router(me.router)
 app.include_router(catalog.router)
 app.include_router(requests.router)
 app.include_router(workflow_status.router)
+app.include_router(sse.router)
 
 
 @app.get("/healthz")

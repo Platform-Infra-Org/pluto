@@ -38,7 +38,15 @@ async def notify(
     session.add(n)
     await session.flush()  # assign n.id before we reference it in the payload
     payload = json.dumps(
-        {"id": n.id, "user_id": user_id, "type": type, "request_id": request_id}
+        {
+            "id": n.id,
+            "user_id": user_id,
+            "type": type,
+            "request_id": request_id,
+            "title": title,
+            "body": body,
+            "read_at": None,
+        }
     )
     # NOTIFY is buffered by Postgres and delivered to LISTENers only at COMMIT,
     # which is exactly persist-then-push: no push without a durable row.
