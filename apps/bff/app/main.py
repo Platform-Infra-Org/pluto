@@ -12,6 +12,7 @@ from app.catalog.git_sync import sync_repo
 from app.config import settings
 from app.execution.reconcile import reconcile_on_startup
 from app.notifications import sse
+from app.obs.telemetry import setup_telemetry
 from app.services.fields.option_source import poll_loop
 
 log = logging.getLogger(__name__)
@@ -57,6 +58,7 @@ async def _reconcile_loop(interval: int = 300) -> None:
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    setup_telemetry(app)  # OTel + secret-redaction; no-op without an OTLP endpoint
     task = None
     if settings.git_repo_url:
         task = asyncio.create_task(_reconcile_loop())

@@ -16,6 +16,7 @@ from app.argo.status import find_failed_step
 from app.catalog.git_sync import sync_repo
 from app.models.request import Request
 from app.notifications import events
+from app.obs import telemetry
 from app.requests.state import transition
 
 _TERMINAL = {"Succeeded", "Failed", "Error"}
@@ -57,6 +58,8 @@ async def _apply_terminal(req, ws, session, reindex) -> None:
     if ws.phase == "Succeeded":
         transition(req, "succeed", actor="system", note="workflow succeeded")
         await session.commit()
+        telemetry.record_workflow_result(True)
+        telemetry.record_request_state("SUCCEEDED")
         await events.notify_safe(events.workflow_succeeded, session, req)
         await reindex()  # workflow committed to Git -> refresh the catalog index
     elif ws.phase in ("Failed", "Error"):
@@ -72,6 +75,8 @@ async def _apply_terminal(req, ws, session, reindex) -> None:
         )
         transition(req, "fail", actor="system", note="workflow failed")
         await session.commit()
+        telemetry.record_workflow_result(False)
+        telemetry.record_request_state("FAILED")
         await events.notify_safe(events.workflow_failed, session, req)
     # Non-terminal ws here would mean the workflow is still running with no
     # terminal truth yet; leave the request EXECUTING for the next reconcile.

@@ -5,7 +5,7 @@ Reuses the hardening conftest (compose Postgres + dependency overrides).
 
 import pytest
 
-from app.models.request import Request, RequestEvent
+from app.models.request import Request
 from app.models.resource import ResourceIndex
 from app.services.definition import ServiceDefinition
 from app.services.fields.option_source import OptionSource

@@ -8,6 +8,9 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/bff"
     log_level: str = "INFO"
+    # OpenTelemetry (E09 Task 4). Empty endpoint => telemetry is a no-op.
+    otel_exporter_otlp_endpoint: str = ""
+    otel_service_name: str = "platform-bff"
     cors_allowed_origins: str = "http://localhost:5173"
     app_base_url: str = "http://localhost:5173"
     bff_base_url: str = "http://localhost:8000"
