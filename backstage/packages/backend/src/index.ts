@@ -42,9 +42,11 @@ backend.add(import('@backstage/plugin-catalog-backend-module-logs'));
 
 // permission plugin
 backend.add(import('@backstage/plugin-permission-backend'));
-// See https://backstage.io/docs/permissions/getting-started for how to create your own permission policy
+// Platform RBAC policy (approve → platform-admins; create → non-auditors).
 backend.add(
-  import('@backstage/plugin-permission-backend-module-allow-all-policy'),
+  import(
+    '@internal/backstage-plugin-permission-backend-module-platform-rbac'
+  ),
 );
 
 // search plugin
@@ -72,4 +74,5 @@ backend.add(import('@backstage/plugin-signals-backend'));
 backend.add(import('@backstage/plugin-mcp-actions-backend'));
 
 backend.add(import('@internal/backstage-plugin-platform-requests-backend'));
+backend.add(import('@internal/backstage-plugin-permission-backend-module-platform-rbac'));
 backend.start();

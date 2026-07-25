@@ -5131,6 +5131,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@internal/backstage-plugin-permission-backend-module-platform-rbac@workspace:^, @internal/backstage-plugin-permission-backend-module-platform-rbac@workspace:plugins/permission-backend-module-platform-rbac":
+  version: 0.0.0-use.local
+  resolution: "@internal/backstage-plugin-permission-backend-module-platform-rbac@workspace:plugins/permission-backend-module-platform-rbac"
+  dependencies:
+    "@backstage/backend-plugin-api": "npm:^1.9.3"
+    "@backstage/backend-test-utils": "npm:^1.11.5"
+    "@backstage/cli": "npm:^0.36.4"
+    "@backstage/plugin-permission-common": "npm:^0.9.9"
+    "@backstage/plugin-permission-node": "npm:^0.11.2"
+    "@internal/plugin-platform-common": "workspace:^"
+  languageName: unknown
+  linkType: soft
+
 "@internal/backstage-plugin-platform-requests-backend@workspace:^, @internal/backstage-plugin-platform-requests-backend@workspace:plugins/platform-requests-backend":
   version: 0.0.0-use.local
   resolution: "@internal/backstage-plugin-platform-requests-backend@workspace:plugins/platform-requests-backend"
@@ -13167,6 +13180,7 @@ __metadata:
     "@backstage/plugin-signals-backend": "npm:^0.3.17"
     "@backstage/plugin-techdocs-backend": "npm:^2.2.2"
     "@backstage/plugin-user-settings-backend": "npm:^0.4.5"
+    "@internal/backstage-plugin-permission-backend-module-platform-rbac": "workspace:^"
     "@internal/backstage-plugin-platform-requests-backend": "workspace:^"
     app: "link:../app"
     better-sqlite3: "npm:^12.0.0"

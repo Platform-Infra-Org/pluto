@@ -108,12 +108,10 @@ auth:
         prompt: auto
         signIn:
           resolvers:
-            # Map the local part of the Keycloak email (admin@… -> admin) to a
-            # User entity when one exists; for the P0 demo allow sign-in even
-            # without a catalog user (P1 seeds Users + group membership and
-            # tightens this).
+            # Map the local part of the Keycloak email (admin@… -> admin) to the
+            # seeded User entity, so the user's group memberships flow into the
+            # Backstage identity for RBAC.
             - resolver: emailLocalPartMatchingUserEntityName
-              dangerouslyAllowSignInWithoutUserInCatalog: true
   # see https://backstage.io/docs/ai/mcp-actions#client-id-metadata-documents
   # to learn more about client id metadata documents
   clientIdMetadataDocuments:

@@ -81,19 +81,42 @@ def main():
         open(os.path.join(OUT, fn), "w").write(yaml_dump(entity) + "\n")
         targets.append(f"./{fn}")
 
-    # Group entities backing the owner refs.
+    # Group entities backing the owner refs (resource-owner teams) + the Keycloak
+    # role-groups used for RBAC. Group names mirror the Keycloak `groups` claim.
+    role_groups = ["platform-admins", "platform-auditors", "owners-payments", "service-owner"]
     groups = []
-    for team in sorted(teams):
+    for name in sorted(set(teams) | set(role_groups)):
         groups.append({
             "apiVersion": "backstage.io/v1alpha1",
             "kind": "Group",
-            "metadata": {"name": team},
+            "metadata": {"name": name},
             "spec": {"type": "team", "children": []},
         })
     open(os.path.join(OUT, "groups.yaml"), "w").write(
         "\n---\n".join(yaml_dump(g) for g in groups) + "\n"
     )
     targets.insert(0, "./groups.yaml")
+
+    # User entities for the Keycloak users, each a member of their groups. The OIDC
+    # sign-in resolver matches the email local-part to these (user:default/<name>),
+    # so their group memberships flow into the identity for RBAC.
+    users = [
+        ("admin", ["platform-admins"]),
+        ("requester", ["owners-payments"]),
+        ("auditor", ["platform-auditors"]),
+    ]
+    docs = []
+    for name, member_of in users:
+        docs.append({
+            "apiVersion": "backstage.io/v1alpha1",
+            "kind": "User",
+            "metadata": {"name": name},
+            "spec": {"memberOf": member_of},
+        })
+    open(os.path.join(OUT, "users.yaml"), "w").write(
+        "\n---\n".join(yaml_dump(d) for d in docs) + "\n"
+    )
+    targets.insert(1, "./users.yaml")
 
     location = {
         "apiVersion": "backstage.io/v1alpha1",
