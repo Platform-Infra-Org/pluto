@@ -14,7 +14,7 @@ import { Request, isTerminal } from '@internal/plugin-platform-common';
 import { requestsApiRef } from '../api';
 import { requestRouteRef } from '../routes';
 import { WorkflowGraph } from './WorkflowGraph';
-import { stateBadge } from './RequestsPage';
+import { stateBadge, formatTs } from './RequestsPage';
 
 const ADMIN_GROUP = 'group:default/platform-admins';
 
@@ -100,6 +100,10 @@ export function RequestPage() {
               <dd>{request.workflowName ?? '—'}</dd>
               <dt>Phase</dt>
               <dd>{request.workflowPhase ?? '—'}</dd>
+              <dt>Created</dt>
+              <dd>{formatTs(request.createdAt)}</dd>
+              <dt>Updated</dt>
+              <dd>{formatTs(request.updatedAt)}</dd>
               <dt>Params</dt>
               <dd>
                 <code>{JSON.stringify(request.params)}</code>
@@ -118,6 +122,7 @@ export function RequestPage() {
               <div key={i} style={{ marginBottom: 6 }}>
                 <b>{a.approver}</b> {a.decision}
                 {a.note ? ` — ${a.note}` : ''}
+                <span className="sc-muted"> · {formatTs(a.at)}</span>
               </div>
             ))}
             {pending && canApprove && (

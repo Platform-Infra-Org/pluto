@@ -5,6 +5,13 @@ import { Page, PageHeader, Card, Badge } from '@internal/plugin-platform-ui';
 import { Request, RequestState } from '@internal/plugin-platform-common';
 import { requestsApiRef } from '../api';
 
+/** ISO string -> locale date + time (e.g. "Jul 26, 2026, 3:04 PM"). */
+export const formatTs = (iso: string) =>
+  new Date(iso).toLocaleString(undefined, {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+
 export function stateBadge(s: RequestState) {
   switch (s) {
     case 'PENDING_APPROVAL':
@@ -167,6 +174,7 @@ export function RequestsPage() {
               <th>Type</th>
               <th>Resource</th>
               <th>Requester</th>
+              <th>Created</th>
               <th>State</th>
             </tr>
           </thead>
@@ -182,6 +190,7 @@ export function RequestsPage() {
                 <td>{r.resourceType}</td>
                 <td>{r.resourceName}</td>
                 <td>{r.requester}</td>
+                <td className="sc-muted">{formatTs(r.createdAt)}</td>
                 <td>{stateBadge(r.state)}</td>
               </tr>
             ))}
