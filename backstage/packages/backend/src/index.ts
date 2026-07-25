@@ -74,5 +74,4 @@ backend.add(import('@backstage/plugin-signals-backend'));
 backend.add(import('@backstage/plugin-mcp-actions-backend'));
 
 backend.add(import('@internal/backstage-plugin-platform-requests-backend'));
-backend.add(import('@internal/backstage-plugin-permission-backend-module-platform-rbac'));
 backend.start();
