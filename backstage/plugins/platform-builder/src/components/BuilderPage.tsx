@@ -20,6 +20,7 @@ export function BuilderPage() {
   const api = useApi(builderApiRef);
   const [name, setName] = useState('');
   const [title, setTitle] = useState('');
+  const [owner, setOwner] = useState('');
   const [fields, setFields] = useState<RequestField[]>([
     { name: 'region', title: 'Region', type: 'string', required: true },
   ]);
@@ -38,6 +39,7 @@ export function BuilderPage() {
       const res = await api.createDefinition({
         name: name.trim(),
         title: title.trim() || name.trim(),
+        owner: owner.trim() || undefined,
         fields: fields
           .filter(f => f.name.trim())
           .map(f => ({ ...f, enum: f.type === 'enum' ? f.enum : undefined })),
@@ -71,6 +73,14 @@ export function BuilderPage() {
                 <Input value={title} onChange={e => setTitle(e.target.value)} />
               </Field>
             </div>
+
+            <Field label="Owner team (service owner — approves this type's requests)">
+              <Input
+                placeholder="group:default/platform (or a bare group name)"
+                value={owner}
+                onChange={e => setOwner(e.target.value)}
+              />
+            </Field>
 
             <div className="sc-label" style={{ marginTop: 8 }}>
               Request fields

@@ -16,6 +16,8 @@ export interface ServiceDefinitionInput {
   name: string;
   title: string;
   category?: string;
+  /** Owning team (service owner): group entityRef or bare group name. */
+  owner?: string;
   fields: RequestField[];
 }
 

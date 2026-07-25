@@ -18,6 +18,7 @@ const definitionSchema = z.object({
   name: z.string(),
   title: z.string(),
   category: z.string().optional(),
+  owner: z.string().optional(),
   fields: z.array(fieldSchema),
 });
 

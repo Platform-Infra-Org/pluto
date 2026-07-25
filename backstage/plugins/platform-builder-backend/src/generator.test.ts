@@ -23,6 +23,29 @@ describe('generateArtifacts', () => {
     expect(templateYaml).toContain('/requests/${{ steps.submit.output.requestId }}');
   });
 
+  it('follows current standards: resource-type annotation + owner + argoSubmit', () => {
+    const { templateYaml } = generateArtifacts(def);
+    // annotation ties requests back to this template for per-team approval
+    expect(templateYaml).toContain('platform.io/resource-type: my-bucket');
+    // an explicit argoSubmit block with << token >> runtime values
+    expect(templateYaml).toContain('workflowTemplate: my-bucket');
+    expect(templateYaml).toContain('<< paramsJson >>');
+    expect(templateYaml).toContain('<< params.region >>');
+    expect(templateYaml).toContain('<< requester >>');
+  });
+
+  it('normalizes the owner (default, bare name, full ref)', () => {
+    expect(generateArtifacts(def).templateYaml).toContain(
+      'owner: group:default/platform',
+    );
+    expect(
+      generateArtifacts({ ...def, owner: 'checkout' }).templateYaml,
+    ).toContain('owner: group:default/checkout');
+    expect(
+      generateArtifacts({ ...def, owner: 'group:default/team-x' }).templateYaml,
+    ).toContain('owner: group:default/team-x');
+  });
+
   it('adds an implicit required `name` field when missing', () => {
     const { templateYaml } = generateArtifacts(def);
     expect(templateYaml).toMatch(/name:\n\s+type: string\n\s+title: Name/);
@@ -55,5 +78,8 @@ describe('generateArtifacts', () => {
     const json = JSON.stringify(workflowTemplate);
     expect(json).toContain('alpine:3.20');
     expect(json).toContain('provisioning my-bucket');
+    // WorkflowTemplate declares the params the argoSubmit passes (name + fields)
+    expect(json).toContain('"name":"region"');
+    expect(json).toContain('"name":"size"');
   });
 });
