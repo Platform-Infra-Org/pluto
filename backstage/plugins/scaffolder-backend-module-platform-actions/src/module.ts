@@ -31,14 +31,62 @@ export function createRequestSubmitAction(services: {
     description: 'Create a platform resource request (pending approval).',
     schema: {
       input: {
-        resourceType: z => z.string(),
-        resourceName: z => z.string(),
-        kind: z => z.enum(['CREATE', 'UPDATE', 'DELETE']).optional(),
-        params: z => z.record(z.any()).optional(),
-        argoSubmit: z => z.record(z.any()).optional(),
+        resourceType: z =>
+          z.string().describe('Resource type; also the default WorkflowTemplate name.'),
+        resourceName: z => z.string().describe('Name of the resource to act on.'),
+        kind: z =>
+          z
+            .enum(['CREATE', 'UPDATE', 'DELETE'])
+            .optional()
+            .describe('Request verb. Default: CREATE.'),
+        params: z =>
+          z
+            .record(z.any())
+            .optional()
+            .describe('Arbitrary parameters; exposed to argoSubmit tokens.'),
+        argoSubmit: z =>
+          z
+            .object({
+              namespace: z
+                .string()
+                .optional()
+                .describe('Argo namespace to submit into. Default: platform.argo.namespace.'),
+              resourceKind: z
+                .enum(['WorkflowTemplate', 'ClusterWorkflowTemplate', 'CronWorkflow'])
+                .optional()
+                .describe('Argo resource kind. Default: WorkflowTemplate.'),
+              workflowTemplate: z
+                .string()
+                .optional()
+                .describe('Template name to submit. Default: resourceType.'),
+              entrypoint: z.string().optional().describe('Override the template entrypoint.'),
+              serviceAccount: z
+                .string()
+                .optional()
+                .describe('Service account to run the workflow as.'),
+              generateName: z
+                .string()
+                .optional()
+                .describe('Prefix for the generated workflow name.'),
+              parameters: z
+                .record(z.string())
+                .optional()
+                .describe('Argo parameters (name -> value). Default: { request: paramsJson }.'),
+              labels: z
+                .record(z.string())
+                .optional()
+                .describe('Workflow labels (the request-id label is always added).'),
+              annotations: z.record(z.string()).optional().describe('Workflow annotations.'),
+            })
+            .optional()
+            .describe(
+              'Full control over the Argo submit. String values support ${{ token }} ' +
+                'templating: requestId, resourceName, resourceType, requester, paramsJson, ' +
+                'params.<field>. Omit for default behavior.',
+            ),
       },
       output: {
-        requestId: z => z.number(),
+        requestId: z => z.number().describe('Id of the created request.'),
       },
     },
     async handler(ctx) {

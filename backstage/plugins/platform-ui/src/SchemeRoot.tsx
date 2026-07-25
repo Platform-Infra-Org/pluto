@@ -23,6 +23,26 @@ function ensureStyle(id: string, css: string) {
 }
 
 /**
+ * Inject the base shadcn CSS + the accent var for `scheme` (or the persisted
+ * one). Runs at module load so the sign-in gate — which renders before the
+ * SchemeRoot app-root element mounts — is already themed by the picker.
+ */
+export function applyScheme(scheme?: string) {
+  if (typeof document === 'undefined') return;
+  ensureStyle('sc-base', SHADCN_CSS);
+  const stored =
+    typeof localStorage !== 'undefined'
+      ? localStorage.getItem('platform-scheme')
+      : null;
+  const id = scheme || stored || 'violet';
+  const s = SCHEMES.find(x => x.id === id) ?? SCHEMES[0];
+  ensureStyle('sc-accent', `:root{--sc-primary:${s.hsl};--sc-ring:${s.hsl}}`);
+}
+
+// Theme the login gate immediately, before React mounts anything.
+applyScheme();
+
+/**
  * App-root element: injects the shadcn design layer, keeps `.sc-dark` in sync
  * with the active Backstage theme, and renders the live color-scheme picker.
  */
@@ -35,13 +55,9 @@ export function SchemeRoot() {
       'violet',
   );
 
-  useEffect(() => ensureStyle('sc-base', SHADCN_CSS), []);
-
   useEffect(() => {
-    const s = SCHEMES.find(x => x.id === scheme) ?? SCHEMES[0];
-    // Injected after the base rule → wins for --sc-primary/--sc-ring on :root,
-    // so both the .sc components and the MUI reskin follow the picker.
-    ensureStyle('sc-accent', `:root{--sc-primary:${s.hsl};--sc-ring:${s.hsl}}`);
+    // Base CSS + accent var; also re-applied live whenever the picker changes.
+    applyScheme(scheme);
     try {
       localStorage.setItem('platform-scheme', scheme);
     } catch {

@@ -94,7 +94,11 @@ function CustomNav({ navItems }: { navItems: any }) {
           {collapsed ? '»' : '«'}
         </button>
       </div>
-      <nav className="sc-nav-list">{bag.rest({ sortBy: 'title' })}</nav>
+      <nav className="sc-nav-list">
+        {/* Home pinned first; everything else follows, alphabetically. */}
+        {bag.take('page:platform-requests/home')}
+        {bag.rest({ sortBy: 'title' })}
+      </nav>
     </aside>
   );
 }

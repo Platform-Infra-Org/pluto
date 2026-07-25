@@ -4,6 +4,8 @@ metadata:
   name: payments-primary
   annotations:
     platform.io/resource-type: database
+    # TechDocs source lives next to this file (mkdocs.yml + docs/).
+    backstage.io/techdocs-ref: dir:.
 spec:
   type: database
   owner: "group:default/payments"

@@ -132,6 +132,12 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-sub { color: hsl(var(--sc-muted-fg)); margin-top: 4px; font-size: 14px; }
 .sc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
 .sc-grid { display: grid; gap: 16px; }
+.sc-grid-2 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items: start; }
+.sc-action { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid hsl(var(--sc-border)); text-decoration: none; transition: background .12s, border-color .12s; }
+.sc-action:hover { background: hsl(var(--sc-primary) / .06); border-color: hsl(var(--sc-primary) / .4); }
+.sc-action-l { font-weight: 600; color: hsl(var(--sc-fg)); }
+.sc-action-h { font-size: 12px; }
 
 /* card */
 .sc-card { background: hsl(var(--sc-card)); color: hsl(var(--sc-card-fg));
@@ -159,7 +165,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 
 /* badge */
 .sc-badge { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px;
-  border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid transparent; }
+  border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid transparent;
+  white-space: nowrap; max-width: 100%; }
 .sc-dot { width: 7px; height: 7px; border-radius: 999px; background: currentColor; }
 .sc-badge-muted { background: hsl(var(--sc-muted)); color: hsl(var(--sc-muted-fg)); }
 .sc-badge-primary { background: hsl(var(--sc-primary) / .12); color: hsl(var(--sc-primary)); }

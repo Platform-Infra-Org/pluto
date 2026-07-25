@@ -1,0 +1,75 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: provision-database
+  title: Provision Database
+  description: >
+    Request a managed database. Shows full control over the Argo submit:
+    a custom namespace, service account, entrypoint, generateName, and
+    templated parameters/labels/annotations.
+  tags:
+    - platform
+    - database
+spec:
+  owner: group:default/platform
+  type: resource
+  parameters:
+    - title: Database details
+      required:
+        - resourceName
+        - engine
+        - size
+      properties:
+        resourceName:
+          type: string
+          title: Name
+          description: Name of the database to provision
+        engine:
+          type: string
+          title: Engine
+          default: postgres
+          enum: [postgres, mysql, mariadb]
+        size:
+          type: string
+          title: Size
+          description: Options are fetched live from an API (refreshed on an interval).
+          ui:field: DynamicSelect
+          ui:options:
+            proxyPath: /demo-options/sizes
+            intervalMs: 30000
+  steps:
+    - id: submit
+      name: Submit request
+      action: platform:request:submit
+      input:
+        resourceType: database
+        resourceName: ${{ parameters.resourceName }}
+        kind: CREATE
+        params:
+          engine: ${{ parameters.engine }}
+          size: ${{ parameters.size }}
+        # Full control over the Argo submit. Backend resolves ${{ '${{ token }}' }}
+        # tokens at submit time: requestId, resourceName, resourceType, requester,
+        # paramsJson, params.<field>. The ${{ '${{ ... }}' }} wrapping keeps them
+        # literal through Scaffolder's own templating so the backend sees them.
+        argoSubmit:
+          namespace: databases
+          resourceKind: WorkflowTemplate
+          workflowTemplate: provision-database
+          entrypoint: create
+          serviceAccount: db-provisioner
+          generateName: "db-${{ '${{ resourceName }}' }}-"
+          parameters:
+            engine: "${{ '${{ params.engine }}' }}"
+            size: "${{ '${{ params.size }}' }}"
+            name: "${{ '${{ resourceName }}' }}"
+            request: "${{ '${{ paramsJson }}' }}"
+          labels:
+            platform.io/resource-type: "${{ '${{ resourceType }}' }}"
+            platform.io/requested-by: "${{ '${{ requester }}' }}"
+          annotations:
+            platform.io/request-id: "${{ '${{ requestId }}' }}"
+  output:
+    links:
+      - title: Open request
+        url: /requests/${{ steps.submit.output.requestId }}

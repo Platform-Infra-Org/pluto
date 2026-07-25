@@ -6,10 +6,10 @@ app:
   packages: all
 
   extensions:
-    # Configure the catalog index page to be the root page, this is normally mounted on /catalog
+    # Our Home page owns `/`; the catalog index moves to its default /catalog.
     - page:catalog:
         config:
-          path: /
+          path: /catalog
     # Disable the stock Backstage themes so the platform theme is the default.
     - theme:app/light: false
     - theme:app/dark: false
@@ -63,6 +63,13 @@ backend:
   # workingDirectory: /tmp # Use this to configure a working directory for the scaffolder, defaults to the OS temp-dir
 
 integrations:
+  # Local Gitea, so the reader can fetch directory trees (needed by TechDocs to
+  # pull an entity's mkdocs.yml + docs/). Dev-only basic-auth creds.
+  gitea:
+    - host: localhost:3001
+      baseUrl: http://localhost:3001
+      username: platform
+      password: platform
   github:
     - host: github.com
       # This is a Personal Access Token or PAT from GitHub. You can find out how to generate this token, and more information
@@ -162,6 +169,16 @@ permission:
 
 # Argo Workflows (argo-server, port-forwarded from the kind cluster).
 platform:
+  # Home / landing page. All keys optional; omit to show both sections.
+  home:
+    title: Welcome to Platform
+    subtitle: Your resources and open requests at a glance
+    sections:
+      - quickActions
+      - ownedResources
+      - standingRequests
+      - pendingApprovals
+    maxItems: 8
   argo:
     baseUrl: http://localhost:2746
     namespace: argo

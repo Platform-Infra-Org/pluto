@@ -11,6 +11,6 @@ spec:
     - ./resources/audit-logs.yaml
     - ./resources/payments-exports.yaml
     - ./resources/orders-db.yaml
-    - ./resources/payments-primary.yaml
+    - ./resources/payments-primary/catalog-info.yaml
     - ./resources/search-index.yaml
     - ./resources/prod-net.yaml

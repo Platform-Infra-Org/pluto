@@ -1,0 +1,8 @@
+site_name: Demo Resource template
+site_description: How the demo-resource template works
+
+nav:
+  - Overview: index.md
+
+plugins:
+  - techdocs-core

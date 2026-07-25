@@ -9,6 +9,9 @@ metadata:
   tags:
     - platform
     - demo
+  annotations:
+    # TechDocs for the template itself (Docs tab on the template page).
+    backstage.io/techdocs-ref: dir:.
 spec:
   owner: group:default/platform
   type: resource

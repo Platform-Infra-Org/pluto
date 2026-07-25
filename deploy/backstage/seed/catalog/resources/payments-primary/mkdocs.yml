@@ -1,0 +1,9 @@
+site_name: payments-primary
+site_description: Primary payments database
+
+nav:
+  - Overview: index.md
+  - Runbook: runbook.md
+
+plugins:
+  - techdocs-core
