@@ -109,6 +109,21 @@ export async function createRouter(
     res.status(201).json(created);
   });
 
+  // Demo options endpoint for DynamicSelect fields (map for regions, list for
+  // sizes) — shows both response shapes a choice box can consume.
+  const OPTION_SETS: Record<string, unknown> = {
+    regions: {
+      'US East (N. Virginia)': 'us-east-1',
+      'EU West (Ireland)': 'eu-west-1',
+      'AP South (Mumbai)': 'ap-south-1',
+    },
+    sizes: ['small', 'medium', 'large'],
+  };
+  router.get('/options/:name', async (req, res) => {
+    await httpAuth.credentials(req, { allow: ['user', 'service'] });
+    res.json(OPTION_SETS[req.params.name] ?? []);
+  });
+
   router.get('/requests', async (req, res) => {
     const credentials = await httpAuth.credentials(req, {
       allow: ['user', 'service'],

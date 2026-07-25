@@ -25,10 +25,11 @@ spec:
         region:
           type: string
           title: Region
-          default: eu-west-1
-          enum:
-            - eu-west-1
-            - us-east-1
+          description: Options are fetched live from an API (refreshed on an interval).
+          ui:field: DynamicSelect
+          ui:options:
+            url: http://localhost:7007/api/platform-requests/options/regions
+            intervalMs: 30000
   steps:
     - id: submit
       name: Submit request

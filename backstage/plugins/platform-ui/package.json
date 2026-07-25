@@ -25,6 +25,7 @@
     "@backstage/core-plugin-api": "*",
     "@backstage/frontend-plugin-api": "*",
     "@backstage/plugin-app-react": "*",
+    "@backstage/plugin-scaffolder-react": "^2.0.2",
     "@backstage/theme": "*",
     "@material-ui/icons": "^4.9.1"
   },
