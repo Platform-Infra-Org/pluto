@@ -8,3 +8,4 @@ spec:
   targets:
     - ./templates/demo-resource/template.yaml
     - ./templates/provision-database/template.yaml
+    - ./templates/checkout-service/template.yaml

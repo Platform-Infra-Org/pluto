@@ -21,3 +21,12 @@ metadata:
 spec:
   memberOf:
     - platform-auditors
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: sam
+  description: Service owner for the checkout team
+spec:
+  memberOf:
+    - checkout

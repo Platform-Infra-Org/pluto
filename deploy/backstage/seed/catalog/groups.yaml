@@ -45,3 +45,12 @@ metadata:
 spec:
   type: team
   children: []
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: checkout
+  description: Checkout service team (owns the checkout-service template)
+spec:
+  type: team
+  children: []

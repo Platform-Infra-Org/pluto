@@ -132,6 +132,9 @@
     },
     {
       "name": "service-owner"
+    },
+    {
+      "name": "checkout"
     }
   ],
   "users": [
@@ -187,6 +190,24 @@
       ],
       "groups": [
         "/platform-auditors"
+      ]
+    },
+    {
+      "username": "sam",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "sam@platform.dev",
+      "firstName": "Sam",
+      "lastName": "Checkout",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "sam",
+          "temporary": false
+        }
+      ],
+      "groups": [
+        "/checkout"
       ]
     }
   ]

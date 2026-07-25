@@ -1,0 +1,58 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: checkout-service
+  title: Checkout Service
+  description: >
+    Provision a checkout service. Owned by the checkout team — only that team
+    (or an admin) can approve create/update/delete requests for it.
+  tags:
+    - platform
+    - checkout
+  annotations:
+    # resourceType 'checkout-service' → this template → its owner (group:default/checkout).
+    platform.io/resource-type: checkout-service
+spec:
+  # The template owner IS the service owner. `sam` is a member of this team, so
+  # sam can approve checkout-service requests; requester/other owners cannot.
+  owner: group:default/checkout
+  type: resource
+  parameters:
+    - title: Checkout service details
+      required:
+        - resourceName
+        - replicas
+      properties:
+        resourceName:
+          type: string
+          title: Name
+          description: Name of the checkout service to provision
+        replicas:
+          type: integer
+          title: Replicas
+          default: 2
+          description: Desired replica count
+  steps:
+    - id: submit
+      name: Submit request
+      action: platform:request:submit
+      input:
+        resourceType: checkout-service
+        resourceName: ${{ parameters.resourceName }}
+        kind: CREATE
+        params:
+          replicas: ${{ parameters.replicas }}
+        argoSubmit:
+          namespace: argo
+          workflowTemplate: checkout-service
+          entrypoint: create
+          parameters:
+            name: "<< resourceName >>"
+            replicas: "<< params.replicas >>"
+            request: "<< paramsJson >>"
+          labels:
+            platform.io/requested-by: "<< requester >>"
+  output:
+    links:
+      - title: Open request
+        url: /requests/${{ steps.submit.output.requestId }}

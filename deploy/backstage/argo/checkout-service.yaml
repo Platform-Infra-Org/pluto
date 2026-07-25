@@ -1,0 +1,49 @@
+# WorkflowTemplate for the checkout-service software template. Simulates
+# provisioning (echo + short sleep) and runs to Succeeded. Submitted by the
+# backend with name/replicas/request parameters and labelled with the request id.
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: checkout-service
+  namespace: argo
+spec:
+  entrypoint: create
+  arguments:
+    parameters:
+      - name: name
+        value: "checkout"
+      - name: replicas
+        value: "2"
+      - name: request
+        value: "{}"
+  templates:
+    - name: create
+      inputs:
+        parameters:
+          - { name: name, value: "checkout" }
+          - { name: replicas, value: "2" }
+          - { name: request, value: "{}" }
+      steps:
+        - - name: provision
+            template: provision
+            arguments:
+              parameters:
+                - { name: name, value: "{{inputs.parameters.name}}" }
+                - { name: replicas, value: "{{inputs.parameters.replicas}}" }
+                - { name: request, value: "{{inputs.parameters.request}}" }
+    - name: provision
+      inputs:
+        parameters:
+          - { name: name, value: "checkout" }
+          - { name: replicas, value: "2" }
+          - { name: request, value: "{}" }
+      container:
+        image: alpine:3.20
+        command: [sh, -c]
+        args:
+          - |
+            echo "provisioning checkout service {{inputs.parameters.name}}"
+            echo "replicas={{inputs.parameters.replicas}}"
+            echo "request={{inputs.parameters.request}}"
+            sleep 5
+            echo "done"
