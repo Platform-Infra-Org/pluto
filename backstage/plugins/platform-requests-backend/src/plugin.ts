@@ -2,6 +2,7 @@ import {
   coreServices,
   createBackendPlugin,
 } from '@backstage/backend-plugin-api';
+import { catalogServiceRef } from '@backstage/plugin-catalog-node';
 import { notificationService } from '@backstage/plugin-notifications-node';
 import { Request as PlatformRequest } from '@internal/plugin-platform-common';
 import { createRouter } from './router';
@@ -21,6 +22,7 @@ export const platformRequestsPlugin = createBackendPlugin({
       deps: {
         logger: coreServices.logger,
         config: coreServices.rootConfig,
+        auth: coreServices.auth,
         httpAuth: coreServices.httpAuth,
         httpRouter: coreServices.httpRouter,
         database: coreServices.database,
@@ -28,10 +30,12 @@ export const platformRequestsPlugin = createBackendPlugin({
         scheduler: coreServices.scheduler,
         notifications: notificationService,
         userInfo: coreServices.userInfo,
+        catalog: catalogServiceRef,
       },
       async init({
         logger,
         config,
+        auth,
         httpAuth,
         httpRouter,
         database,
@@ -39,6 +43,7 @@ export const platformRequestsPlugin = createBackendPlugin({
         scheduler,
         notifications,
         userInfo,
+        catalog,
       }) {
         const store = await RequestsStore.create(database);
         logger.info('platform-requests store initialized');
@@ -128,21 +133,48 @@ export const platformRequestsPlugin = createBackendPlugin({
           );
         };
 
-        // Map the acting user's group memberships to platform roles, so the
-        // state machine can allow self-approval for admins/service-owners.
+        // The acting user's platform roles (admin bypass) + raw group refs
+        // (per-team ownership), both from their catalog ownership.
         const GROUP_ROLE: Record<string, string> = {
           'group:default/platform-admins': 'platform-admin',
-          'group:default/service-owner': 'service-owner',
           'group:default/platform-auditors': 'auditor',
         };
-        const roleResolver = async (credentials: Parameters<typeof userInfo.getUserInfo>[0]) => {
+        const principalResolver = async (
+          credentials: Parameters<typeof userInfo.getUserInfo>[0],
+        ) => {
           try {
             const info = await userInfo.getUserInfo(credentials);
-            return info.ownershipEntityRefs
+            const groups = info.ownershipEntityRefs;
+            const roles = groups
               .map(ref => GROUP_ROLE[ref])
               .filter((r): r is string => Boolean(r));
+            return { roles, groups };
           } catch {
-            return [];
+            return { roles: [], groups: [] };
+          }
+        };
+
+        // The owning service team for a resourceType = the owner of the
+        // Scaffolder Template that provides it (matched by a
+        // `platform.io/resource-type` annotation, or by template name).
+        const ownerResolver = async (
+          resourceType: string,
+        ): Promise<string | undefined> => {
+          try {
+            const { items } = await catalog.getEntities(
+              { filter: { kind: 'template' } },
+              { credentials: await auth.getOwnServiceCredentials() },
+            );
+            const tpl = items.find(
+              t =>
+                t.metadata.annotations?.['platform.io/resource-type'] ===
+                  resourceType || t.metadata.name === resourceType,
+            );
+            const owner = tpl?.spec?.owner;
+            return typeof owner === 'string' ? owner : undefined;
+          } catch (e) {
+            logger.warn(`ownerResolver failed for '${resourceType}': ${e}`);
+            return undefined;
           }
         };
 
@@ -154,7 +186,8 @@ export const platformRequestsPlugin = createBackendPlugin({
             submitWorkflow,
             onCreated: notify.approvalNeeded,
             workflowNodesFor: (name, namespace) => argo.nodesFor(name, namespace),
-            roleResolver,
+            principalResolver,
+            ownerResolver,
           }),
         );
 

@@ -10,8 +10,13 @@ metadata:
   tags:
     - platform
     - database
+  annotations:
+    # resourceType 'database' → this template → its owner (the service team).
+    platform.io/resource-type: database
 spec:
-  owner: group:default/platform
+  # A different service team than demo-resource: its members (or an admin) may
+  # approve database requests; the demo-resource owner cannot.
+  owner: group:default/payments
   type: resource
   parameters:
     - title: Database details

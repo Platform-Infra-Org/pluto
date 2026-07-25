@@ -1,9 +1,11 @@
-import { ConflictError } from '@backstage/errors';
+import { ConflictError, NotAllowedError } from '@backstage/errors';
 import {
   ApprovalPolicy,
   Request,
 } from '@internal/plugin-platform-common';
 import { applyDecision, policySatisfied } from './stateMachine';
+
+const OWNER = 'group:default/team-a';
 
 const baseRequest = (policy: ApprovalPolicy): Request => ({
   id: 1,
@@ -14,12 +16,28 @@ const baseRequest = (policy: ApprovalPolicy): Request => ({
   state: 'PENDING_APPROVAL',
   policy,
   requester: 'alice',
+  ownerGroup: OWNER,
   approvals: [],
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 });
 
 const noRoles = () => false;
+
+// An admin (bypasses the owning-team gate) and a service owner (member of the
+// request's owning team), as applyDecision opts.
+const asAdmin = {
+  approverHasRole: (r: string) => r === 'platform-admin',
+  approverInGroup: () => false,
+};
+const asOwner = {
+  approverHasRole: () => false,
+  approverInGroup: (g: string) => g === OWNER,
+};
+const asOutsider = {
+  approverHasRole: () => false,
+  approverInGroup: () => false,
+};
 
 describe('policySatisfied', () => {
   const approve = (approver: string) => ({
@@ -55,92 +73,93 @@ describe('policySatisfied', () => {
 });
 
 describe('applyDecision', () => {
-  const grant = () => true;
-  const deny = () => false;
-
-  it('SINGLE: one approve -> APPROVED', () => {
+  it('SINGLE: owning service owner approves -> APPROVED', () => {
     const { nextState } = applyDecision(
       baseRequest({ mode: 'SINGLE' }),
       'bob',
       'approve',
-      { approverHasRole: deny },
+      asOwner,
     );
     expect(nextState).toBe('APPROVED');
   });
 
-  it('N_OF_M n=2: stays pending until a second distinct approver', () => {
+  it('N_OF_M n=2: stays pending until a second distinct owner approves', () => {
     const req = baseRequest({ mode: 'N_OF_M', n: 2 });
-    const first = applyDecision(req, 'bob', 'approve', {
-      approverHasRole: deny,
-    });
+    const first = applyDecision(req, 'bob', 'approve', asOwner);
     expect(first.nextState).toBe('PENDING_APPROVAL');
 
     const withOne: Request = { ...req, approvals: [first.approval] };
     // duplicate approver does not count twice
     expect(
-      applyDecision(withOne, 'bob', 'approve', { approverHasRole: deny })
-        .nextState,
+      applyDecision(withOne, 'bob', 'approve', asOwner).nextState,
     ).toBe('PENDING_APPROVAL');
     // second distinct approver satisfies
     expect(
-      applyDecision(withOne, 'carol', 'approve', { approverHasRole: deny })
-        .nextState,
+      applyDecision(withOne, 'carol', 'approve', asOwner).nextState,
     ).toBe('APPROVED');
   });
 
-  it('RBAC: role holder approves -> APPROVED, non-holder stays pending', () => {
-    const req = baseRequest({ mode: 'RBAC', role: 'admin' });
+  it('RBAC: role holder approves -> APPROVED, owning non-holder stays pending', () => {
+    const req = baseRequest({ mode: 'RBAC', role: 'platform-admin' });
     expect(
-      applyDecision(req, 'bob', 'approve', { approverHasRole: grant })
-        .nextState,
+      applyDecision(req, 'bob', 'approve', asAdmin).nextState,
     ).toBe('APPROVED');
+    // an owner who lacks the role passes the gate but doesn't satisfy RBAC
     expect(
-      applyDecision(req, 'carol', 'approve', { approverHasRole: deny })
-        .nextState,
+      applyDecision(req, 'carol', 'approve', asOwner).nextState,
     ).toBe('PENDING_APPROVAL');
   });
 
-  it('reject -> REJECTED', () => {
+  it('reject by the owning team -> REJECTED', () => {
     const { nextState, approval } = applyDecision(
       baseRequest({ mode: 'SINGLE' }),
       'bob',
       'reject',
-      { approverHasRole: deny },
+      asOwner,
     );
     expect(nextState).toBe('REJECTED');
     expect(approval.decision).toBe('reject');
   });
 
-  it('self-approval throws for a non-privileged approver', () => {
+  it('a non-owner non-admin cannot decide (another team) -> NotAllowedError', () => {
     expect(() =>
-      applyDecision(baseRequest({ mode: 'SINGLE' }), 'alice', 'approve', {
-        approverHasRole: deny,
-      }),
-    ).toThrow(ConflictError);
+      applyDecision(baseRequest({ mode: 'SINGLE' }), 'bob', 'approve', asOutsider),
+    ).toThrow(NotAllowedError);
   });
 
-  it('self-approval is allowed for admins / service-owners', () => {
-    const asAdmin = applyDecision(
-      baseRequest({ mode: 'SINGLE' }),
-      'alice',
-      'approve',
-      { approverHasRole: role => role === 'platform-admin' },
-    );
-    expect(asAdmin.nextState).toBe('APPROVED');
+  it('an admin may decide any request (bypasses the owning-team gate)', () => {
+    expect(
+      applyDecision(baseRequest({ mode: 'SINGLE' }), 'bob', 'approve', asAdmin)
+        .nextState,
+    ).toBe('APPROVED');
+  });
 
-    const asOwner = applyDecision(
-      baseRequest({ mode: 'SINGLE' }),
-      'alice',
-      'approve',
-      { approverHasRole: role => role === 'service-owner' },
+  it('the owning service owner may self-approve; a non-owner requester cannot', () => {
+    // alice is the requester; as an owner she may self-approve
+    expect(
+      applyDecision(baseRequest({ mode: 'SINGLE' }), 'alice', 'approve', asOwner)
+        .nextState,
+    ).toBe('APPROVED');
+    // alice as a non-owner cannot approve her own request
+    expect(() =>
+      applyDecision(baseRequest({ mode: 'SINGLE' }), 'alice', 'approve', asOutsider),
+    ).toThrow(NotAllowedError);
+  });
+
+  it('absent ownerGroup -> only an admin may decide', () => {
+    const req = { ...baseRequest({ mode: 'SINGLE' }), ownerGroup: undefined };
+    expect(() =>
+      applyDecision(req, 'bob', 'approve', asOwner),
+    ).toThrow(NotAllowedError);
+    expect(applyDecision(req, 'bob', 'approve', asAdmin).nextState).toBe(
+      'APPROVED',
     );
-    expect(asOwner.nextState).toBe('APPROVED');
   });
 
   it('deciding a non-pending request throws', () => {
     const req = { ...baseRequest({ mode: 'SINGLE' }), state: 'APPROVED' as const };
     expect(() =>
-      applyDecision(req, 'bob', 'approve', { approverHasRole: deny }),
+      applyDecision(req, 'bob', 'approve', asAdmin),
     ).toThrow(ConflictError);
   });
 });

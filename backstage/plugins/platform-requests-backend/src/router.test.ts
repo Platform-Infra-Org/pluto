@@ -8,7 +8,7 @@ import { AuthorizeResult } from '@backstage/plugin-permission-common';
 import { Request as PlatformRequest } from '@internal/plugin-platform-common';
 import express from 'express';
 import request from 'supertest';
-import { createRouter, RoleResolver } from './router';
+import { createRouter, PrincipalResolver } from './router';
 import { RequestsStore } from './store';
 
 jest.setTimeout(60_000);
@@ -25,7 +25,8 @@ describe('createRouter', () => {
 
   async function makeApp(opts: {
     result: AuthorizeResult.ALLOW | AuthorizeResult.DENY;
-    roleResolver?: RoleResolver;
+    principalResolver?: PrincipalResolver;
+    ownerResolver?: (resourceType: string) => Promise<string | undefined>;
     submitWorkflow?: jest.Mock<Promise<void>, [PlatformRequest]>;
   }) {
     const knex = await databases.init('SQLITE_3');
@@ -34,7 +35,8 @@ describe('createRouter', () => {
       httpAuth: mockServices.httpAuth(),
       permissions: mockServices.permissions({ result: opts.result }),
       store,
-      roleResolver: opts.roleResolver,
+      principalResolver: opts.principalResolver,
+      ownerResolver: opts.ownerResolver,
       submitWorkflow: opts.submitWorkflow,
     });
     const app = express();
@@ -65,10 +67,12 @@ describe('createRouter', () => {
     expect(created.status).toBe(403);
   });
 
-  it('approves by an allowed approver -> APPROVED then IN_PROGRESS + submitWorkflow', async () => {
+  it('approves by an admin -> APPROVED then IN_PROGRESS + submitWorkflow', async () => {
     const submitWorkflow = jest.fn().mockResolvedValue(undefined);
     const { app } = await makeApp({
       result: AuthorizeResult.ALLOW,
+      // admin bypasses the owning-team gate
+      principalResolver: async () => ({ roles: ['platform-admin'], groups: [] }),
       submitWorkflow,
     });
     const created = await request(app).post('/requests').send(NEW_REQUEST);
@@ -91,20 +95,42 @@ describe('createRouter', () => {
     });
   });
 
-  it('rejects self-approval (4xx)', async () => {
+  it('denies a decision by a non-owner non-admin (403)', async () => {
     const { app } = await makeApp({ result: AuthorizeResult.ALLOW });
     const created = await request(app).post('/requests').send(NEW_REQUEST);
-    // default user `mock` is the requester, so approving as `mock` is self-approval
+    // default user `mock` has no roles/groups and the request has no owner
+    // team → only an admin could decide it.
     const res = await request(app)
       .post(`/requests/${created.body.id}/approve`)
       .send({});
-    expect(res.status).toBeGreaterThanOrEqual(400);
-    expect(res.status).toBeLessThan(500);
-    expect(res.status).toBe(409);
+    expect(res.status).toBe(403);
+  });
+
+  it('an owning-team member approves their own request (200)', async () => {
+    const { app } = await makeApp({
+      result: AuthorizeResult.ALLOW,
+      // resolve the request's owner team, and put the actor in it
+      ownerResolver: async () => 'group:default/team-a',
+      principalResolver: async () => ({
+        roles: [],
+        groups: ['group:default/team-a'],
+      }),
+      submitWorkflow: jest.fn().mockResolvedValue(undefined),
+    });
+    // `mock` is both requester and owning-team member → self-approval allowed
+    const created = await request(app).post('/requests').send(NEW_REQUEST);
+    const res = await request(app)
+      .post(`/requests/${created.body.id}/approve`)
+      .send({});
+    expect(res.status).toBe(200);
+    expect(res.body.state).toBe('IN_PROGRESS');
   });
 
   it('rejects a request -> REJECTED', async () => {
-    const { app } = await makeApp({ result: AuthorizeResult.ALLOW });
+    const { app } = await makeApp({
+      result: AuthorizeResult.ALLOW,
+      principalResolver: async () => ({ roles: ['platform-admin'], groups: [] }),
+    });
     const created = await request(app).post('/requests').send(NEW_REQUEST);
     const res = await request(app)
       .post(`/requests/${created.body.id}/reject`)
@@ -120,12 +146,16 @@ describe('createRouter', () => {
     expect(res.status).toBe(404);
   });
 
-  it('honors RBAC via the role resolver', async () => {
-    // The approver holds the 'approver' role required by the RBAC policy.
-    const roleResolver: RoleResolver = async () => ['approver'];
+  it('honors RBAC via the principal resolver', async () => {
+    // The approver owns the request (passes the team gate) and holds the
+    // 'approver' role required by the RBAC policy.
     const { app } = await makeApp({
       result: AuthorizeResult.ALLOW,
-      roleResolver,
+      ownerResolver: async () => 'group:default/team-x',
+      principalResolver: async () => ({
+        roles: ['approver'],
+        groups: ['group:default/team-x'],
+      }),
     });
     const created = await request(app)
       .post('/requests')

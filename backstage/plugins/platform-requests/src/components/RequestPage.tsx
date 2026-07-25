@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useApi } from '@backstage/core-plugin-api';
+import { useApi, identityApiRef } from '@backstage/core-plugin-api';
 import { useRouteRefParams } from '@backstage/frontend-plugin-api';
 import {
   Page,
@@ -16,10 +16,14 @@ import { requestRouteRef } from '../routes';
 import { WorkflowGraph } from './WorkflowGraph';
 import { stateBadge } from './RequestsPage';
 
+const ADMIN_GROUP = 'group:default/platform-admins';
+
 export function RequestPage() {
   const api = useApi(requestsApiRef);
+  const identity = useApi(identityApiRef);
   const { id } = useRouteRefParams(requestRouteRef);
   const [request, setRequest] = useState<Request>();
+  const [myGroups, setMyGroups] = useState<string[]>([]);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
@@ -28,6 +32,12 @@ export function RequestPage() {
     api.get(Number(id)).then(setRequest).catch(e => setError(String(e)));
   }, [api, id]);
   useEffect(load, [load]);
+
+  useEffect(() => {
+    identity
+      .getBackstageIdentity()
+      .then(i => setMyGroups(i.ownershipEntityRefs));
+  }, [identity]);
 
   const decide = async (decision: 'approve' | 'reject') => {
     setBusy(true);
@@ -55,6 +65,10 @@ export function RequestPage() {
   }
 
   const pending = request.state === 'PENDING_APPROVAL';
+  // Only an admin, or a member of the owning service team, may decide it.
+  const canApprove =
+    myGroups.includes(ADMIN_GROUP) ||
+    (!!request.ownerGroup && myGroups.includes(request.ownerGroup));
 
   return (
     <Page>
@@ -78,6 +92,8 @@ export function RequestPage() {
               <dd>{request.resourceName}</dd>
               <dt>Requester</dt>
               <dd>{request.requester}</dd>
+              <dt>Owner team</dt>
+              <dd>{request.ownerGroup ?? '— (admin only)'}</dd>
               <dt>Policy</dt>
               <dd>{JSON.stringify(request.policy)}</dd>
               <dt>Workflow</dt>
@@ -104,7 +120,7 @@ export function RequestPage() {
                 {a.note ? ` — ${a.note}` : ''}
               </div>
             ))}
-            {pending && (
+            {pending && canApprove && (
               <div style={{ marginTop: 14 }}>
                 <Input
                   placeholder="Note (optional)"
@@ -123,6 +139,11 @@ export function RequestPage() {
                     Reject
                   </Button>
                 </div>
+              </div>
+            )}
+            {pending && !canApprove && (
+              <div className="sc-muted" style={{ marginTop: 10 }}>
+                Only the owning service team or an admin can decide this request.
               </div>
             )}
             {!pending && isTerminal(request.state) && (

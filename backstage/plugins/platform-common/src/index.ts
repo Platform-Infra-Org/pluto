@@ -70,6 +70,13 @@ export interface Request {
   policy: ApprovalPolicy;
   requester: string;
   approvals: Approval[];
+  /**
+   * The owning service team (a group entityRef), resolved at creation from the
+   * owner of the Scaffolder Template for this resourceType. Only a member of
+   * this group (the service owner) — or an admin — may approve/reject. Absent
+   * when no owning template was found (then only admins can decide).
+   */
+  ownerGroup?: string;
   /** Per-request Argo submit spec; absent = default behavior. */
   argoSubmit?: ArgoSubmitSpec;
   /** Argo workflow name once submitted (P2). */

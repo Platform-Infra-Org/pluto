@@ -12,8 +12,13 @@ metadata:
   annotations:
     # TechDocs for the template itself (Docs tab on the template page).
     backstage.io/techdocs-ref: dir:.
+    # Ties requests with this resourceType back to this template (and its owner,
+    # the service team) for per-team approval.
+    platform.io/resource-type: demo-resource
 spec:
-  owner: group:default/platform
+  # The template owner IS the service owner: only this team (or an admin) may
+  # approve create/update/delete requests for demo-resource.
+  owner: group:default/owners-payments
   type: resource
   parameters:
     - title: Resource details

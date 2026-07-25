@@ -1,4 +1,4 @@
-import { ConflictError } from '@backstage/errors';
+import { ConflictError, NotAllowedError } from '@backstage/errors';
 import {
   Approval,
   ApprovalPolicy,
@@ -34,20 +34,30 @@ export function applyDecision(
   request: Request,
   approver: string,
   decision: 'approve' | 'reject',
-  opts: { note?: string; approverHasRole: (role: string) => boolean },
+  opts: {
+    note?: string;
+    approverHasRole: (role: string) => boolean;
+    /** Is the approver a member of the given group entityRef? */
+    approverInGroup: (groupRef: string) => boolean;
+  },
 ): { nextState: RequestState; approval: Approval } {
   if (request.state !== 'PENDING_APPROVAL') {
     throw new ConflictError(
       `Cannot ${decision} a request in state ${request.state}`,
     );
   }
-  // Self-approval is allowed for privileged approvers (platform-admin /
-  // service-owner); everyone else may not approve their own request.
-  const privileged =
-    opts.approverHasRole('platform-admin') ||
-    opts.approverHasRole('service-owner');
-  if (approver === request.requester && !privileged) {
-    throw new ConflictError('Self-approval is not allowed');
+  // Per-team RBAC: only an admin, or a member of the request's owning service
+  // team (the Scaffolder Template owner), may decide it. This also governs
+  // self-approval — the owning service owner (or an admin) may approve their
+  // own request; anyone else cannot approve at all. Absent ownerGroup =>
+  // admin-only.
+  const isAdmin = opts.approverHasRole('platform-admin');
+  const ownsRequest =
+    !!request.ownerGroup && opts.approverInGroup(request.ownerGroup);
+  if (!isAdmin && !ownsRequest) {
+    throw new NotAllowedError(
+      'Only an admin or a member of the owning service team may decide this request',
+    );
   }
 
   const approval: Approval = {

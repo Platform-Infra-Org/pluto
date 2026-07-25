@@ -16,17 +16,22 @@ import { requestApprovePermission, requestCreatePermission } from './permissions
 import { applyDecision } from './stateMachine';
 import { RequestsStore } from './store';
 
-/** Resolves the roles held by the acting user (from their group memberships). */
-export type RoleResolver = (
+/**
+ * Resolves the acting user's platform roles and raw group memberships (from
+ * their catalog ownership), for per-team approval decisions.
+ */
+export type PrincipalResolver = (
   credentials: BackstageCredentials,
-) => Promise<string[]>;
+) => Promise<{ roles: string[]; groups: string[] }>;
 
 export interface RouterOptions {
   httpAuth: HttpAuthService;
   permissions: PermissionsService;
   store: RequestsStore;
-  /** Resolves the acting user's roles (self-approval + RBAC approval policies). */
-  roleResolver?: RoleResolver;
+  /** Resolves the acting user's roles + groups (per-team approval). */
+  principalResolver?: PrincipalResolver;
+  /** Resolves the owning service team (group ref) for a resourceType. */
+  ownerResolver?: (resourceType: string) => Promise<string | undefined>;
   /** Called on APPROVED before flipping to IN_PROGRESS. No-op until P2. */
   submitWorkflow?: (request: PlatformRequest) => Promise<void>;
   /** Called after a request is created (for approver notifications). */
@@ -67,7 +72,8 @@ export async function createRouter(
   options: RouterOptions,
 ): Promise<express.Router> {
   const { httpAuth, permissions, store } = options;
-  const roleResolver: RoleResolver = options.roleResolver ?? (async () => []);
+  const principalResolver: PrincipalResolver =
+    options.principalResolver ?? (async () => ({ roles: [], groups: [] }));
   const submitWorkflow =
     options.submitWorkflow ?? (async () => undefined);
 
@@ -106,7 +112,11 @@ export async function createRouter(
         throw new NotAllowedError('Not allowed to create requests');
       }
     }
-    const created = await store.create({ ...data, requester });
+    // The owning service team = the owner of the Template for this resourceType.
+    const ownerGroup = options.ownerResolver
+      ? await options.ownerResolver(data.resourceType)
+      : undefined;
+    const created = await store.create({ ...data, requester, ownerGroup });
     if (options.onCreated) await options.onCreated(created);
     res.status(201).json(created);
   });
@@ -180,10 +190,12 @@ export async function createRouter(
       const request = await store.get(Number(req.params.id));
       if (!request) throw new NotFoundError(`No request ${req.params.id}`);
 
-      const roles = await roleResolver(credentials);
+      const { roles, groups } = await principalResolver(credentials);
+      const groupSet = new Set(groups);
       const { nextState, approval } = applyDecision(request, actor, decision, {
         note: parsed.data.note,
         approverHasRole: role => roles.includes(role),
+        approverInGroup: group => groupSet.has(group),
       });
 
       await store.addApproval(request.id, approval);

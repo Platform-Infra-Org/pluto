@@ -3,6 +3,7 @@ import {
   startTestBackend,
   TestDatabases,
 } from '@backstage/backend-test-utils';
+import { catalogServiceMock } from '@backstage/plugin-catalog-node/testUtils';
 import { AuthorizeResult } from '@backstage/plugin-permission-common';
 import request from 'supertest';
 import { platformRequestsPlugin } from './plugin';
@@ -20,6 +21,7 @@ describe('platformRequestsPlugin', () => {
         platformRequestsPlugin,
         mockServices.database.factory({ knex }),
         mockServices.permissions.factory({ result: AuthorizeResult.ALLOW }),
+        catalogServiceMock.factory({ entities: [] }),
       ],
     });
 

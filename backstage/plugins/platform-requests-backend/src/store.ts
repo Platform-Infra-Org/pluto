@@ -27,6 +27,7 @@ type RequestRow = {
   state: string;
   policy: string;
   requester: string;
+  owner_group: string | null;
   argo_submit: string | null;
   workflow_name: string | null;
   workflow_namespace: string | null;
@@ -58,7 +59,9 @@ export class RequestsStore {
     return new RequestsStore(db);
   }
 
-  async create(input: NewRequest & { requester: string }): Promise<Request> {
+  async create(
+    input: NewRequest & { requester: string; ownerGroup?: string },
+  ): Promise<Request> {
     const now = new Date().toISOString();
     const [row] = await this.db('platform_requests')
       .insert({
@@ -69,6 +72,7 @@ export class RequestsStore {
         state: 'PENDING_APPROVAL',
         policy: JSON.stringify(input.policy ?? { mode: 'SINGLE' }),
         requester: input.requester,
+        owner_group: input.ownerGroup ?? null,
         argo_submit: input.argoSubmit ? JSON.stringify(input.argoSubmit) : null,
         created_at: now,
         updated_at: now,
@@ -143,6 +147,7 @@ function assemble(row: RequestRow, approvals: ApprovalRow[]): Request {
     state: row.state as RequestState,
     policy: JSON.parse(row.policy) as ApprovalPolicy,
     requester: row.requester,
+    ownerGroup: row.owner_group ?? undefined,
     approvals: approvals.map(a => ({
       approver: a.approver,
       decision: a.decision as Approval['decision'],
