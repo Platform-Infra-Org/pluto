@@ -9,6 +9,7 @@ import { catalogApiRef } from '@backstage/plugin-catalog-react';
 import { Request, isTerminal } from '@internal/plugin-platform-common';
 import { Page, PageHeader, Card } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
+import { stateBadge } from './RequestsPage';
 
 type Section =
   | 'quickActions'
@@ -23,12 +24,6 @@ interface OwnedResource {
 
 const cap = <T,>(items: T[], max: number): T[] =>
   max > 0 ? items.slice(0, max) : items;
-
-// PENDING_APPROVAL -> "Pending approval"
-const humanState = (s: string) => {
-  const t = s.replace(/_/g, ' ').toLowerCase();
-  return t.charAt(0).toUpperCase() + t.slice(1);
-};
 
 const ACTIONS = [
   { to: '/create', label: 'Create a resource', hint: 'Run a software template' },
@@ -136,7 +131,6 @@ function StandingRequests({ max }: { max: number }) {
             <tr>
               <th>#</th>
               <th>Resource</th>
-              <th>Kind</th>
               <th>State</th>
             </tr>
           </thead>
@@ -148,13 +142,10 @@ function StandingRequests({ max }: { max: number }) {
                     #{r.id}
                   </Link>
                 </td>
-                <td>
+                <td className="sc-cell-ellip">
                   {r.resourceType}/{r.resourceName}
                 </td>
-                <td className="sc-muted">{r.kind}</td>
-                <td>
-                  <span className="sc-badge sc-badge-muted">{humanState(r.state)}</span>
-                </td>
+                <td>{stateBadge(r.state)}</td>
               </tr>
             ))}
           </tbody>

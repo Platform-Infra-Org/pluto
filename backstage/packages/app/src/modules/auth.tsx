@@ -15,7 +15,14 @@ import {
 } from '@backstage/core-plugin-api';
 import { OAuth2 } from '@backstage/core-app-api';
 import { SignInPageBlueprint } from '@backstage/plugin-app-react';
-import { SignInPage } from '@backstage/core-components';
+import { UserIdentity } from '@backstage/core-components';
+import {
+  errorApiRef,
+  useApi,
+  type SignInPageProps,
+} from '@backstage/core-plugin-api';
+import { Button, SchemePicker } from '@internal/plugin-platform-ui';
+import { useState } from 'react';
 
 // Custom auth API for the generic OIDC (Keycloak) provider — Backstage ships no
 // built-in oidcAuthApiRef, so the app defines one and wires it to the backend's
@@ -57,22 +64,50 @@ const oidcAuthApi = ApiBlueprint.make({
     }),
 });
 
+// Custom sign-in page: fully shadcn-themed so the accent (brand mark + button)
+// follows the color picker — which is rendered right on the login screen.
+function PlatformSignInPage(props: SignInPageProps) {
+  const oidc = useApi(oidcAuthApiRef);
+  const errorApi = useApi(errorApiRef);
+  const [busy, setBusy] = useState(false);
+
+  const signIn = async () => {
+    setBusy(true);
+    try {
+      const id = await oidc.getBackstageIdentity({ instantPopup: true });
+      if (id) {
+        props.onSignInSuccess(
+          UserIdentity.create({ identity: id.identity, authApi: oidc }),
+        );
+      }
+    } catch (e) {
+      errorApi.post(e as Error);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="sc sc-login">
+      <div className="sc-login-card">
+        <div className="sc-login-mark" />
+        <h1 className="sc-login-title">Platform</h1>
+        <p className="sc-login-sub">Sign in to continue</p>
+        <Button onClick={signIn} disabled={busy}>
+          {busy ? 'Signing in…' : 'Sign in with Keycloak'}
+        </Button>
+        <div className="sc-login-pick">
+          <SchemePicker />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const signInPage = SignInPageBlueprint.make({
   params: {
-    loader: async () => (props: any) =>
-      (
-        <SignInPage
-          {...props}
-          providers={[
-            {
-              id: 'oidc',
-              title: 'Keycloak',
-              message: 'Sign in with your platform account',
-              apiRef: oidcAuthApiRef,
-            },
-          ]}
-        />
-      ),
+    loader: async () => (props: SignInPageProps) =>
+      <PlatformSignInPage {...props} />,
   },
 });
 

@@ -1,5 +1,5 @@
 export { SHADCN_CSS } from './styles';
-export { SCHEMES } from './SchemeRoot';
+export { SCHEMES, SchemePicker } from './SchemeRoot';
 export { platformUiModule } from './theme';
 export {
   Page,

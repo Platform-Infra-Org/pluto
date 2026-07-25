@@ -43,11 +43,10 @@ export function applyScheme(scheme?: string) {
 applyScheme();
 
 /**
- * App-root element: injects the shadcn design layer, keeps `.sc-dark` in sync
- * with the active Backstage theme, and renders the live color-scheme picker.
+ * The live color-scheme swatches. Self-contained (own state, persisted +
+ * applied on click), so it works both inside the app and on the login gate.
  */
-export function SchemeRoot() {
-  const appTheme = useApi(appThemeApiRef);
+export function SchemePicker() {
   const [scheme, setScheme] = useState(
     () =>
       (typeof localStorage !== 'undefined' &&
@@ -65,16 +64,6 @@ export function SchemeRoot() {
     }
   }, [scheme]);
 
-  useEffect(() => {
-    const sub = appTheme.activeThemeId$().subscribe(id => {
-      document.documentElement.classList.toggle(
-        'sc-dark',
-        !!id && id.includes('dark'),
-      );
-    });
-    return () => sub.unsubscribe();
-  }, [appTheme]);
-
   return (
     <div className="sc sc-picker" role="group" aria-label="Color scheme">
       {SCHEMES.map(s => (
@@ -90,4 +79,24 @@ export function SchemeRoot() {
       ))}
     </div>
   );
+}
+
+/**
+ * App-root element: injects the shadcn design layer, keeps `.sc-dark` in sync
+ * with the active Backstage theme, and renders the live color-scheme picker.
+ */
+export function SchemeRoot() {
+  const appTheme = useApi(appThemeApiRef);
+
+  useEffect(() => {
+    const sub = appTheme.activeThemeId$().subscribe(id => {
+      document.documentElement.classList.toggle(
+        'sc-dark',
+        !!id && id.includes('dark'),
+      );
+    });
+    return () => sub.unsubscribe();
+  }, [appTheme]);
+
+  return <SchemePicker />;
 }

@@ -141,7 +141,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 
 /* card */
 .sc-card { background: hsl(var(--sc-card)); color: hsl(var(--sc-card-fg));
-  border: 1px solid hsl(var(--sc-border)); border-radius: var(--sc-radius); }
+  border: 1px solid hsl(var(--sc-border)); border-radius: var(--sc-radius); overflow: hidden; }
 .sc-card-h { padding: 18px 20px 0; }
 .sc-card-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
 .sc-card-desc { color: hsl(var(--sc-muted-fg)); font-size: 13px; margin-top: 2px; }
@@ -180,6 +180,23 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   text-transform: uppercase; letter-spacing: .05em; color: hsl(var(--sc-muted-fg));
   border-bottom: 1px solid hsl(var(--sc-border)); }
 .sc-table td { padding: 12px 14px; border-bottom: 1px solid hsl(var(--sc-border)); color: hsl(var(--sc-fg)); }
+.sc-cell-ellip { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* login gate */
+.sc-login { min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: hsl(var(--sc-bg)); padding: 24px; }
+.sc-login-card { width: 360px; max-width: 100%; padding: 36px 32px; text-align: center;
+  background: hsl(var(--sc-card)); border: 1px solid hsl(var(--sc-border));
+  border-radius: var(--sc-radius); box-shadow: 0 10px 40px hsl(240 20% 10% / .12);
+  display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.sc-login-mark { width: 52px; height: 52px; border-radius: 14px; margin-bottom: 8px;
+  background: linear-gradient(135deg, hsl(var(--sc-primary)), hsl(var(--sc-primary) / .6));
+  box-shadow: 0 4px 16px hsl(var(--sc-primary) / .4); }
+.sc-login-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: hsl(var(--sc-fg)); margin: 0; }
+.sc-login-sub { font-size: 14px; color: hsl(var(--sc-muted-fg)); margin: 0 0 16px; }
+.sc-login-card .sc-btn { width: 100%; }
+.sc-login-pick { margin-top: 20px; padding-top: 18px; border-top: 1px solid hsl(var(--sc-border)); width: 100%;
+  display: flex; justify-content: center; }
 .sc-table tr:last-child td { border-bottom: none; }
 .sc-table tbody tr:hover { background: hsl(var(--sc-muted) / .5); }
 
