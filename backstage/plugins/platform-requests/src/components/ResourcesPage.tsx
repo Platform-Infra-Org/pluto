@@ -1,25 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useApi } from '@backstage/core-plugin-api';
+import { Link } from '@backstage/core-components';
 import { catalogApiRef } from '@backstage/plugin-catalog-react';
 import { Entity } from '@backstage/catalog-model';
 import {
-  Content,
-  Header,
-  Link,
   Page,
-  Progress,
-  Table,
-  TableColumn,
-} from '@backstage/core-components';
-import {
+  PageHeader,
+  Card,
   Button,
   Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  Typography,
-} from '@material-ui/core';
+  Field,
+  Input,
+} from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
 
 interface ResourceRow {
@@ -46,24 +38,18 @@ export function ResourcesPage() {
   const [edit, setEdit] = useState<ResourceRow>();
   const [del, setDel] = useState<ResourceRow>();
   const [fields, setFields] = useState<Record<string, string>>({});
-  const [notice, setNotice] = useState<{ id: number } | string>();
+  const [notice, setNotice] = useState<number>();
 
-  const load = () =>
+  useEffect(() => {
     catalog
       .getEntities({ filter: { kind: 'Resource' } })
       .then(res => setRows(res.items.map(toRow)));
-
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [catalog]);
 
   const openEdit = (r: ResourceRow) => {
     setEdit(r);
     setFields(
-      Object.fromEntries(
-        Object.entries(r.spec).map(([k, v]) => [k, String(v)]),
-      ),
+      Object.fromEntries(Object.entries(r.spec).map(([k, v]) => [k, String(v)])),
     );
   };
 
@@ -76,7 +62,7 @@ export function ResourcesPage() {
       params: fields,
     });
     setEdit(undefined);
-    setNotice({ id: req.id });
+    setNotice(req.id);
   };
 
   const submitDelete = async () => {
@@ -88,92 +74,110 @@ export function ResourcesPage() {
       params: {},
     });
     setDel(undefined);
-    setNotice({ id: req.id });
+    setNotice(req.id);
   };
 
-  const columns: TableColumn<ResourceRow>[] = [
-    { title: 'Name', field: 'name' },
-    { title: 'Type', field: 'type' },
-    { title: 'Owner', field: 'owner' },
-    {
-      title: 'Actions',
-      render: r => (
-        <>
-          <Button size="small" onClick={() => openEdit(r)}>
-            Edit
-          </Button>
-          <Button size="small" color="secondary" onClick={() => setDel(r)}>
-            Delete
-          </Button>
-        </>
-      ),
-    },
-  ];
-
   return (
-    <Page themeId="home">
-      <Header title="Resources" subtitle="Catalog resources — edit / delete via approval" />
-      <Content>
-        {notice && typeof notice === 'object' && (
-          <Typography style={{ marginBottom: 12 }}>
-            Request created —{' '}
-            <Link to={`/requests/${notice.id}`}>#{notice.id}</Link> (pending approval).
-          </Typography>
-        )}
-        {!rows && <Progress />}
-        {rows && (
-          <Table
-            title={`${rows.length} resource(s)`}
-            options={{ paging: true, pageSize: 20, search: true }}
-            columns={columns}
-            data={rows}
-          />
-        )}
+    <Page>
+      <PageHeader
+        title="Resources"
+        subtitle="Catalog resources — edit / delete via approval"
+      />
+      {notice && (
+        <div style={{ marginBottom: 12 }} className="sc">
+          Request created —{' '}
+          <Link to={`/requests/${notice}`} className="sc-link">
+            #{notice}
+          </Link>{' '}
+          (pending approval).
+        </div>
+      )}
+      <Card>
+        <table className="sc-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Owner</th>
+              <th style={{ textAlign: 'right' }}>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows?.map(r => (
+              <tr key={r.name}>
+                <td>{r.name}</td>
+                <td>{r.type}</td>
+                <td className="sc-muted">{r.owner}</td>
+                <td>
+                  <div
+                    className="sc-row"
+                    style={{ justifyContent: 'flex-end' }}
+                  >
+                    <Button size="sm" variant="ghost" onClick={() => openEdit(r)}>
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => setDel(r)}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {!rows && <div className="sc-card-b sc-muted">Loading…</div>}
+      </Card>
 
-        <Dialog open={!!edit} onClose={() => setEdit(undefined)} fullWidth>
-          <DialogTitle>Edit {edit?.name}</DialogTitle>
-          <DialogContent>
-            {edit &&
-              Object.keys(fields).map(k => (
-                <TextField
-                  key={k}
-                  label={k}
-                  fullWidth
-                  margin="dense"
-                  value={fields[k]}
-                  onChange={e =>
-                    setFields(f => ({ ...f, [k]: e.target.value }))
-                  }
-                />
-              ))}
-            {edit && Object.keys(fields).length === 0 && (
-              <Typography variant="body2">No editable spec fields.</Typography>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setEdit(undefined)}>Cancel</Button>
-            <Button color="primary" onClick={submitEdit}>
-              Request update
+      <Dialog
+        open={!!edit}
+        onClose={() => setEdit(undefined)}
+        title={`Edit ${edit?.name}`}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setEdit(undefined)}>
+              Cancel
             </Button>
-          </DialogActions>
-        </Dialog>
+            <Button onClick={submitEdit}>Request update</Button>
+          </>
+        }
+      >
+        {edit && Object.keys(fields).length === 0 && (
+          <div className="sc-muted">No editable spec fields.</div>
+        )}
+        {Object.keys(fields).map(k => (
+          <Field key={k} label={k}>
+            <Input
+              value={fields[k]}
+              onChange={e => setFields(f => ({ ...f, [k]: e.target.value }))}
+            />
+          </Field>
+        ))}
+      </Dialog>
 
-        <Dialog open={!!del} onClose={() => setDel(undefined)}>
-          <DialogTitle>Delete {del?.name}?</DialogTitle>
-          <DialogContent>
-            <Typography>
-              This raises a delete request for approval. On approval the workflow
-              runs and the resource is removed from the catalog.
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDel(undefined)}>Cancel</Button>
-            <Button color="secondary" onClick={submitDelete}>
+      <Dialog
+        open={!!del}
+        onClose={() => setDel(undefined)}
+        title={`Delete ${del?.name}?`}
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setDel(undefined)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={submitDelete}>
               Request delete
             </Button>
-          </DialogActions>
-        </Dialog>
-      </Content>
+          </>
+        }
+      >
+        <div className="sc-muted">
+          This raises a delete request for approval. On approval the workflow
+          runs and the resource is removed from the catalog.
+        </div>
+      </Dialog>
     </Page>
   );
 }

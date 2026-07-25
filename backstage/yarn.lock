@@ -5211,6 +5211,7 @@ __metadata:
     "@backstage/core-plugin-api": "npm:*"
     "@backstage/frontend-plugin-api": "npm:*"
     "@backstage/theme": "npm:*"
+    "@internal/plugin-platform-ui": "workspace:^"
     "@material-ui/core": "npm:^4.12.2"
     "@material-ui/icons": "npm:^4.9.1"
   peerDependencies:
@@ -5236,11 +5237,23 @@ __metadata:
     "@backstage/test-utils": "npm:*"
     "@backstage/theme": "npm:*"
     "@internal/plugin-platform-common": "workspace:^"
+    "@internal/plugin-platform-ui": "workspace:^"
     "@material-ui/core": "npm:^4.12.2"
     "@material-ui/icons": "npm:^4.9.1"
     "@testing-library/jest-dom": "npm:*"
     "@testing-library/react": "npm:*"
     "@xyflow/react": "npm:^12"
+  peerDependencies:
+    react: ^17 || ^18 || ^19
+  languageName: unknown
+  linkType: soft
+
+"@internal/plugin-platform-ui@workspace:^, @internal/plugin-platform-ui@workspace:plugins/platform-ui":
+  version: 0.0.0-use.local
+  resolution: "@internal/plugin-platform-ui@workspace:plugins/platform-ui"
+  dependencies:
+    "@backstage/core-plugin-api": "npm:*"
+    "@backstage/frontend-plugin-api": "npm:*"
   peerDependencies:
     react: ^17 || ^18 || ^19
   languageName: unknown
@@ -12738,6 +12751,7 @@ __metadata:
     "@backstage/ui": "npm:^0.17.0"
     "@internal/plugin-platform-builder": "workspace:^"
     "@internal/plugin-platform-requests": "workspace:^"
+    "@internal/plugin-platform-ui": "workspace:^"
     "@material-ui/core": "npm:^4.12.2"
     "@material-ui/icons": "npm:^4.9.1"
     "@playwright/test": "npm:^1.32.3"

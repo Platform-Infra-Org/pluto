@@ -1,37 +1,45 @@
 import { useEffect, useState } from 'react';
 import { useApi } from '@backstage/core-plugin-api';
-import {
-  Content,
-  Header,
-  Page,
-  Progress,
-  StatusOK,
-  StatusPending,
-  StatusRunning,
-  StatusError,
-  StatusAborted,
-  Table,
-  TableColumn,
-  Link,
-} from '@backstage/core-components';
+import { Link } from '@backstage/core-components';
+import { Page, PageHeader, Card, Badge } from '@internal/plugin-platform-ui';
 import { Request, RequestState } from '@internal/plugin-platform-common';
 import { requestsApiRef } from '../api';
 
-function StateChip({ state }: { state: RequestState }) {
-  switch (state) {
+export function stateBadge(s: RequestState) {
+  switch (s) {
     case 'PENDING_APPROVAL':
-      return <StatusPending>Pending approval</StatusPending>;
+      return (
+        <Badge tone="warning" dot>
+          Pending approval
+        </Badge>
+      );
     case 'APPROVED':
     case 'IN_PROGRESS':
-      return <StatusRunning>{state === 'APPROVED' ? 'Approved' : 'In progress'}</StatusRunning>;
+      return (
+        <Badge tone="primary" dot>
+          {s === 'APPROVED' ? 'Approved' : 'In progress'}
+        </Badge>
+      );
     case 'SUCCEEDED':
-      return <StatusOK>Succeeded</StatusOK>;
+      return (
+        <Badge tone="success" dot>
+          Succeeded
+        </Badge>
+      );
     case 'FAILED':
-      return <StatusError>Failed</StatusError>;
+      return (
+        <Badge tone="destructive" dot>
+          Failed
+        </Badge>
+      );
     case 'REJECTED':
-      return <StatusAborted>Rejected</StatusAborted>;
+      return (
+        <Badge tone="muted" dot>
+          Rejected
+        </Badge>
+      );
     default:
-      return <>{state}</>;
+      return <Badge>{s}</Badge>;
   }
 }
 
@@ -44,39 +52,44 @@ export function RequestsPage() {
     api.list().then(setRows).catch(e => setError(String(e)));
   }, [api]);
 
-  const columns: TableColumn<Request>[] = [
-    {
-      title: 'ID',
-      field: 'id',
-      width: '60px',
-      render: r => <Link to={`/requests/${r.id}`}>#{r.id}</Link>,
-    },
-    { title: 'Kind', field: 'kind', width: '90px' },
-    { title: 'Type', field: 'resourceType' },
-    { title: 'Resource', field: 'resourceName' },
-    { title: 'Requester', field: 'requester' },
-    {
-      title: 'State',
-      field: 'state',
-      render: r => <StateChip state={r.state} />,
-    },
-  ];
-
   return (
-    <Page themeId="tool">
-      <Header title="Requests" subtitle="Resource requests + approvals" />
-      <Content>
-        {error && <StatusError>{error}</StatusError>}
-        {!rows && !error && <Progress />}
-        {rows && (
-          <Table
-            title={`${rows.length} request(s)`}
-            options={{ paging: true, pageSize: 20, search: true }}
-            columns={columns}
-            data={rows}
-          />
+    <Page>
+      <PageHeader title="Requests" subtitle="Resource requests + approvals" />
+      <Card>
+        <table className="sc-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Kind</th>
+              <th>Type</th>
+              <th>Resource</th>
+              <th>Requester</th>
+              <th>State</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows?.map(r => (
+              <tr key={r.id}>
+                <td>
+                  <Link to={`/requests/${r.id}`} className="sc-link">
+                    #{r.id}
+                  </Link>
+                </td>
+                <td>{r.kind}</td>
+                <td>{r.resourceType}</td>
+                <td>{r.resourceName}</td>
+                <td>{r.requester}</td>
+                <td>{stateBadge(r.state)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {error && <div className="sc-card-b sc-muted">{error}</div>}
+        {rows && rows.length === 0 && (
+          <div className="sc-card-b sc-muted">No requests yet.</div>
         )}
-      </Content>
+        {!rows && !error && <div className="sc-card-b sc-muted">Loading…</div>}
+      </Card>
     </Page>
   );
 }

@@ -29,6 +29,7 @@
     "@backstage/plugin-catalog-react": "*",
     "@backstage/theme": "*",
     "@internal/plugin-platform-common": "workspace:^",
+    "@internal/plugin-platform-ui": "workspace:^",
     "@material-ui/core": "^4.12.2",
     "@material-ui/icons": "^4.9.1",
     "@xyflow/react": "^12"

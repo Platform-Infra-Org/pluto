@@ -1,5 +1,9 @@
 import { ThemeBlueprint } from '@backstage/plugin-app-react';
-import { createFrontendModule } from '@backstage/frontend-plugin-api';
+import {
+  AppRootElementBlueprint,
+  createFrontendModule,
+} from '@backstage/frontend-plugin-api';
+import { SchemeRoot } from '@internal/plugin-platform-ui';
 import {
   createUnifiedTheme,
   genPageTheme,
@@ -204,7 +208,13 @@ const darkTheme = ThemeBlueprint.make({
   },
 });
 
+// Injects the shadcn design layer + the live color-scheme picker at app root.
+const schemeRoot = AppRootElementBlueprint.make({
+  name: 'scheme-root',
+  params: { element: <SchemeRoot /> },
+});
+
 export const themeModule = createFrontendModule({
   pluginId: 'app',
-  extensions: [lightTheme, darkTheme],
+  extensions: [lightTheme, darkTheme, schemeRoot],
 });

@@ -1,27 +1,18 @@
 import { useState } from 'react';
 import { useApi } from '@backstage/core-plugin-api';
+import { Link } from '@backstage/core-components';
 import {
-  Content,
-  Header,
-  InfoCard,
-  Link,
   Page,
-} from '@backstage/core-components';
-import {
+  PageHeader,
+  Card,
+  CardHeader,
+  CardBody,
   Button,
-  Grid,
-  IconButton,
-  MenuItem,
-  TextField,
-  Typography,
-} from '@material-ui/core';
-import DeleteIcon from '@material-ui/icons/Delete';
-import AddIcon from '@material-ui/icons/Add';
-import {
-  builderApiRef,
-  PublishResult,
-  RequestField,
-} from '../api';
+  Field,
+  Input,
+  Select,
+} from '@internal/plugin-platform-ui';
+import { builderApiRef, PublishResult, RequestField } from '../api';
 
 const TYPES = ['string', 'number', 'boolean', 'enum'] as const;
 
@@ -38,10 +29,6 @@ export function BuilderPage() {
 
   const setField = (i: number, patch: Partial<RequestField>) =>
     setFields(fs => fs.map((f, j) => (j === i ? { ...f, ...patch } : f)));
-  const addField = () =>
-    setFields(fs => [...fs, { name: '', type: 'string' }]);
-  const removeField = (i: number) =>
-    setFields(fs => fs.filter((_, j) => j !== i));
 
   const submit = async () => {
     setBusy(true);
@@ -53,13 +40,7 @@ export function BuilderPage() {
         title: title.trim() || name.trim(),
         fields: fields
           .filter(f => f.name.trim())
-          .map(f => ({
-            ...f,
-            enum:
-              f.type === 'enum' && f.enum
-                ? f.enum
-                : undefined,
-          })),
+          .map(f => ({ ...f, enum: f.type === 'enum' ? f.enum : undefined })),
       });
       setResult(res);
     } catch (e) {
@@ -70,143 +51,134 @@ export function BuilderPage() {
   };
 
   return (
-    <Page themeId="tool">
-      <Header
+    <Page>
+      <PageHeader
         title="Service Builder"
         subtitle="Author a resource type — publishes a software template + Argo workflow"
       />
-      <Content>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={7}>
-            <InfoCard title="New resource type">
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <TextField
-                    label="Type id (e.g. cache)"
-                    fullWidth
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                  />
-                </Grid>
-                <Grid item xs={6}>
-                  <TextField
-                    label="Title"
-                    fullWidth
-                    value={title}
-                    onChange={e => setTitle(e.target.value)}
-                  />
-                </Grid>
-              </Grid>
+      <div className="sc-grid" style={{ gridTemplateColumns: '1.4fr 1fr' }}>
+        <Card>
+          <CardHeader title="New resource type" />
+          <CardBody>
+            <div
+              className="sc-grid"
+              style={{ gridTemplateColumns: '1fr 1fr' }}
+            >
+              <Field label="Type id (e.g. cache)">
+                <Input value={name} onChange={e => setName(e.target.value)} />
+              </Field>
+              <Field label="Title">
+                <Input value={title} onChange={e => setTitle(e.target.value)} />
+              </Field>
+            </div>
 
-              <Typography variant="subtitle2" style={{ marginTop: 20 }}>
-                Request fields
-              </Typography>
-              {fields.map((f, i) => (
-                <Grid container spacing={1} key={i} alignItems="center">
-                  <Grid item xs={4}>
-                    <TextField
-                      label="name"
-                      fullWidth
-                      value={f.name}
-                      onChange={e => setField(i, { name: e.target.value })}
-                    />
-                  </Grid>
-                  <Grid item xs={3}>
-                    <TextField
-                      select
-                      label="type"
-                      fullWidth
-                      value={f.type}
-                      onChange={e =>
-                        setField(i, { type: e.target.value as RequestField['type'] })
-                      }
-                    >
-                      {TYPES.map(t => (
-                        <MenuItem key={t} value={t}>
-                          {t}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
-                  <Grid item xs={3}>
-                    {f.type === 'enum' && (
-                      <TextField
-                        label="values (csv)"
-                        fullWidth
-                        value={(f.enum ?? []).join(',')}
-                        onChange={e =>
-                          setField(i, {
-                            enum: e.target.value
-                              .split(',')
-                              .map(s => s.trim())
-                              .filter(Boolean),
-                          })
-                        }
-                      />
-                    )}
-                  </Grid>
-                  <Grid item xs={2}>
-                    <IconButton
-                      aria-label="remove field"
-                      onClick={() => removeField(i)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Grid>
-                </Grid>
-              ))}
-              <Button
-                startIcon={<AddIcon />}
-                onClick={addField}
-                size="small"
-                style={{ marginTop: 8 }}
+            <div className="sc-label" style={{ marginTop: 8 }}>
+              Request fields
+            </div>
+            {fields.map((f, i) => (
+              <div
+                key={i}
+                className="sc-row"
+                style={{ marginBottom: 8, alignItems: 'flex-end' }}
               >
-                Add field
-              </Button>
-
-              <div style={{ marginTop: 20 }}>
+                <div style={{ flex: 2 }}>
+                  <Input
+                    placeholder="name"
+                    value={f.name}
+                    onChange={e => setField(i, { name: e.target.value })}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <Select
+                    value={f.type}
+                    onChange={e =>
+                      setField(i, {
+                        type: e.target.value as RequestField['type'],
+                      })
+                    }
+                  >
+                    {TYPES.map(t => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+                <div style={{ flex: 2 }}>
+                  {f.type === 'enum' && (
+                    <Input
+                      placeholder="values (csv)"
+                      value={(f.enum ?? []).join(',')}
+                      onChange={e =>
+                        setField(i, {
+                          enum: e.target.value
+                            .split(',')
+                            .map(s => s.trim())
+                            .filter(Boolean),
+                        })
+                      }
+                    />
+                  )}
+                </div>
                 <Button
-                  variant="contained"
-                  color="primary"
-                  disabled={busy || !name.trim()}
-                  onClick={submit}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() =>
+                    setFields(fs => fs.filter((_, j) => j !== i))
+                  }
                 >
-                  Publish type
+                  ✕
                 </Button>
               </div>
-              {error && (
-                <Typography color="error" style={{ marginTop: 12 }}>
-                  {error}
-                </Typography>
-              )}
-            </InfoCard>
-          </Grid>
+            ))}
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setFields(fs => [...fs, { name: '', type: 'string' }])}
+            >
+              + Add field
+            </Button>
 
-          <Grid item xs={12} md={5}>
-            <InfoCard title="Result">
-              {!result && !error && (
-                <Typography variant="body2" color="textSecondary">
-                  Publishing generates a Scaffolder template + an Argo
-                  WorkflowTemplate and makes the type requestable.
-                </Typography>
-              )}
-              {result && (
-                <>
-                  <Typography>
-                    Published <b>{result.name}</b> — now requestable.
-                  </Typography>
-                  <Typography variant="body2" style={{ marginTop: 8 }}>
-                    Template: <code>{result.templatePath}</code>
-                  </Typography>
-                  <Typography style={{ marginTop: 12 }}>
-                    <Link to="/create">Go to Create →</Link>
-                  </Typography>
-                </>
-              )}
-            </InfoCard>
-          </Grid>
-        </Grid>
-      </Content>
+            <div style={{ marginTop: 18 }}>
+              <Button disabled={busy || !name.trim()} onClick={submit}>
+                Publish type
+              </Button>
+            </div>
+            {error && (
+              <div style={{ color: 'hsl(var(--sc-destructive))', marginTop: 12 }}>
+                {error}
+              </div>
+            )}
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title="Result" />
+          <CardBody>
+            {!result && !error && (
+              <div className="sc-muted">
+                Publishing generates a Scaffolder template + an Argo
+                WorkflowTemplate and makes the type requestable.
+              </div>
+            )}
+            {result && (
+              <>
+                <div>
+                  Published <b>{result.name}</b> — now requestable.
+                </div>
+                <div className="sc-muted" style={{ marginTop: 8 }}>
+                  Template: <code>{result.templatePath}</code>
+                </div>
+                <div style={{ marginTop: 12 }}>
+                  <Link to="/create" className="sc-link">
+                    Go to Create →
+                  </Link>
+                </div>
+              </>
+            )}
+          </CardBody>
+        </Card>
+      </div>
     </Page>
   );
 }

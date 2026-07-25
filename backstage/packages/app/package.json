@@ -40,6 +40,7 @@
     "@backstage/ui": "^0.17.0",
     "@internal/plugin-platform-builder": "workspace:^",
     "@internal/plugin-platform-requests": "workspace:^",
+    "@internal/plugin-platform-ui": "workspace:^",
     "@material-ui/core": "^4.12.2",
     "@material-ui/icons": "^4.9.1",
     "react": "^18.0.2",
