@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from '@backstage/core-components';
 import { NavContentBlueprint } from '@backstage/plugin-app-react';
+import { PlatformMark } from './components';
 
 // The nav renders outside react-router's context, so derive the active path
 // from the browser location + history events rather than useLocation().
@@ -81,7 +82,9 @@ function CustomNav({ navItems }: { navItems: any }) {
     <aside className={`sc sc-nav${collapsed ? ' collapsed' : ''}`} aria-label="Main">
       <div className="sc-nav-top">
         <Link to="/" className="sc-nav-brand">
-          <span className="sc-nav-mark" />
+          <span className="sc-nav-mark">
+            <PlatformMark />
+          </span>
           <span className="sc-nav-word">Platform</span>
         </Link>
         <button

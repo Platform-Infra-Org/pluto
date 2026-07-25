@@ -21,7 +21,7 @@ import {
   useApi,
   type SignInPageProps,
 } from '@backstage/core-plugin-api';
-import { Button, SchemePicker } from '@internal/plugin-platform-ui';
+import { Button, SchemePicker, PlatformMark } from '@internal/plugin-platform-ui';
 import { useState } from 'react';
 
 // Custom auth API for the generic OIDC (Keycloak) provider — Backstage ships no
@@ -90,7 +90,9 @@ function PlatformSignInPage(props: SignInPageProps) {
   return (
     <div className="sc sc-login">
       <div className="sc-login-card">
-        <div className="sc-login-mark" />
+        <div className="sc-login-mark">
+          <PlatformMark />
+        </div>
         <h1 className="sc-login-title">Platform</h1>
         <p className="sc-login-sub">Sign in to continue</p>
         <Button onClick={signIn} disabled={busy}>

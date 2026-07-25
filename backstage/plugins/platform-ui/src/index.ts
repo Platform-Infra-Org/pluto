@@ -2,6 +2,7 @@ export { SHADCN_CSS } from './styles';
 export { SCHEMES, SchemePicker } from './SchemeRoot';
 export { platformUiModule } from './theme';
 export {
+  PlatformMark,
   Page,
   PageHeader,
   Card,

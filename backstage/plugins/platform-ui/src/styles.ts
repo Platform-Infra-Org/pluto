@@ -192,8 +192,10 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   border-radius: var(--sc-radius); box-shadow: 0 10px 40px hsl(240 20% 10% / .12);
   display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .sc-login-mark { width: 52px; height: 52px; border-radius: 14px; margin-bottom: 8px;
+  display: flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, hsl(var(--sc-primary)), hsl(var(--sc-primary) / .6));
   box-shadow: 0 4px 16px hsl(var(--sc-primary) / .4); }
+.sc-login-mark svg { width: 34px; height: 34px; color: hsl(var(--sc-primary-fg)); }
 .sc-login-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: hsl(var(--sc-fg)); margin: 0; }
 .sc-login-sub { font-size: 14px; color: hsl(var(--sc-muted-fg)); margin: 0 0 16px; }
 .sc-login-card .sc-btn { width: 100%; }
@@ -235,8 +237,10 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-nav-top { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 14px; }
 .sc-nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; min-width: 0; }
 .sc-nav-mark { width: 26px; height: 26px; border-radius: 8px; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, hsl(var(--sc-primary)), hsl(var(--sc-primary) / .65));
   box-shadow: 0 2px 8px hsl(var(--sc-primary) / .35); }
+.sc-nav-mark svg { width: 17px; height: 17px; color: hsl(var(--sc-primary-fg)); }
 .sc-nav-word { font-weight: 700; font-size: 17px; letter-spacing: -0.02em; color: hsl(var(--sc-fg)); white-space: nowrap; }
 .sc-nav-toggle { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 7px; border: 1px solid hsl(var(--sc-border));
   background: transparent; color: hsl(var(--sc-muted-fg)); cursor: pointer; font-size: 13px; line-height: 1;
