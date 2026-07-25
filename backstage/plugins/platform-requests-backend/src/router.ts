@@ -1,4 +1,5 @@
 import {
+  BackstageCredentials,
   HttpAuthService,
   PermissionsService,
 } from '@backstage/backend-plugin-api';
@@ -15,14 +16,16 @@ import { requestApprovePermission, requestCreatePermission } from './permissions
 import { applyDecision } from './stateMachine';
 import { RequestsStore } from './store';
 
-/** Resolves the roles held by an actor (used for RBAC approval policies). */
-export type RoleResolver = (actor: string) => Promise<string[]>;
+/** Resolves the roles held by the acting user (from their group memberships). */
+export type RoleResolver = (
+  credentials: BackstageCredentials,
+) => Promise<string[]>;
 
 export interface RouterOptions {
   httpAuth: HttpAuthService;
   permissions: PermissionsService;
   store: RequestsStore;
-  /** Resolves roles for RBAC policies. Defaults to none (P2 wires the real one). */
+  /** Resolves the acting user's roles (self-approval + RBAC approval policies). */
   roleResolver?: RoleResolver;
   /** Called on APPROVED before flipping to IN_PROGRESS. No-op until P2. */
   submitWorkflow?: (request: PlatformRequest) => Promise<void>;
@@ -157,7 +160,7 @@ export async function createRouter(
       const request = await store.get(Number(req.params.id));
       if (!request) throw new NotFoundError(`No request ${req.params.id}`);
 
-      const roles = await roleResolver(actor);
+      const roles = await roleResolver(credentials);
       const { nextState, approval } = applyDecision(request, actor, decision, {
         note: parsed.data.note,
         approverHasRole: role => roles.includes(role),

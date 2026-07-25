@@ -121,8 +121,8 @@ describe('createRouter', () => {
   });
 
   it('honors RBAC via the role resolver', async () => {
-    const roleResolver: RoleResolver = async actor =>
-      actor === 'admin' ? ['approver'] : [];
+    // The approver holds the 'approver' role required by the RBAC policy.
+    const roleResolver: RoleResolver = async () => ['approver'];
     const { app } = await makeApp({
       result: AuthorizeResult.ALLOW,
       roleResolver,

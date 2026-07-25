@@ -13,16 +13,21 @@ function userWith(refs: string[]) {
 const query = (name: string) => ({ permission: { name } }) as any;
 
 describe('PlatformPermissionPolicy', () => {
-  it('allows approve only for platform-admins', async () => {
+  it('allows approve for platform-admins and service-owners, denies others', async () => {
     const admin = await policy.handle(
       query(PLATFORM_PERMISSIONS.requestApprove),
       userWith(['group:default/platform-admins']),
+    );
+    const owner = await policy.handle(
+      query(PLATFORM_PERMISSIONS.requestApprove),
+      userWith(['group:default/service-owner']),
     );
     const other = await policy.handle(
       query(PLATFORM_PERMISSIONS.requestApprove),
       userWith(['group:default/owners-payments']),
     );
     expect(admin.result).toBe(AuthorizeResult.ALLOW);
+    expect(owner.result).toBe(AuthorizeResult.ALLOW);
     expect(other.result).toBe(AuthorizeResult.DENY);
   });
 

@@ -111,12 +111,30 @@ describe('applyDecision', () => {
     expect(approval.decision).toBe('reject');
   });
 
-  it('self-approval throws', () => {
+  it('self-approval throws for a non-privileged approver', () => {
     expect(() =>
       applyDecision(baseRequest({ mode: 'SINGLE' }), 'alice', 'approve', {
         approverHasRole: deny,
       }),
     ).toThrow(ConflictError);
+  });
+
+  it('self-approval is allowed for admins / service-owners', () => {
+    const asAdmin = applyDecision(
+      baseRequest({ mode: 'SINGLE' }),
+      'alice',
+      'approve',
+      { approverHasRole: role => role === 'platform-admin' },
+    );
+    expect(asAdmin.nextState).toBe('APPROVED');
+
+    const asOwner = applyDecision(
+      baseRequest({ mode: 'SINGLE' }),
+      'alice',
+      'approve',
+      { approverHasRole: role => role === 'service-owner' },
+    );
+    expect(asOwner.nextState).toBe('APPROVED');
   });
 
   it('deciding a non-pending request throws', () => {

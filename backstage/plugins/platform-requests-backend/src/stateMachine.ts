@@ -41,7 +41,12 @@ export function applyDecision(
       `Cannot ${decision} a request in state ${request.state}`,
     );
   }
-  if (approver === request.requester) {
+  // Self-approval is allowed for privileged approvers (platform-admin /
+  // service-owner); everyone else may not approve their own request.
+  const privileged =
+    opts.approverHasRole('platform-admin') ||
+    opts.approverHasRole('service-owner');
+  if (approver === request.requester && !privileged) {
     throw new ConflictError('Self-approval is not allowed');
   }
 

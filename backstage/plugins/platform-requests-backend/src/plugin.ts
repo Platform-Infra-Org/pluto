@@ -26,6 +26,7 @@ export const platformRequestsPlugin = createBackendPlugin({
         permissions: coreServices.permissions,
         scheduler: coreServices.scheduler,
         notifications: notificationService,
+        userInfo: coreServices.userInfo,
       },
       async init({
         logger,
@@ -36,6 +37,7 @@ export const platformRequestsPlugin = createBackendPlugin({
         permissions,
         scheduler,
         notifications,
+        userInfo,
       }) {
         const store = await RequestsStore.create(database);
         logger.info('platform-requests store initialized');
@@ -125,6 +127,24 @@ export const platformRequestsPlugin = createBackendPlugin({
           logger.info(`request ${request.id}: submitted workflow ${name}`);
         };
 
+        // Map the acting user's group memberships to platform roles, so the
+        // state machine can allow self-approval for admins/service-owners.
+        const GROUP_ROLE: Record<string, string> = {
+          'group:default/platform-admins': 'platform-admin',
+          'group:default/service-owner': 'service-owner',
+          'group:default/platform-auditors': 'auditor',
+        };
+        const roleResolver = async (credentials: Parameters<typeof userInfo.getUserInfo>[0]) => {
+          try {
+            const info = await userInfo.getUserInfo(credentials);
+            return info.ownershipEntityRefs
+              .map(ref => GROUP_ROLE[ref])
+              .filter((r): r is string => Boolean(r));
+          } catch {
+            return [];
+          }
+        };
+
         httpRouter.use(
           await createRouter({
             httpAuth,
@@ -133,6 +153,7 @@ export const platformRequestsPlugin = createBackendPlugin({
             submitWorkflow,
             onCreated: notify.approvalNeeded,
             workflowNodesFor: name => argo.nodesFor(name),
+            roleResolver,
           }),
         );
 
