@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from '@backstage/core-components';
 import { NavContentBlueprint } from '@backstage/plugin-app-react';
-import { createFrontendModule } from '@backstage/frontend-plugin-api';
 
 // The nav renders outside react-router's context, so derive the active path
 // from the browser location + history events rather than useLocation().
@@ -67,13 +66,7 @@ function CustomNav({ navItems }: { navItems: any }) {
   );
 }
 
-const navContent = NavContentBlueprint.make({
+export const navContent = NavContentBlueprint.make({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   params: { component: ({ navItems }: any) => <CustomNav navItems={navItems} /> },
-});
-
-/** Register as a plugin: a frontend module that replaces the app's nav bar. */
-export const platformNavModule = createFrontendModule({
-  pluginId: 'app',
-  extensions: [navContent],
 });

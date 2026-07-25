@@ -4,7 +4,9 @@
 // Backstage's own MUI styles outside our pages.
 export const SHADCN_CSS = `
 .sc, .sc * { box-sizing: border-box; }
-.sc {
+/* Tokens live on :root so BOTH our .sc components and the MUI/Backstage reskin
+   below read the same variables (and follow the color picker). */
+:root {
   --sc-radius: 0.5rem;
   --sc-bg: 0 0% 100%;
   --sc-fg: 240 10% 3.9%;
@@ -22,10 +24,8 @@ export const SHADCN_CSS = `
   --sc-success: 142 71% 45%;
   --sc-warning: 38 92% 50%;
   --sc-destructive: 0 72% 51%;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  color: hsl(var(--sc-fg));
 }
-.sc-dark .sc, .sc.sc-dark {
+:root.sc-dark {
   --sc-bg: 240 10% 3.9%;
   --sc-fg: 0 0% 98%;
   --sc-card: 240 10% 6.5%;
@@ -37,6 +37,48 @@ export const SHADCN_CSS = `
   --sc-accent: 240 3.7% 15.9%;
   --sc-accent-fg: 0 0% 98%;
 }
+.sc {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: hsl(var(--sc-fg));
+}
+
+/* ===== Reskin the Backstage/MUI native pages (catalog, scaffolder, search,
+   settings…) to the shadcn look, driven by the same tokens + color picker. ===== */
+body, .BackstageContent { background: hsl(var(--sc-bg)); }
+/* flatten the wave header */
+header.MuiPaper-root, .BackstageHeader-header {
+  background-image: none !important; background-color: hsl(var(--sc-card)) !important;
+  box-shadow: none !important; border-bottom: 1px solid hsl(var(--sc-border)) !important; }
+.BackstageHeader-title, .BackstageHeader-title * { color: hsl(var(--sc-fg)) !important; }
+.BackstageHeader-subtitle, .BackstageHeaderLabel-label { color: hsl(var(--sc-muted-fg)) !important; }
+/* cards / surfaces */
+.MuiCard-root, .MuiPaper-elevation1, .MuiPaper-elevation2, .MuiAccordion-root, .BackstageInfoCard-header {
+  background-color: hsl(var(--sc-card)) !important; color: hsl(var(--sc-fg));
+  border: 1px solid hsl(var(--sc-border)) !important; box-shadow: none !important;
+  border-radius: var(--sc-radius) !important; }
+.MuiInputBase-root, .MuiOutlinedInput-root { border-radius: calc(var(--sc-radius) - 2px) !important; }
+.MuiOutlinedInput-notchedOutline { border-color: hsl(var(--sc-input)) !important; }
+/* accent — buttons, links, tabs, selection (all follow the picker) */
+.MuiButton-root { text-transform: none !important; border-radius: calc(var(--sc-radius) - 2px) !important; box-shadow: none !important; font-weight: 600 !important; }
+.MuiButton-containedPrimary { background-color: hsl(var(--sc-primary)) !important; color: hsl(var(--sc-primary-fg)) !important; }
+.MuiButton-outlinedPrimary, .MuiButton-textPrimary { color: hsl(var(--sc-primary)) !important; }
+.MuiLink-root, a.MuiTypography-colorPrimary, .MuiTypography-colorPrimary { color: hsl(var(--sc-primary)) !important; }
+.MuiTabs-indicator { background-color: hsl(var(--sc-primary)) !important; }
+.MuiTab-root { text-transform: none !important; font-weight: 600 !important; }
+.MuiTab-textColorPrimary.Mui-selected, .Mui-selected { color: hsl(var(--sc-primary)) !important; }
+.MuiSwitch-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
+.MuiCheckbox-colorPrimary.Mui-checked, .MuiRadio-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
+.MuiChip-root { border-radius: 6px !important; }
+/* flatten the gradient card headers (template / entity cards) */
+[class*="ItemCardHeader"] {
+  background-image: none !important; background: hsl(var(--sc-muted)) !important;
+  border-bottom: 1px solid hsl(var(--sc-border)) !important; }
+[class*="ItemCardHeader"] * { color: hsl(var(--sc-fg)) !important; }
+/* tables */
+.MuiTableCell-head, .MuiTableCell-root.MuiTableCell-head {
+  text-transform: uppercase !important; font-size: 11px !important; font-weight: 700 !important;
+  letter-spacing: .05em !important; color: hsl(var(--sc-muted-fg)) !important; }
+.MuiTableCell-root { border-color: hsl(var(--sc-border)) !important; }
 
 /* page + layout */
 .sc-page { padding: 28px 32px; background: hsl(var(--sc-bg)); min-height: 100%; }

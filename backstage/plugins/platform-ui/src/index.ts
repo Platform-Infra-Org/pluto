@@ -1,5 +1,6 @@
 export { SHADCN_CSS } from './styles';
-export { SchemeRoot, SCHEMES } from './SchemeRoot';
+export { SCHEMES } from './SchemeRoot';
+export { platformUiModule } from './theme';
 export {
   Page,
   PageHeader,
@@ -13,4 +14,3 @@ export {
   Field,
   Dialog,
 } from './components';
-export { platformNavModule } from './CustomNav';

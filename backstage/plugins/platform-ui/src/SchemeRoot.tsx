@@ -38,8 +38,9 @@ export function SchemeRoot() {
 
   useEffect(() => {
     const s = SCHEMES.find(x => x.id === scheme) ?? SCHEMES[0];
-    // Injected after the base rule → wins for --sc-primary/--sc-ring.
-    ensureStyle('sc-accent', `.sc{--sc-primary:${s.hsl};--sc-ring:${s.hsl}}`);
+    // Injected after the base rule → wins for --sc-primary/--sc-ring on :root,
+    // so both the .sc components and the MUI reskin follow the picker.
+    ensureStyle('sc-accent', `:root{--sc-primary:${s.hsl};--sc-ring:${s.hsl}}`);
     try {
       localStorage.setItem('platform-scheme', scheme);
     } catch {
