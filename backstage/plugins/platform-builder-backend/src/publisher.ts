@@ -2,7 +2,9 @@ import { LoggerService } from '@backstage/backend-plugin-api';
 
 export interface PublisherConfig {
   giteaBaseUrl: string;
-  giteaToken: string;
+  // Basic-auth against the seeded Gitea admin (reproducible; no minted token).
+  giteaUser: string;
+  giteaPassword: string;
   owner: string;
   repo: string;
   argoBaseUrl: string;
@@ -31,8 +33,11 @@ export class Publisher {
   }
 
   private get giteaHeaders(): Record<string, string> {
+    const basic = Buffer.from(
+      `${this.cfg.giteaUser}:${this.cfg.giteaPassword}`,
+    ).toString('base64');
     return {
-      Authorization: `token ${this.cfg.giteaToken}`,
+      Authorization: `Basic ${basic}`,
       'Content-Type': 'application/json',
     };
   }
@@ -49,11 +54,12 @@ export class Publisher {
     return (await res.json()) as GiteaContent;
   }
 
-  /** Create-or-update a file in the templates repo via the Gitea contents API. */
+  /** Create-or-update a file in the templates repo via the Gitea contents API.
+   * Gitea uses POST to create a new file and PUT (with the current sha) to update. */
   async commitFile(path: string, content: string, message: string): Promise<void> {
     const existing = await this.getFile(path);
     const res = await fetch(this.contentsUrl(path), {
-      method: 'PUT',
+      method: existing?.sha ? 'PUT' : 'POST',
       headers: this.giteaHeaders,
       body: JSON.stringify({
         message,

@@ -27,9 +27,12 @@ export const platformBuilderPlugin = createBackendPlugin({
             giteaBaseUrl:
               config.getOptionalString('platform.builder.gitea.baseUrl') ??
               'http://localhost:3001',
-            giteaToken:
-              config.getOptionalString('platform.builder.gitea.token') ??
-              'use-a-real-token',
+            giteaUser:
+              config.getOptionalString('platform.builder.gitea.user') ??
+              'platform',
+            giteaPassword:
+              config.getOptionalString('platform.builder.gitea.password') ??
+              'platform',
             owner:
               config.getOptionalString('platform.builder.gitea.owner') ??
               'platform',
