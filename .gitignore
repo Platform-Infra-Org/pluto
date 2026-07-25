@@ -21,3 +21,7 @@ dist/
 # Playwright
 /apps/web/test-results/
 /apps/web/playwright-report/
+
+# backstage argo port-forward runtime
+.argo-pf.pid
+.argo-pf.log

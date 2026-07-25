@@ -1,0 +1,40 @@
+# Demo type WorkflowTemplate the P2 spine submits. For P0 it just simulates
+# provisioning (echo + short sleep) and runs to Succeeded. The git-commit-to-Gitea
+# step that makes the catalog entity appear is added in P2 (needs pod->host Gitea
+# reachability, solved there). Submitted with a `request` parameter (the rendered
+# resource payload) and labelled platform.io/request-id by the backend.
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: demo-resource
+  namespace: argo
+spec:
+  entrypoint: create
+  arguments:
+    parameters:
+      - name: request
+        value: "{}"
+  templates:
+    - name: create
+      inputs:
+        parameters:
+          - { name: request, value: "{}" }
+      steps:
+        - - name: provision
+            template: provision
+            arguments:
+              parameters:
+                - { name: request, value: "{{inputs.parameters.request}}" }
+    - name: provision
+      inputs:
+        parameters:
+          - { name: request, value: "{}" }
+      container:
+        image: alpine:3.20
+        command: [sh, -c]
+        args:
+          - |
+            echo "provisioning resource..."
+            echo "request={{inputs.parameters.request}}"
+            sleep 5
+            echo "done"
