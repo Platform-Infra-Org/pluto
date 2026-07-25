@@ -28,7 +28,9 @@ spec:
           description: Options are fetched live from an API (refreshed on an interval).
           ui:field: DynamicSelect
           ui:options:
-            url: http://localhost:7007/api/platform-requests/options/regions
+            # Routed through the Backstage proxy, which injects upstream auth
+            # server-side (see proxy.endpoints./demo-options in app-config).
+            proxyPath: /demo-options/regions
             intervalMs: 30000
   steps:
     - id: submit
