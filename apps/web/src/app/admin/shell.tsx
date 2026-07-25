@@ -7,11 +7,15 @@ import { AdminServices } from './services'
 import { AdminWorkflows } from './workflows'
 import { AdminRbac } from './rbac'
 import { AdminOptionSources } from './option-sources'
+import { AdminGroups } from './groups'
+import { AdminProjects } from './projects'
 
 const PANELS = {
   overview: { label: 'Overview', render: () => <AdminOverview /> },
   requests: { label: 'Requests', render: () => <AdminRequests /> },
   services: { label: 'Services', render: () => <AdminServices /> },
+  projects: { label: 'Projects', render: () => <AdminProjects /> },
+  groups: { label: 'Groups', render: () => <AdminGroups /> },
   workflows: { label: 'Workflows', render: () => <AdminWorkflows /> },
   rbac: { label: 'RBAC & ownership', render: () => <AdminRbac /> },
   'option-sources': { label: 'Option sources', render: () => <AdminOptionSources /> },

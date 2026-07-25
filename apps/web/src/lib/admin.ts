@@ -76,6 +76,41 @@ export const putOwnership = (body: Ownership) =>
 export const fetchOptionSources = () =>
   apiFetch<{ items: OptionSourceHealth[] }>('/admin/option-sources')
 
+// --- F3: local groups registry (import) + projects mapped to a group --------
+
+export interface Group {
+  id: number
+  name: string
+  source: string
+  description: string | null
+}
+
+export interface Project {
+  id: number
+  name: string
+  group_name: string
+  description: string | null
+}
+
+export const fetchGroups = () => apiFetch<{ items: Group[] }>('/admin/groups')
+
+// Import body is raw JSON or CSV text (not a JSON envelope); the server reads
+// the raw body and picks the parser from `format`.
+export const importGroups = (body: string, format: 'json' | 'csv') =>
+  apiFetch<{ imported: number; skipped: number }>(`/admin/groups/import?format=${format}`, {
+    method: 'POST',
+    body,
+    headers: { 'Content-Type': 'text/plain' },
+  })
+
+export const fetchProjects = () => apiFetch<{ items: Project[] }>('/admin/projects')
+
+export const createProject = (body: { name: string; group_name: string; description?: string }) =>
+  apiFetch<Project & { group_known: boolean }>('/admin/projects', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+
 export const approveOnboarding = (id: number, note?: string) =>
   apiFetch<{ state: string; definition_status: string | null }>(
     `/admin/services/onboarding/${id}/approve`,
