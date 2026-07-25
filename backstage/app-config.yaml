@@ -1,5 +1,5 @@
 app:
-  title: Scaffolded Backstage App
+  title: Platform
   baseUrl: http://localhost:3000
 
   # Enable all packages by default, this will discover packages from packages/app/package.json
@@ -10,9 +10,12 @@ app:
     - page:catalog:
         config:
           path: /
+    # Disable the stock Backstage themes so the platform theme is the default.
+    - theme:app/light: false
+    - theme:app/dark: false
 
 organization:
-  name: My Company
+  name: Platform
 
 backend:
   # Static external-access token for local smoke tests / scripts (dev-only).
