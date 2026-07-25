@@ -57,15 +57,17 @@ export const SHADCN_CSS = `
 /* bui primary buttons resolve their own token — retarget by variant attribute. */
 [data-variant="primary"][class*="bui-Button"] { background-color: hsl(var(--sc-primary)) !important; color: hsl(var(--sc-primary-fg)) !important; }
 [data-variant="primary"][class*="bui-Button"]:hover { background-color: hsl(var(--sc-primary) / 0.9) !important; }
-body, .BackstageContent { background: hsl(var(--sc-bg)); }
-/* flatten the wave header */
-header.MuiPaper-root, .BackstageHeader-header {
+/* NB: Backstage makeStyles classes are hashed (BackstageHeader-header-42), so
+   we match them with [class*="…"] attribute-contains selectors. */
+body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); }
+/* flatten the wave header everywhere */
+header.MuiPaper-root, [class*="BackstageHeader-header"] {
   background-image: none !important; background-color: hsl(var(--sc-card)) !important;
   box-shadow: none !important; border-bottom: 1px solid hsl(var(--sc-border)) !important; }
-.BackstageHeader-title, .BackstageHeader-title * { color: hsl(var(--sc-fg)) !important; }
-.BackstageHeader-subtitle, .BackstageHeaderLabel-label { color: hsl(var(--sc-muted-fg)) !important; }
+[class*="BackstageHeader-title"], [class*="BackstageHeader-title"] * { color: hsl(var(--sc-fg)) !important; }
+[class*="BackstageHeader-subtitle"], [class*="HeaderLabel-label"], [class*="BackstageHeader-type"] { color: hsl(var(--sc-muted-fg)) !important; }
 /* cards / surfaces */
-.MuiCard-root, .MuiPaper-elevation1, .MuiPaper-elevation2, .MuiAccordion-root, .BackstageInfoCard-header {
+.MuiCard-root, .MuiPaper-elevation1, .MuiPaper-elevation2, .MuiAccordion-root, [class*="BackstageInfoCard-header"] {
   background-color: hsl(var(--sc-card)) !important; color: hsl(var(--sc-fg));
   border: 1px solid hsl(var(--sc-border)) !important; box-shadow: none !important;
   border-radius: var(--sc-radius) !important; }
@@ -82,6 +84,25 @@ header.MuiPaper-root, .BackstageHeader-header {
 .MuiSwitch-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiCheckbox-colorPrimary.Mui-checked, .MuiRadio-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiChip-root { border-radius: 6px !important; }
+/* ===== Graphs: Backstage catalog/dependency graph (SVG) + our React Flow ===== */
+/* SVG node rectangles -> shadcn cards; text -> foreground; edges -> muted. */
+[class*="DependencyGraph"] rect, [class*="EntityNode"] rect, svg [class*="Node"] rect {
+  fill: hsl(var(--sc-card)) !important; stroke: hsl(var(--sc-border)) !important;
+  rx: 9 !important; ry: 9 !important; }
+[class*="DependencyGraph"] text, [class*="EntityNode"] text, svg [class*="Node"] text { fill: hsl(var(--sc-fg)) !important; }
+[class*="EntityKindIcon"], [class*="EntityNode"] path { fill: hsl(var(--sc-muted-fg)) !important; }
+[class*="DependencyGraph"] path[marker-end], [class*="Edge"] path, [class*="DependencyGraph"] [class*="path"] {
+  stroke: hsl(var(--sc-muted-fg) / .6) !important; }
+[class*="DependencyGraph"] marker path, [class*="Edge"] marker path { fill: hsl(var(--sc-muted-fg) / .6) !important; }
+/* focused / selected entity node -> accent */
+[class*="EntityNode"][class*="focused"] rect, rect[class*="focused"], [class*="highlighted"] rect {
+  stroke: hsl(var(--sc-primary)) !important; stroke-width: 2 !important; }
+/* React Flow (our workflow DAG) */
+.react-flow__renderer, .react-flow { background: hsl(var(--sc-bg)) !important; }
+.react-flow__node { border-radius: var(--sc-radius) !important; }
+.react-flow__controls button { background: hsl(var(--sc-card)) !important; border-color: hsl(var(--sc-border)) !important; fill: hsl(var(--sc-fg)) !important; }
+.react-flow__attribution { display: none !important; }
+
 /* flatten the gradient card headers (template / entity cards) */
 [class*="ItemCardHeader"] {
   background-image: none !important; background: hsl(var(--sc-muted)) !important;

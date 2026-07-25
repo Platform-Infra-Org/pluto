@@ -6,12 +6,12 @@ import { Typography } from '@material-ui/core';
 import { requestsApiRef, WorkflowInfo, WorkflowNode } from '../api';
 
 const PHASE_COLOR: Record<string, string> = {
-  Succeeded: '#16a34a',
-  Running: '#6366f1',
-  Pending: '#a1a1aa',
-  Failed: '#dc2626',
-  Error: '#dc2626',
-  Skipped: '#a1a1aa',
+  Succeeded: 'hsl(var(--sc-success))',
+  Running: 'hsl(var(--sc-primary))',
+  Pending: 'hsl(var(--sc-muted-fg))',
+  Failed: 'hsl(var(--sc-destructive))',
+  Error: 'hsl(var(--sc-destructive))',
+  Skipped: 'hsl(var(--sc-muted-fg))',
 };
 
 // Depth of each node from roots (no incoming edge), following children.
@@ -43,9 +43,11 @@ function toFlow(wf: WorkflowInfo): { nodes: Node[]; edges: Edge[] } {
       position: { x: col * 220, y: row * 80 },
       data: { label: `${n.name}\n${n.phase ?? ''}` },
       style: {
-        border: `2px solid ${PHASE_COLOR[n.phase ?? 'Pending'] ?? '#a1a1aa'}`,
-        borderRadius: 8,
-        padding: 6,
+        border: `2px solid ${PHASE_COLOR[n.phase ?? 'Pending'] ?? 'hsl(var(--sc-muted-fg))'}`,
+        background: 'hsl(var(--sc-card))',
+        color: 'hsl(var(--sc-fg))',
+        borderRadius: 10,
+        padding: 8,
         fontSize: 11,
         whiteSpace: 'pre-line',
         width: 180,
