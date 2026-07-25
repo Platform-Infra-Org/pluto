@@ -96,11 +96,23 @@ export class RequestsStore {
 
   async list(filter?: {
     state?: RequestState;
+    /** Exact requester (the caller's own requests). */
     requester?: string;
+    /** ownerGroup ∈ these groups (the caller's approval scope). */
+    ownerGroups?: string[];
+    /** requester = X OR ownerGroup ∈ groups (own + team-owned). */
+    visibleTo?: { requester: string; ownerGroups: string[] };
   }): Promise<Request[]> {
     let q = this.db<RequestRow>('platform_requests');
     if (filter?.state) q = q.where('state', filter.state);
     if (filter?.requester) q = q.where('requester', filter.requester);
+    if (filter?.ownerGroups) q = q.whereIn('owner_group', filter.ownerGroups);
+    if (filter?.visibleTo) {
+      const { requester, ownerGroups } = filter.visibleTo;
+      q = q.where(b =>
+        b.where('requester', requester).orWhereIn('owner_group', ownerGroups),
+      );
+    }
     const rows = await q.orderBy('id', 'asc');
     // ponytail: N+1 to join approvals; fine at this scale, batch if it grows.
     return Promise.all(rows.map(r => this.get(r.id) as Promise<Request>));

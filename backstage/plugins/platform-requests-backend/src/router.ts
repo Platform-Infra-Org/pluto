@@ -140,14 +140,38 @@ export async function createRouter(
     const credentials = await httpAuth.credentials(req, {
       allow: ['user', 'service'],
     });
-    const actor =
-      credentials.principal.type === 'user'
-        ? actorId(credentials.principal.userEntityRef)
-        : undefined;
     const state = req.query.state as RequestState | undefined;
-    const mine =
-      !!actor && (req.query.mine === '1' || req.query.mine === 'true');
-    res.json(await store.list({ state, requester: mine ? actor : undefined }));
+
+    // Service callers (internal) see everything.
+    if (credentials.principal.type !== 'user') {
+      res.json(await store.list({ state }));
+      return;
+    }
+
+    const actor = actorId(credentials.principal.userEntityRef);
+    const { roles, groups } = await principalResolver(credentials);
+    const isAdmin = roles.includes('platform-admin');
+    const mine = req.query.mine === '1' || req.query.mine === 'true';
+    const scope = req.query.scope;
+
+    if (mine) {
+      // The caller's own requests.
+      res.json(await store.list({ state, requester: actor }));
+    } else if (scope === 'approval') {
+      // Requests the caller may approve: admin → all; else their teams' only.
+      res.json(
+        await store.list(isAdmin ? { state } : { state, ownerGroups: groups }),
+      );
+    } else {
+      // Default: admin → all; else own + their teams' requests.
+      res.json(
+        await store.list(
+          isAdmin
+            ? { state }
+            : { state, visibleTo: { requester: actor, ownerGroups: groups } },
+        ),
+      );
+    }
   });
 
   router.get('/requests/:id', async (req, res) => {

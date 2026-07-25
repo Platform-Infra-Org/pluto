@@ -159,7 +159,10 @@ function PendingApprovals({ max }: { max: number }) {
   const [rows, setRows] = useState<Request[]>();
 
   useEffect(() => {
-    requests.list({ state: 'PENDING_APPROVAL' }).then(setRows);
+    // Only what this user may approve (admin: all; service owner: their teams').
+    requests
+      .list({ scope: 'approval', state: 'PENDING_APPROVAL' })
+      .then(setRows);
   }, [requests]);
 
   return (

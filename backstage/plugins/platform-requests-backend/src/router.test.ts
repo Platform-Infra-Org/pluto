@@ -140,6 +140,58 @@ describe('createRouter', () => {
     expect(res.body.state).toBe('REJECTED');
   });
 
+  it('scopes GET /requests: non-admin sees own + their teams, not others', async () => {
+    const { app } = await makeApp({
+      result: AuthorizeResult.ALLOW,
+      ownerResolver: async rt =>
+        rt === 'team-a-res' ? 'group:default/team-a' : 'group:default/team-b',
+      principalResolver: async () => ({
+        roles: [],
+        groups: ['group:default/team-a'],
+      }),
+    });
+    // owned by team-a, requested by the acting user (mock)
+    await request(app)
+      .post('/requests')
+      .send({ ...NEW_REQUEST, resourceType: 'team-a-res' });
+    // owned by team-b, requested by someone else (service caller on behalf of bob)
+    await request(app)
+      .post('/requests')
+      .set('Authorization', mockCredentials.service.header())
+      .send({ ...NEW_REQUEST, resourceType: 'team-b-res', requester: 'bob' });
+
+    // default view: own + team-a only (not team-b)
+    const all = await request(app).get('/requests');
+    expect(all.body.map((r: PlatformRequest) => r.resourceType)).toEqual([
+      'team-a-res',
+    ]);
+    // approval scope: only team-a
+    const approval = await request(app).get('/requests?scope=approval');
+    expect(approval.body.map((r: PlatformRequest) => r.resourceType)).toEqual([
+      'team-a-res',
+    ]);
+    // mine: only own (mock requested team-a-res)
+    const mine = await request(app).get('/requests?mine=1');
+    expect(mine.body.map((r: PlatformRequest) => r.resourceType)).toEqual([
+      'team-a-res',
+    ]);
+  });
+
+  it('GET /requests returns all to an admin', async () => {
+    const { app } = await makeApp({
+      result: AuthorizeResult.ALLOW,
+      ownerResolver: async () => 'group:default/team-b',
+      principalResolver: async () => ({ roles: ['platform-admin'], groups: [] }),
+    });
+    await request(app).post('/requests').send(NEW_REQUEST);
+    await request(app)
+      .post('/requests')
+      .set('Authorization', mockCredentials.service.header())
+      .send({ ...NEW_REQUEST, requester: 'bob' });
+    const res = await request(app).get('/requests');
+    expect(res.body).toHaveLength(2);
+  });
+
   it('returns 404 for a missing request', async () => {
     const { app } = await makeApp({ result: AuthorizeResult.ALLOW });
     const res = await request(app).get('/requests/9999');

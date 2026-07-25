@@ -183,6 +183,13 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-cell-ellip { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Horizontal scroll for tables too wide for their card (card still clips to its corners). */
 .sc-table-wrap { overflow-x: auto; max-width: 100%; }
+/* tabs */
+.sc-tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid hsl(var(--sc-border)); }
+.sc-tab { appearance: none; background: none; border: none; cursor: pointer; font: inherit;
+  padding: 9px 14px; color: hsl(var(--sc-muted-fg)); font-weight: 600; font-size: 14px;
+  border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.sc-tab:hover { color: hsl(var(--sc-fg)); }
+.sc-tab.active { color: hsl(var(--sc-primary)); border-bottom-color: hsl(var(--sc-primary)); }
 
 /* login gate */
 .sc-login { min-height: 100vh; display: flex; align-items: center; justify-content: center;

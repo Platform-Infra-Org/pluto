@@ -43,18 +43,47 @@ export function stateBadge(s: RequestState) {
   }
 }
 
+type Tab = 'mine' | 'approval';
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'mine', label: 'My requests' },
+  { id: 'approval', label: 'For approval' },
+];
+
 export function RequestsPage() {
   const api = useApi(requestsApiRef);
+  const [tab, setTab] = useState<Tab>('mine');
   const [rows, setRows] = useState<Request[]>();
   const [error, setError] = useState<string>();
 
   useEffect(() => {
-    api.list().then(setRows).catch(e => setError(String(e)));
-  }, [api]);
+    setRows(undefined);
+    setError(undefined);
+    const opts =
+      tab === 'mine' ? { mine: true } : { scope: 'approval' as const };
+    api.list(opts).then(setRows).catch(e => setError(String(e)));
+  }, [api, tab]);
+
+  const empty =
+    tab === 'mine'
+      ? "You haven't made any requests yet."
+      : 'Nothing in your approval scope.';
 
   return (
     <Page>
       <PageHeader title="Requests" subtitle="Resource requests + approvals" />
+      <div className="sc-tabs">
+        {TABS.map(t => (
+          <button
+            key={t.id}
+            type="button"
+            className={`sc-tab${tab === t.id ? ' active' : ''}`}
+            onClick={() => setTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
       <Card>
         <div className="sc-table-wrap"><table className="sc-table">
           <thead>
@@ -86,7 +115,7 @@ export function RequestsPage() {
         </table></div>
         {error && <div className="sc-card-b sc-muted">{error}</div>}
         {rows && rows.length === 0 && (
-          <div className="sc-card-b sc-muted">No requests yet.</div>
+          <div className="sc-card-b sc-muted">{empty}</div>
         )}
         {!rows && !error && <div className="sc-card-b sc-muted">Loading…</div>}
       </Card>

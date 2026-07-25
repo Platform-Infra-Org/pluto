@@ -21,7 +21,11 @@ export interface WorkflowInfo {
 
 /** Client for the platform-requests backend. */
 export interface RequestsApi {
-  list(opts?: { state?: string; mine?: boolean }): Promise<Request[]>;
+  list(opts?: {
+    state?: string;
+    mine?: boolean;
+    scope?: 'approval';
+  }): Promise<Request[]>;
   get(id: number): Promise<Request>;
   create(body: NewRequest): Promise<Request>;
   approve(id: number, note?: string): Promise<Request>;
@@ -50,10 +54,15 @@ export class RequestsClient implements RequestsApi {
     return res.json() as Promise<T>;
   }
 
-  async list(opts?: { state?: string; mine?: boolean }): Promise<Request[]> {
+  async list(opts?: {
+    state?: string;
+    mine?: boolean;
+    scope?: 'approval';
+  }): Promise<Request[]> {
     const q = new URLSearchParams();
     if (opts?.state) q.set('state', opts.state);
     if (opts?.mine) q.set('mine', '1');
+    if (opts?.scope) q.set('scope', opts.scope);
     const url = `${await this.base()}/requests${q.toString() ? `?${q}` : ''}`;
     return this.json(await this.opts.fetchApi.fetch(url));
   }
