@@ -4,6 +4,7 @@ import {
   ReactNode,
   SelectHTMLAttributes,
 } from 'react';
+import { createPortal } from 'react-dom';
 
 /**
  * The Platform logo glyph: an ancient Greek temple facade (pediment, columns,
@@ -166,14 +167,17 @@ export function Dialog({
   children: ReactNode;
   footer?: ReactNode;
 }) {
-  if (!open) return null;
-  return (
+  if (!open || typeof document === 'undefined') return null;
+  // Portal to <body> so the overlay escapes any ancestor stacking context
+  // (e.g. the React Flow graph card) instead of rendering behind it.
+  return createPortal(
     <div className="sc sc-overlay" onClick={onClose}>
       <div className="sc-dialog" onClick={e => e.stopPropagation()}>
         <div className="sc-dialog-h">{title}</div>
         <div className="sc-dialog-b">{children}</div>
         {footer && <div className="sc-dialog-f">{footer}</div>}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

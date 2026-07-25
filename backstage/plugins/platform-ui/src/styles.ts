@@ -220,7 +220,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-kv dd { margin: 0; color: hsl(var(--sc-fg)); }
 
 /* dialog */
-.sc-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1400;
+.sc-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1600;
   display: flex; align-items: center; justify-content: center; }
 .sc-dialog { background: hsl(var(--sc-card)); color: hsl(var(--sc-fg));
   border: 1px solid hsl(var(--sc-border)); border-radius: var(--sc-radius);
