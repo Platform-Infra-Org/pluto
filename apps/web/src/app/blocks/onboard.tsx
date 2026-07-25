@@ -13,6 +13,7 @@ import {
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { EmojiPicker } from '@/components/ui/emoji-picker'
 
 // Base IO kinds offered by the type choice box (design §3). enum/map take a sub-field.
 const KINDS = ['string', 'number', 'boolean', 'json', 'jsonpath', 'secretRef', 'enum', 'map'] as const
@@ -64,6 +65,8 @@ function BlockRow({ block, onEdit }: { block: Block; onEdit: (b: Block) => void 
     <li>
       <Card className="space-y-1 p-4 text-sm">
         <div className="flex items-center gap-2">
+          {/* Show the emoji icon; legacy blocks stored a lucide name — fall back to 📦. */}
+          <span aria-hidden>{/\P{ASCII}/u.test(m.icon || '') ? m.icon : '📦'}</span>
           <span className="font-medium">{block.name}</span>
           <span className="text-muted-foreground">v{block.version}</span>
           <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">{block.kind}</span>
@@ -204,7 +207,7 @@ const BLANK = {
   templateRef: '',
   entrypoint: 'run',
   category: 'custom',
-  icon: 'box',
+  icon: '📦',
   inputs: [emptyRow(true)],
   outputs: [emptyRow(false, 'json')],
 }
@@ -260,7 +263,7 @@ function BlockForm({
         </label>
         <label className="space-y-1 text-sm">
           <span className="text-muted-foreground">Icon</span>
-          <Input aria-label="icon" value={icon} onChange={(e) => setIcon(e.target.value)} />
+          <EmojiPicker value={icon} onChange={setIcon} />
         </label>
       </div>
 
@@ -283,7 +286,7 @@ function BlockForm({
             onSubmit({
               name: name.trim(),
               category: category.trim() || 'custom',
-              icon: icon.trim() || 'box',
+              icon: icon || '📦',
               template_ref: templateRef.trim(),
               entrypoint: entrypoint.trim() || 'run',
               inputs: clean(inputs),
