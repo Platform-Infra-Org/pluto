@@ -1,4 +1,62 @@
 import { LoggerService } from '@backstage/backend-plugin-api';
+import { ArgoSubmitSpec } from '@internal/plugin-platform-common';
+
+/** Values available to `${{ token }}` templating in an ArgoSubmitSpec. */
+export interface ResolveCtx {
+  requestId: number;
+  resourceName: string;
+  resourceType: string;
+  requester: string;
+  params: Record<string, unknown>;
+}
+
+/**
+ * Resolve `${{ token }}` occurrences in a string. Tokens: requestId,
+ * resourceName, resourceType, requester, paramsJson, params.<field>.
+ * Unknown tokens and missing params resolve to ''. Pure.
+ */
+export function resolveTemplate(str: string, ctx: ResolveCtx): string {
+  return str.replace(/\$\{\{\s*([\w.]+)\s*\}\}/g, (_m, token: string) => {
+    switch (token) {
+      case 'requestId':
+        return String(ctx.requestId);
+      case 'resourceName':
+        return ctx.resourceName;
+      case 'resourceType':
+        return ctx.resourceType;
+      case 'requester':
+        return ctx.requester;
+      case 'paramsJson':
+        return JSON.stringify(ctx.params ?? {});
+      default: {
+        if (token.startsWith('params.')) {
+          const v = ctx.params?.[token.slice('params.'.length)];
+          return v == null ? '' : String(v);
+        }
+        return '';
+      }
+    }
+  });
+}
+
+/** Resolve every value of a string map. Pure. */
+export function resolveMap(
+  map: Record<string, string> | undefined,
+  ctx: ResolveCtx,
+): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(map ?? {})) {
+    out[k] = resolveTemplate(v, ctx);
+  }
+  return out;
+}
+
+/** Render a map as Argo's `k1=v1,k2=v2` submitOptions string. */
+function kvString(map: Record<string, string>): string {
+  return Object.entries(map)
+    .map(([k, v]) => `${k}=${v}`)
+    .join(',');
+}
 
 export interface ArgoConfig {
   baseUrl: string;
@@ -37,30 +95,74 @@ export class ArgoClient {
     return `platform.io/request-id=${requestId}`;
   }
 
-  /** Submit the workflow for a request; returns the created workflow name. */
-  async submit(
-    resourceType: string,
-    requestId: number,
-    requestJson: string,
-  ): Promise<string> {
+  /**
+   * Submit the workflow for a request from an optional per-request spec.
+   * `spec` undefined = today's default (resourceType template, cfg.namespace,
+   * `request` param, request-id label). Returns the created workflow name and
+   * the namespace it landed in.
+   */
+  async submitSpec(
+    spec: ArgoSubmitSpec | undefined,
+    ctx: ResolveCtx,
+  ): Promise<{ name: string; namespace: string }> {
+    const namespace =
+      (spec?.namespace && resolveTemplate(spec.namespace, ctx)) ||
+      this.cfg.namespace;
+    const resourceKind = spec?.resourceKind ?? 'WorkflowTemplate';
+    const resourceName =
+      (spec?.workflowTemplate && resolveTemplate(spec.workflowTemplate, ctx)) ||
+      ctx.resourceType;
+
+    const parameters = Object.entries(
+      resolveMap(spec?.parameters ?? { request: '${{ paramsJson }}' }, ctx),
+    ).map(([k, v]) => `${k}=${v}`);
+
+    // request-id label always wins (correlation key for status/completion).
+    const labels = {
+      ...resolveMap(spec?.labels, ctx),
+      'platform.io/request-id': String(ctx.requestId),
+    };
+    const annotations = resolveMap(spec?.annotations, ctx);
+
+    const submitOptions: Record<string, unknown> = {
+      labels: kvString(labels),
+      parameters,
+    };
+    if (spec?.entrypoint) {
+      submitOptions.entryPoint = resolveTemplate(spec.entrypoint, ctx);
+    }
+    if (spec?.serviceAccount) {
+      submitOptions.serviceAccount = resolveTemplate(spec.serviceAccount, ctx);
+    }
+    if (spec?.generateName) {
+      submitOptions.generateName = resolveTemplate(spec.generateName, ctx);
+    }
+    if (Object.keys(annotations).length) {
+      submitOptions.annotations = kvString(annotations);
+    }
+
     const submitWith = (template: string) =>
-      fetch(`${this.cfg.baseUrl}/api/v1/workflows/${this.cfg.namespace}/submit`, {
+      fetch(`${this.cfg.baseUrl}/api/v1/workflows/${namespace}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          resourceKind: 'WorkflowTemplate',
+          namespace,
+          resourceKind,
           resourceName: template,
-          submitOptions: {
-            labels: this.label(requestId),
-            parameters: [`request=${requestJson}`],
-          },
+          submitOptions,
         }),
       });
 
-    let res = await submitWith(resourceType);
-    if (!res.ok && resourceType !== this.cfg.defaultTemplate) {
+    let res = await submitWith(resourceName);
+    // Fallback to the default template ONLY when the caller did not pin a
+    // workflowTemplate (preserves today's per-type-with-fallback behavior).
+    if (
+      !res.ok &&
+      !spec?.workflowTemplate &&
+      resourceName !== this.cfg.defaultTemplate
+    ) {
       this.logger.warn(
-        `no WorkflowTemplate '${resourceType}' (${res.status}); using default '${this.cfg.defaultTemplate}'`,
+        `no WorkflowTemplate '${resourceName}' (${res.status}); using default '${this.cfg.defaultTemplate}'`,
       );
       res = await submitWith(this.cfg.defaultTemplate);
     }
@@ -70,14 +172,17 @@ export class ArgoClient {
     const wf = (await res.json()) as { metadata?: { name?: string } };
     const name = wf.metadata?.name;
     if (!name) throw new Error('argo submit returned no workflow name');
-    return name;
+    return { name, namespace };
   }
 
   /** Current status of the workflow for a request (by label), if any. */
-  async statusFor(requestId: number): Promise<WorkflowStatus> {
+  async statusFor(
+    requestId: number,
+    namespace: string = this.cfg.namespace,
+  ): Promise<WorkflowStatus> {
     const sel = encodeURIComponent(this.label(requestId));
     const res = await fetch(
-      `${this.cfg.baseUrl}/api/v1/workflows/${this.cfg.namespace}?listOptions.labelSelector=${sel}`,
+      `${this.cfg.baseUrl}/api/v1/workflows/${namespace}?listOptions.labelSelector=${sel}`,
     );
     if (!res.ok) throw new Error(`argo list failed: ${res.status}`);
     const data = (await res.json()) as {
@@ -95,9 +200,12 @@ export class ArgoClient {
   }
 
   /** The workflow's DAG nodes (for the status view). Empty if not found. */
-  async nodesFor(workflowName: string): Promise<WorkflowNode[]> {
+  async nodesFor(
+    workflowName: string,
+    namespace: string = this.cfg.namespace,
+  ): Promise<WorkflowNode[]> {
     const res = await fetch(
-      `${this.cfg.baseUrl}/api/v1/workflows/${this.cfg.namespace}/${workflowName}`,
+      `${this.cfg.baseUrl}/api/v1/workflows/${namespace}/${workflowName}`,
     );
     if (!res.ok) return [];
     const wf = (await res.json()) as {
