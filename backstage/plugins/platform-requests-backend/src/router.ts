@@ -40,6 +40,9 @@ const newRequestSchema = z.object({
   resourceName: z.string(),
   params: z.record(z.unknown()).optional(),
   policy: policySchema.optional(),
+  // Only honored for service callers (the Scaffolder action creating on behalf
+  // of the initiating user); ignored for user callers (requester = the actor).
+  requester: z.string().optional(),
 });
 
 const decisionSchema = z.object({ note: z.string().optional() });
@@ -60,6 +63,7 @@ export async function createRouter(
   const router = Router();
   router.use(express.json());
 
+  // User identity for approval/creation; throws for non-user callers.
   const actorOf = async (req: express.Request) => {
     const credentials = await httpAuth.credentials(req, { allow: ['user'] });
     return { credentials, actor: actorId(credentials.principal.userEntityRef) };
@@ -68,29 +72,49 @@ export async function createRouter(
   router.post('/requests', async (req, res) => {
     const parsed = newRequestSchema.safeParse(req.body);
     if (!parsed.success) throw new InputError(parsed.error.toString());
-    const { credentials, actor } = await actorOf(req);
-    const [decision] = await permissions.authorize(
-      [{ permission: requestCreatePermission }],
-      { credentials },
-    );
-    if (decision.result !== AuthorizeResult.ALLOW) {
-      throw new NotAllowedError('Not allowed to create requests');
+    const { requester: onBehalf, ...data } = parsed.data;
+
+    // Service callers (the Scaffolder action) create on behalf of a named user;
+    // user callers create for themselves and must hold the create permission.
+    const credentials = await httpAuth.credentials(req, {
+      allow: ['user', 'service'],
+    });
+    let requester: string;
+    if (credentials.principal.type === 'service') {
+      if (!onBehalf) {
+        throw new InputError('service callers must set `requester`');
+      }
+      requester = onBehalf;
+    } else {
+      requester = actorId(credentials.principal.userEntityRef);
+      const [decision] = await permissions.authorize(
+        [{ permission: requestCreatePermission }],
+        { credentials },
+      );
+      if (decision.result !== AuthorizeResult.ALLOW) {
+        throw new NotAllowedError('Not allowed to create requests');
+      }
     }
-    const created = await store.create({ ...parsed.data, requester: actor });
+    const created = await store.create({ ...data, requester });
     res.status(201).json(created);
   });
 
   router.get('/requests', async (req, res) => {
-    const { actor } = await actorOf(req);
+    const credentials = await httpAuth.credentials(req, {
+      allow: ['user', 'service'],
+    });
+    const actor =
+      credentials.principal.type === 'user'
+        ? actorId(credentials.principal.userEntityRef)
+        : undefined;
     const state = req.query.state as RequestState | undefined;
-    const mine = req.query.mine === '1' || req.query.mine === 'true';
-    res.json(
-      await store.list({ state, requester: mine ? actor : undefined }),
-    );
+    const mine =
+      !!actor && (req.query.mine === '1' || req.query.mine === 'true');
+    res.json(await store.list({ state, requester: mine ? actor : undefined }));
   });
 
   router.get('/requests/:id', async (req, res) => {
-    await actorOf(req);
+    await httpAuth.credentials(req, { allow: ['user', 'service'] });
     const found = await store.get(Number(req.params.id));
     if (!found) throw new NotFoundError(`No request ${req.params.id}`);
     res.json(found);

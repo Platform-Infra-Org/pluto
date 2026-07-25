@@ -154,6 +154,13 @@ permission:
   # setting this to `false` will disable permissions
   enabled: true
 
+# Argo Workflows (argo-server, port-forwarded from the kind cluster).
+platform:
+  argo:
+    baseUrl: http://localhost:2746
+    namespace: argo
+    defaultTemplate: demo-resource
+
 # see https://backstage.io/docs/ai/mcp-actions for more details
 mcpActions:
   name: 'My Company Backstage' # defaults to "backstage"
