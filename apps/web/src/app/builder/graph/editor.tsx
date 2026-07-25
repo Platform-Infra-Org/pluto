@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/lib/auth'
 import { fetchBlocks, type Block } from '@/lib/blocks'
-import { createDefinition, editDefinition } from '@/lib/services'
+import { createDefinition, editDefinition, fetchIdFieldOptions } from '@/lib/services'
 import type { GraphsJson, ServiceGraphJson, Verb } from '@/lib/graph'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -102,6 +102,15 @@ export function GraphEditor() {
   const [subTab, setSubTab] = useState<'graph' | 'fields'>('graph')
   const [selected, setSelected] = useState<string | null>(null)
   const [defId, setDefId] = useState<number | null>(null)
+  const [idField, setIdField] = useState('metadata.name')
+
+  // The id-field choice box: the owner picks which leaf of the final templated JSON
+  // identifies a resource of this type. Options refetch when the graph changes.
+  const idFieldQuery = useQuery({
+    queryKey: ['id-field-options', JSON.stringify(graphs)],
+    queryFn: () => fetchIdFieldOptions(graphs),
+  })
+  const idFieldOptions = idFieldQuery.data?.options ?? ['metadata.name']
 
   // Save & submit: ensure a DRAFT definition exists, then POST the composed graphs
   // to the BFF, which regenerates the artifacts (CB02) and re-enters onboarding.
@@ -120,7 +129,7 @@ export function GraphEditor() {
         id = d.id
         setDefId(id)
       }
-      return editDefinition(id, graphs)
+      return editDefinition(id, graphs, idField)
     },
   })
 
@@ -142,6 +151,23 @@ export function GraphEditor() {
           value={graphs.name}
           onChange={(e) => setGraphs((gs) => ({ ...gs, name: e.target.value }))}
         />
+        <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          ID field
+          <select
+            aria-label="id field"
+            className="rounded-md border border-input bg-transparent px-2 py-1 text-sm"
+            value={idField}
+            onChange={(e) => setIdField(e.target.value)}
+          >
+            {(idFieldOptions.includes(idField) ? idFieldOptions : [idField, ...idFieldOptions]).map(
+              (o) => (
+                <option key={o} value={o}>
+                  {o}
+                </option>
+              ),
+            )}
+          </select>
+        </label>
         <Button
           type="button"
           disabled={!graphs.name.trim() || save.isPending}

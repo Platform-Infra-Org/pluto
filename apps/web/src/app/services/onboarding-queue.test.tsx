@@ -30,6 +30,7 @@ const ITEM = {
     workflow_binding: {},
     approval_policy: { mode: 'SINGLE' as const },
     git_path: 'resources/app-database/',
+    id_field: 'metadata.name',
     status: 'PENDING_ONBOARDING' as const,
     version: 2,
     generated: {

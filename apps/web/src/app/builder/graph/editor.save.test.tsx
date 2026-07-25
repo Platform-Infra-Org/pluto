@@ -32,6 +32,9 @@ beforeEach(() => {
   vi.mocked(services.createDefinition).mockResolvedValue({ id: 9 } as any)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vi.mocked(services.editDefinition).mockResolvedValue({ version: 1, request_id: 4, definition: {} as any })
+  vi.mocked(services.fetchIdFieldOptions).mockResolvedValue({
+    options: ['metadata.name', 'payload.body.name'],
+  })
 })
 
 describe('GraphEditor save & submit', () => {
@@ -45,8 +48,29 @@ describe('GraphEditor save & submit', () => {
       expect(services.editDefinition).toHaveBeenCalledWith(
         9,
         expect.objectContaining({ name: 'app-database' }),
+        'metadata.name',
       ),
     )
     expect(await screen.findByText(/submitted for onboarding/i)).toBeInTheDocument()
+  })
+
+  it('renders fetched id-field options and includes the chosen id_field on save', async () => {
+    renderPage()
+    fireEvent.change(screen.getByLabelText('service name'), { target: { value: 'app-database' } })
+
+    const select = (await screen.findByLabelText('id field')) as HTMLSelectElement
+    await waitFor(() =>
+      expect(screen.getByRole('option', { name: 'payload.body.name' })).toBeInTheDocument(),
+    )
+    fireEvent.change(select, { target: { value: 'payload.body.name' } })
+    fireEvent.click(screen.getByRole('button', { name: /save.*submit/i }))
+
+    await waitFor(() =>
+      expect(services.editDefinition).toHaveBeenCalledWith(
+        9,
+        expect.objectContaining({ name: 'app-database' }),
+        'payload.body.name',
+      ),
+    )
   })
 })

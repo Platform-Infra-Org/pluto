@@ -12,6 +12,7 @@ export interface ServiceDefinition {
   workflow_binding: WorkflowBinding
   approval_policy: ApprovalPolicy
   git_path: string
+  id_field: string
   status: 'DRAFT' | 'PENDING_ONBOARDING' | 'ACTIVE' | 'RETIRED'
   version: number
   // CB04: the regenerated artifacts printed for the platform team to commit to Git.
@@ -43,11 +44,21 @@ export function submitDefinition(id: number) {
 
 // CB04: save the composed per-verb graphs (regenerate on the BFF) and re-enter
 // onboarding. A non-DRAFT definition forks a new bumped version (pin-until-migrated).
-export function editDefinition(id: number, graphs: unknown) {
+// `id_field` is the owner-chosen dot-path identifying a resource of this type.
+export function editDefinition(id: number, graphs: unknown, id_field?: string) {
   return apiFetch<{ version: number; request_id: number; definition: ServiceDefinition }>(
     `/services/definitions/${id}/edit`,
-    { method: 'POST', body: JSON.stringify({ graphs }) },
+    { method: 'POST', body: JSON.stringify({ graphs, id_field }) },
   )
+}
+
+// Candidate id-field dot-paths (payload leaves + metadata.name) for the current
+// graphs, populating the builder's ID-field choice box. Never rejects a bad graph.
+export function fetchIdFieldOptions(graphs: unknown) {
+  return apiFetch<{ options: string[] }>('/services/id-field-options', {
+    method: 'POST',
+    body: JSON.stringify({ graphs }),
+  })
 }
 
 export function fetchMyDefinitions() {

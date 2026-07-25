@@ -96,3 +96,13 @@ React will try to recreate this component tree from scratch using the error boun
 [2m3:09:23 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/blocks/onboard.tsx, /src/index.css[22m
 [2m3:09:32 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/blocks/onboard.tsx, /src/index.css[22m
 [2m3:09:55 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/blocks/onboard.tsx, /src/index.css[22m
+[2m3:34:53 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/app/builder/canvas.tsx, /src/app/builder/graph/editor.tsx, /src/app/services/mine.tsx, /src/app/services/onboarding-queue.tsx, /src/app/routes/requests/new.tsx, /src/app/routes/resources/import.tsx[22m
+[2m3:35:00 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/app/builder/canvas.tsx, /src/app/builder/graph/editor.tsx, /src/app/services/mine.tsx, /src/app/services/onboarding-queue.tsx, /src/app/routes/requests/new.tsx, /src/app/routes/resources/import.tsx[22m
+[2m3:35:22 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m3:35:28 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m3:35:32 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/builder/graph/editor.tsx, /src/index.css[22m
+[2m3:35:37 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/builder/graph/editor.tsx, /src/index.css[22m
+[2m3:35:42 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/builder/graph/editor.tsx, /src/index.css[22m
+[2m3:35:48 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/app/builder/graph/editor.tsx, /src/index.css[22m
+[2m3:36:05 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
+[2m3:36:45 AM[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css[22m
