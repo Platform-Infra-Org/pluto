@@ -26,6 +26,12 @@ export interface RouterOptions {
   roleResolver?: RoleResolver;
   /** Called on APPROVED before flipping to IN_PROGRESS. No-op until P2. */
   submitWorkflow?: (request: PlatformRequest) => Promise<void>;
+  /** Called after a request is created (for approver notifications). */
+  onCreated?: (request: PlatformRequest) => Promise<void>;
+  /** Resolve a workflow's DAG nodes for the status view. */
+  workflowNodesFor?: (name: string) => Promise<
+    { id: string; name: string; type?: string; phase?: string; children: string[] }[]
+  >;
 }
 
 const policySchema = z.union([
@@ -96,6 +102,7 @@ export async function createRouter(
       }
     }
     const created = await store.create({ ...data, requester });
+    if (options.onCreated) await options.onCreated(created);
     res.status(201).json(created);
   });
 
@@ -118,6 +125,18 @@ export async function createRouter(
     const found = await store.get(Number(req.params.id));
     if (!found) throw new NotFoundError(`No request ${req.params.id}`);
     res.json(found);
+  });
+
+  // The request's workflow DAG (for the status view).
+  router.get('/requests/:id/workflow', async (req, res) => {
+    await httpAuth.credentials(req, { allow: ['user', 'service'] });
+    const found = await store.get(Number(req.params.id));
+    if (!found) throw new NotFoundError(`No request ${req.params.id}`);
+    const nodes =
+      found.workflowName && options.workflowNodesFor
+        ? await options.workflowNodesFor(found.workflowName)
+        : [];
+    res.json({ phase: found.workflowPhase, name: found.workflowName, nodes });
   });
 
   const decide =

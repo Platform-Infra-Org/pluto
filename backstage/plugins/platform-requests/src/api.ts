@@ -5,6 +5,20 @@ import {
 } from '@backstage/core-plugin-api';
 import { NewRequest, Request } from '@internal/plugin-platform-common';
 
+export interface WorkflowNode {
+  id: string;
+  name: string;
+  type?: string;
+  phase?: string;
+  children: string[];
+}
+
+export interface WorkflowInfo {
+  phase?: string;
+  name?: string;
+  nodes: WorkflowNode[];
+}
+
 /** Client for the platform-requests backend. */
 export interface RequestsApi {
   list(opts?: { state?: string; mine?: boolean }): Promise<Request[]>;
@@ -12,6 +26,7 @@ export interface RequestsApi {
   create(body: NewRequest): Promise<Request>;
   approve(id: number, note?: string): Promise<Request>;
   reject(id: number, note?: string): Promise<Request>;
+  getWorkflow(id: number): Promise<WorkflowInfo>;
 }
 
 export const requestsApiRef = createApiRef<RequestsApi>({
@@ -45,6 +60,12 @@ export class RequestsClient implements RequestsApi {
 
   async get(id: number): Promise<Request> {
     return this.json(await this.opts.fetchApi.fetch(`${await this.base()}/requests/${id}`));
+  }
+
+  async getWorkflow(id: number): Promise<WorkflowInfo> {
+    return this.json(
+      await this.opts.fetchApi.fetch(`${await this.base()}/requests/${id}/workflow`),
+    );
   }
 
   async create(body: NewRequest): Promise<Request> {

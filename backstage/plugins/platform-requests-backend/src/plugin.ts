@@ -2,6 +2,7 @@ import {
   coreServices,
   createBackendPlugin,
 } from '@backstage/backend-plugin-api';
+import { notificationService } from '@backstage/plugin-notifications-node';
 import { createRouter } from './router';
 import { RequestsStore } from './store';
 import { ArgoClient } from './argo';
@@ -24,6 +25,7 @@ export const platformRequestsPlugin = createBackendPlugin({
         database: coreServices.database,
         permissions: coreServices.permissions,
         scheduler: coreServices.scheduler,
+        notifications: notificationService,
       },
       async init({
         logger,
@@ -33,6 +35,7 @@ export const platformRequestsPlugin = createBackendPlugin({
         database,
         permissions,
         scheduler,
+        notifications,
       }) {
         const store = await RequestsStore.create(database);
         logger.info('platform-requests store initialized');
@@ -72,6 +75,41 @@ export const platformRequestsPlugin = createBackendPlugin({
           logger,
         );
 
+        // Native Backstage notifications: approvers on new requests, requester
+        // on terminal outcomes. Never let a notification failure break the flow.
+        const notify = {
+          async approvalNeeded(r: { id: number; kind: string; resourceType: string; resourceName: string; requester: string }) {
+            try {
+              await notifications.send({
+                recipients: { type: 'entity', entityRef: 'group:default/platform-admins' },
+                payload: {
+                  title: `Approval needed: ${r.kind} ${r.resourceType}/${r.resourceName}`,
+                  description: `Requested by ${r.requester}`,
+                  link: `/requests/${r.id}`,
+                  severity: 'normal',
+                },
+              });
+            } catch (e) {
+              logger.warn(`notify approvalNeeded failed for ${r.id}: ${e}`);
+            }
+          },
+          async finished(r: { id: number; resourceType: string; resourceName: string; requester: string }, ok: boolean) {
+            try {
+              await notifications.send({
+                recipients: { type: 'entity', entityRef: `user:default/${r.requester}` },
+                payload: {
+                  title: `Request #${r.id} ${ok ? 'succeeded' : 'failed'}`,
+                  description: `${r.resourceType}/${r.resourceName}`,
+                  link: `/requests/${r.id}`,
+                  severity: ok ? 'normal' : 'high',
+                },
+              });
+            } catch (e) {
+              logger.warn(`notify finished failed for ${r.id}: ${e}`);
+            }
+          },
+        };
+
         // On APPROVED the router calls this, then flips the request to IN_PROGRESS.
         const submitWorkflow = async (request: {
           id: number;
@@ -88,7 +126,14 @@ export const platformRequestsPlugin = createBackendPlugin({
         };
 
         httpRouter.use(
-          await createRouter({ httpAuth, permissions, store, submitWorkflow }),
+          await createRouter({
+            httpAuth,
+            permissions,
+            store,
+            submitWorkflow,
+            onCreated: notify.approvalNeeded,
+            workflowNodesFor: name => argo.nodesFor(name),
+          }),
         );
 
         // Poll Argo and mirror workflow phase onto IN_PROGRESS requests; a request
@@ -116,10 +161,12 @@ export const platformRequestsPlugin = createBackendPlugin({
                     logger.warn(`catalog write failed for request ${r.id}: ${e}`);
                   }
                   await store.setState(r.id, 'SUCCEEDED');
+                  await notify.finished(r, true);
                   logger.info(`request ${r.id}: workflow succeeded`);
                 } else if (phase === 'Failed' || phase === 'Error') {
                   await store.setWorkflow(r.id, { error: message });
                   await store.setState(r.id, 'FAILED');
+                  await notify.finished(r, false);
                   logger.info(`request ${r.id}: workflow ${phase}`);
                 }
               } catch (e) {

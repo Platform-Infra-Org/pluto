@@ -13,6 +13,15 @@ export interface WorkflowStatus {
   message?: string;
 }
 
+/** A node in the workflow DAG, for the status view. */
+export interface WorkflowNode {
+  id: string;
+  name: string;
+  type?: string;
+  phase?: string;
+  children: string[];
+}
+
 /**
  * Thin client over the Argo Workflows REST API (argo-server). Submits a
  * WorkflowTemplate labelled with the request id and reads status back by that
@@ -83,5 +92,36 @@ export class ArgoClient {
       phase: wf?.status?.phase,
       message: wf?.status?.message,
     };
+  }
+
+  /** The workflow's DAG nodes (for the status view). Empty if not found. */
+  async nodesFor(workflowName: string): Promise<WorkflowNode[]> {
+    const res = await fetch(
+      `${this.cfg.baseUrl}/api/v1/workflows/${this.cfg.namespace}/${workflowName}`,
+    );
+    if (!res.ok) return [];
+    const wf = (await res.json()) as {
+      status?: {
+        nodes?: Record<
+          string,
+          {
+            id: string;
+            name?: string;
+            displayName?: string;
+            type?: string;
+            phase?: string;
+            children?: string[];
+          }
+        >;
+      };
+    };
+    const nodes = wf.status?.nodes ?? {};
+    return Object.values(nodes).map(n => ({
+      id: n.id,
+      name: n.displayName || n.name || n.id,
+      type: n.type,
+      phase: n.phase,
+      children: n.children ?? [],
+    }));
   }
 }

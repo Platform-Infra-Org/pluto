@@ -13,6 +13,7 @@ import { Button, Grid, TextField } from '@material-ui/core';
 import { Request, isTerminal } from '@internal/plugin-platform-common';
 import { requestsApiRef } from '../api';
 import { requestRouteRef } from '../routes';
+import { WorkflowGraph } from './WorkflowGraph';
 
 export function RequestPage() {
   const api = useApi(requestsApiRef);
@@ -80,6 +81,13 @@ export function RequestPage() {
               />
             </InfoCard>
           </Grid>
+          {request.workflowName && (
+            <Grid item xs={12}>
+              <InfoCard title={`Workflow — ${request.workflowName} (${request.workflowPhase ?? '…'})`}>
+                <WorkflowGraph id={request.id} live={!isTerminal(request.state)} />
+              </InfoCard>
+            </Grid>
+          )}
           <Grid item xs={12} md={5}>
             <InfoCard title="Approvals">
               {request.approvals.length === 0 && <>No decisions yet.</>}
