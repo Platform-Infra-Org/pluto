@@ -13,7 +13,23 @@ const relationsGraphCard = EntityCardBlueprint.make({
   },
 });
 
+// Edit/delete a catalog Resource in place (raises an approval request). Shown
+// on Resource entity pages instead of a separate /resources listing.
+const resourceActionsCard = EntityCardBlueprint.make({
+  name: 'platform-resource-actions',
+  params: {
+    filter: 'kind:resource',
+    type: 'info',
+    loader: async () => {
+      const { ResourceActionsCard } = await import(
+        './components/ResourceActionsCard'
+      );
+      return <ResourceActionsCard />;
+    },
+  },
+});
+
 export const platformRelationsCardModule = createFrontendModule({
   pluginId: 'catalog',
-  extensions: [relationsGraphCard],
+  extensions: [relationsGraphCard, resourceActionsCard],
 });

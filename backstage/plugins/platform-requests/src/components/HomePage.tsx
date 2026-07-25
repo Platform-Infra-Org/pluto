@@ -27,9 +27,8 @@ const cap = <T,>(items: T[], max: number): T[] =>
 
 const ACTIONS = [
   { to: '/create', label: 'Create a resource', hint: 'Run a software template' },
-  { to: '/resources', label: 'Browse resources', hint: 'Edit or delete via approval' },
+  { to: '/catalog', label: 'Browse resources', hint: 'Edit or delete from an entity page' },
   { to: '/requests', label: 'All requests', hint: 'Track approvals and workflows' },
-  { to: '/catalog', label: 'Catalog', hint: 'Explore the software catalog' },
 ];
 
 function QuickActions() {

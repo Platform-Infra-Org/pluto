@@ -6,15 +6,9 @@ import {
   fetchApiRef,
 } from '@backstage/frontend-plugin-api';
 import AssignmentIcon from '@material-ui/icons/Assignment';
-import StorageIcon from '@material-ui/icons/Storage';
 import HomeIcon from '@material-ui/icons/Home';
 import { requestsApiRef, RequestsClient } from './api';
-import {
-  rootRouteRef,
-  homeRouteRef,
-  requestRouteRef,
-  resourcesRouteRef,
-} from './routes';
+import { rootRouteRef, homeRouteRef, requestRouteRef } from './routes';
 
 const requestsApi = ApiBlueprint.make({
   name: 'requests',
@@ -60,26 +54,8 @@ const requestPage = PageBlueprint.make({
   },
 });
 
-const resourcesPage = PageBlueprint.make({
-  name: 'resources',
-  params: {
-    path: '/resources',
-    title: 'Resources',
-    icon: <StorageIcon />,
-    routeRef: resourcesRouteRef,
-    loader: () =>
-      import('./components/ResourcesPage').then(m => <m.ResourcesPage />),
-  },
-});
-
 export default createFrontendPlugin({
   pluginId: 'platform-requests',
-  extensions: [
-    requestsApi,
-    homePage,
-    requestsPage,
-    requestPage,
-    resourcesPage,
-  ],
+  extensions: [requestsApi, homePage, requestsPage, requestPage],
   routes: { root: rootRouteRef },
 });
