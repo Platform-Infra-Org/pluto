@@ -13,6 +13,8 @@ app:
     # Disable the stock Backstage themes so the platform theme is the default.
     - theme:app/light: false
     - theme:app/dark: false
+    # Disable the default relations graph card (replaced by our shadcn one).
+    - entity-card:catalog-graph/relations: false
 
 organization:
   name: Platform
