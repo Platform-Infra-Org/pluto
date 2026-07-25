@@ -13,8 +13,11 @@ import {
 import '@xyflow/react/dist/style.css'
 import { fetchResourceGraph, type ResourceGraph as Graph, type ResourceGraphNode } from '@/lib/catalog'
 
-// Depth of each node from the root, following dependency edges (from -> to).
-// Unreached nodes default to depth 0. Exported for unit testing the layout.
+// Signed column of each node relative to the root, following edges in BOTH
+// directions: a dependency (root -> to) sits one column right, a parent
+// (from -> root) one column left. So the root's dependencies fan right and the
+// resources that depend on it fan left. Unreached nodes default to 0. Exported
+// for unit testing the layout.
 export function layoutByDepth(
   nodes: ResourceGraphNode[],
   edges: { from: number; to: number }[],
@@ -22,19 +25,26 @@ export function layoutByDepth(
 ): Map<number, number> {
   const out = new Map<number, number>()
   for (const n of nodes) out.set(n.id, 0)
-  const adj = new Map<number, number[]>()
-  for (const e of edges) (adj.get(e.from) ?? adj.set(e.from, []).get(e.from)!).push(e.to)
+  // Undirected adjacency, tagged with the column delta: +1 toward dependencies
+  // (along from->to), -1 toward parents (against it).
+  const adj = new Map<number, { id: number; delta: number }[]>()
+  const link = (a: number, b: number, delta: number) =>
+    (adj.get(a) ?? adj.set(a, []).get(a)!).push({ id: b, delta })
+  for (const e of edges) {
+    link(e.from, e.to, +1)
+    link(e.to, e.from, -1)
+  }
   const queue: number[] = [rootId]
   const seen = new Set<number>([rootId])
   out.set(rootId, 0)
   while (queue.length) {
     const id = queue.shift()!
-    const d = out.get(id) ?? 0
-    for (const to of adj.get(id) ?? []) {
-      if (!seen.has(to)) {
-        seen.add(to)
-        out.set(to, d + 1)
-        queue.push(to)
+    const col = out.get(id) ?? 0
+    for (const { id: next, delta } of adj.get(id) ?? []) {
+      if (!seen.has(next)) {
+        seen.add(next)
+        out.set(next, col + delta)
+        queue.push(next)
       }
     }
   }
@@ -63,6 +73,7 @@ const nodeTypes = { resource: ResourceNode }
 
 function toFlow(graph: Graph, currentId: number): { nodes: Node[]; edges: Edge[] } {
   const depth = layoutByDepth(graph.nodes, graph.edges, currentId)
+  const minCol = Math.min(0, ...depth.values()) // parents can sit left of the root
   const rowByDepth = new Map<number, number>()
   const nodes: Node[] = graph.nodes.map((n) => {
     const d = depth.get(n.id) ?? 0
@@ -71,7 +82,7 @@ function toFlow(graph: Graph, currentId: number): { nodes: Node[]; edges: Edge[]
     return {
       id: String(n.id),
       type: 'resource',
-      position: { x: d * 240, y: row * 96 },
+      position: { x: (d - minCol) * 240, y: row * 96 },
       data: { name: n.name, type: n.type, resourceId: n.id, current: n.id === currentId },
     }
   })

@@ -22,6 +22,23 @@ describe('layoutByDepth', () => {
     expect(depth.get(2)).toBe(1)
     expect(depth.get(3)).toBe(2)
   })
+
+  it('places parents to the left (negative columns) of the root', () => {
+    const nodes = [
+      { id: 1, name: 'A', type: 'db', id_value: 'A' },
+      { id: 2, name: 'B', type: 'db', id_value: 'B' },
+      { id: 3, name: 'C', type: 'db', id_value: 'C' },
+    ]
+    // A -> B -> C; view from the leaf C: A and B are parents.
+    const edges = [
+      { from: 1, to: 2 },
+      { from: 2, to: 3 },
+    ]
+    const depth = layoutByDepth(nodes, edges, 3)
+    expect(depth.get(3)).toBe(0)
+    expect(depth.get(2)).toBe(-1)
+    expect(depth.get(1)).toBe(-2)
+  })
 })
 
 describe('ResourceGraph', () => {

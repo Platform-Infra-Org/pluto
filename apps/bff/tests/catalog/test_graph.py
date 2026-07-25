@@ -56,6 +56,17 @@ async def test_graph_walks_chain(session):
 
 
 @pytest.mark.anyio
+async def test_graph_includes_parents(session):
+    # C has no children, but B->C and A->B: from C we still surface the parent chain.
+    await _seed(session)
+    ids = await _ids(session)
+    g = await build_graph(session, ADMIN, ids["C"])
+    assert {n["name"] for n in g["nodes"]} == {"A", "B", "C"}
+    edges = {(e["from"], e["to"]) for e in g["edges"]}
+    assert edges == {(ids["A"], ids["B"]), (ids["B"], ids["C"])}
+
+
+@pytest.mark.anyio
 async def test_graph_no_deps_is_just_self(session):
     await _seed(session)
     ids = await _ids(session)

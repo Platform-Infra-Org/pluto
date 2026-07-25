@@ -4,8 +4,10 @@ Each resource type identifies its instances by a dot-path `id_field` (on the
 type's ACTIVE ServiceDefinition, default `metadata.name`). A resource declares
 its dependencies by referencing another resource's id value somewhere inside its
 `mapping.children` subtree. We index every *visible* resource by id value, then
-BFS from the target, following child references, to build a small connected
-subgraph (depth-limited). RBAC is inherited from `index.list_resources`.
+BFS from the target in *both* directions — following child references down to
+dependencies and back up to the parents that reference the target — to build a
+small connected subgraph (depth-limited). Edges always point referrer→referenced.
+RBAC is inherited from `index.list_resources`.
 """
 
 from __future__ import annotations
@@ -73,6 +75,19 @@ async def build_graph(
         if v is not None:
             by_id.setdefault(v, r)  # first wins on the rare id collision
 
+    # Referrer→referenced edges across the whole visible catalog: a row references
+    # `dep` if dep's id value appears as a string leaf in the row's mapping.children.
+    deps_of: dict[int, list[ResourceIndex]] = {}
+    parents_of: dict[int, list[ResourceIndex]] = {}
+    for r in rows:
+        own = idv(r)
+        for s in {s for s in _scalar_strings(_children(r.payload)) if s != own}:
+            dep = by_id.get(s)
+            if dep is None or dep.id == r.id:
+                continue
+            deps_of.setdefault(r.id, []).append(dep)
+            parents_of.setdefault(dep.id, []).append(r)
+
     nodes: dict[int, ResourceIndex] = {target.id: target}
     edges: list[dict] = []
     seen_edges: set[tuple[int, int]] = set()
@@ -83,19 +98,18 @@ async def build_graph(
         row, depth = frontier.pop()
         if depth >= MAX_DEPTH:
             continue
-        own = idv(row)
-        for s in _scalar_strings(_children(row.payload)):
-            dep = by_id.get(s)
-            if dep is None or dep.id == row.id or s == own:
-                continue
-            key = (row.id, dep.id)
-            if key not in seen_edges:
-                seen_edges.add(key)
-                edges.append({"from": row.id, "to": dep.id})
-            nodes[dep.id] = dep
-            if dep.id not in visited:
-                visited.add(dep.id)
-                frontier.append((dep, depth + 1))
+        # Both directions: dependencies (row→dep) and parents (parent→row).
+        for other, edge in (
+            *((d, (row.id, d.id)) for d in deps_of.get(row.id, [])),
+            *((p, (p.id, row.id)) for p in parents_of.get(row.id, [])),
+        ):
+            if edge not in seen_edges:
+                seen_edges.add(edge)
+                edges.append({"from": edge[0], "to": edge[1]})
+            nodes[other.id] = other
+            if other.id not in visited:
+                visited.add(other.id)
+                frontier.append((other, depth + 1))
 
     return {
         "nodes": [
