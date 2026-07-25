@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useApi } from '@backstage/core-plugin-api';
-import { Background, Controls, ReactFlow, type Edge, type Node } from '@xyflow/react';
+import {
+  Background,
+  BackgroundVariant,
+  Controls,
+  ReactFlow,
+  type Edge,
+  type Node,
+} from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Typography } from '@material-ui/core';
 import { requestsApiRef, WorkflowInfo, WorkflowNode } from '../api';
@@ -43,14 +50,15 @@ function toFlow(wf: WorkflowInfo): { nodes: Node[]; edges: Edge[] } {
       position: { x: col * 220, y: row * 80 },
       data: { label: `${n.name}\n${n.phase ?? ''}` },
       style: {
-        border: `2px solid ${PHASE_COLOR[n.phase ?? 'Pending'] ?? 'hsl(var(--sc-muted-fg))'}`,
-        background: 'hsl(var(--sc-card))',
-        color: 'hsl(var(--sc-fg))',
-        borderRadius: 10,
-        padding: 8,
-        fontSize: 11,
+        border: `1.5px solid ${PHASE_COLOR[n.phase ?? 'Pending'] ?? 'hsl(var(--sc-muted-fg))'}`,
+        background: '#17171f',
+        color: '#e7e7ef',
+        borderRadius: 8,
+        padding: '5px 8px',
+        fontSize: 10,
+        lineHeight: 1.3,
         whiteSpace: 'pre-line',
-        width: 180,
+        width: 128,
       },
     };
   });
@@ -90,9 +98,9 @@ export function WorkflowGraph({ id, live }: { id: number; live: boolean }) {
   }
   const { nodes, edges } = toFlow(wf);
   return (
-    <div style={{ height: 320 }}>
+    <div style={{ height: 300, background: '#0a0a10', borderRadius: 10 }}>
       <ReactFlow nodes={nodes} edges={edges} fitView proOptions={{ hideAttribution: true }}>
-        <Background />
+        <Background variant={BackgroundVariant.Dots} gap={17} size={1.2} color="#3a3a48" />
         <Controls showInteractive={false} />
       </ReactFlow>
     </div>

@@ -84,24 +84,34 @@ header.MuiPaper-root, [class*="BackstageHeader-header"] {
 .MuiSwitch-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiCheckbox-colorPrimary.Mui-checked, .MuiRadio-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiChip-root { border-radius: 6px !important; }
-/* ===== Graphs: Backstage catalog/dependency graph (SVG) + our React Flow ===== */
-/* SVG node rectangles -> shadcn cards; text -> foreground; edges -> muted. */
-[class*="DependencyGraph"] rect, [class*="EntityNode"] rect, svg [class*="Node"] rect {
-  fill: hsl(var(--sc-card)) !important; stroke: hsl(var(--sc-border)) !important;
-  rx: 9 !important; ry: 9 !important; }
-[class*="DependencyGraph"] text, [class*="EntityNode"] text, svg [class*="Node"] text { fill: hsl(var(--sc-fg)) !important; }
-[class*="EntityKindIcon"], [class*="EntityNode"] path { fill: hsl(var(--sc-muted-fg)) !important; }
-[class*="DependencyGraph"] path[marker-end], [class*="Edge"] path, [class*="DependencyGraph"] [class*="path"] {
-  stroke: hsl(var(--sc-muted-fg) / .6) !important; }
-[class*="DependencyGraph"] marker path, [class*="Edge"] marker path { fill: hsl(var(--sc-muted-fg) / .6) !important; }
-/* focused / selected entity node -> accent */
-[class*="EntityNode"][class*="focused"] rect, rect[class*="focused"], [class*="highlighted"] rect {
-  stroke: hsl(var(--sc-primary)) !important; stroke-width: 2 !important; }
-/* React Flow (our workflow DAG) */
-.react-flow__renderer, .react-flow { background: hsl(var(--sc-bg)) !important; }
-.react-flow__node { border-radius: var(--sc-radius) !important; }
-.react-flow__controls button { background: hsl(var(--sc-card)) !important; border-color: hsl(var(--sc-border)) !important; fill: hsl(var(--sc-fg)) !important; }
+/* ===== Graphs: React-Flow look — dark canvas + dots, compact dark nodes ===== */
+/* Backstage catalog/dependency graph SVG canvas (the svg that holds the nodes). */
+svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultNode"]) {
+  background-color: #0a0a10 !important;
+  background-image: radial-gradient(circle, rgba(255,255,255,.16) 1px, transparent 1px) !important;
+  background-size: 17px 17px !important; border-radius: 10px; }
+[class*="PluginCatalogGraphCustomNode-node"], [class*="DependencyGraphDefaultNode-node"] {
+  fill: #17171f !important; stroke: #32303e !important; rx: 8 !important; ry: 8 !important; }
+[class*="PluginCatalogGraphCustomLabel-text"], [class*="DependencyGraphDefaultNode-text"] {
+  fill: #e7e7ef !important; font-size: 11px !important; font-weight: 500 !important; }
+[class*="PluginCatalogGraph"] path, [class*="DependencyGraph"] path[marker-end], [class*="Edge"] path {
+  stroke: rgba(255,255,255,.24) !important; }
+[class*="PluginCatalogGraph"] marker path, [class*="DependencyGraph"] marker path { fill: rgba(255,255,255,.24) !important; }
+/* focused / selected node -> accent tint */
+[class*="PluginCatalogGraphCustomNode-node"][class*="primary"], [class*="PluginCatalogGraphCustomNode-node"][class*="focused"], rect[class*="focused"] {
+  fill: hsl(var(--sc-primary) / .22) !important; stroke: hsl(var(--sc-primary)) !important; }
+/* our React Flow workflow DAG — dark + dots (dot color set in the component). */
+.react-flow, .react-flow__renderer, .react-flow__pane { background: #0a0a10 !important; }
+.react-flow__node { border-radius: 8px !important; }
+.react-flow__controls { box-shadow: none !important; }
+.react-flow__controls button { background: #17171f !important; border-color: #32303e !important; }
+.react-flow__controls button svg, .react-flow__controls-button svg { fill: #e7e7ef !important; }
 .react-flow__attribution { display: none !important; }
+
+/* ===== Compact headers (title bar too tall / oversized title) ===== */
+[class*="BackstageHeader-header"] { padding-top: 16px !important; padding-bottom: 14px !important; min-height: 0 !important; }
+[class*="BackstageHeader-title"] { font-size: 1.6rem !important; line-height: 1.2 !important; }
+[class*="BackstageHeader-title"] * { font-size: inherit !important; }
 
 /* flatten the gradient card headers (template / entity cards) */
 [class*="ItemCardHeader"] {
