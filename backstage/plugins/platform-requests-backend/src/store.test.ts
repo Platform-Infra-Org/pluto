@@ -96,6 +96,33 @@ describe('RequestsStore', () => {
       await store.setWorkflow(created.id, { error: 'boom' });
       expect((await store.get(created.id))!.error).toBe('boom');
 
+      // argoSubmit round-trips, and setWorkflow persists the namespace.
+      const withSpec = await store.create({
+        kind: 'CREATE',
+        resourceType: 'demo',
+        resourceName: 'thing',
+        argoSubmit: {
+          namespace: 'team-a',
+          workflowTemplate: 'tpl',
+          parameters: { request: '${{ paramsJson }}' },
+          labels: { owner: '${{ requester }}' },
+        },
+        requester: 'dave',
+      });
+      expect(withSpec.argoSubmit).toEqual({
+        namespace: 'team-a',
+        workflowTemplate: 'tpl',
+        parameters: { request: '${{ paramsJson }}' },
+        labels: { owner: '${{ requester }}' },
+      });
+      // absent argoSubmit stays undefined
+      expect(created.argoSubmit).toBeUndefined();
+
+      await store.setWorkflow(withSpec.id, { name: 'wf-9', namespace: 'team-a' });
+      const routed = await store.get(withSpec.id);
+      expect(routed!.workflowName).toBe('wf-9');
+      expect(routed!.workflowNamespace).toBe('team-a');
+
       expect(await store.get(9999)).toBeUndefined();
     },
   );

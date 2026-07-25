@@ -6,6 +6,7 @@ import { Knex } from 'knex';
 import {
   Approval,
   ApprovalPolicy,
+  ArgoSubmitSpec,
   NewRequest,
   Request,
   RequestKind,
@@ -26,7 +27,9 @@ type RequestRow = {
   state: string;
   policy: string;
   requester: string;
+  argo_submit: string | null;
   workflow_name: string | null;
+  workflow_namespace: string | null;
   workflow_phase: string | null;
   error: string | null;
   created_at: string | Date;
@@ -66,6 +69,7 @@ export class RequestsStore {
         state: 'PENDING_APPROVAL',
         policy: JSON.stringify(input.policy ?? { mode: 'SINGLE' }),
         requester: input.requester,
+        argo_submit: input.argoSubmit ? JSON.stringify(input.argoSubmit) : null,
         created_at: now,
         updated_at: now,
       })
@@ -116,12 +120,13 @@ export class RequestsStore {
 
   async setWorkflow(
     id: number,
-    patch: { name?: string; phase?: string; error?: string },
+    patch: { name?: string; namespace?: string; phase?: string; error?: string },
   ): Promise<void> {
     const update: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
     };
     if (patch.name !== undefined) update.workflow_name = patch.name;
+    if (patch.namespace !== undefined) update.workflow_namespace = patch.namespace;
     if (patch.phase !== undefined) update.workflow_phase = patch.phase;
     if (patch.error !== undefined) update.error = patch.error;
     await this.db('platform_requests').where({ id }).update(update);
@@ -144,7 +149,11 @@ function assemble(row: RequestRow, approvals: ApprovalRow[]): Request {
       note: a.note ?? undefined,
       at: toIso(a.created_at),
     })),
+    argoSubmit: row.argo_submit
+      ? (JSON.parse(row.argo_submit) as ArgoSubmitSpec)
+      : undefined,
     workflowName: row.workflow_name ?? undefined,
+    workflowNamespace: row.workflow_namespace ?? undefined,
     workflowPhase: row.workflow_phase ?? undefined,
     error: row.error ?? undefined,
     createdAt: toIso(row.created_at),
