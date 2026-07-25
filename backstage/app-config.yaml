@@ -160,6 +160,12 @@ platform:
     baseUrl: http://localhost:2746
     namespace: argo
     defaultTemplate: demo-resource
+  builder:
+    gitea:
+      baseUrl: http://localhost:3001
+      owner: platform
+      repo: software-templates
+      token: de1073515a9dc9447a4d4152e7c4c8e96f6d6e11
 
 # see https://backstage.io/docs/ai/mcp-actions for more details
 mcpActions:

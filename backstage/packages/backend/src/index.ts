@@ -75,4 +75,5 @@ backend.add(import('@backstage/plugin-mcp-actions-backend'));
 
 backend.add(import('@internal/backstage-plugin-platform-requests-backend'));
 backend.add(import('@internal/backstage-plugin-scaffolder-backend-module-platform-actions'));
+backend.add(import('@internal/backstage-plugin-platform-builder-backend'));
 backend.start();
