@@ -32,7 +32,7 @@ export interface RouterOptions {
   /** Called after a request is created (for approver notifications). */
   onCreated?: (request: PlatformRequest) => Promise<void>;
   /** Resolve a workflow's DAG nodes for the status view. */
-  workflowNodesFor?: (name: string) => Promise<
+  workflowNodesFor?: (name: string, namespace?: string) => Promise<
     { id: string; name: string; type?: string; phase?: string; children: string[] }[]
   >;
 }
@@ -49,6 +49,8 @@ const newRequestSchema = z.object({
   resourceName: z.string(),
   params: z.record(z.unknown()).optional(),
   policy: policySchema.optional(),
+  // Loose: the spec is validated/normalized when building the Argo submit body.
+  argoSubmit: z.record(z.any()).optional(),
   // Only honored for service callers (the Scaffolder action creating on behalf
   // of the initiating user); ignored for user callers (requester = the actor).
   requester: z.string().optional(),
@@ -152,7 +154,10 @@ export async function createRouter(
     if (!found) throw new NotFoundError(`No request ${req.params.id}`);
     const nodes =
       found.workflowName && options.workflowNodesFor
-        ? await options.workflowNodesFor(found.workflowName)
+        ? await options.workflowNodesFor(
+            found.workflowName,
+            found.workflowNamespace,
+          )
         : [];
     res.json({ phase: found.workflowPhase, name: found.workflowName, nodes });
   });

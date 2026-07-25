@@ -35,6 +35,7 @@ export function createRequestSubmitAction(services: {
         resourceName: z => z.string(),
         kind: z => z.enum(['CREATE', 'UPDATE', 'DELETE']).optional(),
         params: z => z.record(z.any()).optional(),
+        argoSubmit: z => z.record(z.any()).optional(),
       },
       output: {
         requestId: z => z.number(),
@@ -58,6 +59,7 @@ export function createRequestSubmitAction(services: {
           resourceType: ctx.input.resourceType,
           resourceName: ctx.input.resourceName,
           params: ctx.input.params ?? {},
+          ...(ctx.input.argoSubmit ? { argoSubmit: ctx.input.argoSubmit } : {}),
           requester,
         }),
       });

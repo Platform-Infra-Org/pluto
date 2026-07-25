@@ -42,6 +42,18 @@ spec:
         kind: CREATE
         params:
           region: ${{ parameters.region }}
+        # Full control over the Argo submit. Omit argoSubmit for default behavior.
+        # ${{ '${{ token }}' }} tokens are resolved by the backend at submit time
+        # (requestId, resourceName, resourceType, requester, paramsJson, params.<field>).
+        argoSubmit:
+          namespace: argo
+          workflowTemplate: demo-resource
+          entrypoint: create
+          parameters:
+            request: "${{ '${{ paramsJson }}' }}"
+            region: "${{ '${{ params.region }}' }}"
+          labels:
+            platform.io/requested-by: "${{ '${{ requester }}' }}"
   output:
     links:
       - title: Open request

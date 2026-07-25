@@ -3,6 +3,7 @@ import {
   createBackendPlugin,
 } from '@backstage/backend-plugin-api';
 import { notificationService } from '@backstage/plugin-notifications-node';
+import { Request as PlatformRequest } from '@internal/plugin-platform-common';
 import { createRouter } from './router';
 import { RequestsStore } from './store';
 import { ArgoClient } from './argo';
@@ -113,18 +114,18 @@ export const platformRequestsPlugin = createBackendPlugin({
         };
 
         // On APPROVED the router calls this, then flips the request to IN_PROGRESS.
-        const submitWorkflow = async (request: {
-          id: number;
-          resourceType: string;
-          params: Record<string, unknown>;
-        }) => {
-          const name = await argo.submit(
-            request.resourceType,
-            request.id,
-            JSON.stringify(request.params ?? {}),
+        const submitWorkflow = async (request: PlatformRequest) => {
+          const { name, namespace } = await argo.submitSpec(request.argoSubmit, {
+            requestId: request.id,
+            resourceName: request.resourceName,
+            resourceType: request.resourceType,
+            requester: request.requester,
+            params: request.params ?? {},
+          });
+          await store.setWorkflow(request.id, { name, namespace });
+          logger.info(
+            `request ${request.id}: submitted workflow ${name} in ${namespace}`,
           );
-          await store.setWorkflow(request.id, { name });
-          logger.info(`request ${request.id}: submitted workflow ${name}`);
         };
 
         // Map the acting user's group memberships to platform roles, so the
@@ -152,7 +153,7 @@ export const platformRequestsPlugin = createBackendPlugin({
             store,
             submitWorkflow,
             onCreated: notify.approvalNeeded,
-            workflowNodesFor: name => argo.nodesFor(name),
+            workflowNodesFor: (name, namespace) => argo.nodesFor(name, namespace),
             roleResolver,
           }),
         );
@@ -167,7 +168,10 @@ export const platformRequestsPlugin = createBackendPlugin({
             const inProgress = await store.list({ state: 'IN_PROGRESS' });
             for (const r of inProgress) {
               try {
-                const { phase, message } = await argo.statusFor(r.id);
+                const { phase, message } = await argo.statusFor(
+                  r.id,
+                  r.workflowNamespace,
+                );
                 if (!phase) continue;
                 await store.setWorkflow(r.id, { phase });
                 if (phase === 'Succeeded') {
