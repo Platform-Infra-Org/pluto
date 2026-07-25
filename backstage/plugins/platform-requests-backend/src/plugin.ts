@@ -5,6 +5,7 @@ import {
 import { createRouter } from './router';
 import { RequestsStore } from './store';
 import { ArgoClient } from './argo';
+import { CatalogWriter } from './catalogWriter';
 
 /**
  * platformRequestsPlugin backend plugin
@@ -50,6 +51,27 @@ export const platformRequestsPlugin = createBackendPlugin({
           logger,
         );
 
+        const catalogWriter = new CatalogWriter(
+          {
+            giteaBaseUrl:
+              config.getOptionalString('platform.catalog.gitea.baseUrl') ??
+              'http://localhost:3001',
+            user:
+              config.getOptionalString('platform.catalog.gitea.user') ??
+              'platform',
+            password:
+              config.getOptionalString('platform.catalog.gitea.password') ??
+              'platform',
+            owner:
+              config.getOptionalString('platform.catalog.gitea.owner') ??
+              'platform',
+            repo:
+              config.getOptionalString('platform.catalog.gitea.repo') ??
+              'catalog',
+          },
+          logger,
+        );
+
         // On APPROVED the router calls this, then flips the request to IN_PROGRESS.
         const submitWorkflow = async (request: {
           id: number;
@@ -83,6 +105,16 @@ export const platformRequestsPlugin = createBackendPlugin({
                 if (!phase) continue;
                 await store.setWorkflow(r.id, { phase });
                 if (phase === 'Succeeded') {
+                  // Apply the result to the catalog repo (edit/delete).
+                  try {
+                    if (r.kind === 'DELETE') {
+                      await catalogWriter.deleteResource(r.resourceName);
+                    } else if (r.kind === 'UPDATE') {
+                      await catalogWriter.updateResource(r.resourceName, r.params);
+                    }
+                  } catch (e) {
+                    logger.warn(`catalog write failed for request ${r.id}: ${e}`);
+                  }
                   await store.setState(r.id, 'SUCCEEDED');
                   logger.info(`request ${r.id}: workflow succeeded`);
                 } else if (phase === 'Failed' || phase === 'Error') {

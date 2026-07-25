@@ -1449,7 +1449,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@backstage/catalog-model@npm:^1.9.0":
+"@backstage/catalog-model@npm:*, @backstage/catalog-model@npm:^1.9.0":
   version: 1.9.0
   resolution: "@backstage/catalog-model@npm:1.9.0"
   dependencies:
@@ -2775,7 +2775,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@backstage/plugin-catalog-react@npm:^3.2.0":
+"@backstage/plugin-catalog-react@npm:*, @backstage/plugin-catalog-react@npm:^3.2.0":
   version: 3.2.0
   resolution: "@backstage/plugin-catalog-react@npm:3.2.0"
   dependencies:
@@ -5186,6 +5186,7 @@ __metadata:
     express-promise-router: "npm:^4.1.0"
     knex: "npm:^3.0.0"
     supertest: "npm:^6.2.4"
+    yaml: "npm:^2.9.0"
     zod: "npm:^3.25.76 || ^4.0.0"
   languageName: unknown
   linkType: soft
@@ -5226,9 +5227,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/plugin-platform-requests@workspace:plugins/platform-requests"
   dependencies:
+    "@backstage/catalog-model": "npm:*"
     "@backstage/core-components": "npm:*"
     "@backstage/core-plugin-api": "npm:*"
     "@backstage/frontend-plugin-api": "npm:*"
+    "@backstage/plugin-catalog-react": "npm:*"
     "@backstage/test-utils": "npm:*"
     "@backstage/theme": "npm:*"
     "@internal/plugin-platform-common": "workspace:^"

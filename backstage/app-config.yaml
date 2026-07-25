@@ -168,6 +168,14 @@ platform:
       # Basic-auth against the seeded Gitea admin (dev-only, reproducible).
       user: platform
       password: platform
+  # Where request results (edit/update, delete) are applied on workflow success.
+  catalog:
+    gitea:
+      baseUrl: http://localhost:3001
+      owner: platform
+      repo: catalog
+      user: platform
+      password: platform
 
 # see https://backstage.io/docs/ai/mcp-actions for more details
 mcpActions:
