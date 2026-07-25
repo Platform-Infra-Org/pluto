@@ -35,6 +35,28 @@ export interface Approval {
   at: string;
 }
 
+/**
+ * Fully describes what a request submits to Argo's
+ * `POST /api/v1/workflows/{namespace}/submit`. All string values support
+ * `${{ token }}` templating (tokens: requestId, resourceName, resourceType,
+ * requester, paramsJson, params.<field>). Absent = default behavior.
+ */
+export interface ArgoSubmitSpec {
+  /** default: platform.argo.namespace ('argo') */
+  namespace?: string;
+  /** 'WorkflowTemplate' (default) | 'ClusterWorkflowTemplate' | 'CronWorkflow' */
+  resourceKind?: string;
+  /** template name; default: resourceType */
+  workflowTemplate?: string;
+  entrypoint?: string;
+  serviceAccount?: string;
+  /** Argo parameters (name -> value); default { request: '${{ paramsJson }}' } */
+  parameters?: Record<string, string>;
+  labels?: Record<string, string>;
+  annotations?: Record<string, string>;
+  generateName?: string;
+}
+
 /** A resource request tracked through approval + workflow execution. */
 export interface Request {
   id: number;
@@ -46,8 +68,12 @@ export interface Request {
   policy: ApprovalPolicy;
   requester: string;
   approvals: Approval[];
+  /** Per-request Argo submit spec; absent = default behavior. */
+  argoSubmit?: ArgoSubmitSpec;
   /** Argo workflow name once submitted (P2). */
   workflowName?: string;
+  /** Namespace the workflow was submitted into (for status/nodes queries). */
+  workflowNamespace?: string;
   /** Argo workflow phase mirrored onto the request (P2). */
   workflowPhase?: string;
   /** Error message when the request FAILED. */
@@ -63,6 +89,7 @@ export interface NewRequest {
   resourceName: string;
   params?: Record<string, unknown>;
   policy?: ApprovalPolicy;
+  argoSubmit?: ArgoSubmitSpec;
 }
 
 /** Permission ids exposed by the platform suite. */
