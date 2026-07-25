@@ -72,13 +72,67 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "backstage",
+      "name": "Backstage",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "backstage-dev-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://localhost:7007/api/auth/oidc/handler/frame",
+        "http://localhost:3000/api/auth/oidc/handler/frame"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://localhost:7007"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:3000/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "backstage-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "backstage",
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "claim.name": "groups"
+          }
+        }
+      ]
     }
   ],
   "groups": [
-    { "name": "platform-admins" },
-    { "name": "platform-auditors" },
-    { "name": "owners-payments" },
-    { "name": "service-owner" }
+    {
+      "name": "platform-admins"
+    },
+    {
+      "name": "platform-auditors"
+    },
+    {
+      "name": "owners-payments"
+    },
+    {
+      "name": "service-owner"
+    }
   ],
   "users": [
     {
@@ -89,9 +143,15 @@
       "firstName": "Ada",
       "lastName": "Admin",
       "credentials": [
-        { "type": "password", "value": "admin", "temporary": false }
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
       ],
-      "groups": ["/platform-admins"]
+      "groups": [
+        "/platform-admins"
+      ]
     },
     {
       "username": "requester",
@@ -101,9 +161,15 @@
       "firstName": "Rey",
       "lastName": "Requester",
       "credentials": [
-        { "type": "password", "value": "requester", "temporary": false }
+        {
+          "type": "password",
+          "value": "requester",
+          "temporary": false
+        }
       ],
-      "groups": ["/owners-payments"]
+      "groups": [
+        "/owners-payments"
+      ]
     },
     {
       "username": "auditor",
@@ -113,9 +179,15 @@
       "firstName": "Aud",
       "lastName": "Itor",
       "credentials": [
-        { "type": "password", "value": "auditor", "temporary": false }
+        {
+          "type": "password",
+          "value": "auditor",
+          "temporary": false
+        }
       ],
-      "groups": ["/platform-auditors"]
+      "groups": [
+        "/platform-auditors"
+      ]
     }
   ]
 }
