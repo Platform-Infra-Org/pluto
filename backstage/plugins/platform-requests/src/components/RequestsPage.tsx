@@ -56,7 +56,7 @@ export function RequestsPage() {
     <Page>
       <PageHeader title="Requests" subtitle="Resource requests + approvals" />
       <Card>
-        <table className="sc-table">
+        <div className="sc-table-wrap"><table className="sc-table">
           <thead>
             <tr>
               <th>ID</th>
@@ -83,7 +83,7 @@ export function RequestsPage() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
         {error && <div className="sc-card-b sc-muted">{error}</div>}
         {rows && rows.length === 0 && (
           <div className="sc-card-b sc-muted">No requests yet.</div>

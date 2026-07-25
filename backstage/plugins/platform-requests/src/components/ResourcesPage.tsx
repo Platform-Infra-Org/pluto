@@ -93,7 +93,7 @@ export function ResourcesPage() {
         </div>
       )}
       <Card>
-        <table className="sc-table">
+        <div className="sc-table-wrap"><table className="sc-table">
           <thead>
             <tr>
               <th>Name</th>
@@ -128,7 +128,7 @@ export function ResourcesPage() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
         {!rows && <div className="sc-card-b sc-muted">Loading…</div>}
       </Card>
 

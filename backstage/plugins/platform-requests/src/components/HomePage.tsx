@@ -81,7 +81,7 @@ function OwnedResources({ max }: { max: number }) {
         <div className="sc-card-b sc-muted">You don't own any resources yet.</div>
       )}
       {rows && rows.length > 0 && (
-        <table className="sc-table">
+        <div className="sc-table-wrap"><table className="sc-table">
           <thead>
             <tr>
               <th>Name</th>
@@ -100,7 +100,7 @@ function OwnedResources({ max }: { max: number }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       )}
     </Card>
   );
@@ -126,7 +126,7 @@ function StandingRequests({ max }: { max: number }) {
         <div className="sc-card-b sc-muted">No open requests.</div>
       )}
       {rows && rows.length > 0 && (
-        <table className="sc-table">
+        <div className="sc-table-wrap"><table className="sc-table">
           <thead>
             <tr>
               <th>#</th>
@@ -149,7 +149,7 @@ function StandingRequests({ max }: { max: number }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       )}
     </Card>
   );
@@ -173,7 +173,7 @@ function PendingApprovals({ max }: { max: number }) {
         <div className="sc-card-b sc-muted">Nothing waiting for approval.</div>
       )}
       {rows && rows.length > 0 && (
-        <table className="sc-table">
+        <div className="sc-table-wrap"><table className="sc-table">
           <thead>
             <tr>
               <th>#</th>
@@ -196,7 +196,7 @@ function PendingApprovals({ max }: { max: number }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       )}
     </Card>
   );

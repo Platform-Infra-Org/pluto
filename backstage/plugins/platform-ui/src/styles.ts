@@ -181,6 +181,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   border-bottom: 1px solid hsl(var(--sc-border)); }
 .sc-table td { padding: 12px 14px; border-bottom: 1px solid hsl(var(--sc-border)); color: hsl(var(--sc-fg)); }
 .sc-cell-ellip { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Horizontal scroll for tables too wide for their card (card still clips to its corners). */
+.sc-table-wrap { overflow-x: auto; max-width: 100%; }
 
 /* login gate */
 .sc-login { min-height: 100vh; display: flex; align-items: center; justify-content: center;
