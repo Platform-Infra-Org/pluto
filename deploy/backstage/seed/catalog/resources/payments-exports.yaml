@@ -1,0 +1,18 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: payments-exports
+  annotations:
+    platform.io/resource-type: bucket
+spec:
+  type: bucket
+  owner: "group:default/payments"
+  definition:
+    apiVersion: platform/v1
+    kind: Bucket
+    metadata:
+      name: payments-exports
+      ownerTeam: payments
+    spec:
+      region: eu-west-1
+      versioning: true

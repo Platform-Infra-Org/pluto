@@ -1,0 +1,15 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: platform-catalog
+  description: All platform resources + owning groups
+spec:
+  type: url
+  targets:
+    - ./groups.yaml
+    - ./resources/audit-logs.yaml
+    - ./resources/payments-exports.yaml
+    - ./resources/orders-db.yaml
+    - ./resources/payments-primary.yaml
+    - ./resources/search-index.yaml
+    - ./resources/prod-net.yaml

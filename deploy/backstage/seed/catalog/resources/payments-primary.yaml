@@ -1,0 +1,20 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: payments-primary
+  annotations:
+    platform.io/resource-type: database
+spec:
+  type: database
+  owner: "group:default/payments"
+  definition:
+    apiVersion: platform/v1
+    kind: Database
+    metadata:
+      name: payments-primary
+      ownerTeam: payments
+    spec:
+      engine: postgres
+      version: 16
+      size: large
+      region: eu-west-1

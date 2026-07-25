@@ -1,0 +1,9 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: platform-templates
+  description: Platform software templates (authored by the graph builder)
+spec:
+  type: url
+  targets:
+    - ./templates/demo-resource/template.yaml

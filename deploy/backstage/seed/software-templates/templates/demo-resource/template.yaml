@@ -1,0 +1,41 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: demo-resource
+  title: Demo Resource
+  description: >
+    P0 placeholder template so the Create page is populated. The real
+    Argo-submit wiring (platform:request:submit) lands in P2.
+  tags:
+    - platform
+    - demo
+spec:
+  owner: group:default/platform
+  type: resource
+  parameters:
+    - title: Resource details
+      required:
+        - name
+        - region
+      properties:
+        name:
+          type: string
+          title: Name
+          description: Name of the resource to provision
+        region:
+          type: string
+          title: Region
+          default: eu-west-1
+          enum:
+            - eu-west-1
+            - us-east-1
+  steps:
+    - id: log
+      name: Log intent
+      action: debug:log
+      input:
+        message: "Would submit a request for ${{ parameters.name }} in ${{ parameters.region }}"
+  output:
+    text:
+      - title: Note
+        content: "P0 placeholder — no request created yet. Request creation arrives in P2."
