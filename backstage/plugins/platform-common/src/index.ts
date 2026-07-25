@@ -1,0 +1,78 @@
+/**
+ * Shared types for the platform plugin suite.
+ *
+ * @packageDocumentation
+ */
+
+/** Lifecycle states of a resource request. */
+export type RequestState =
+  | 'PENDING_APPROVAL'
+  | 'APPROVED'
+  | 'IN_PROGRESS'
+  | 'SUCCEEDED'
+  | 'FAILED'
+  | 'REJECTED';
+
+/** The verb a request performs against a resource. */
+export type RequestKind = 'CREATE' | 'UPDATE' | 'DELETE';
+
+/**
+ * How many approvals a request needs.
+ * - `SINGLE`: one approval from anyone privileged.
+ * - `N_OF_M`: `n` distinct approvals.
+ * - `RBAC`: one approval from someone holding `role`.
+ */
+export type ApprovalPolicy =
+  | { mode: 'SINGLE' }
+  | { mode: 'N_OF_M'; n: number }
+  | { mode: 'RBAC'; role: string };
+
+/** A single approve/reject decision recorded against a request. */
+export interface Approval {
+  approver: string;
+  decision: 'approve' | 'reject';
+  note?: string;
+  at: string;
+}
+
+/** A resource request tracked through approval + workflow execution. */
+export interface Request {
+  id: number;
+  kind: RequestKind;
+  resourceType: string;
+  resourceName: string;
+  params: Record<string, unknown>;
+  state: RequestState;
+  policy: ApprovalPolicy;
+  requester: string;
+  approvals: Approval[];
+  /** Argo workflow name once submitted (P2). */
+  workflowName?: string;
+  /** Argo workflow phase mirrored onto the request (P2). */
+  workflowPhase?: string;
+  /** Error message when the request FAILED. */
+  error?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Body accepted by `POST /requests`. */
+export interface NewRequest {
+  kind: RequestKind;
+  resourceType: string;
+  resourceName: string;
+  params?: Record<string, unknown>;
+  policy?: ApprovalPolicy;
+}
+
+/** Permission ids exposed by the platform suite. */
+export const PLATFORM_PERMISSIONS = {
+  requestCreate: 'platform.request.create',
+  requestApprove: 'platform.request.approve',
+  requestRead: 'platform.request.read',
+} as const;
+
+/** A request in a terminal state is "finished". */
+export function isTerminal(state: RequestState): boolean {
+  return state === 'SUCCEEDED' || state === 'FAILED' || state === 'REJECTED';
+}
