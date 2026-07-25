@@ -83,6 +83,26 @@ def git_sha_of(listed, rid):
 
 
 @pytest.mark.anyio
+async def test_graph_endpoint_returns_target_node(client):
+    c, holder = client
+    holder["principal"] = ADMIN
+    listed = (await c.get("/api/resources")).json()["items"]
+    rid = next(r["id"] for r in listed if r["name"] == "orders-db")
+    g = (await c.get(f"/api/resources/{rid}/graph")).json()
+    assert rid in {n["id"] for n in g["nodes"]}
+
+
+@pytest.mark.anyio
+async def test_graph_endpoint_rbac_404(client):
+    c, holder = client
+    holder["principal"] = ADMIN
+    listed = (await c.get("/api/resources")).json()["items"]
+    rid = next(r["id"] for r in listed if r["name"] == "sessions")  # search-owned
+    holder["principal"] = REQUESTER
+    assert (await c.get(f"/api/resources/{rid}/graph")).status_code == 404
+
+
+@pytest.mark.anyio
 async def test_requester_cannot_read_other_teams_detail(client):
     c, holder = client
     holder["principal"] = ADMIN

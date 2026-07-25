@@ -1,0 +1,25 @@
+{
+  "apiVersion": "platform/v1",
+  "kind": "Network",
+  "metadata": {
+    "name": "prod-net",
+    "ownerTeam": "payments"
+  },
+  "spec": {
+    "cidr": "10.0.0.0/16",
+    "region": "eu-west-1"
+  },
+  "payload": {
+    "method": "POST",
+    "url": "https://net.api/networks",
+    "body": {
+      "name": "prod-net",
+      "cidr": "10.0.0.0/16",
+      "region": "eu-west-1"
+    }
+  },
+  "mapping": {
+    "children": {},
+    "internals": {}
+  }
+}

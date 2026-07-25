@@ -3,7 +3,7 @@
   "kind": "Bucket",
   "metadata": {
     "name": "audit-logs",
-    "ownerTeam": "search"
+    "ownerTeam": "payments"
   },
   "spec": {
     "region": "eu-west-1",
@@ -21,7 +21,15 @@
     }
   },
   "mapping": {
-    "children": {},
+    "children": {
+      "database": {
+        "service": "database",
+        "action": "reference",
+        "inputs": { "id": "orders-db" },
+        "outputs": {},
+        "mapping": { "children": {}, "internals": {} }
+      }
+    },
     "internals": {
       "grant_read": {
         "type": "api-call",

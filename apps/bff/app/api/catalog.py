@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.deps import current_principal
 from app.auth.principal import Principal
-from app.catalog import index
+from app.catalog import graph, index
 from app.catalog.git_sync import sync_repo
 from app.config import settings
 from app.db import get_session
@@ -64,6 +64,18 @@ async def resource_detail(
 ) -> dict:
     row = await _require_resource(resource_id, principal, session)
     return {**_summary(row), "payload": row.payload}
+
+
+@router.get("/api/resources/{resource_id}/graph")
+async def resource_graph(
+    resource_id: int,
+    principal: Principal = Depends(current_principal),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    g = await graph.build_graph(session, principal, resource_id)
+    if g is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "resource not found")
+    return g
 
 
 @router.get("/api/resources/{resource_id}/raw", response_class=PlainTextResponse)

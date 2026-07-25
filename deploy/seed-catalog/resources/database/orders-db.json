@@ -27,7 +27,7 @@
       "network": {
         "service": "network",
         "action": "create",
-        "inputs": { "region": "eu-west-1" },
+        "inputs": { "region": "eu-west-1", "id": "prod-net" },
         "outputs": { "subnet_id": null },
         "mapping": { "children": {}, "internals": {} }
       }
