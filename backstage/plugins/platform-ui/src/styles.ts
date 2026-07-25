@@ -190,6 +190,10 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .sc-tab:hover { color: hsl(var(--sc-fg)); }
 .sc-tab.active { color: hsl(var(--sc-primary)); border-bottom-color: hsl(var(--sc-primary)); }
+/* filter/sort toolbar */
+.sc-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+.sc-toolbar .sc-input { width: auto; flex: 1 1 220px; min-width: 180px; }
+.sc-toolbar .sc-select { width: auto; min-width: 150px; }
 
 /* login gate */
 .sc-login { min-height: 100vh; display: flex; align-items: center; justify-content: center;

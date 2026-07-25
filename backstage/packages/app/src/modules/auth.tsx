@@ -22,7 +22,7 @@ import {
   type SignInPageProps,
 } from '@backstage/core-plugin-api';
 import { Button, SchemePicker, PlatformMark } from '@internal/plugin-platform-ui';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // Custom auth API for the generic OIDC (Keycloak) provider — Backstage ships no
 // built-in oidcAuthApiRef, so the app defines one and wires it to the backend's
@@ -70,6 +70,33 @@ function PlatformSignInPage(props: SignInPageProps) {
   const oidc = useApi(oidcAuthApiRef);
   const errorApi = useApi(errorApiRef);
   const [busy, setBusy] = useState(false);
+  // On load, silently restore an existing session (refresh token) instead of
+  // forcing a fresh login on every page refresh. `optional: true` never pops up.
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    oidc
+      .getBackstageIdentity({ optional: true })
+      .then(id => {
+        if (cancelled) return;
+        if (id) {
+          props.onSignInSuccess(
+            UserIdentity.create({ identity: id.identity, authApi: oidc }),
+          );
+        } else {
+          setChecking(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setChecking(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // Run once on mount; onSignInSuccess must fire at most once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [oidc]);
 
   const signIn = async () => {
     setBusy(true);
@@ -86,6 +113,20 @@ function PlatformSignInPage(props: SignInPageProps) {
       setBusy(false);
     }
   };
+
+  // While restoring a session, don't flash the login card.
+  if (checking) {
+    return (
+      <div className="sc sc-login">
+        <div className="sc-login-card">
+          <div className="sc-login-mark">
+            <PlatformMark />
+          </div>
+          <p className="sc-login-sub">Signing you in…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="sc sc-login">
