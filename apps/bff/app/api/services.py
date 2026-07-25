@@ -44,6 +44,11 @@ class NoteBody(BaseModel):
 
 class EditBody(BaseModel):
     graphs: dict  # full per-verb graph set (CB03 wire shape); replaces the current graphs
+    id_field: str | None = None  # dot-path identifying a resource; None keeps current
+
+
+class GraphsBody(BaseModel):
+    graphs: dict
 
 
 def _dump_def(d: ServiceDefinition) -> dict:
@@ -57,6 +62,7 @@ def _dump_def(d: ServiceDefinition) -> dict:
         "workflow_binding": d.workflow_binding,
         "approval_policy": d.approval_policy,
         "graphs": d.graphs,
+        "id_field": d.id_field,
         "generated": d.generated,
         "block_versions": d.block_versions,
         "git_path": d.git_path,
@@ -79,6 +85,7 @@ async def get_type_schema(
         "resource_type": resource_type,
         "form_schema": d.form_schema,
         "ui_schema": d.ui_schema,
+        "id_field": d.id_field,
         "version": d.version,
     }
 
@@ -95,8 +102,20 @@ async def available_types(
     rows = list((await session.execute(stmt)).scalars())
     latest: dict[str, dict] = {}
     for d in sorted(rows, key=lambda x: x.version):  # keep the newest per name
-        latest[d.name] = {"name": d.name, "category": d.category, "owner_team": d.owner_team}
+        latest[d.name] = {"name": d.name, "category": d.category,
+                          "owner_team": d.owner_team, "id_field": d.id_field}
     return {"items": sorted(latest.values(), key=lambda x: x["name"])}
+
+
+@router.post("/id-field-options")
+async def id_field_options(
+    body: GraphsBody,
+    _: Principal = Depends(current_principal),
+    session: AsyncSession = Depends(get_session),
+) -> dict:
+    """Candidate id-field dot-paths for the given graphs (payload leaves +
+    metadata.name), for the builder's ID-field choice box. Never 500s."""
+    return {"options": await compose.id_field_options(session, body.graphs)}
 
 
 @router.post("/definitions", status_code=status.HTTP_201_CREATED)
@@ -200,11 +219,12 @@ async def edit_definition(
             workflow_binding=src.workflow_binding,
             approval_policy=src.approval_policy,
             git_path=src.git_path,
+            id_field=src.id_field,
             status=DRAFT,
             version=await service_def.next_version(session, src.name),
         )
     try:
-        await compose.save_graphs(session, target, body.graphs)
+        await compose.save_graphs(session, target, body.graphs, body.id_field)
     except GenerationError as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
     except (KeyError, ValueError, TypeError, AttributeError, ManifestError) as exc:

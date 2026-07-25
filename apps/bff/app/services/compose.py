@@ -9,10 +9,13 @@ The BFF never writes Git; the templates are only persisted for later display.
 
 from __future__ import annotations
 
+import json
+
+from jinja2 import Environment
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.blocks import registry
-from app.generator.generate import generate
+from app.generator.generate import GenerationError, generate
 from app.generator.graph import parse_graphs
 from app.services.definition import ServiceDefinition
 
@@ -50,7 +53,10 @@ def _pinned_versions(graphs: dict, palette: list[dict]) -> dict[str, int]:
 
 
 async def save_graphs(
-    session: AsyncSession, defn: ServiceDefinition, graphs: dict
+    session: AsyncSession,
+    defn: ServiceDefinition,
+    graphs: dict,
+    id_field: str | None = None,
 ) -> ServiceDefinition:
     """Validate + regenerate + persist. Raises GenerationError on an invalid graph."""
     palette = await registry.list_blocks(session)
@@ -62,6 +68,8 @@ async def save_graphs(
 
     session.add(defn)
     defn.graphs = graphs
+    if id_field is not None:
+        defn.id_field = id_field
     # The graph's request fields ARE the request form for this type.
     defn.form_schema = _form_schema_from_graphs(graphs)
     defn.generated = {
@@ -71,3 +79,36 @@ async def save_graphs(
     defn.block_versions = _pinned_versions(graphs, palette)
     await session.commit()
     return defn
+
+
+def _leaf_paths(value: object, prefix: str) -> list[str]:
+    """Dot-paths of every leaf (non-dict) under `value`, prefixed with `prefix`."""
+    if not isinstance(value, dict):
+        return [prefix]
+    out: list[str] = []
+    for key, sub in value.items():
+        out += _leaf_paths(sub, f"{prefix}.{key}")
+    return out
+
+
+async def id_field_options(session: AsyncSession, graphs: dict) -> list[str]:
+    """Candidate id-field dot-paths: the `payload` subtree's leaves in the final
+    templated JSON plus the wrapper `metadata.name`. Deduped, sorted, metadata.name
+    first. An invalid/empty graph degrades to just ["metadata.name"] (never 500)."""
+    always = ["metadata.name"]
+    try:
+        manifests = await registry.load_manifests(session)
+        gen = generate(parse_graphs(graphs), manifests)
+        # Render request fields as themselves (field name -> field name) so leaves are
+        # concrete strings; outputs stay as "<<...>>" placeholders — still leaves.
+        fields: dict[str, str] = {}
+        for verb in ("create", "update", "delete"):
+            fields.update((graphs.get(verb) or {}).get("request_fields") or {})
+        rendered = Environment().from_string(gen.build_json_j2).render(
+            request={f: f for f in fields}, resolved={}
+        )
+        payload = json.loads(rendered).get("payload", {})
+        paths = set(_leaf_paths(payload, "payload"))
+    except (GenerationError, KeyError, ValueError, TypeError, AttributeError):
+        paths = set()
+    return always + sorted(paths - set(always))

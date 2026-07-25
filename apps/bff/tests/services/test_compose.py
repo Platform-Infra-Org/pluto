@@ -72,6 +72,35 @@ async def test_valid_graphs_persist_artifacts_and_pinned_versions(session):
     assert reloaded.generated["workflow_template_yaml"] == out.generated["workflow_template_yaml"]
 
 
+async def test_save_graphs_persists_id_field(session):
+    d = await _draft(session)
+    out = await compose.save_graphs(session, d, _graphs([_main()]), id_field="payload.body.name")
+    assert out.id_field == "payload.body.name"
+    reloaded = await session.get(ServiceDefinition, d.id)
+    assert reloaded.id_field == "payload.body.name"
+
+
+async def test_save_graphs_defaults_id_field_to_metadata_name(session):
+    d = await _draft(session)
+    out = await compose.save_graphs(session, d, _graphs([_main()]))
+    assert out.id_field == "metadata.name"
+
+
+async def test_id_field_options_payload_leaves_and_metadata(session):
+    opts = await compose.id_field_options(
+        session, {"name": "app-database", "create": {
+            "request_fields": {"app_name": "string"}, "nodes": [_main()]}}
+    )
+    assert opts[0] == "metadata.name"
+    assert "payload.body.name" in opts
+    assert "payload.method" in opts
+    assert "payload.url" in opts
+
+
+async def test_id_field_options_empty_graph_graceful(session):
+    assert await compose.id_field_options(session, {"name": "x"}) == ["metadata.name"]
+
+
 async def test_invalid_graph_rejected_nothing_persisted(session):
     d = await _draft(session)
     two_mains = _graphs([_main(), _main(id="main2")])

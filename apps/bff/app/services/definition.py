@@ -44,6 +44,9 @@ class ServiceDefinition(Base):
     # CB04: per-verb composed graphs {create?,update?,delete?} (only defined verbs),
     # the regenerated artifacts, and the block versions each node was wired against.
     graphs: Mapped[dict] = mapped_column(JSONB, default=dict)
+    # Dot-path into the resource's final templated JSON that identifies a resource of
+    # this type (owner-chosen in the builder). See id-field-options endpoint (E08).
+    id_field: Mapped[str] = mapped_column(default="metadata.name")
     generated: Mapped[dict] = mapped_column(JSONB, default=dict)  # {build_json_j2, workflow_template_yaml}
     block_versions: Mapped[dict] = mapped_column(JSONB, default=dict)  # {block_name: pinned_version}
     git_path: Mapped[str] = mapped_column(default="")

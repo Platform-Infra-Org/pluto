@@ -118,6 +118,33 @@ async def test_add_and_remove_verb_bumps_version_and_reonboards(client):
     assert "- name: delete" not in yaml3
 
 
+async def test_edit_persists_chosen_id_field(client):
+    c, holder, session = client
+    holder["principal"] = OWNER
+    d = (await c.post("/api/services/definitions", json={
+        "name": "app-database", "owner_team": "payments"})).json()
+    edit = await c.post(f"/api/services/definitions/{d['id']}/edit", json={
+        "graphs": {"name": "app-database", "create": _create_graph()},
+        "id_field": "payload.body.name"})
+    assert edit.status_code == 200, edit.text
+    assert edit.json()["definition"]["id_field"] == "payload.body.name"
+
+
+async def test_id_field_options_endpoint(client):
+    c, holder, session = client
+    holder["principal"] = OWNER
+    r = await c.post("/api/services/id-field-options", json={
+        "graphs": {"name": "app-database", "create": _create_graph()}})
+    assert r.status_code == 200, r.text
+    opts = r.json()["options"]
+    assert opts[0] == "metadata.name"
+    assert "payload.body.name" in opts and "payload.method" in opts
+
+    empty = await c.post("/api/services/id-field-options", json={"graphs": {"name": "x"}})
+    assert empty.status_code == 200
+    assert empty.json()["options"] == ["metadata.name"]
+
+
 async def test_invalid_graph_edit_rejected_no_version_created(client):
     c, holder, session = client
     holder["principal"] = OWNER
