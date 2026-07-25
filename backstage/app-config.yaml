@@ -15,12 +15,13 @@ organization:
   name: My Company
 
 backend:
-  # Used for enabling authentication, secret is shared by all backend plugins
-  # See https://backstage.io/docs/auth/service-to-service-auth for
-  # information on the format
-  # auth:
-  #   keys:
-  #     - secret: ${BACKEND_SECRET}
+  # Static external-access token for local smoke tests / scripts (dev-only).
+  auth:
+    externalAccess:
+      - type: static
+        options:
+          token: dev-smoke-token-please-change
+          subject: local-smoke
   baseUrl: http://localhost:7007
   listen:
     port: 7007
@@ -34,6 +35,10 @@ backend:
     origin: http://localhost:3000
     methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
     credentials: true
+  # Allow the generic URL reader to fetch catalog/template YAML from local Gitea.
+  reading:
+    allow:
+      - host: localhost:3001
   # This is for local development only, it is not recommended to use this in production
   # The production database configuration is stored in app-config.production.yaml
   # Local dev DB = the backstage-stack Postgres (docker, port 5433). Throwaway creds.
@@ -127,33 +132,18 @@ catalog:
     entityFilename: catalog-info.yaml
     pullRequestBranchName: backstage-integration
   rules:
-    - allow: [Component, System, API, Resource, Location]
+    - allow: [Component, System, API, Resource, Location, Group, User, Template]
   locations:
-    # Local example data, file locations are relative to the backend process, typically `packages/backend`
-    - type: file
-      target: ../../examples/entities.yaml
-
-    # Local example template
-    - type: file
-      target: ../../examples/template/template.yaml
+    # Platform catalog + templates, hosted in Gitea (config-swappable to GitHub/GitLab).
+    # Root Location files resolve their relative targets against the raw URL.
+    - type: url
+      target: http://localhost:3001/platform/catalog/raw/branch/main/catalog-info.yaml
       rules:
-        - allow: [Template]
-
-    # Local example organizational data
-    - type: file
-      target: ../../examples/org.yaml
+        - allow: [Location, Resource, Group, User]
+    - type: url
+      target: http://localhost:3001/platform/software-templates/raw/branch/main/catalog-info.yaml
       rules:
-        - allow: [User, Group]
-
-    ## Uncomment these lines to add more example data
-    # - type: url
-    #   target: https://github.com/backstage/backstage/blob/master/packages/catalog-model/examples/all.yaml
-
-    ## Uncomment these lines to add an example org
-    # - type: url
-    #   target: https://github.com/backstage/backstage/blob/master/packages/catalog-model/examples/acme-corp.yaml
-    #   rules:
-    #     - allow: [User, Group]
+        - allow: [Location, Template]
 
 kubernetes:
   # see https://backstage.io/docs/features/kubernetes/configuration for kubernetes configuration options
