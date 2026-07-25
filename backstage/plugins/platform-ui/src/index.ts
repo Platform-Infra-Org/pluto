@@ -14,3 +14,5 @@ export {
   Field,
   Dialog,
 } from './components';
+export { DynamicSelect, toChoiceOptions } from './DynamicSelect';
+export type { DynamicSelectProps, ChoiceOption, Fetcher } from './DynamicSelect';
