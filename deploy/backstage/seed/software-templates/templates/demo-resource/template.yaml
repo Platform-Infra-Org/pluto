@@ -4,8 +4,8 @@ metadata:
   name: demo-resource
   title: Demo Resource
   description: >
-    P0 placeholder template so the Create page is populated. The real
-    Argo-submit wiring (platform:request:submit) lands in P2.
+    Request a demo resource. Submitting creates an approval request; once
+    approved, an Argo workflow provisions it and the request tracks it to done.
   tags:
     - platform
     - demo
@@ -15,10 +15,10 @@ spec:
   parameters:
     - title: Resource details
       required:
-        - name
+        - resourceName
         - region
       properties:
-        name:
+        resourceName:
           type: string
           title: Name
           description: Name of the resource to provision
@@ -30,12 +30,16 @@ spec:
             - eu-west-1
             - us-east-1
   steps:
-    - id: log
-      name: Log intent
-      action: debug:log
+    - id: submit
+      name: Submit request
+      action: platform:request:submit
       input:
-        message: "Would submit a request for ${{ parameters.name }} in ${{ parameters.region }}"
+        resourceType: demo-resource
+        resourceName: ${{ parameters.resourceName }}
+        kind: CREATE
+        params:
+          region: ${{ parameters.region }}
   output:
-    text:
-      - title: Note
-        content: "P0 placeholder — no request created yet. Request creation arrives in P2."
+    links:
+      - title: Open request
+        url: /requests/${{ steps.submit.output.requestId }}
