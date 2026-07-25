@@ -80,7 +80,7 @@ export function createRequestSubmitAction(services: {
             })
             .optional()
             .describe(
-              'Full control over the Argo submit. String values support ${{ token }} ' +
+              'Full control over the Argo submit. String values support << token >> ' +
                 'templating: requestId, resourceName, resourceType, requester, paramsJson, ' +
                 'params.<field>. Omit for default behavior.',
             ),

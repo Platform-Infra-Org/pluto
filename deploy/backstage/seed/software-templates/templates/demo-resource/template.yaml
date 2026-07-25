@@ -46,17 +46,18 @@ spec:
         params:
           region: ${{ parameters.region }}
         # Full control over the Argo submit. Omit argoSubmit for default behavior.
-        # ${{ '${{ token }}' }} tokens are resolved by the backend at submit time
-        # (requestId, resourceName, resourceType, requester, paramsJson, params.<field>).
+        # << token >> is resolved by the backend at submit time (requestId,
+        # resourceName, resourceType, requester, paramsJson, params.<field>).
+        # The << >> delimiter is distinct from Scaffolder's ${{ }}, so no escaping.
         argoSubmit:
           namespace: argo
           workflowTemplate: demo-resource
           entrypoint: create
           parameters:
-            request: "${{ '${{ paramsJson }}' }}"
-            region: "${{ '${{ params.region }}' }}"
+            request: "<< paramsJson >>"
+            region: "<< params.region >>"
           labels:
-            platform.io/requested-by: "${{ '${{ requester }}' }}"
+            platform.io/requested-by: "<< requester >>"
   output:
     links:
       - title: Open request

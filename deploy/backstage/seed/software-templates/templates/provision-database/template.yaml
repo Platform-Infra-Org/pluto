@@ -48,27 +48,27 @@ spec:
         params:
           engine: ${{ parameters.engine }}
           size: ${{ parameters.size }}
-        # Full control over the Argo submit. Backend resolves ${{ '${{ token }}' }}
-        # tokens at submit time: requestId, resourceName, resourceType, requester,
-        # paramsJson, params.<field>. The ${{ '${{ ... }}' }} wrapping keeps them
-        # literal through Scaffolder's own templating so the backend sees them.
+        # Full control over the Argo submit. Backend resolves << token >> at
+        # submit time: requestId, resourceName, resourceType, requester,
+        # paramsJson, params.<field>. The << >> delimiter is distinct from
+        # Scaffolder's ${{ }}, so these pass through untouched — no escaping.
         argoSubmit:
           namespace: databases
           resourceKind: WorkflowTemplate
           workflowTemplate: provision-database
           entrypoint: create
           serviceAccount: db-provisioner
-          generateName: "db-${{ '${{ resourceName }}' }}-"
+          generateName: "db-<< resourceName >>-"
           parameters:
-            engine: "${{ '${{ params.engine }}' }}"
-            size: "${{ '${{ params.size }}' }}"
-            name: "${{ '${{ resourceName }}' }}"
-            request: "${{ '${{ paramsJson }}' }}"
+            engine: "<< params.engine >>"
+            size: "<< params.size >>"
+            name: "<< resourceName >>"
+            request: "<< paramsJson >>"
           labels:
-            platform.io/resource-type: "${{ '${{ resourceType }}' }}"
-            platform.io/requested-by: "${{ '${{ requester }}' }}"
+            platform.io/resource-type: "<< resourceType >>"
+            platform.io/requested-by: "<< requester >>"
           annotations:
-            platform.io/request-id: "${{ '${{ requestId }}' }}"
+            platform.io/request-id: "<< requestId >>"
   output:
     links:
       - title: Open request

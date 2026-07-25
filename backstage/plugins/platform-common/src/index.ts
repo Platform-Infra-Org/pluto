@@ -38,8 +38,10 @@ export interface Approval {
 /**
  * Fully describes what a request submits to Argo's
  * `POST /api/v1/workflows/{namespace}/submit`. All string values support
- * `${{ token }}` templating (tokens: requestId, resourceName, resourceType,
- * requester, paramsJson, params.<field>). Absent = default behavior.
+ * `<< token >>` templating (tokens: requestId, resourceName, resourceType,
+ * requester, paramsJson, params.<field>), resolved by the backend at submit
+ * time. The `<< >>` delimiter is distinct from Scaffolder's `${{ }}`, so no
+ * escaping is needed in a template. Absent = default behavior.
  */
 export interface ArgoSubmitSpec {
   /** default: platform.argo.namespace ('argo') */

@@ -11,32 +11,32 @@ const ctx: ResolveCtx = {
 
 describe('resolveTemplate', () => {
   it('resolves every token', () => {
-    expect(resolveTemplate('${{ requestId }}', ctx)).toBe('42');
-    expect(resolveTemplate('${{ resourceName }}', ctx)).toBe('my-bucket');
-    expect(resolveTemplate('${{ resourceType }}', ctx)).toBe('demo-resource');
-    expect(resolveTemplate('${{ requester }}', ctx)).toBe('alice');
-    expect(resolveTemplate('${{ paramsJson }}', ctx)).toBe(
+    expect(resolveTemplate('<< requestId >>', ctx)).toBe('42');
+    expect(resolveTemplate('<< resourceName >>', ctx)).toBe('my-bucket');
+    expect(resolveTemplate('<< resourceType >>', ctx)).toBe('demo-resource');
+    expect(resolveTemplate('<< requester >>', ctx)).toBe('alice');
+    expect(resolveTemplate('<< paramsJson >>', ctx)).toBe(
       JSON.stringify(ctx.params),
     );
-    expect(resolveTemplate('${{ params.region }}', ctx)).toBe('eu-west-1');
-    expect(resolveTemplate('${{ params.size }}', ctx)).toBe('10');
+    expect(resolveTemplate('<< params.region >>', ctx)).toBe('eu-west-1');
+    expect(resolveTemplate('<< params.size >>', ctx)).toBe('10');
   });
 
   it('is whitespace-tolerant and handles multiple/embedded tokens', () => {
-    expect(resolveTemplate('${{requester}}', ctx)).toBe('alice');
-    expect(resolveTemplate('ns-${{ resourceType }}-${{ requestId }}', ctx)).toBe(
+    expect(resolveTemplate('<<requester>>', ctx)).toBe('alice');
+    expect(resolveTemplate('ns-<< resourceType >>-<< requestId >>', ctx)).toBe(
       'ns-demo-resource-42',
     );
   });
 
   it('resolves missing params and unknown tokens to empty string', () => {
-    expect(resolveTemplate('${{ params.nope }}', ctx)).toBe('');
-    expect(resolveTemplate('${{ bogus }}', ctx)).toBe('');
+    expect(resolveTemplate('<< params.nope >>', ctx)).toBe('');
+    expect(resolveTemplate('<< bogus >>', ctx)).toBe('');
     expect(resolveTemplate('plain', ctx)).toBe('plain');
   });
 
   it('resolveMap resolves all values', () => {
-    expect(resolveMap({ a: '${{ requester }}', b: 'x' }, ctx)).toEqual({
+    expect(resolveMap({ a: '<< requester >>', b: 'x' }, ctx)).toEqual({
       a: 'alice',
       b: 'x',
     });
@@ -85,13 +85,13 @@ describe('ArgoClient.submitSpec', () => {
       .mockResolvedValue(okResponse());
     const { namespace } = await client().submitSpec(
       {
-        namespace: 'team-${{ requester }}',
+        namespace: 'team-<< requester >>',
         workflowTemplate: 'tpl',
         entrypoint: 'create',
         serviceAccount: 'sa',
-        parameters: { region: '${{ params.region }}' },
-        labels: { 'platform.io/request-id': 'SHOULD-LOSE', owner: '${{ requester }}' },
-        annotations: { note: 'for ${{ resourceName }}' },
+        parameters: { region: '<< params.region >>' },
+        labels: { 'platform.io/request-id': 'SHOULD-LOSE', owner: '<< requester >>' },
+        annotations: { note: 'for << resourceName >>' },
       },
       ctx,
     );

@@ -17,8 +17,10 @@ Requests a demo resource and tracks it to completion.
 
 The `argoSubmit` block in the template's submit step controls everything sent
 to Argo: `namespace`, `workflowTemplate`, `entrypoint`, `parameters`, `labels`,
-and more. String values support `${{ token }}` templating (`requestId`,
+and more. String values support `<< token >>` templating (`requestId`,
 `resourceName`, `resourceType`, `requester`, `paramsJson`, `params.<field>`),
-resolved by the backend at submit time. Omit `argoSubmit` for default behavior.
+resolved by the backend at submit time. The `<< >>` delimiter is distinct from
+Scaffolder's `${{ }}`, so tokens need no escaping. Omit `argoSubmit` for the
+default behavior.
 
 See **Provision Database** for a fuller example.

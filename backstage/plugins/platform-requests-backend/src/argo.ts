@@ -11,12 +11,16 @@ export interface ResolveCtx {
 }
 
 /**
- * Resolve `${{ token }}` occurrences in a string. Tokens: requestId,
+ * Resolve `<< token >>` occurrences in a string. Tokens: requestId,
  * resourceName, resourceType, requester, paramsJson, params.<field>.
  * Unknown tokens and missing params resolve to ''. Pure.
+ *
+ * The `<< >>` delimiter is deliberately distinct from Scaffolder's `${{ }}`,
+ * so these tokens pass through the template's nunjucks render untouched and
+ * are resolved here, at submit time, against the request's runtime context.
  */
 export function resolveTemplate(str: string, ctx: ResolveCtx): string {
-  return str.replace(/\$\{\{\s*([\w.]+)\s*\}\}/g, (_m, token: string) => {
+  return str.replace(/<<\s*([\w.]+)\s*>>/g, (_m, token: string) => {
     switch (token) {
       case 'requestId':
         return String(ctx.requestId);
@@ -114,7 +118,7 @@ export class ArgoClient {
       ctx.resourceType;
 
     const parameters = Object.entries(
-      resolveMap(spec?.parameters ?? { request: '${{ paramsJson }}' }, ctx),
+      resolveMap(spec?.parameters ?? { request: '<< paramsJson >>' }, ctx),
     ).map(([k, v]) => `${k}=${v}`);
 
     // request-id label always wins (correlation key for status/completion).
