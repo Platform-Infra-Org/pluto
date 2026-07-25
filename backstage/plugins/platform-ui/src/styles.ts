@@ -86,10 +86,15 @@ header.MuiPaper-root, [class*="BackstageHeader-header"] {
 .MuiChip-root { border-radius: 6px !important; }
 /* ===== Graphs: React-Flow look — dark canvas + dots, compact dark nodes ===== */
 /* Backstage catalog/dependency graph SVG canvas (the svg that holds the nodes). */
-svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultNode"]) {
+/* Wrapper gets the dark dotted canvas (full width); the svg fit-zooms the sparse
+   graph, so cap its width to keep nodes from ballooning (rendered node size ≈
+   svgWidth/contentWidth). */
+div:has(> svg [class*="PluginCatalogGraph"]), div:has(> svg [class*="DependencyGraphDefaultNode"]) {
   background-color: #0a0a10 !important;
   background-image: radial-gradient(circle, rgba(255,255,255,.16) 1px, transparent 1px) !important;
   background-size: 17px 17px !important; border-radius: 10px; }
+svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultNode"]) {
+  background: transparent !important; max-width: 460px !important; margin: 0 auto !important; display: block !important; }
 [class*="PluginCatalogGraphCustomNode-node"], [class*="DependencyGraphDefaultNode-node"] {
   fill: #17171f !important; stroke: #32303e !important; rx: 8 !important; ry: 8 !important; }
 [class*="PluginCatalogGraphCustomLabel-text"], [class*="DependencyGraphDefaultNode-text"] {

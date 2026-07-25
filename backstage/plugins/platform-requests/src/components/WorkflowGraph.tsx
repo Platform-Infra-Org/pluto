@@ -99,7 +99,15 @@ export function WorkflowGraph({ id, live }: { id: number; live: boolean }) {
   const { nodes, edges } = toFlow(wf);
   return (
     <div style={{ height: 300, background: '#0a0a10', borderRadius: 10 }}>
-      <ReactFlow nodes={nodes} edges={edges} fitView proOptions={{ hideAttribution: true }}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        fitView
+        fitViewOptions={{ maxZoom: 1, padding: 0.25 }}
+        minZoom={0.4}
+        maxZoom={1.25}
+        proOptions={{ hideAttribution: true }}
+      >
         <Background variant={BackgroundVariant.Dots} gap={17} size={1.2} color="#3a3a48" />
         <Controls showInteractive={false} />
       </ReactFlow>
