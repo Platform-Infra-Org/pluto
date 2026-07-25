@@ -2384,7 +2384,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@backstage/plugin-app-react@npm:^0.2.5":
+"@backstage/plugin-app-react@npm:*, @backstage/plugin-app-react@npm:^0.2.5":
   version: 0.2.5
   resolution: "@backstage/plugin-app-react@npm:0.2.5"
   dependencies:
@@ -5252,8 +5252,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/plugin-platform-ui@workspace:plugins/platform-ui"
   dependencies:
+    "@backstage/core-components": "npm:*"
     "@backstage/core-plugin-api": "npm:*"
     "@backstage/frontend-plugin-api": "npm:*"
+    "@backstage/plugin-app-react": "npm:*"
   peerDependencies:
     react: ^17 || ^18 || ^19
   languageName: unknown

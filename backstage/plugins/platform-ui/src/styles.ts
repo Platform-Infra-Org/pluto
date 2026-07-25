@@ -113,8 +113,26 @@ export const SHADCN_CSS = `
 .sc-dialog-b { padding: 16px 22px; }
 .sc-dialog-f { padding: 12px 22px 20px; display: flex; justify-content: flex-end; gap: 8px; }
 
+/* custom shadcn nav (replaces the Backstage sidebar) */
+.sc-nav { position: fixed; top: 0; left: 0; bottom: 0; width: 248px; z-index: 1200;
+  background: hsl(var(--sc-card)); border-right: 1px solid hsl(var(--sc-border));
+  display: flex; flex-direction: column; padding: 14px 12px 64px; overflow-y: auto; }
+.sc-nav-brand { display: flex; align-items: center; gap: 10px; padding: 6px 8px 16px; text-decoration: none; }
+.sc-nav-mark { width: 24px; height: 24px; border-radius: 7px;
+  background: linear-gradient(135deg, hsl(var(--sc-primary)), hsl(262 83% 62%)); }
+.sc-nav-word { font-weight: 700; font-size: 18px; letter-spacing: -0.02em; color: hsl(var(--sc-fg)); }
+.sc-nav-list { display: flex; flex-direction: column; gap: 2px; }
+.sc-nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px;
+  color: hsl(var(--sc-muted-fg)); text-decoration: none; font-size: 14px; font-weight: 500; transition: background .12s; }
+.sc-nav-item:hover { background: hsl(var(--sc-accent)); color: hsl(var(--sc-fg)); }
+.sc-nav-item.active { background: hsl(var(--sc-primary) / .12); color: hsl(var(--sc-primary)); }
+.sc-nav-item svg { width: 19px; height: 19px; }
+/* Force the content gutter to match the custom nav width (overrides SidebarPage). */
+.BackstageSidebarPage-root { padding-left: 248px !important; }
+@media (max-width: 600px) { .sc-nav { display: none; } .BackstageSidebarPage-root { padding-left: 0 !important; } }
+
 /* color scheme picker */
-.sc-picker { position: fixed; left: 14px; bottom: 14px; z-index: 1500;
+.sc-picker { position: fixed; right: 14px; bottom: 14px; z-index: 1500;
   display: flex; align-items: center; gap: 6px; padding: 7px 9px; border-radius: 999px;
   background: hsl(var(--sc-card)); border: 1px solid hsl(var(--sc-border)); box-shadow: 0 6px 20px rgba(0,0,0,.18); }
 .sc-swatch { width: 18px; height: 18px; border-radius: 999px; border: 2px solid transparent; cursor: pointer; padding: 0; }

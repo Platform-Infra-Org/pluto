@@ -13,3 +13,4 @@ export {
   Field,
   Dialog,
 } from './components';
+export { platformNavModule } from './CustomNav';

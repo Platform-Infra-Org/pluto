@@ -21,8 +21,10 @@
     "clean": "backstage-cli package clean"
   },
   "dependencies": {
+    "@backstage/core-components": "*",
     "@backstage/core-plugin-api": "*",
-    "@backstage/frontend-plugin-api": "*"
+    "@backstage/frontend-plugin-api": "*",
+    "@backstage/plugin-app-react": "*"
   },
   "peerDependencies": {
     "react": "^17 || ^18 || ^19"
