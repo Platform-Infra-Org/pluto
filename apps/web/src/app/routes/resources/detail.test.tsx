@@ -7,6 +7,9 @@ import { ResourceDetail } from './detail'
 
 vi.mock('@/lib/catalog')
 vi.mock('@/lib/requests')
+// ResourceGraph renders ReactFlow (needs ResizeObserver); it's covered by its own
+// test, so stub it here to isolate the detail-page behavior.
+vi.mock('./resource-graph', () => ({ ResourceGraph: () => null }))
 
 const resource = {
   id: 5,
@@ -57,5 +60,19 @@ describe('ResourceDetail actions', () => {
     renderDetail()
     fireEvent.click(await screen.findByRole('button', { name: /delete/i }))
     expect(requests.submitRequest).not.toHaveBeenCalled()
+  })
+
+  it('defaults to the form view and toggles to raw JSON', async () => {
+    renderDetail()
+    // Form view: field labels/values are rendered, no raw JSON block.
+    expect(await screen.findByText('engine')).toBeInTheDocument()
+    expect(screen.getByText('postgres')).toBeInTheDocument()
+    expect(screen.queryByText(/"engine": "postgres"/)).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Raw JSON' }))
+    expect(screen.getByText(/"engine": "postgres"/)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Form' }))
+    expect(screen.queryByText(/"engine": "postgres"/)).not.toBeInTheDocument()
   })
 })

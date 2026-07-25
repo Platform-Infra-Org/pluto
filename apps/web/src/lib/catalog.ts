@@ -37,3 +37,19 @@ export function fetchResource(id: number) {
 export function fetchHistory(id: number) {
   return apiFetch<HistoryEntry[]>(`/resources/${id}/history`)
 }
+
+export interface ResourceGraphNode {
+  id: number
+  name: string
+  type: string
+  id_value: string | null
+}
+
+export interface ResourceGraph {
+  nodes: ResourceGraphNode[]
+  edges: { from: number; to: number }[]
+}
+
+export function fetchResourceGraph(id: number) {
+  return apiFetch<ResourceGraph>(`/resources/${id}/graph`)
+}

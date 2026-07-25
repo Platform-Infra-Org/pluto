@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Pencil, Trash2 } from 'lucide-react'
@@ -6,6 +7,8 @@ import { submitRequest } from '@/lib/requests'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatusBadge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
+import { ResourceForm } from './resource-form'
+import { ResourceGraph } from './resource-graph'
 
 // Resource detail: parsed fields, owner team, current Git SHA, raw JSON, and
 // change history from git log. An in-flight-request badge is deferred to E05.
@@ -22,6 +25,7 @@ export function ResourceDetail({ id }: { id: number }) {
     mutationFn: () =>
       submitRequest({ action: 'DELETE', resource_type: data!.type, resource_id: id, payload: {} }),
   })
+  const [view, setView] = useState<'form' | 'raw'>('form')
 
   if (isLoading) return <p className="mx-auto max-w-4xl px-4 py-8 text-sm text-muted-foreground">Loading…</p>
   if (isError || !data)
@@ -74,13 +78,46 @@ export function ResourceDetail({ id }: { id: number }) {
       {del.isError && <p className="text-sm text-destructive">Delete request failed.</p>}
 
       <Card>
-        <CardHeader>
-          <CardTitle>Raw JSON</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between gap-4 space-y-0">
+          <CardTitle>Definition</CardTitle>
+          <div className="inline-flex rounded-md border border-border p-0.5">
+            <button
+              type="button"
+              aria-label="Form"
+              aria-pressed={view === 'form'}
+              onClick={() => setView('form')}
+              className={`rounded px-2.5 py-1 text-xs font-medium ${view === 'form' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}
+            >
+              Form
+            </button>
+            <button
+              type="button"
+              aria-label="Raw JSON"
+              aria-pressed={view === 'raw'}
+              onClick={() => setView('raw')}
+              className={`rounded px-2.5 py-1 text-xs font-medium ${view === 'raw' ? 'bg-muted text-foreground' : 'text-muted-foreground'}`}
+            >
+              Raw JSON
+            </button>
+          </div>
         </CardHeader>
         <CardContent>
-          <pre className="overflow-auto rounded-md border border-border bg-muted/40 p-3 text-xs">
-            {JSON.stringify(data.payload, null, 2)}
-          </pre>
+          {view === 'form' ? (
+            <ResourceForm value={data.payload} />
+          ) : (
+            <pre className="overflow-auto rounded-md border border-border bg-muted/40 p-3 text-xs">
+              {JSON.stringify(data.payload, null, 2)}
+            </pre>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Dependency graph</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResourceGraph id={id} />
         </CardContent>
       </Card>
 
