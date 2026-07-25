@@ -1,0 +1,83 @@
+import {
+  createApiRef,
+  DiscoveryApi,
+  FetchApi,
+} from '@backstage/core-plugin-api';
+import { NewRequest, Request } from '@internal/plugin-platform-common';
+
+/** Client for the platform-requests backend. */
+export interface RequestsApi {
+  list(opts?: { state?: string; mine?: boolean }): Promise<Request[]>;
+  get(id: number): Promise<Request>;
+  create(body: NewRequest): Promise<Request>;
+  approve(id: number, note?: string): Promise<Request>;
+  reject(id: number, note?: string): Promise<Request>;
+}
+
+export const requestsApiRef = createApiRef<RequestsApi>({
+  id: 'plugin.platform-requests.api',
+});
+
+export class RequestsClient implements RequestsApi {
+  constructor(
+    private readonly opts: { discoveryApi: DiscoveryApi; fetchApi: FetchApi },
+  ) {}
+
+  private async base(): Promise<string> {
+    return this.opts.discoveryApi.getBaseUrl('platform-requests');
+  }
+
+  private async json<T>(res: Response): Promise<T> {
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`${res.status}: ${text}`);
+    }
+    return res.json() as Promise<T>;
+  }
+
+  async list(opts?: { state?: string; mine?: boolean }): Promise<Request[]> {
+    const q = new URLSearchParams();
+    if (opts?.state) q.set('state', opts.state);
+    if (opts?.mine) q.set('mine', '1');
+    const url = `${await this.base()}/requests${q.toString() ? `?${q}` : ''}`;
+    return this.json(await this.opts.fetchApi.fetch(url));
+  }
+
+  async get(id: number): Promise<Request> {
+    return this.json(await this.opts.fetchApi.fetch(`${await this.base()}/requests/${id}`));
+  }
+
+  async create(body: NewRequest): Promise<Request> {
+    return this.json(
+      await this.opts.fetchApi.fetch(`${await this.base()}/requests`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }),
+    );
+  }
+
+  private async decide(
+    id: number,
+    decision: 'approve' | 'reject',
+    note?: string,
+  ): Promise<Request> {
+    return this.json(
+      await this.opts.fetchApi.fetch(
+        `${await this.base()}/requests/${id}/${decision}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ note }),
+        },
+      ),
+    );
+  }
+
+  approve(id: number, note?: string) {
+    return this.decide(id, 'approve', note);
+  }
+  reject(id: number, note?: string) {
+    return this.decide(id, 'reject', note);
+  }
+}

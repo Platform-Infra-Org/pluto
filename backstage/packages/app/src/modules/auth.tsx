@@ -49,7 +49,9 @@ const oidcAuthApi = ApiBlueprint.make({
             icon: () => null,
           },
           environment: configApi.getOptionalString('auth.environment'),
-          defaultScopes: ['openid', 'profile', 'email', 'groups'],
+          // No 'groups' scope: Keycloak exposes groups via a token mapper, not a
+          // client scope, so requesting it would fail with invalid_scope.
+          defaultScopes: ['openid', 'profile', 'email'],
           popupOptions: { size: { width: 600, height: 700 } },
         }),
     }),
