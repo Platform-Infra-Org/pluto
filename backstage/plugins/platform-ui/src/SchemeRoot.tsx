@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { appThemeApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
 
+// Muted, shadcn-calm accents (lower saturation — not neon).
 export const SCHEMES = [
-  { id: 'violet', label: 'Violet', hsl: '262 83% 58%' },
-  { id: 'blue', label: 'Blue', hsl: '221 83% 53%' },
-  { id: 'green', label: 'Green', hsl: '142 71% 45%' },
-  { id: 'rose', label: 'Rose', hsl: '347 77% 50%' },
-  { id: 'orange', label: 'Orange', hsl: '25 95% 53%' },
-  { id: 'zinc', label: 'Zinc', hsl: '240 5% 34%' },
+  { id: 'violet', label: 'Violet', hsl: '250 52% 55%' },
+  { id: 'blue', label: 'Blue', hsl: '217 60% 52%' },
+  { id: 'green', label: 'Green', hsl: '152 42% 40%' },
+  { id: 'rose', label: 'Rose', hsl: '345 55% 52%' },
+  { id: 'amber', label: 'Amber', hsl: '32 70% 48%' },
+  { id: 'slate', label: 'Slate', hsl: '215 20% 40%' },
 ];
 
 function ensureStyle(id: string, css: string) {

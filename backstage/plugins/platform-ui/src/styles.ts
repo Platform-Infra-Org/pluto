@@ -8,22 +8,23 @@ export const SHADCN_CSS = `
    below read the same variables (and follow the color picker). */
 :root {
   --sc-radius: 0.5rem;
-  --sc-bg: 0 0% 100%;
-  --sc-fg: 240 10% 3.9%;
+  --sc-nav-w: 240px;
+  --sc-bg: 240 10% 98%;
+  --sc-fg: 240 10% 12%;
   --sc-card: 0 0% 100%;
-  --sc-card-fg: 240 10% 3.9%;
-  --sc-muted: 240 4.8% 95.9%;
-  --sc-muted-fg: 240 3.8% 46.1%;
-  --sc-border: 240 5.9% 90%;
-  --sc-input: 240 5.9% 90%;
-  --sc-primary: 262 83% 58%;
+  --sc-card-fg: 240 10% 12%;
+  --sc-muted: 240 5% 96%;
+  --sc-muted-fg: 240 4% 46%;
+  --sc-border: 240 6% 90%;
+  --sc-input: 240 6% 90%;
+  --sc-primary: 250 52% 55%;
   --sc-primary-fg: 0 0% 100%;
-  --sc-ring: 262 83% 58%;
-  --sc-accent: 240 4.8% 95.9%;
-  --sc-accent-fg: 240 5.9% 10%;
-  --sc-success: 142 71% 45%;
-  --sc-warning: 38 92% 50%;
-  --sc-destructive: 0 72% 51%;
+  --sc-ring: 250 52% 55%;
+  --sc-accent: 240 5% 95%;
+  --sc-accent-fg: 240 6% 20%;
+  --sc-success: 152 42% 40%;
+  --sc-warning: 35 68% 47%;
+  --sc-destructive: 0 60% 51%;
 }
 :root.sc-dark {
   --sc-bg: 240 10% 3.9%;
@@ -44,6 +45,18 @@ export const SHADCN_CSS = `
 
 /* ===== Reskin the Backstage/MUI native pages (catalog, scaffolder, search,
    settings…) to the shadcn look, driven by the same tokens + color picker. ===== */
+/* Backstage UI (bui) design tokens — retarget the solid accent to our picker. */
+:root {
+  --bui-bg-solid: hsl(var(--sc-primary));
+  --bui-bg-solid-hover: hsl(var(--sc-primary) / 0.92);
+  --bui-bg-solid-pressed: hsl(var(--sc-primary) / 0.85);
+  --bui-fg-link: hsl(var(--sc-primary));
+  --bui-border-focus: hsl(var(--sc-primary));
+}
+[class*="bui-ButtonLink"], [class*="bui-Button"] { border-radius: calc(var(--sc-radius) - 2px) !important; }
+/* bui primary buttons resolve their own token — retarget by variant attribute. */
+[data-variant="primary"][class*="bui-Button"] { background-color: hsl(var(--sc-primary)) !important; color: hsl(var(--sc-primary-fg)) !important; }
+[data-variant="primary"][class*="bui-Button"]:hover { background-color: hsl(var(--sc-primary) / 0.9) !important; }
 body, .BackstageContent { background: hsl(var(--sc-bg)); }
 /* flatten the wave header */
 header.MuiPaper-root, .BackstageHeader-header {
@@ -156,22 +169,41 @@ header.MuiPaper-root, .BackstageHeader-header {
 .sc-dialog-f { padding: 12px 22px 20px; display: flex; justify-content: flex-end; gap: 8px; }
 
 /* custom shadcn nav (replaces the Backstage sidebar) */
-.sc-nav { position: fixed; top: 0; left: 0; bottom: 0; width: 248px; z-index: 1200;
+.sc-nav { position: fixed; top: 0; left: 0; bottom: 0; width: var(--sc-nav-w); z-index: 1200;
   background: hsl(var(--sc-card)); border-right: 1px solid hsl(var(--sc-border));
-  display: flex; flex-direction: column; padding: 14px 12px 64px; overflow-y: auto; }
-.sc-nav-brand { display: flex; align-items: center; gap: 10px; padding: 6px 8px 16px; text-decoration: none; }
-.sc-nav-mark { width: 24px; height: 24px; border-radius: 7px;
-  background: linear-gradient(135deg, hsl(var(--sc-primary)), hsl(262 83% 62%)); }
-.sc-nav-word { font-weight: 700; font-size: 18px; letter-spacing: -0.02em; color: hsl(var(--sc-fg)); }
+  display: flex; flex-direction: column; padding: 12px 12px 16px; overflow-x: hidden;
+  transition: width .16s ease; }
+.sc-nav-top { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 14px; }
+.sc-nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; min-width: 0; }
+.sc-nav-mark { width: 26px; height: 26px; border-radius: 8px; flex: 0 0 auto;
+  background: linear-gradient(135deg, hsl(var(--sc-primary)), hsl(var(--sc-primary) / .65));
+  box-shadow: 0 2px 8px hsl(var(--sc-primary) / .35); }
+.sc-nav-word { font-weight: 700; font-size: 17px; letter-spacing: -0.02em; color: hsl(var(--sc-fg)); white-space: nowrap; }
+.sc-nav-toggle { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 7px; border: 1px solid hsl(var(--sc-border));
+  background: transparent; color: hsl(var(--sc-muted-fg)); cursor: pointer; font-size: 13px; line-height: 1;
+  display: flex; align-items: center; justify-content: center; }
+.sc-nav-toggle:hover { background: hsl(var(--sc-accent)); color: hsl(var(--sc-fg)); }
 .sc-nav-list { display: flex; flex-direction: column; gap: 2px; }
-.sc-nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px;
-  color: hsl(var(--sc-muted-fg)); text-decoration: none; font-size: 14px; font-weight: 500; transition: background .12s; }
-.sc-nav-item:hover { background: hsl(var(--sc-accent)); color: hsl(var(--sc-fg)); }
-.sc-nav-item.active { background: hsl(var(--sc-primary) / .12); color: hsl(var(--sc-primary)); }
-.sc-nav-item svg { width: 19px; height: 19px; }
-/* Force the content gutter to match the custom nav width (overrides SidebarPage). */
-.BackstageSidebarPage-root { padding-left: 248px !important; }
-@media (max-width: 600px) { .sc-nav { display: none; } .BackstageSidebarPage-root { padding-left: 0 !important; } }
+.sc-nav-item { position: relative; display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: 9px;
+  text-decoration: none; font-size: 14px; font-weight: 500; transition: background .12s, color .12s; white-space: nowrap; }
+.sc-nav-ic { display: flex; align-items: center; color: hsl(var(--sc-muted-fg)); flex: 0 0 auto; }
+.sc-nav-ic svg { width: 19px; height: 19px; }
+.sc-nav-tx { color: hsl(var(--sc-muted-fg)); overflow: hidden; text-overflow: ellipsis; }
+.sc-nav-item:hover { background: hsl(var(--sc-accent)); }
+.sc-nav-item:hover .sc-nav-tx, .sc-nav-item:hover .sc-nav-ic { color: hsl(var(--sc-fg)); }
+/* active: subtle pill + left accent bar; only the LETTERS take the accent color. */
+.sc-nav-item.active { background: hsl(var(--sc-primary) / .10); }
+.sc-nav-item.active .sc-nav-tx { color: hsl(var(--sc-primary)); font-weight: 600; }
+.sc-nav-item.active .sc-nav-ic { color: hsl(var(--sc-fg)); }
+.sc-nav-item.active::before { content: ''; position: absolute; left: 3px; top: 8px; bottom: 8px; width: 3px;
+  border-radius: 3px; background: hsl(var(--sc-primary)); }
+/* collapsed: icons only */
+.sc-nav.collapsed .sc-nav-word, .sc-nav.collapsed .sc-nav-tx { display: none; }
+.sc-nav.collapsed .sc-nav-item { justify-content: center; padding: 9px; }
+.sc-nav.collapsed .sc-nav-top { justify-content: center; }
+/* Force the content gutter to match the nav width (hashed SidebarPage class). */
+[class*="BackstageSidebarPage-root"] { padding-left: var(--sc-nav-w) !important; transition: padding-left .16s ease; }
+@media (max-width: 600px) { .sc-nav { display: none; } [class*="BackstageSidebarPage-root"] { padding-left: 0 !important; } }
 
 /* color scheme picker */
 .sc-picker { position: fixed; right: 14px; bottom: 14px; z-index: 1500;

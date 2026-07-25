@@ -41,6 +41,26 @@ function isActive(pathname: string, to: string): boolean {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function CustomNav({ navItems }: { navItems: any }) {
   const pathname = useCurrentPath();
+  const [collapsed, setCollapsed] = useState(
+    () =>
+      typeof localStorage !== 'undefined' &&
+      localStorage.getItem('platform-nav-collapsed') === '1',
+  );
+
+  // Drive both the nav width and the content gutter from one variable so they
+  // stay aligned; persist the choice.
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      '--sc-nav-w',
+      collapsed ? '68px' : '240px',
+    );
+    try {
+      localStorage.setItem('platform-nav-collapsed', collapsed ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }, [collapsed]);
+
   // withComponent maps each discovered nav item (icon node + href + title) to
   // our shadcn link; rest() returns them all (sorted).
   const bag = navItems.withComponent((item: any) => {
@@ -48,19 +68,32 @@ function CustomNav({ navItems }: { navItems: any }) {
     return (
       <Link
         to={item.href}
+        title={item.title}
         className={`sc-nav-item${active ? ' active' : ''}`}
       >
         <span className="sc-nav-ic">{item.icon}</span>
-        <span>{item.title}</span>
+        <span className="sc-nav-tx">{item.title}</span>
       </Link>
     );
   });
+
   return (
-    <aside className="sc sc-nav" aria-label="Main">
-      <Link to="/" className="sc-nav-brand">
-        <span className="sc-nav-mark" />
-        <span className="sc-nav-word">Platform</span>
-      </Link>
+    <aside className={`sc sc-nav${collapsed ? ' collapsed' : ''}`} aria-label="Main">
+      <div className="sc-nav-top">
+        <Link to="/" className="sc-nav-brand">
+          <span className="sc-nav-mark" />
+          <span className="sc-nav-word">Platform</span>
+        </Link>
+        <button
+          type="button"
+          className="sc-nav-toggle"
+          aria-label="Toggle sidebar"
+          title="Toggle sidebar"
+          onClick={() => setCollapsed(c => !c)}
+        >
+          {collapsed ? '»' : '«'}
+        </button>
+      </div>
       <nav className="sc-nav-list">{bag.rest({ sortBy: 'title' })}</nav>
     </aside>
   );
