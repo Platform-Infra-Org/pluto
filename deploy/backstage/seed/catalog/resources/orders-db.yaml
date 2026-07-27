@@ -4,9 +4,10 @@ metadata:
   name: orders-db
   annotations:
     platform.io/resource-type: database
-    # Resource data lives in a sibling file (like backstage.io/techdocs-ref).
-    # Resolved relative to this file → resources/orders-db-data.json.
-    platform.io/resource-data: ./orders-db-data.json
+    # Resource data ref (like backstage.io/techdocs-ref):
+    #   dir:<relative>  → a file next to this one (resources/orders-db-data.json)
+    #   url:<absolute>  → any reader-allowed URL
+    platform.io/resource-data: dir:./orders-db-data.json
 spec:
   type: database
   owner: "group:default/payments"

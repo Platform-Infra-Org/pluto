@@ -56,7 +56,7 @@ spec:
               name: $NAME
               annotations:
                 platform.io/resource-type: $TYPE
-                platform.io/resource-data: ./$NAME-data.json
+                platform.io/resource-data: dir:./$NAME-data.json
             spec:
               type: $TYPE
               owner: $OWNER

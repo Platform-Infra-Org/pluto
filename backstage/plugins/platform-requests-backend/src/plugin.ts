@@ -143,26 +143,38 @@ export const platformRequestsPlugin = createBackendPlugin({
             );
             if (!entity) return {};
             const ref = entity.metadata.annotations?.['platform.io/resource-data'];
-            const loc =
-              entity.metadata.annotations?.['backstage.io/managed-by-location'] ??
-              entity.metadata.annotations?.[
-                'backstage.io/managed-by-origin-location'
-              ];
-            if (ref && loc) {
-              try {
-                const base = loc.replace(/^url:/, '');
-                const url = new URL(ref, base).toString();
-                const read = await urlReader.readUrl(url);
-                const text = (await read.buffer()).toString('utf8');
-                // yaml.parse handles JSON too (JSON is a subset of YAML).
-                const data = parseYaml(text);
-                if (data && typeof data === 'object') {
-                  return data as Record<string, unknown>;
+            if (ref) {
+              const loc =
+                entity.metadata.annotations?.[
+                  'backstage.io/managed-by-location'
+                ] ??
+                entity.metadata.annotations?.[
+                  'backstage.io/managed-by-origin-location'
+                ];
+              // Like techdocs-ref: `url:<absolute>` fetches that URL;
+              // `dir:<relative>` (or a bare relative path) resolves against the
+              // resource's own location. Both are read via the UrlReader.
+              let url: string | undefined;
+              if (ref.startsWith('url:')) {
+                url = ref.slice('url:'.length);
+              } else if (loc) {
+                const rel = ref.startsWith('dir:') ? ref.slice('dir:'.length) : ref;
+                url = new URL(rel, loc.replace(/^url:/, '')).toString();
+              }
+              if (url) {
+                try {
+                  const read = await urlReader.readUrl(url);
+                  const text = (await read.buffer()).toString('utf8');
+                  // yaml.parse handles JSON too (JSON is a subset of YAML).
+                  const data = parseYaml(text);
+                  if (data && typeof data === 'object') {
+                    return data as Record<string, unknown>;
+                  }
+                } catch (e) {
+                  logger.warn(
+                    `resource-data ref '${ref}' for '${resourceName}' failed: ${e}`,
+                  );
                 }
-              } catch (e) {
-                logger.warn(
-                  `resource-data ref '${ref}' for '${resourceName}' failed: ${e}`,
-                );
               }
             }
             const sd = (entity.spec as { resourceData?: unknown } | undefined)
