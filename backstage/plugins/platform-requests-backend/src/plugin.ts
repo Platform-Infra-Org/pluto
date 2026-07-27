@@ -128,47 +128,58 @@ export const platformRequestsPlugin = createBackendPlugin({
           },
         };
 
-        // The resource's current data (for the Resource Data tab, edit dialog,
-        // and `<< resourceData >>`): the `platform.io/resource-data` annotation
-        // is a *ref* to a JSON/YAML file (like backstage.io/techdocs-ref),
-        // relative to the resource's own location — fetched via the reader.
-        // Falls back to `spec.resourceData`, else `{}`.
-        const resourceDataFor = async (
+        // Repo path from a Gitea raw URL (.../raw/branch/<b>/<path> -> <path>).
+        const gitPathOf = (url: string): string | undefined => {
+          const m = url.match(/\/raw\/branch\/[^/]+\/(.+)$/);
+          return m?.[1];
+        };
+
+        // Resolve a resource's data + the git paths of its files. The
+        // `platform.io/resource-data` annotation is a ref (like techdocs-ref):
+        // `url:<absolute>` fetches that URL, `dir:<relative>` (or a bare path)
+        // resolves against the resource's own location. Data falls back to
+        // `spec.resourceData`. The git paths let git-ops act on the actual
+        // files regardless of the resource's layout (flat or subdir).
+        const resolveResource = async (
           resourceName: string,
-        ): Promise<Record<string, unknown>> => {
+        ): Promise<{
+          data: Record<string, unknown>;
+          resourcePath?: string;
+          dataPath?: string;
+        }> => {
           try {
             const entity = await catalog.getEntityByRef(
               `resource:default/${resourceName}`,
               { credentials: await auth.getOwnServiceCredentials() },
             );
-            if (!entity) return {};
+            if (!entity) return { data: {} };
+            const loc = (
+              entity.metadata.annotations?.['backstage.io/managed-by-location'] ??
+              entity.metadata.annotations?.[
+                'backstage.io/managed-by-origin-location'
+              ]
+            )?.replace(/^url:/, '');
+            const resourcePath = loc ? gitPathOf(loc) : undefined;
+
             const ref = entity.metadata.annotations?.['platform.io/resource-data'];
+            let data: Record<string, unknown> = {};
+            let dataPath: string | undefined;
             if (ref) {
-              const loc =
-                entity.metadata.annotations?.[
-                  'backstage.io/managed-by-location'
-                ] ??
-                entity.metadata.annotations?.[
-                  'backstage.io/managed-by-origin-location'
-                ];
-              // Like techdocs-ref: `url:<absolute>` fetches that URL;
-              // `dir:<relative>` (or a bare relative path) resolves against the
-              // resource's own location. Both are read via the UrlReader.
               let url: string | undefined;
               if (ref.startsWith('url:')) {
                 url = ref.slice('url:'.length);
               } else if (loc) {
                 const rel = ref.startsWith('dir:') ? ref.slice('dir:'.length) : ref;
-                url = new URL(rel, loc.replace(/^url:/, '')).toString();
+                url = new URL(rel, loc).toString();
               }
               if (url) {
+                dataPath = gitPathOf(url);
                 try {
                   const read = await urlReader.readUrl(url);
                   const text = (await read.buffer()).toString('utf8');
-                  // yaml.parse handles JSON too (JSON is a subset of YAML).
-                  const data = parseYaml(text);
-                  if (data && typeof data === 'object') {
-                    return data as Record<string, unknown>;
+                  const parsed = parseYaml(text); // yaml.parse handles JSON too
+                  if (parsed && typeof parsed === 'object') {
+                    data = parsed as Record<string, unknown>;
                   }
                 } catch (e) {
                   logger.warn(
@@ -177,31 +188,40 @@ export const platformRequestsPlugin = createBackendPlugin({
                 }
               }
             }
-            const sd = (entity.spec as { resourceData?: unknown } | undefined)
-              ?.resourceData;
-            return sd && typeof sd === 'object'
-              ? (sd as Record<string, unknown>)
-              : {};
+            if (!Object.keys(data).length) {
+              const sd = (entity.spec as { resourceData?: unknown } | undefined)
+                ?.resourceData;
+              if (sd && typeof sd === 'object') {
+                data = sd as Record<string, unknown>;
+              }
+            }
+            return { data, resourcePath, dataPath };
           } catch (e) {
-            logger.warn(`resourceDataFor '${resourceName}' failed: ${e}`);
-            return {};
+            logger.warn(`resolveResource '${resourceName}' failed: ${e}`);
+            return { data: {} };
           }
         };
 
+        const resourceDataFor = async (resourceName: string) =>
+          (await resolveResource(resourceName)).data;
+
         // On APPROVED the router calls this, then flips the request to IN_PROGRESS.
         const submitWorkflow = async (request: PlatformRequest) => {
-          // CREATE has no existing resource yet → empty; update/delete resolve it.
-          const resourceData =
+          // CREATE has no existing resource yet; update/delete resolve the
+          // resource's data + the git paths of its files (for git-ops).
+          const r =
             request.kind === 'CREATE'
-              ? {}
-              : await resourceDataFor(request.resourceName);
+              ? { data: {}, resourcePath: undefined, dataPath: undefined }
+              : await resolveResource(request.resourceName);
           const { name, namespace } = await argo.submitSpec(request.argoSubmit, {
             requestId: request.id,
             resourceName: request.resourceName,
             resourceType: request.resourceType,
             requester: request.requester,
             params: request.params ?? {},
-            resourceData,
+            resourceData: r.data,
+            resourcePath: r.resourcePath,
+            resourceDataPath: r.dataPath,
           });
           await store.setWorkflow(request.id, { name, namespace });
           logger.info(

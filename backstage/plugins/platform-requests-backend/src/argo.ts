@@ -14,6 +14,10 @@ export interface ResolveCtx {
    * Available as `<< resourceData >>` (full JSON) and `<< resourceData.field >>`.
    */
   resourceData?: Record<string, unknown>;
+  /** Repo path of the resource's catalog file (`<< resourcePath >>`). */
+  resourcePath?: string;
+  /** Repo path of the resource's data file, from its ref (`<< resourceDataPath >>`). */
+  resourceDataPath?: string;
 }
 
 /**
@@ -41,6 +45,10 @@ export function resolveTemplate(str: string, ctx: ResolveCtx): string {
       case 'resourceData':
         // Absent or empty resource data resolves to an empty JSON object.
         return JSON.stringify(ctx.resourceData ?? {});
+      case 'resourcePath':
+        return ctx.resourcePath ?? '';
+      case 'resourceDataPath':
+        return ctx.resourceDataPath ?? '';
       default: {
         if (token.startsWith('params.')) {
           const v = ctx.params?.[token.slice('params.'.length)];

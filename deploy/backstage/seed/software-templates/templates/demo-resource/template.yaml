@@ -15,8 +15,8 @@ metadata:
     # Ties requests with this resourceType back to this template (and its owner,
     # the service team) for per-team approval.
     platform.io/resource-type: demo-resource
-    platform.io/verb-update: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"update","parameters":{"name":"<< resourceName >>","data":"<< paramsJson >>"}},"resultOutput":"resource-ref"}'
-    platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"delete","parameters":{"name":"<< resourceName >>"}}}'
+    platform.io/verb-update: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"update","parameters":{"name":"<< resourceName >>","dataPath":"<< resourceDataPath >>","data":"<< paramsJson >>"}},"resultOutput":"resource-ref"}'
+    platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"delete","parameters":{"name":"<< resourceName >>","path":"<< resourcePath >>","dataPath":"<< resourceDataPath >>"}}}'
 spec:
   # The template owner IS the service owner: only this team (or an admin) may
   # approve create/update/delete requests for demo-resource.

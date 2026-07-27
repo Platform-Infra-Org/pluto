@@ -82,6 +82,9 @@ spec:
       inputs:
         parameters:
           - { name: name }
+          # Repo path of the data file, resolved by the backend from the
+          # resource's own resource-data ref. Falls back to the flat layout.
+          - { name: dataPath, value: "" }
           - { name: data }
           - { name: gitea }
           - { name: repo }
@@ -99,21 +102,26 @@ spec:
             set -eu
             apk add --no-cache curl >/dev/null 2>&1
             NAME="{{inputs.parameters.name}}"; DATA='{{inputs.parameters.data}}'
+            P="{{inputs.parameters.dataPath}}"; [ -n "$P" ] || P="resources/$NAME-data.json"
             GITEA="{{inputs.parameters.gitea}}"; REPO="{{inputs.parameters.repo}}"
             CREDS="{{inputs.parameters.creds}}"
             API="$GITEA/api/v1/repos/platform/$REPO/contents"
             b64() { base64 2>/dev/null | tr -d '\n'; }
-            P="resources/$NAME-data.json"
             SHA=$(curl -sfS -u "$CREDS" "$API/$P" | grep -o '"sha":"[0-9a-f]\{40\}"' | head -1 | cut -d'"' -f4)
             printf '%s' "$DATA" > /tmp/data.json
             curl -sfS -X PUT -u "$CREDS" -H 'Content-Type: application/json' "$API/$P" \
               -d "{\"message\":\"update $NAME\",\"content\":\"$(b64 < /tmp/data.json)\",\"sha\":\"$SHA\",\"branch\":\"main\"}" >/dev/null
             printf '%s' "$NAME" > /tmp/resource-ref
-            echo "updated $NAME"
+            echo "updated $NAME ($P)"
     - name: delete
       inputs:
         parameters:
           - { name: name }
+          # Repo paths of the resource file + its data file, resolved by the
+          # backend from the resource's location + resource-data ref. Fall back
+          # to the flat layout.
+          - { name: path, value: "" }
+          - { name: dataPath, value: "" }
           - { name: gitea }
           - { name: repo }
           - { name: creds }
@@ -125,11 +133,13 @@ spec:
             set -eu
             apk add --no-cache curl >/dev/null 2>&1
             NAME="{{inputs.parameters.name}}"
+            YAML="{{inputs.parameters.path}}"; [ -n "$YAML" ] || YAML="resources/$NAME.yaml"
+            DATA="{{inputs.parameters.dataPath}}"; [ -n "$DATA" ] || DATA="resources/$NAME-data.json"
             GITEA="{{inputs.parameters.gitea}}"; REPO="{{inputs.parameters.repo}}"
             CREDS="{{inputs.parameters.creds}}"
             API="$GITEA/api/v1/repos/platform/$REPO/contents"
             b64() { base64 2>/dev/null | tr -d '\n'; }
-            for P in "resources/$NAME.yaml" "resources/$NAME-data.json"; do
+            for P in "$YAML" "$DATA"; do
               SHA=$(curl -sS -u "$CREDS" "$API/$P" | grep -o '"sha":"[0-9a-f]\{40\}"' | head -1 | cut -d'"' -f4 || true)
               if [ -n "${SHA:-}" ]; then
                 curl -sfS -X DELETE -u "$CREDS" -H 'Content-Type: application/json' "$API/$P" \
@@ -138,7 +148,7 @@ spec:
             done
             RAW=$(curl -sfS -u "$CREDS" "$GITEA/platform/$REPO/raw/branch/main/catalog-info.yaml")
             SHA=$(curl -sfS -u "$CREDS" "$API/catalog-info.yaml" | grep -o '"sha":"[0-9a-f]\{40\}"' | head -1 | cut -d'"' -f4)
-            NEWC=$(printf '%s\n' "$RAW" | grep -vF "./resources/$NAME.yaml" | b64)
+            NEWC=$(printf '%s\n' "$RAW" | grep -vF "./$YAML" | b64)
             curl -sfS -X PUT -u "$CREDS" -H 'Content-Type: application/json' "$API/catalog-info.yaml" \
               -d "{\"message\":\"unregister $NAME\",\"content\":\"$NEWC\",\"sha\":\"$SHA\",\"branch\":\"main\"}" >/dev/null
-            echo "deleted $NAME"
+            echo "deleted $NAME ($YAML)"

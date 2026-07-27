@@ -12,8 +12,8 @@ metadata:
   annotations:
     # resourceType 'checkout-service' → this template → its owner (group:default/checkout).
     platform.io/resource-type: checkout-service
-    platform.io/verb-update: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"update","parameters":{"name":"<< resourceName >>","data":"<< paramsJson >>"}},"resultOutput":"resource-ref"}'
-    platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"delete","parameters":{"name":"<< resourceName >>"}}}'
+    platform.io/verb-update: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"update","parameters":{"name":"<< resourceName >>","dataPath":"<< resourceDataPath >>","data":"<< paramsJson >>"}},"resultOutput":"resource-ref"}'
+    platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"delete","parameters":{"name":"<< resourceName >>","path":"<< resourcePath >>","dataPath":"<< resourceDataPath >>"}}}'
 spec:
   # The template owner IS the service owner. `sam` is a member of this team, so
   # sam can approve checkout-service requests; requester/other owners cannot.

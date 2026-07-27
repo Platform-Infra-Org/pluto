@@ -14,8 +14,8 @@ metadata:
     platform.io/resource-type: git-resource
     # Edit → git-ops update (rewrites the resource's data file with the edited
     # data). Delete → git-ops delete (removes the resource + its data file).
-    platform.io/verb-update: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"update","parameters":{"name":"<< resourceName >>","data":"<< paramsJson >>"}},"resultOutput":"resource-ref"}'
-    platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"delete","parameters":{"name":"<< resourceName >>"}}}'
+    platform.io/verb-update: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"update","parameters":{"name":"<< resourceName >>","dataPath":"<< resourceDataPath >>","data":"<< paramsJson >>"}},"resultOutput":"resource-ref"}'
+    platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"delete","parameters":{"name":"<< resourceName >>","path":"<< resourcePath >>","dataPath":"<< resourceDataPath >>"}}}'
 spec:
   owner: group:default/checkout
   type: resource

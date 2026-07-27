@@ -15,8 +15,8 @@ metadata:
     platform.io/resource-type: database
     # Per-verb Argo submit for edit/delete via the shared git-ops workflow.
     # << paramsJson >> = the edited data (the card sends the full field set).
-    platform.io/verb-update: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"update","parameters":{"name":"<< resourceName >>","data":"<< paramsJson >>"}},"resultOutput":"resource-ref"}'
-    platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"delete","parameters":{"name":"<< resourceName >>"}}}'
+    platform.io/verb-update: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"update","parameters":{"name":"<< resourceName >>","dataPath":"<< resourceDataPath >>","data":"<< paramsJson >>"}},"resultOutput":"resource-ref"}'
+    platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"delete","parameters":{"name":"<< resourceName >>","path":"<< resourcePath >>","dataPath":"<< resourceDataPath >>"}}}'
 spec:
   # A different service team than demo-resource: its members (or an admin) may
   # approve database requests; the demo-resource owner cannot.

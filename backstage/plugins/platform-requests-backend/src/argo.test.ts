@@ -45,6 +45,21 @@ describe('resolveTemplate', () => {
     expect(resolveTemplate('<< resourceData.nope >>', withData)).toBe('');
   });
 
+  it('resolves resourcePath / resourceDataPath (empty when absent)', () => {
+    const withPaths: ResolveCtx = {
+      ...ctx,
+      resourcePath: 'resources/my-bucket.yaml',
+      resourceDataPath: 'resources/my-bucket-data.json',
+    };
+    expect(resolveTemplate('<< resourcePath >>', withPaths)).toBe(
+      'resources/my-bucket.yaml',
+    );
+    expect(resolveTemplate('<< resourceDataPath >>', withPaths)).toBe(
+      'resources/my-bucket-data.json',
+    );
+    expect(resolveTemplate('<< resourcePath >>', ctx)).toBe('');
+  });
+
   it('resolves missing params and unknown tokens to empty string', () => {
     expect(resolveTemplate('<< params.nope >>', ctx)).toBe('');
     expect(resolveTemplate('<< bogus >>', ctx)).toBe('');
