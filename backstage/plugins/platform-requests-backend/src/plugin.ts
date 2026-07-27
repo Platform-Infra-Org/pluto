@@ -101,13 +101,42 @@ export const platformRequestsPlugin = createBackendPlugin({
               logger.warn(`notify approvalNeeded failed for ${r.id}: ${e}`);
             }
           },
-          async finished(r: { id: number; resourceType: string; resourceName: string; requester: string }, ok: boolean) {
+          // Alert the requester when their request changes state after a
+          // decision (approved → workflow running, or rejected).
+          async decided(r: PlatformRequest) {
+            const map: Record<string, { title: string; sev: 'normal' | 'high' } | undefined> = {
+              IN_PROGRESS: { title: `Request #${r.id} approved — workflow running`, sev: 'normal' },
+              REJECTED: { title: `Request #${r.id} was rejected`, sev: 'high' },
+            };
+            const m = map[r.state];
+            if (!m) return; // still pending (e.g. partial N_OF_M) — no alert
+            try {
+              await notifications.send({
+                recipients: { type: 'entity', entityRef: `user:default/${r.requester}` },
+                payload: {
+                  title: m.title,
+                  description: `${r.resourceType}/${r.resourceName}`,
+                  link: `/requests/${r.id}`,
+                  severity: m.sev,
+                },
+              });
+            } catch (e) {
+              logger.warn(`notify decided failed for ${r.id}: ${e}`);
+            }
+          },
+          async finished(
+            r: { id: number; resourceType: string; resourceName: string; requester: string },
+            ok: boolean,
+            resultRef?: string,
+          ) {
             try {
               await notifications.send({
                 recipients: { type: 'entity', entityRef: `user:default/${r.requester}` },
                 payload: {
                   title: `Request #${r.id} ${ok ? 'succeeded' : 'failed'}`,
-                  description: `${r.resourceType}/${r.resourceName}`,
+                  description: resultRef
+                    ? `${r.resourceType}/${r.resourceName} → ${resultRef}`
+                    : `${r.resourceType}/${r.resourceName}`,
                   link: `/requests/${r.id}`,
                   severity: ok ? 'normal' : 'high',
                 },
@@ -185,6 +214,7 @@ export const platformRequestsPlugin = createBackendPlugin({
             store,
             submitWorkflow,
             onCreated: notify.approvalNeeded,
+            onDecided: notify.decided,
             workflowNodesFor: (name, namespace) => argo.nodesFor(name, namespace),
             principalResolver,
             ownerResolver,
@@ -201,7 +231,7 @@ export const platformRequestsPlugin = createBackendPlugin({
             const inProgress = await store.list({ state: 'IN_PROGRESS' });
             for (const r of inProgress) {
               try {
-                const { phase, message } = await argo.statusFor(
+                const { phase, message, outputs } = await argo.statusFor(
                   r.id,
                   r.workflowNamespace,
                 );
@@ -218,9 +248,19 @@ export const platformRequestsPlugin = createBackendPlugin({
                   } catch (e) {
                     logger.warn(`catalog write failed for request ${r.id}: ${e}`);
                   }
+                  // Read the configured output → the created resource ref/URL.
+                  const resultRef =
+                    r.resultOutput && outputs?.[r.resultOutput]
+                      ? outputs[r.resultOutput]
+                      : undefined;
+                  if (resultRef) await store.setResult(r.id, resultRef);
                   await store.setState(r.id, 'SUCCEEDED');
-                  await notify.finished(r, true);
-                  logger.info(`request ${r.id}: workflow succeeded`);
+                  await notify.finished(r, true, resultRef);
+                  logger.info(
+                    `request ${r.id}: workflow succeeded${
+                      resultRef ? ` → ${resultRef}` : ''
+                    }`,
+                  );
                 } else if (phase === 'Failed' || phase === 'Error') {
                   await store.setWorkflow(r.id, { error: message });
                   await store.setState(r.id, 'FAILED');

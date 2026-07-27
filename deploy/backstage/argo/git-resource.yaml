@@ -1,0 +1,85 @@
+# A WorkflowTemplate that ACTUALLY creates a catalog resource in Git: it commits
+# resources/<name>.yaml to the Gitea catalog repo and registers it in
+# catalog-info.yaml, then emits `resource-ref` (the created name) as a workflow
+# output parameter. The backend reads that output on success (resultOutput) and
+# links the created resource from the request.
+#
+# Reachability: the pod calls Gitea on the host via host.docker.internal (Docker
+# Desktop). Override `gitea` if your host alias differs.
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: git-resource
+  namespace: argo
+spec:
+  entrypoint: create
+  arguments:
+    parameters:
+      - { name: name, value: "resource" }
+      - { name: request, value: "{}" }
+      - { name: gitea, value: "http://host.docker.internal:3001" }
+      - { name: owner, value: "platform" }
+      - { name: repo, value: "catalog" }
+      - { name: creds, value: "platform:platform" }
+  templates:
+    - name: create
+      inputs:
+        parameters:
+          - { name: name }
+          - { name: request }
+          - { name: gitea }
+          - { name: owner }
+          - { name: repo }
+          - { name: creds }
+      outputs:
+        parameters:
+          - name: resource-ref
+            valueFrom: { path: /tmp/resource-ref }
+      container:
+        image: alpine:3.20
+        command: [sh, -c]
+        args:
+          - |
+            set -eu
+            apk add --no-cache curl >/dev/null 2>&1
+            NAME="{{inputs.parameters.name}}"
+            GITEA="{{inputs.parameters.gitea}}"
+            OWNER="{{inputs.parameters.owner}}"
+            REPO="{{inputs.parameters.repo}}"
+            CREDS="{{inputs.parameters.creds}}"
+            API="$GITEA/api/v1/repos/$OWNER/$REPO/contents"
+            b64() { base64 2>/dev/null | tr -d '\n'; }
+
+            # 1) commit the Resource entity file
+            cat > /tmp/res.yaml <<YAML
+            apiVersion: backstage.io/v1alpha1
+            kind: Resource
+            metadata:
+              name: $NAME
+              annotations:
+                platform.io/created-by: git-resource
+            spec:
+              type: demo
+              owner: group:default/checkout
+            YAML
+            CONTENT=$(b64 < /tmp/res.yaml)
+            curl -sfS -X POST -u "$CREDS" -H 'Content-Type: application/json' \
+              "$API/resources/$NAME.yaml" \
+              -d "{\"message\":\"create $NAME\",\"content\":\"$CONTENT\",\"branch\":\"main\"}" >/dev/null
+            echo "committed resources/$NAME.yaml"
+
+            # 2) register it in catalog-info.yaml (append the location target if new)
+            RAW=$(curl -sfS -u "$CREDS" "$GITEA/$OWNER/$REPO/raw/branch/main/catalog-info.yaml")
+            if ! printf '%s\n' "$RAW" | grep -qF "./resources/$NAME.yaml"; then
+              SHA=$(curl -sfS -u "$CREDS" "$API/catalog-info.yaml" \
+                    | grep -o '"sha":"[0-9a-f]\{40\}"' | head -1 | cut -d'"' -f4)
+              NEWC=$(printf '%s\n    - ./resources/%s.yaml\n' "$RAW" "$NAME" | b64)
+              curl -sfS -X PUT -u "$CREDS" -H 'Content-Type: application/json' \
+                "$API/catalog-info.yaml" \
+                -d "{\"message\":\"register $NAME\",\"content\":\"$NEWC\",\"sha\":\"$SHA\",\"branch\":\"main\"}" >/dev/null
+              echo "registered $NAME in catalog-info.yaml"
+            fi
+
+            # 3) emit the created resource ref (read by the backend on success)
+            printf '%s' "$NAME" > /tmp/resource-ref
+            echo "done: $NAME"

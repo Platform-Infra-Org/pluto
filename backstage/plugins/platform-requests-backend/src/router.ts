@@ -36,6 +36,8 @@ export interface RouterOptions {
   submitWorkflow?: (request: PlatformRequest) => Promise<void>;
   /** Called after a request is created (for approver notifications). */
   onCreated?: (request: PlatformRequest) => Promise<void>;
+  /** Called after an approve/reject decision resolves (for requester alerts). */
+  onDecided?: (request: PlatformRequest) => Promise<void>;
   /** Resolve a workflow's DAG nodes for the status view. */
   workflowNodesFor?: (name: string, namespace?: string) => Promise<
     { id: string; name: string; type?: string; phase?: string; children: string[] }[]
@@ -56,6 +58,8 @@ const newRequestSchema = z.object({
   policy: policySchema.optional(),
   // Loose: the spec is validated/normalized when building the Argo submit body.
   argoSubmit: z.record(z.any()).optional(),
+  // Argo output parameter to read on success (created resource ref/URL).
+  resultOutput: z.string().optional(),
   // Only honored for service callers (the Scaffolder action creating on behalf
   // of the initiating user); ignored for user callers (requester = the actor).
   requester: z.string().optional(),
@@ -230,7 +234,9 @@ export async function createRouter(
         await store.setState(request.id, 'IN_PROGRESS');
       }
 
-      res.json(await store.get(request.id));
+      const resolved = (await store.get(request.id))!;
+      if (options.onDecided) await options.onDecided(resolved);
+      res.json(resolved);
     };
 
   router.post('/requests/:id/approve', decide('approve'));

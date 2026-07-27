@@ -44,6 +44,15 @@ export function createRequestSubmitAction(services: {
             .record(z.any())
             .optional()
             .describe('Arbitrary parameters; exposed to argoSubmit tokens.'),
+        resultOutput: z =>
+          z
+            .string()
+            .optional()
+            .describe(
+              'Argo workflow output parameter to read on success — its value ' +
+                'identifies the created resource (catalog name or URL), linked ' +
+                'from the finished request.',
+            ),
         argoSubmit: z =>
           z
             .object({
@@ -108,6 +117,9 @@ export function createRequestSubmitAction(services: {
           resourceName: ctx.input.resourceName,
           params: ctx.input.params ?? {},
           ...(ctx.input.argoSubmit ? { argoSubmit: ctx.input.argoSubmit } : {}),
+          ...(ctx.input.resultOutput
+            ? { resultOutput: ctx.input.resultOutput }
+            : {}),
           requester,
         }),
       });

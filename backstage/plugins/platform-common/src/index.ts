@@ -79,6 +79,14 @@ export interface Request {
   ownerGroup?: string;
   /** Per-request Argo submit spec; absent = default behavior. */
   argoSubmit?: ArgoSubmitSpec;
+  /**
+   * Name of the Argo workflow **output parameter** to read when the workflow
+   * succeeds — its value identifies the created resource (a catalog name or a
+   * URL). Stored back as `resultRef` and linked from the request.
+   */
+  resultOutput?: string;
+  /** The value read from `resultOutput` on success (created resource ref/URL). */
+  resultRef?: string;
   /** Argo workflow name once submitted (P2). */
   workflowName?: string;
   /** Namespace the workflow was submitted into (for status/nodes queries). */
@@ -99,6 +107,7 @@ export interface NewRequest {
   params?: Record<string, unknown>;
   policy?: ApprovalPolicy;
   argoSubmit?: ArgoSubmitSpec;
+  resultOutput?: string;
 }
 
 /** Permission ids exposed by the platform suite. */

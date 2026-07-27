@@ -29,6 +29,8 @@ type RequestRow = {
   requester: string;
   owner_group: string | null;
   argo_submit: string | null;
+  result_output: string | null;
+  result_ref: string | null;
   workflow_name: string | null;
   workflow_namespace: string | null;
   workflow_phase: string | null;
@@ -74,6 +76,7 @@ export class RequestsStore {
         requester: input.requester,
         owner_group: input.ownerGroup ?? null,
         argo_submit: input.argoSubmit ? JSON.stringify(input.argoSubmit) : null,
+        result_output: input.resultOutput ?? null,
         created_at: now,
         updated_at: now,
       })
@@ -128,6 +131,13 @@ export class RequestsStore {
     });
   }
 
+  /** Record the created-resource ref read from the workflow's output. */
+  async setResult(id: number, resultRef: string): Promise<void> {
+    await this.db('platform_requests')
+      .where({ id })
+      .update({ result_ref: resultRef, updated_at: new Date().toISOString() });
+  }
+
   async setState(id: number, state: RequestState): Promise<void> {
     await this.db('platform_requests')
       .where({ id })
@@ -169,6 +179,8 @@ function assemble(row: RequestRow, approvals: ApprovalRow[]): Request {
     argoSubmit: row.argo_submit
       ? (JSON.parse(row.argo_submit) as ArgoSubmitSpec)
       : undefined,
+    resultOutput: row.result_output ?? undefined,
+    resultRef: row.result_ref ?? undefined,
     workflowName: row.workflow_name ?? undefined,
     workflowNamespace: row.workflow_namespace ?? undefined,
     workflowPhase: row.workflow_phase ?? undefined,

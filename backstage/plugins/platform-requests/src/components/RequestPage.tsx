@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useApi, identityApiRef } from '@backstage/core-plugin-api';
 import { useRouteRefParams } from '@backstage/frontend-plugin-api';
+import { Link } from '@backstage/core-components';
 import {
   Page,
   PageHeader,
@@ -65,6 +66,13 @@ export function RequestPage() {
   }
 
   const pending = request.state === 'PENDING_APPROVAL';
+  // Link to the created resource once the workflow reports it: a bare ref -> the
+  // catalog entity page; anything with a scheme -> that URL.
+  const resourceLink = request.resultRef
+    ? request.resultRef.includes('://')
+      ? request.resultRef
+      : `/catalog/default/resource/${request.resultRef}`
+    : undefined;
   // Only an admin, or a member of the owning service team, may decide it.
   const canApprove =
     myGroups.includes(ADMIN_GROUP) ||
@@ -77,6 +85,14 @@ export function RequestPage() {
         subtitle={`${request.kind} · ${request.resourceType}/${request.resourceName}`}
         actions={stateBadge(request.state)}
       />
+      {request.state === 'SUCCEEDED' && resourceLink && (
+        <div className="sc-notice" style={{ marginBottom: 12 }}>
+          ✓ Created resource:{' '}
+          <Link to={resourceLink} className="sc-link">
+            {request.resultRef}
+          </Link>
+        </div>
+      )}
       <div className="sc-grid" style={{ gridTemplateColumns: '1.4fr 1fr' }}>
         <Card>
           <CardHeader title="Details" />

@@ -1,0 +1,51 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: git-resource
+  title: Git Resource (real create)
+  description: >
+    Provisions a resource by committing it to the catalog Git repo via an Argo
+    workflow. On success the request links to the created catalog resource
+    (read from the workflow's `resource-ref` output).
+  tags:
+    - platform
+    - demo
+  annotations:
+    platform.io/resource-type: git-resource
+spec:
+  # Owned by the checkout team, so sam (a member) can approve its requests.
+  owner: group:default/checkout
+  type: resource
+  parameters:
+    - title: Resource details
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          title: Name
+          description: Name of the resource to create in the catalog
+  steps:
+    - id: submit
+      name: Submit request
+      action: platform:request:submit
+      input:
+        resourceType: git-resource
+        resourceName: ${{ parameters.name }}
+        kind: CREATE
+        # Read this Argo output parameter on success → the created resource ref,
+        # which the request then links to.
+        resultOutput: resource-ref
+        argoSubmit:
+          namespace: argo
+          workflowTemplate: git-resource
+          entrypoint: create
+          parameters:
+            name: "<< resourceName >>"
+            request: "<< paramsJson >>"
+          labels:
+            platform.io/requested-by: "<< requester >>"
+  output:
+    links:
+      - title: Open request
+        url: /requests/${{ steps.submit.output.requestId }}

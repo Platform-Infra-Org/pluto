@@ -133,4 +133,29 @@ describe('ArgoClient.submitSpec', () => {
     ).rejects.toThrow('argo submit failed: 500');
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it('statusFor reads phase, message and output parameters', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        items: [
+          {
+            metadata: { name: 'wf-1' },
+            status: {
+              phase: 'Succeeded',
+              outputs: {
+                parameters: [
+                  { name: 'resource-ref', value: 'my-bucket' },
+                  { name: 'other', value: '42' },
+                ],
+              },
+            },
+          },
+        ],
+      }),
+    } as Response);
+    const s = await client().statusFor(42, 'argo');
+    expect(s.phase).toBe('Succeeded');
+    expect(s.outputs).toEqual({ 'resource-ref': 'my-bucket', other: '42' });
+  });
 });

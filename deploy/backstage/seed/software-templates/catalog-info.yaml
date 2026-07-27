@@ -9,3 +9,4 @@ spec:
     - ./templates/demo-resource/template.yaml
     - ./templates/provision-database/template.yaml
     - ./templates/checkout-service/template.yaml
+    - ./templates/git-resource/template.yaml

@@ -73,6 +73,8 @@ export interface WorkflowStatus {
   name?: string;
   phase?: string;
   message?: string;
+  /** The workflow's global output parameters (name -> value), if any. */
+  outputs?: Record<string, string>;
 }
 
 /** A node in the workflow DAG, for the status view. */
@@ -192,14 +194,23 @@ export class ArgoClient {
     const data = (await res.json()) as {
       items?: Array<{
         metadata?: { name?: string };
-        status?: { phase?: string; message?: string };
+        status?: {
+          phase?: string;
+          message?: string;
+          outputs?: { parameters?: Array<{ name?: string; value?: string }> };
+        };
       }>;
     };
     const wf = data.items?.[0];
+    const outputs: Record<string, string> = {};
+    for (const p of wf?.status?.outputs?.parameters ?? []) {
+      if (p.name != null && p.value != null) outputs[p.name] = p.value;
+    }
     return {
       name: wf?.metadata?.name,
       phase: wf?.status?.phase,
       message: wf?.status?.message,
+      outputs,
     };
   }
 

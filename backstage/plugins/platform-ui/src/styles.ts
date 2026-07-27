@@ -194,6 +194,10 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
 .sc-toolbar .sc-input { width: auto; flex: 1 1 220px; min-width: 180px; }
 .sc-toolbar .sc-select { width: auto; min-width: 150px; }
+/* success notice (e.g. created-resource link) */
+.sc-notice { padding: 10px 14px; border-radius: 8px; font-weight: 500;
+  background: hsl(var(--sc-success) / .12); color: hsl(var(--sc-success));
+  border: 1px solid hsl(var(--sc-success) / .3); }
 
 /* login gate */
 .sc-login { min-height: 100vh; display: flex; align-items: center; justify-content: center;
