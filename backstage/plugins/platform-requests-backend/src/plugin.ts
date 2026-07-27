@@ -5,10 +5,10 @@ import {
 import { catalogServiceRef } from '@backstage/plugin-catalog-node';
 import { notificationService } from '@backstage/plugin-notifications-node';
 import { Request as PlatformRequest } from '@internal/plugin-platform-common';
+import { parse as parseYaml } from 'yaml';
 import { createRouter } from './router';
 import { RequestsStore } from './store';
 import { ArgoClient } from './argo';
-import { CatalogWriter } from './catalogWriter';
 
 /**
  * platformRequestsPlugin backend plugin
@@ -23,6 +23,7 @@ export const platformRequestsPlugin = createBackendPlugin({
         logger: coreServices.logger,
         config: coreServices.rootConfig,
         auth: coreServices.auth,
+        urlReader: coreServices.urlReader,
         httpAuth: coreServices.httpAuth,
         httpRouter: coreServices.httpRouter,
         database: coreServices.database,
@@ -36,6 +37,7 @@ export const platformRequestsPlugin = createBackendPlugin({
         logger,
         config,
         auth,
+        urlReader,
         httpAuth,
         httpRouter,
         database,
@@ -58,27 +60,6 @@ export const platformRequestsPlugin = createBackendPlugin({
             defaultTemplate:
               config.getOptionalString('platform.argo.defaultTemplate') ??
               'demo-resource',
-          },
-          logger,
-        );
-
-        const catalogWriter = new CatalogWriter(
-          {
-            giteaBaseUrl:
-              config.getOptionalString('platform.catalog.gitea.baseUrl') ??
-              'http://localhost:3001',
-            user:
-              config.getOptionalString('platform.catalog.gitea.user') ??
-              'platform',
-            password:
-              config.getOptionalString('platform.catalog.gitea.password') ??
-              'platform',
-            owner:
-              config.getOptionalString('platform.catalog.gitea.owner') ??
-              'platform',
-            repo:
-              config.getOptionalString('platform.catalog.gitea.repo') ??
-              'catalog',
           },
           logger,
         );
@@ -147,9 +128,11 @@ export const platformRequestsPlugin = createBackendPlugin({
           },
         };
 
-        // The resource's current data JSON (for update/delete): the resolved
-        // `platform.io/resource-data` annotation, else `spec.resourceData`, else
-        // `{}`. Available to argoSubmit as `<< resourceData >>`.
+        // The resource's current data (for the Resource Data tab, edit dialog,
+        // and `<< resourceData >>`): the `platform.io/resource-data` annotation
+        // is a *ref* to a JSON/YAML file (like backstage.io/techdocs-ref),
+        // relative to the resource's own location — fetched via the reader.
+        // Falls back to `spec.resourceData`, else `{}`.
         const resourceDataFor = async (
           resourceName: string,
         ): Promise<Record<string, unknown>> => {
@@ -159,13 +142,27 @@ export const platformRequestsPlugin = createBackendPlugin({
               { credentials: await auth.getOwnServiceCredentials() },
             );
             if (!entity) return {};
-            const raw = entity.metadata.annotations?.['platform.io/resource-data'];
-            if (raw) {
+            const ref = entity.metadata.annotations?.['platform.io/resource-data'];
+            const loc =
+              entity.metadata.annotations?.['backstage.io/managed-by-location'] ??
+              entity.metadata.annotations?.[
+                'backstage.io/managed-by-origin-location'
+              ];
+            if (ref && loc) {
               try {
-                const parsed = JSON.parse(raw);
-                if (parsed && Object.keys(parsed).length) return parsed;
-              } catch {
-                /* fall through to spec.resourceData */
+                const base = loc.replace(/^url:/, '');
+                const url = new URL(ref, base).toString();
+                const read = await urlReader.readUrl(url);
+                const text = (await read.buffer()).toString('utf8');
+                // yaml.parse handles JSON too (JSON is a subset of YAML).
+                const data = parseYaml(text);
+                if (data && typeof data === 'object') {
+                  return data as Record<string, unknown>;
+                }
+              } catch (e) {
+                logger.warn(
+                  `resource-data ref '${ref}' for '${resourceName}' failed: ${e}`,
+                );
               }
             }
             const sd = (entity.spec as { resourceData?: unknown } | undefined)
@@ -299,6 +296,7 @@ export const platformRequestsPlugin = createBackendPlugin({
             principalResolver,
             ownerResolver,
             verbConfigResolver,
+            resourceDataFor,
           }),
         );
 
@@ -333,16 +331,8 @@ export const platformRequestsPlugin = createBackendPlugin({
                 if (!phase) continue;
                 await store.setWorkflow(r.id, { phase });
                 if (phase === 'Succeeded') {
-                  // Apply the result to the catalog repo (edit/delete).
-                  try {
-                    if (r.kind === 'DELETE') {
-                      await catalogWriter.deleteResource(r.resourceName);
-                    } else if (r.kind === 'UPDATE') {
-                      await catalogWriter.updateResource(r.resourceName, r.params);
-                    }
-                  } catch (e) {
-                    logger.warn(`catalog write failed for request ${r.id}: ${e}`);
-                  }
+                  // The workflow is the sole Git writer — it created/updated/
+                  // deleted the resource in the catalog repo itself.
                   // Read the configured output → the created resource ref/URL.
                   const resultRef = await readResult(r);
                   if (resultRef) await store.setResult(r.id, resultRef);

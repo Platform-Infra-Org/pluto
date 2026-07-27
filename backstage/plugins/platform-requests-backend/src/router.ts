@@ -37,6 +37,10 @@ export interface RouterOptions {
     resourceType: string,
     kind: string,
   ) => Promise<{ argoSubmit?: unknown; resultOutput?: string } | undefined>;
+  /** Resolves a resource's data (from its ref'd file or spec.resourceData). */
+  resourceDataFor?: (
+    resourceName: string,
+  ) => Promise<Record<string, unknown>>;
   /** Called on APPROVED before flipping to IN_PROGRESS. No-op until P2. */
   submitWorkflow?: (request: PlatformRequest) => Promise<void>;
   /** Called after a request is created (for approver notifications). */
@@ -165,6 +169,15 @@ export async function createRouter(
   router.get('/options/:name', async (req, res) => {
     await httpAuth.credentials(req, { allow: ['user', 'service'] });
     res.json(OPTION_SETS[req.params.name] ?? []);
+  });
+
+  // Resolved resource data (ref'd file or spec.resourceData) for the tab + edit.
+  router.get('/resources/:name/data', async (req, res) => {
+    await httpAuth.credentials(req, { allow: ['user', 'service'] });
+    const data = options.resourceDataFor
+      ? await options.resourceDataFor(req.params.name)
+      : {};
+    res.json(data);
   });
 
   router.get('/requests', async (req, res) => {

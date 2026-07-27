@@ -2,18 +2,21 @@ apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
   name: git-resource
-  title: Git Resource (real create)
+  title: Git Resource
   description: >
-    Provisions a resource by committing it to the catalog Git repo via an Argo
-    workflow. On success the request links to the created catalog resource
-    (read from the workflow's `resource-ref` output).
+    Provision a resource by committing it to the catalog Git repo via the
+    git-ops Argo workflow (create). Edit and delete run the same workflow's
+    update/delete entrypoints — the workflow is the only thing that writes Git.
   tags:
     - platform
     - demo
   annotations:
     platform.io/resource-type: git-resource
+    # Edit → git-ops update (rewrites the resource's data file with the edited
+    # data). Delete → git-ops delete (removes the resource + its data file).
+    platform.io/verb-update: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"update","parameters":{"name":"<< resourceName >>","data":"<< paramsJson >>"}},"resultOutput":"resource-ref"}'
+    platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"delete","parameters":{"name":"<< resourceName >>"}}}'
 spec:
-  # Owned by the checkout team, so sam (a member) can approve its requests.
   owner: group:default/checkout
   type: resource
   parameters:
@@ -24,7 +27,15 @@ spec:
         name:
           type: string
           title: Name
-          description: Name of the resource to create in the catalog
+        size:
+          type: string
+          title: Size
+          default: small
+          enum: [small, medium, large]
+        region:
+          type: string
+          title: Region
+          default: us-east-1
   steps:
     - id: submit
       name: Submit request
@@ -33,16 +44,19 @@ spec:
         resourceType: git-resource
         resourceName: ${{ parameters.name }}
         kind: CREATE
-        # Read this Argo output parameter on success → the created resource ref,
-        # which the request then links to.
+        params:
+          size: ${{ parameters.size }}
+          region: ${{ parameters.region }}
         resultOutput: resource-ref
         argoSubmit:
           namespace: argo
-          workflowTemplate: git-resource
+          workflowTemplate: git-ops
           entrypoint: create
           parameters:
             name: "<< resourceName >>"
-            request: "<< paramsJson >>"
+            type: "git-resource"
+            owner: "group:default/checkout"
+            data: "<< paramsJson >>"
           labels:
             platform.io/requested-by: "<< requester >>"
   output:

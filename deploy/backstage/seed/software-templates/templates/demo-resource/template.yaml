@@ -15,6 +15,8 @@ metadata:
     # Ties requests with this resourceType back to this template (and its owner,
     # the service team) for per-team approval.
     platform.io/resource-type: demo-resource
+    platform.io/verb-update: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"update","parameters":{"name":"<< resourceName >>","data":"<< paramsJson >>"}},"resultOutput":"resource-ref"}'
+    platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"delete","parameters":{"name":"<< resourceName >>"}}}'
 spec:
   # The template owner IS the service owner: only this team (or an admin) may
   # approve create/update/delete requests for demo-resource.
@@ -50,19 +52,20 @@ spec:
         kind: CREATE
         params:
           region: ${{ parameters.region }}
-        # Full control over the Argo submit. Omit argoSubmit for default behavior.
-        # << token >> is resolved by the backend at submit time (requestId,
-        # resourceName, resourceType, requester, paramsJson, params.<field>).
-        # The << >> delimiter is distinct from Scaffolder's ${{ }}, so no escaping.
+        # create commits the resource to Git via the shared git-ops workflow.
+        # << paramsJson >> becomes the resource's data file.
         argoSubmit:
           namespace: argo
-          workflowTemplate: demo-resource
+          workflowTemplate: git-ops
           entrypoint: create
           parameters:
-            request: "<< paramsJson >>"
-            region: "<< params.region >>"
+            name: "<< resourceName >>"
+            type: "demo-resource"
+            owner: "group:default/owners-payments"
+            data: "<< paramsJson >>"
           labels:
             platform.io/requested-by: "<< requester >>"
+        resultOutput: resource-ref
   output:
     links:
       - title: Open request

@@ -1,27 +1,29 @@
+import { useEffect, useState } from 'react';
+import { useApi } from '@backstage/core-plugin-api';
 import { useEntity } from '@backstage/plugin-catalog-react';
 import { Card, CardHeader, CardBody, JsonTree } from '@internal/plugin-platform-ui';
-
-const RESOURCE_DATA = 'platform.io/resource-data';
+import { requestsApiRef } from '../api';
 
 /**
- * Entity tab (Resource pages): renders the resource's full data JSON in a
- * collapsible tree. Prefers the `platform.io/resource-data` annotation (a JSON
- * string); falls back to `spec.resourceData` for resources that don't set it.
+ * Entity tab (Resource pages): renders the resource's data JSON as a collapsible
+ * tree. The data is resolved server-side from the `platform.io/resource-data`
+ * ref (a JSON/YAML file next to the resource, fetched via the reader), falling
+ * back to `spec.resourceData`.
  */
 export function ResourceDataTab() {
   const { entity } = useEntity();
-  const raw = entity.metadata.annotations?.[RESOURCE_DATA];
+  const api = useApi(requestsApiRef);
+  const [data, setData] = useState<Record<string, unknown>>();
+  const [error, setError] = useState<string>();
 
-  let data: unknown;
-  if (raw) {
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      data = raw; // not valid JSON — show the raw string
-    }
-  } else {
-    data = entity.spec?.resourceData ?? undefined;
-  }
+  useEffect(() => {
+    api
+      .getResourceData(entity.metadata.name)
+      .then(setData)
+      .catch(e => setError(String(e)));
+  }, [api, entity.metadata.name]);
+
+  const empty = data && Object.keys(data).length === 0;
 
   return (
     <div style={{ padding: 16 }}>
@@ -31,11 +33,12 @@ export function ResourceDataTab() {
           description="The full description of this resource."
         />
         <CardBody>
-          {data === undefined ? (
+          {error && <div className="sc-muted">{error}</div>}
+          {!data && !error && <div className="sc-muted">Loading…</div>}
+          {data && empty && (
             <div className="sc-muted">No resource data available.</div>
-          ) : (
-            <JsonTree data={data} />
           )}
+          {data && !empty && <JsonTree data={data} />}
         </CardBody>
       </Card>
     </div>

@@ -4,49 +4,9 @@ metadata:
   name: orders-db
   annotations:
     platform.io/resource-type: database
+    # Resource data lives in a sibling file (like backstage.io/techdocs-ref).
+    # Resolved relative to this file → resources/orders-db-data.json.
+    platform.io/resource-data: ./orders-db-data.json
 spec:
   type: database
   owner: "group:default/payments"
-  resourceData:
-    apiVersion: platform/v1
-    kind: Database
-    metadata:
-      name: orders-db
-      ownerTeam: payments
-    spec:
-      engine: postgres
-      version: 16
-      size: medium
-      region: eu-west-1
-    payload:
-      method: POST
-      url: "https://db.api/databases"
-      body:
-        name: orders-db
-        size: medium
-        region: eu-west-1
-        subnet_id: "<<mapping.children.network.outputs.subnet_id>>"
-        account_id: "<<mapping.internals.lookup_account.outputs.account_id>>"
-    mapping:
-      children:
-        network:
-          service: network
-          action: create
-          inputs:
-            region: eu-west-1
-            id: prod-net
-          outputs:
-            subnet_id: null
-          mapping:
-            children: {}
-            internals: {}
-      internals:
-        lookup_account:
-          type: api-call
-          request:
-            method: GET
-            url: "https://accounts.api/accounts?name=orders"
-          extract:
-            account_id: "$.items[0].id"
-          outputs:
-            account_id: null

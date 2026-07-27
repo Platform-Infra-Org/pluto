@@ -1,0 +1,144 @@
+# The one WorkflowTemplate that mutates the catalog Git repo for every resource
+# type: create / update / delete. Each resource is a `resources/<name>.yaml`
+# Resource entity whose data lives in a sibling `resources/<name>-data.json`,
+# referenced by `platform.io/resource-data: ./<name>-data.json` (a ref, like
+# techdocs-ref). update rewrites that data file; delete removes both files.
+# Reaches Gitea on the host via host.docker.internal (Docker Desktop).
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: git-ops
+  namespace: argo
+spec:
+  entrypoint: create
+  arguments:
+    parameters:
+      - { name: name, value: "resource" }
+      - { name: type, value: "resource" }
+      - { name: owner, value: "group:default/platform" }
+      - { name: data, value: "{}" }
+      - { name: gitea, value: "http://host.docker.internal:3001" }
+      - { name: repo, value: "catalog" }
+      - { name: creds, value: "platform:platform" }
+  templates:
+    - name: create
+      inputs:
+        parameters:
+          - { name: name }
+          - { name: type }
+          - { name: owner }
+          - { name: data }
+          - { name: gitea }
+          - { name: repo }
+          - { name: creds }
+      outputs:
+        parameters:
+          - name: resource-ref
+            globalName: resource-ref
+            valueFrom: { path: /tmp/resource-ref }
+      container:
+        image: alpine:3.20
+        command: [sh, -c]
+        args:
+          - |
+            set -eu
+            apk add --no-cache curl >/dev/null 2>&1
+            NAME="{{inputs.parameters.name}}"; TYPE="{{inputs.parameters.type}}"
+            OWNER="{{inputs.parameters.owner}}"; DATA='{{inputs.parameters.data}}'
+            GITEA="{{inputs.parameters.gitea}}"; REPO="{{inputs.parameters.repo}}"
+            CREDS="{{inputs.parameters.creds}}"
+            API="$GITEA/api/v1/repos/platform/$REPO/contents"
+            b64() { base64 2>/dev/null | tr -d '\n'; }
+            cat > /tmp/res.yaml <<YAML
+            apiVersion: backstage.io/v1alpha1
+            kind: Resource
+            metadata:
+              name: $NAME
+              annotations:
+                platform.io/resource-type: $TYPE
+                platform.io/resource-data: ./$NAME-data.json
+            spec:
+              type: $TYPE
+              owner: $OWNER
+            YAML
+            curl -sfS -X POST -u "$CREDS" -H 'Content-Type: application/json' \
+              "$API/resources/$NAME.yaml" \
+              -d "{\"message\":\"create $NAME\",\"content\":\"$(b64 < /tmp/res.yaml)\",\"branch\":\"main\"}" >/dev/null
+            printf '%s' "$DATA" > /tmp/data.json
+            curl -sfS -X POST -u "$CREDS" -H 'Content-Type: application/json' \
+              "$API/resources/$NAME-data.json" \
+              -d "{\"message\":\"data $NAME\",\"content\":\"$(b64 < /tmp/data.json)\",\"branch\":\"main\"}" >/dev/null
+            RAW=$(curl -sfS -u "$CREDS" "$GITEA/platform/$REPO/raw/branch/main/catalog-info.yaml")
+            if ! printf '%s\n' "$RAW" | grep -qF "./resources/$NAME.yaml"; then
+              SHA=$(curl -sfS -u "$CREDS" "$API/catalog-info.yaml" | grep -o '"sha":"[0-9a-f]\{40\}"' | head -1 | cut -d'"' -f4)
+              NEWC=$(printf '%s\n    - ./resources/%s.yaml\n' "$RAW" "$NAME" | b64)
+              curl -sfS -X PUT -u "$CREDS" -H 'Content-Type: application/json' \
+                "$API/catalog-info.yaml" \
+                -d "{\"message\":\"register $NAME\",\"content\":\"$NEWC\",\"sha\":\"$SHA\",\"branch\":\"main\"}" >/dev/null
+            fi
+            printf '%s' "$NAME" > /tmp/resource-ref
+            echo "created $NAME"
+    - name: update
+      inputs:
+        parameters:
+          - { name: name }
+          - { name: data }
+          - { name: gitea }
+          - { name: repo }
+          - { name: creds }
+      outputs:
+        parameters:
+          - name: resource-ref
+            globalName: resource-ref
+            valueFrom: { path: /tmp/resource-ref }
+      container:
+        image: alpine:3.20
+        command: [sh, -c]
+        args:
+          - |
+            set -eu
+            apk add --no-cache curl >/dev/null 2>&1
+            NAME="{{inputs.parameters.name}}"; DATA='{{inputs.parameters.data}}'
+            GITEA="{{inputs.parameters.gitea}}"; REPO="{{inputs.parameters.repo}}"
+            CREDS="{{inputs.parameters.creds}}"
+            API="$GITEA/api/v1/repos/platform/$REPO/contents"
+            b64() { base64 2>/dev/null | tr -d '\n'; }
+            P="resources/$NAME-data.json"
+            SHA=$(curl -sfS -u "$CREDS" "$API/$P" | grep -o '"sha":"[0-9a-f]\{40\}"' | head -1 | cut -d'"' -f4)
+            printf '%s' "$DATA" > /tmp/data.json
+            curl -sfS -X PUT -u "$CREDS" -H 'Content-Type: application/json' "$API/$P" \
+              -d "{\"message\":\"update $NAME\",\"content\":\"$(b64 < /tmp/data.json)\",\"sha\":\"$SHA\",\"branch\":\"main\"}" >/dev/null
+            printf '%s' "$NAME" > /tmp/resource-ref
+            echo "updated $NAME"
+    - name: delete
+      inputs:
+        parameters:
+          - { name: name }
+          - { name: gitea }
+          - { name: repo }
+          - { name: creds }
+      container:
+        image: alpine:3.20
+        command: [sh, -c]
+        args:
+          - |
+            set -eu
+            apk add --no-cache curl >/dev/null 2>&1
+            NAME="{{inputs.parameters.name}}"
+            GITEA="{{inputs.parameters.gitea}}"; REPO="{{inputs.parameters.repo}}"
+            CREDS="{{inputs.parameters.creds}}"
+            API="$GITEA/api/v1/repos/platform/$REPO/contents"
+            b64() { base64 2>/dev/null | tr -d '\n'; }
+            for P in "resources/$NAME.yaml" "resources/$NAME-data.json"; do
+              SHA=$(curl -sS -u "$CREDS" "$API/$P" | grep -o '"sha":"[0-9a-f]\{40\}"' | head -1 | cut -d'"' -f4 || true)
+              if [ -n "${SHA:-}" ]; then
+                curl -sfS -X DELETE -u "$CREDS" -H 'Content-Type: application/json' "$API/$P" \
+                  -d "{\"message\":\"delete $NAME\",\"sha\":\"$SHA\",\"branch\":\"main\"}" >/dev/null
+              fi
+            done
+            RAW=$(curl -sfS -u "$CREDS" "$GITEA/platform/$REPO/raw/branch/main/catalog-info.yaml")
+            SHA=$(curl -sfS -u "$CREDS" "$API/catalog-info.yaml" | grep -o '"sha":"[0-9a-f]\{40\}"' | head -1 | cut -d'"' -f4)
+            NEWC=$(printf '%s\n' "$RAW" | grep -vF "./resources/$NAME.yaml" | b64)
+            curl -sfS -X PUT -u "$CREDS" -H 'Content-Type: application/json' "$API/catalog-info.yaml" \
+              -d "{\"message\":\"unregister $NAME\",\"content\":\"$NEWC\",\"sha\":\"$SHA\",\"branch\":\"main\"}" >/dev/null
+            echo "deleted $NAME"

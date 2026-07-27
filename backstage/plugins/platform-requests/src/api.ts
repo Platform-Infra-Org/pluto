@@ -31,6 +31,8 @@ export interface RequestsApi {
   approve(id: number, note?: string): Promise<Request>;
   reject(id: number, note?: string): Promise<Request>;
   getWorkflow(id: number): Promise<WorkflowInfo>;
+  /** The resource's resolved data (ref'd file or spec.resourceData). */
+  getResourceData(resourceName: string): Promise<Record<string, unknown>>;
 }
 
 export const requestsApiRef = createApiRef<RequestsApi>({
@@ -74,6 +76,18 @@ export class RequestsClient implements RequestsApi {
   async getWorkflow(id: number): Promise<WorkflowInfo> {
     return this.json(
       await this.opts.fetchApi.fetch(`${await this.base()}/requests/${id}/workflow`),
+    );
+  }
+
+  async getResourceData(
+    resourceName: string,
+  ): Promise<Record<string, unknown>> {
+    return this.json(
+      await this.opts.fetchApi.fetch(
+        `${await this.base()}/resources/${encodeURIComponent(
+          resourceName,
+        )}/data`,
+      ),
     );
   }
 
