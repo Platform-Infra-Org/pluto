@@ -14,11 +14,41 @@ import {
 } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
 
-/** The resource's editable spec (from spec.resourceData.spec), as strings. */
+/**
+ * The resource's data object — the same source the Resource Data tab shows and
+ * the backend resolves as `<< resourceData >>`: the `platform.io/resource-data`
+ * annotation (parsed) if present, else `spec.resourceData` (its nested `.spec`
+ * for the envelope shape, else the object itself).
+ */
+function resourceData(e: Entity): Record<string, unknown> {
+  const raw = e.metadata.annotations?.['platform.io/resource-data'];
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      /* fall through */
+    }
+  }
+  const sd = e.spec?.resourceData as Record<string, unknown> | undefined;
+  if (sd && typeof sd === 'object') {
+    const inner = (sd as { spec?: unknown }).spec;
+    if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+      return inner as Record<string, unknown>;
+    }
+    return sd;
+  }
+  return {};
+}
+
+/** Scalar top-level fields of the resource data, editable as strings. */
 function specFields(e: Entity): Record<string, string> {
-  const def = (e.spec?.resourceData ?? {}) as { spec?: Record<string, unknown> };
   return Object.fromEntries(
-    Object.entries(def.spec ?? {}).map(([k, v]) => [k, String(v)]),
+    Object.entries(resourceData(e))
+      .filter(([, v]) => v !== null && typeof v !== 'object')
+      .map(([k, v]) => [k, String(v)]),
   );
 }
 

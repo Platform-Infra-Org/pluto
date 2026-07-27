@@ -64,7 +64,12 @@ export class CatalogWriter {
     if (!res.ok) throw new Error(`gitea write ${path}: ${res.status} ${await res.text()}`);
   }
 
-  /** Rewrite the resource entity's spec fields from the request params. */
+  /**
+   * Apply the request params to the resource's data, at the same source the
+   * edit dialog read them from: the `platform.io/resource-data` annotation if
+   * present, else `spec.resourceData` (its nested `.spec` for the envelope
+   * shape, else the object itself).
+   */
   async updateResource(
     name: string,
     params: Record<string, unknown>,
@@ -73,12 +78,30 @@ export class CatalogWriter {
     const f = await this.getFile(path);
     if (!f?.content) return;
     const doc = parse(Buffer.from(f.content, 'base64').toString('utf8'));
-    doc.spec ??= {};
-    doc.spec.resourceData ??= {};
-    doc.spec.resourceData.spec ??= {};
-    for (const [k, v] of Object.entries(params ?? {})) {
-      doc.spec.resourceData.spec[k] = v;
+    const entries = Object.entries(params ?? {});
+
+    const ann = doc.metadata?.annotations?.['platform.io/resource-data'];
+    if (ann !== undefined) {
+      let data: Record<string, unknown> = {};
+      try {
+        data = JSON.parse(ann) || {};
+      } catch {
+        data = {};
+      }
+      for (const [k, v] of entries) data[k] = v;
+      doc.metadata.annotations['platform.io/resource-data'] =
+        JSON.stringify(data);
+    } else {
+      doc.spec ??= {};
+      doc.spec.resourceData ??= {};
+      const rd = doc.spec.resourceData;
+      const target =
+        rd.spec && typeof rd.spec === 'object' && !Array.isArray(rd.spec)
+          ? rd.spec // envelope shape
+          : rd; // flat
+      for (const [k, v] of entries) target[k] = v;
     }
+
     await this.putFile(path, stringify(doc), `update ${name}`, f.sha);
     this.logger.info(`catalog: updated resource ${name}`);
   }
