@@ -14,9 +14,9 @@ import {
 } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
 
-/** The resource's editable spec (from spec.definition.spec), as strings. */
+/** The resource's editable spec (from spec.resourceData.spec), as strings. */
 function specFields(e: Entity): Record<string, string> {
-  const def = (e.spec?.definition ?? {}) as { spec?: Record<string, unknown> };
+  const def = (e.spec?.resourceData ?? {}) as { spec?: Record<string, unknown> };
   return Object.fromEntries(
     Object.entries(def.spec ?? {}).map(([k, v]) => [k, String(v)]),
   );

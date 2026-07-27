@@ -74,10 +74,10 @@ export class CatalogWriter {
     if (!f?.content) return;
     const doc = parse(Buffer.from(f.content, 'base64').toString('utf8'));
     doc.spec ??= {};
-    doc.spec.definition ??= {};
-    doc.spec.definition.spec ??= {};
+    doc.spec.resourceData ??= {};
+    doc.spec.resourceData.spec ??= {};
     for (const [k, v] of Object.entries(params ?? {})) {
-      doc.spec.definition.spec[k] = v;
+      doc.spec.resourceData.spec[k] = v;
     }
     await this.putFile(path, stringify(doc), `update ${name}`, f.sha);
     this.logger.info(`catalog: updated resource ${name}`);

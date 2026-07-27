@@ -1,13 +1,19 @@
 import { LoggerService } from '@backstage/backend-plugin-api';
 import { ArgoSubmitSpec } from '@internal/plugin-platform-common';
 
-/** Values available to `${{ token }}` templating in an ArgoSubmitSpec. */
+/** Values available to `<< token >>` templating in an ArgoSubmitSpec. */
 export interface ResolveCtx {
   requestId: number;
   resourceName: string;
   resourceType: string;
   requester: string;
   params: Record<string, unknown>;
+  /**
+   * The resource's data JSON (for update/delete): the resolved
+   * `platform.io/resource-data` annotation, else `spec.resourceData`, else `{}`.
+   * Available as `<< resourceData >>` (full JSON) and `<< resourceData.field >>`.
+   */
+  resourceData?: Record<string, unknown>;
 }
 
 /**
@@ -32,9 +38,16 @@ export function resolveTemplate(str: string, ctx: ResolveCtx): string {
         return ctx.requester;
       case 'paramsJson':
         return JSON.stringify(ctx.params ?? {});
+      case 'resourceData':
+        // Absent or empty resource data resolves to an empty JSON object.
+        return JSON.stringify(ctx.resourceData ?? {});
       default: {
         if (token.startsWith('params.')) {
           const v = ctx.params?.[token.slice('params.'.length)];
+          return v == null ? '' : String(v);
+        }
+        if (token.startsWith('resourceData.')) {
+          const v = ctx.resourceData?.[token.slice('resourceData.'.length)];
           return v == null ? '' : String(v);
         }
         return '';

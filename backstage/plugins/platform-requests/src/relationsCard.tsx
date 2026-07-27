@@ -33,7 +33,7 @@ const resourceActionsCard = EntityCardBlueprint.make({
 });
 
 // A "Resource Data" tab on Resource pages: renders the full resource JSON as a
-// collapsible tree (platform.io/resource-data, or spec.definition fallback).
+// collapsible tree (platform.io/resource-data, or spec.resourceData fallback).
 const resourceDataTab = EntityContentBlueprint.make({
   name: 'platform-resource-data',
   params: {

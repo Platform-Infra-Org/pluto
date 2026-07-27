@@ -147,14 +147,52 @@ export const platformRequestsPlugin = createBackendPlugin({
           },
         };
 
+        // The resource's current data JSON (for update/delete): the resolved
+        // `platform.io/resource-data` annotation, else `spec.resourceData`, else
+        // `{}`. Available to argoSubmit as `<< resourceData >>`.
+        const resourceDataFor = async (
+          resourceName: string,
+        ): Promise<Record<string, unknown>> => {
+          try {
+            const entity = await catalog.getEntityByRef(
+              `resource:default/${resourceName}`,
+              { credentials: await auth.getOwnServiceCredentials() },
+            );
+            if (!entity) return {};
+            const raw = entity.metadata.annotations?.['platform.io/resource-data'];
+            if (raw) {
+              try {
+                const parsed = JSON.parse(raw);
+                if (parsed && Object.keys(parsed).length) return parsed;
+              } catch {
+                /* fall through to spec.resourceData */
+              }
+            }
+            const sd = (entity.spec as { resourceData?: unknown } | undefined)
+              ?.resourceData;
+            return sd && typeof sd === 'object'
+              ? (sd as Record<string, unknown>)
+              : {};
+          } catch (e) {
+            logger.warn(`resourceDataFor '${resourceName}' failed: ${e}`);
+            return {};
+          }
+        };
+
         // On APPROVED the router calls this, then flips the request to IN_PROGRESS.
         const submitWorkflow = async (request: PlatformRequest) => {
+          // CREATE has no existing resource yet → empty; update/delete resolve it.
+          const resourceData =
+            request.kind === 'CREATE'
+              ? {}
+              : await resourceDataFor(request.resourceName);
           const { name, namespace } = await argo.submitSpec(request.argoSubmit, {
             requestId: request.id,
             resourceName: request.resourceName,
             resourceType: request.resourceType,
             requester: request.requester,
             params: request.params ?? {},
+            resourceData,
           });
           await store.setWorkflow(request.id, { name, namespace });
           logger.info(
@@ -208,6 +246,47 @@ export const platformRequestsPlugin = createBackendPlugin({
           }
         };
 
+        // Per-verb Argo submit config for UPDATE/DELETE (create carries it in the
+        // template's submit step). Read from the template's `platform.io/verb-*`
+        // annotation (JSON: { argoSubmit, resultOutput }).
+        const verbConfigResolver = async (
+          resourceType: string,
+          kind: string,
+        ): Promise<
+          { argoSubmit?: unknown; resultOutput?: string } | undefined
+        > => {
+          const key =
+            kind === 'UPDATE'
+              ? 'platform.io/verb-update'
+              : kind === 'DELETE'
+              ? 'platform.io/verb-delete'
+              : undefined;
+          if (!key) return undefined;
+          try {
+            const { items } = await catalog.getEntities(
+              { filter: { kind: 'template' } },
+              { credentials: await auth.getOwnServiceCredentials() },
+            );
+            const tpl = items.find(
+              t =>
+                t.metadata.annotations?.['platform.io/resource-type'] ===
+                  resourceType || t.metadata.name === resourceType,
+            );
+            const raw = tpl?.metadata.annotations?.[key];
+            if (!raw) return undefined;
+            const parsed = JSON.parse(raw);
+            return {
+              argoSubmit: parsed.argoSubmit,
+              resultOutput: parsed.resultOutput,
+            };
+          } catch (e) {
+            logger.warn(
+              `verbConfigResolver failed for '${resourceType}'/${kind}: ${e}`,
+            );
+            return undefined;
+          }
+        };
+
         httpRouter.use(
           await createRouter({
             httpAuth,
@@ -219,6 +298,7 @@ export const platformRequestsPlugin = createBackendPlugin({
             workflowNodesFor: (name, namespace) => argo.nodesFor(name, namespace),
             principalResolver,
             ownerResolver,
+            verbConfigResolver,
           }),
         );
 

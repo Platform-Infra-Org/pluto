@@ -32,6 +32,11 @@ export interface RouterOptions {
   principalResolver?: PrincipalResolver;
   /** Resolves the owning service team (group ref) for a resourceType. */
   ownerResolver?: (resourceType: string) => Promise<string | undefined>;
+  /** Resolves per-verb Argo submit config for UPDATE/DELETE (from the template). */
+  verbConfigResolver?: (
+    resourceType: string,
+    kind: string,
+  ) => Promise<{ argoSubmit?: unknown; resultOutput?: string } | undefined>;
   /** Called on APPROVED before flipping to IN_PROGRESS. No-op until P2. */
   submitWorkflow?: (request: PlatformRequest) => Promise<void>;
   /** Called after a request is created (for approver notifications). */
@@ -119,7 +124,30 @@ export async function createRouter(
     const ownerGroup = options.ownerResolver
       ? await options.ownerResolver(data.resourceType)
       : undefined;
-    const created = await store.create({ ...data, requester, ownerGroup });
+
+    // UPDATE/DELETE with no explicit argoSubmit → resolve the template's per-verb
+    // workflow config (so edit/delete hit their own workflow, not create's).
+    let argoSubmit: Record<string, unknown> | undefined = data.argoSubmit;
+    let resultOutput: string | undefined = data.resultOutput;
+    if (
+      !argoSubmit &&
+      (data.kind === 'UPDATE' || data.kind === 'DELETE') &&
+      options.verbConfigResolver
+    ) {
+      const vc = await options.verbConfigResolver(data.resourceType, data.kind);
+      if (vc?.argoSubmit) {
+        argoSubmit = vc.argoSubmit as Record<string, unknown>;
+      }
+      if (vc?.resultOutput) resultOutput = vc.resultOutput;
+    }
+
+    const created = await store.create({
+      ...data,
+      argoSubmit,
+      resultOutput,
+      requester,
+      ownerGroup,
+    });
     if (options.onCreated) await options.onCreated(created);
     res.status(201).json(created);
   });

@@ -6,7 +6,7 @@ const RESOURCE_DATA = 'platform.io/resource-data';
 /**
  * Entity tab (Resource pages): renders the resource's full data JSON in a
  * collapsible tree. Prefers the `platform.io/resource-data` annotation (a JSON
- * string); falls back to `spec.definition` for resources that don't set it.
+ * string); falls back to `spec.resourceData` for resources that don't set it.
  */
 export function ResourceDataTab() {
   const { entity } = useEntity();
@@ -20,7 +20,7 @@ export function ResourceDataTab() {
       data = raw; // not valid JSON — show the raw string
     }
   } else {
-    data = entity.spec?.definition ?? undefined;
+    data = entity.spec?.resourceData ?? undefined;
   }
 
   return (

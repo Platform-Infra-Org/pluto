@@ -13,6 +13,11 @@ metadata:
   annotations:
     # resourceType 'database' → this template → its owner (the service team).
     platform.io/resource-type: database
+    # Per-verb Argo submit for edit/delete (create carries its own in the step).
+    # << resourceData >> = the resource's current data JSON (annotation or
+    # spec.resourceData, else {}); << paramsJson >> = the edited fields.
+    platform.io/verb-update: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"provision-database","entrypoint":"update","parameters":{"name":"<< resourceName >>","data":"<< resourceData >>","changes":"<< paramsJson >>"}},"resultOutput":"resource-ref"}'
+    platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"provision-database","entrypoint":"delete","parameters":{"name":"<< resourceName >>","data":"<< resourceData >>"}}}'
 spec:
   # A different service team than demo-resource: its members (or an admin) may
   # approve database requests; the demo-resource owner cannot.

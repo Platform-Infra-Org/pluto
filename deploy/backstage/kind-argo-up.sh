@@ -51,6 +51,7 @@ kubectl apply -f "$HERE/argo/function-blocks.yaml" >/dev/null
 kubectl apply -f "$HERE/argo/demo-resource.yaml" >/dev/null
 kubectl apply -f "$HERE/argo/checkout-service.yaml" >/dev/null
 kubectl apply -f "$HERE/argo/git-resource.yaml" >/dev/null
+kubectl apply -f "$HERE/argo/provision-database.yaml" >/dev/null
 
 echo "  - port-forwarding argo-server -> localhost:2746"
 if [ -f "$REPO_ROOT/.argo-pf.pid" ] && kill -0 "$(cat "$REPO_ROOT/.argo-pf.pid")" 2>/dev/null; then

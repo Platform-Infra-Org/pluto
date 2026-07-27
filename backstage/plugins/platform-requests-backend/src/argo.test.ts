@@ -29,6 +29,22 @@ describe('resolveTemplate', () => {
     );
   });
 
+  it('resolves resourceData (full JSON + field); empty/absent -> {}', () => {
+    const withData: ResolveCtx = {
+      ...ctx,
+      resourceData: { engine: 'postgres', size: 'large' },
+    };
+    expect(resolveTemplate('<< resourceData >>', withData)).toBe(
+      JSON.stringify(withData.resourceData),
+    );
+    expect(resolveTemplate('<< resourceData.engine >>', withData)).toBe(
+      'postgres',
+    );
+    // absent -> empty JSON object
+    expect(resolveTemplate('<< resourceData >>', ctx)).toBe('{}');
+    expect(resolveTemplate('<< resourceData.nope >>', withData)).toBe('');
+  });
+
   it('resolves missing params and unknown tokens to empty string', () => {
     expect(resolveTemplate('<< params.nope >>', ctx)).toBe('');
     expect(resolveTemplate('<< bogus >>', ctx)).toBe('');
