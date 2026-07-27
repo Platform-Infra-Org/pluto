@@ -215,10 +215,11 @@ export class ArgoClient {
   }
 
   /**
-   * All output parameters of a finished workflow (name -> value), merged from
-   * every node's outputs plus the workflow's global outputs (global wins). A
-   * single-container entrypoint exposes its outputs on the node, not on
-   * `status.outputs`, so scanning nodes is required.
+   * All output parameters of a finished workflow (name -> value). The contract
+   * is that a workflow exposes result values as **global** outputs (an output
+   * parameter with `globalName`), which land in `status.outputs.parameters`.
+   * We also scan node outputs as a forgiving fallback for workflows that omit
+   * `globalName` (global wins on collision).
    */
   async outputsFor(
     workflowName: string,

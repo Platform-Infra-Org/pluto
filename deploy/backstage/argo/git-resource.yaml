@@ -33,7 +33,10 @@ spec:
           - { name: creds }
       outputs:
         parameters:
+          # globalName promotes this to the workflow's status.outputs.parameters
+          # (the global output the backend reads), not just the node's outputs.
           - name: resource-ref
+            globalName: resource-ref
             valueFrom: { path: /tmp/resource-ref }
       container:
         image: alpine:3.20
