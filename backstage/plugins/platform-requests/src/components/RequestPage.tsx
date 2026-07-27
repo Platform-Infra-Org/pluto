@@ -109,7 +109,11 @@ export function RequestPage() {
               <dt>Requester</dt>
               <dd>{request.requester}</dd>
               <dt>Owner team</dt>
-              <dd>{request.ownerGroup ?? '— (admin only)'}</dd>
+              <dd>
+                {request.ownerGroup
+                  ? request.ownerGroup.split('/').pop()
+                  : '— (admin only)'}
+              </dd>
               <dt>Policy</dt>
               <dd>{JSON.stringify(request.policy)}</dd>
               <dt>Workflow</dt>
