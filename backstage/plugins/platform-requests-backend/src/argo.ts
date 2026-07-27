@@ -214,6 +214,44 @@ export class ArgoClient {
     };
   }
 
+  /**
+   * All output parameters of a finished workflow (name -> value), merged from
+   * every node's outputs plus the workflow's global outputs (global wins). A
+   * single-container entrypoint exposes its outputs on the node, not on
+   * `status.outputs`, so scanning nodes is required.
+   */
+  async outputsFor(
+    workflowName: string,
+    namespace: string = this.cfg.namespace,
+  ): Promise<Record<string, string>> {
+    const res = await fetch(
+      `${this.cfg.baseUrl}/api/v1/workflows/${namespace}/${workflowName}`,
+    );
+    if (!res.ok) return {};
+    const wf = (await res.json()) as {
+      status?: {
+        outputs?: { parameters?: Array<{ name?: string; value?: string }> };
+        nodes?: Record<
+          string,
+          { outputs?: { parameters?: Array<{ name?: string; value?: string }> } }
+        >;
+      };
+    };
+    const out: Record<string, string> = {};
+    const add = (
+      params?: Array<{ name?: string; value?: string }>,
+    ): void => {
+      for (const p of params ?? []) {
+        if (p.name != null && p.value != null) out[p.name] = p.value;
+      }
+    };
+    for (const n of Object.values(wf.status?.nodes ?? {})) {
+      add(n.outputs?.parameters);
+    }
+    add(wf.status?.outputs?.parameters); // global wins on collision
+    return out;
+  }
+
   /** The workflow's DAG nodes (for the status view). Empty if not found. */
   async nodesFor(
     workflowName: string,

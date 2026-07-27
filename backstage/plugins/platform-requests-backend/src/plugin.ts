@@ -221,6 +221,20 @@ export const platformRequestsPlugin = createBackendPlugin({
           }),
         );
 
+        // Read the configured output parameter off a request's finished workflow.
+        const readResult = async (
+          r: PlatformRequest,
+        ): Promise<string | undefined> => {
+          if (!r.resultOutput || !r.workflowName) return undefined;
+          try {
+            const outs = await argo.outputsFor(r.workflowName, r.workflowNamespace);
+            return outs[r.resultOutput];
+          } catch (e) {
+            logger.warn(`readResult failed for request ${r.id}: ${e}`);
+            return undefined;
+          }
+        };
+
         // Poll Argo and mirror workflow phase onto IN_PROGRESS requests; a request
         // is only SUCCEEDED once its workflow Succeeds (completion gating).
         await scheduler.scheduleTask({
@@ -231,7 +245,7 @@ export const platformRequestsPlugin = createBackendPlugin({
             const inProgress = await store.list({ state: 'IN_PROGRESS' });
             for (const r of inProgress) {
               try {
-                const { phase, message, outputs } = await argo.statusFor(
+                const { phase, message } = await argo.statusFor(
                   r.id,
                   r.workflowNamespace,
                 );
@@ -249,10 +263,7 @@ export const platformRequestsPlugin = createBackendPlugin({
                     logger.warn(`catalog write failed for request ${r.id}: ${e}`);
                   }
                   // Read the configured output → the created resource ref/URL.
-                  const resultRef =
-                    r.resultOutput && outputs?.[r.resultOutput]
-                      ? outputs[r.resultOutput]
-                      : undefined;
+                  const resultRef = await readResult(r);
                   if (resultRef) await store.setResult(r.id, resultRef);
                   await store.setState(r.id, 'SUCCEEDED');
                   await notify.finished(r, true, resultRef);
@@ -269,6 +280,19 @@ export const platformRequestsPlugin = createBackendPlugin({
                 }
               } catch (e) {
                 logger.warn(`poll failed for request ${r.id}: ${e}`);
+              }
+            }
+
+            // Backfill: succeeded requests whose result output wasn't read yet
+            // (e.g. a transient miss) — retry while the workflow still exists.
+            // ponytail: naive full scan of SUCCEEDED; fine at this scale.
+            const succeeded = await store.list({ state: 'SUCCEEDED' });
+            for (const r of succeeded) {
+              if (!r.resultOutput || r.resultRef) continue;
+              const ref = await readResult(r);
+              if (ref) {
+                await store.setResult(r.id, ref);
+                logger.info(`request ${r.id}: backfilled result → ${ref}`);
               }
             }
           },
