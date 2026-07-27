@@ -169,6 +169,13 @@ permission:
 
 # Argo Workflows (argo-server, port-forwarded from the kind cluster).
 platform:
+  # Which groups are platform admins / read-only auditors. Multiple groups may
+  # map to each. Admins approve anything and see all requests.
+  rbac:
+    adminGroups:
+      - group:default/platform-admins
+    auditorGroups:
+      - group:default/platform-auditors
   # Home / landing page. All keys optional; omit to show both sections.
   home:
     title: Welcome to Platform

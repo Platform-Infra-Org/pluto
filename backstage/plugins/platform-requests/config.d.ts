@@ -28,5 +28,20 @@ export interface Config {
        */
       maxItems?: number;
     };
+    /** Which groups are treated as platform admins / auditors. */
+    rbac?: {
+      /**
+       * Group entityRefs whose members are platform admins (approve anything,
+       * see all requests). Default: [group:default/platform-admins].
+       * @visibility frontend
+       */
+      adminGroups?: string[];
+      /**
+       * Group entityRefs whose members are read-only auditors.
+       * Default: [group:default/platform-auditors].
+       * @visibility frontend
+       */
+      auditorGroups?: string[];
+    };
   };
 }

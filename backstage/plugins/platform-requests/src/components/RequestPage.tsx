@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useApi, identityApiRef } from '@backstage/core-plugin-api';
+import {
+  useApi,
+  identityApiRef,
+  configApiRef,
+} from '@backstage/core-plugin-api';
 import { useRouteRefParams } from '@backstage/frontend-plugin-api';
 import { Link } from '@backstage/core-components';
 import {
@@ -17,11 +21,13 @@ import { requestRouteRef } from '../routes';
 import { WorkflowGraph } from './WorkflowGraph';
 import { stateBadge, formatTs } from './RequestsPage';
 
-const ADMIN_GROUP = 'group:default/platform-admins';
-
 export function RequestPage() {
   const api = useApi(requestsApiRef);
   const identity = useApi(identityApiRef);
+  const config = useApi(configApiRef);
+  const adminGroups = config.getOptionalStringArray(
+    'platform.rbac.adminGroups',
+  ) ?? ['group:default/platform-admins'];
   const { id } = useRouteRefParams(requestRouteRef);
   const [request, setRequest] = useState<Request>();
   const [myGroups, setMyGroups] = useState<string[]>([]);
@@ -75,7 +81,7 @@ export function RequestPage() {
     : undefined;
   // Only an admin, or a member of the owning service team, may decide it.
   const canApprove =
-    myGroups.includes(ADMIN_GROUP) ||
+    myGroups.some(g => adminGroups.includes(g)) ||
     (!!request.ownerGroup && myGroups.includes(request.ownerGroup));
 
   return (

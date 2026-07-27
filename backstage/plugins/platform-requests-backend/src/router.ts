@@ -17,12 +17,12 @@ import { applyDecision } from './stateMachine';
 import { RequestsStore } from './store';
 
 /**
- * Resolves the acting user's platform roles and raw group memberships (from
- * their catalog ownership), for per-team approval decisions.
+ * Resolves the acting user's admin flag + raw group memberships (from their
+ * catalog ownership), for per-team approval decisions and list scoping.
  */
 export type PrincipalResolver = (
   credentials: BackstageCredentials,
-) => Promise<{ roles: string[]; groups: string[] }>;
+) => Promise<{ isAdmin: boolean; groups: string[] }>;
 
 export interface RouterOptions {
   httpAuth: HttpAuthService;
@@ -47,7 +47,6 @@ export interface RouterOptions {
 const policySchema = z.union([
   z.object({ mode: z.literal('SINGLE') }),
   z.object({ mode: z.literal('N_OF_M'), n: z.number().int().min(1) }),
-  z.object({ mode: z.literal('RBAC'), role: z.string() }),
 ]);
 
 const newRequestSchema = z.object({
@@ -77,7 +76,7 @@ export async function createRouter(
 ): Promise<express.Router> {
   const { httpAuth, permissions, store } = options;
   const principalResolver: PrincipalResolver =
-    options.principalResolver ?? (async () => ({ roles: [], groups: [] }));
+    options.principalResolver ?? (async () => ({ isAdmin: false, groups: [] }));
   const submitWorkflow =
     options.submitWorkflow ?? (async () => undefined);
 
@@ -153,8 +152,7 @@ export async function createRouter(
     }
 
     const actor = actorId(credentials.principal.userEntityRef);
-    const { roles, groups } = await principalResolver(credentials);
-    const isAdmin = roles.includes('platform-admin');
+    const { isAdmin, groups } = await principalResolver(credentials);
     const mine = req.query.mine === '1' || req.query.mine === 'true';
     const scope = req.query.scope;
 
@@ -218,11 +216,11 @@ export async function createRouter(
       const request = await store.get(Number(req.params.id));
       if (!request) throw new NotFoundError(`No request ${req.params.id}`);
 
-      const { roles, groups } = await principalResolver(credentials);
+      const { isAdmin, groups } = await principalResolver(credentials);
       const groupSet = new Set(groups);
       const { nextState, approval } = applyDecision(request, actor, decision, {
         note: parsed.data.note,
-        approverHasRole: role => roles.includes(role),
+        isAdmin,
         approverInGroup: group => groupSet.has(group),
       });
 

@@ -10,7 +10,6 @@ import {
 export function policySatisfied(
   policy: ApprovalPolicy,
   approvals: Approval[],
-  approverHasRole: (approver: string, role: string) => boolean,
 ): boolean {
   const approved = approvals.filter(a => a.decision === 'approve');
   const distinct = new Set(approved.map(a => a.approver));
@@ -19,8 +18,6 @@ export function policySatisfied(
       return distinct.size >= 1;
     case 'N_OF_M':
       return distinct.size >= policy.n;
-    case 'RBAC':
-      return approved.some(a => approverHasRole(a.approver, policy.role));
     default:
       return false;
   }
@@ -36,7 +33,8 @@ export function applyDecision(
   decision: 'approve' | 'reject',
   opts: {
     note?: string;
-    approverHasRole: (role: string) => boolean;
+    /** Is the approver a platform admin (bypasses the owning-team gate)? */
+    isAdmin: boolean;
     /** Is the approver a member of the given group entityRef? */
     approverInGroup: (groupRef: string) => boolean;
   },
@@ -46,15 +44,14 @@ export function applyDecision(
       `Cannot ${decision} a request in state ${request.state}`,
     );
   }
-  // Per-team RBAC: only an admin, or a member of the request's owning service
+  // Per-team gate: only an admin, or a member of the request's owning service
   // team (the Scaffolder Template owner), may decide it. This also governs
   // self-approval — the owning service owner (or an admin) may approve their
   // own request; anyone else cannot approve at all. Absent ownerGroup =>
   // admin-only.
-  const isAdmin = opts.approverHasRole('platform-admin');
   const ownsRequest =
     !!request.ownerGroup && opts.approverInGroup(request.ownerGroup);
-  if (!isAdmin && !ownsRequest) {
+  if (!opts.isAdmin && !ownsRequest) {
     throw new NotAllowedError(
       'Only an admin or a member of the owning service team may decide this request',
     );
@@ -72,13 +69,10 @@ export function applyDecision(
   }
 
   const approvals = [...request.approvals, approval];
-  // ponytail: only the current approver's roles are resolvable here; prior
-  // approvers' RBAC roles aren't re-checked. Enough for single-holder RBAC.
-  const satisfied = policySatisfied(request.policy, approvals, (a, role) =>
-    a === approver ? opts.approverHasRole(role) : false,
-  );
   return {
-    nextState: satisfied ? 'APPROVED' : 'PENDING_APPROVAL',
+    nextState: policySatisfied(request.policy, approvals)
+      ? 'APPROVED'
+      : 'PENDING_APPROVAL',
     approval,
   };
 }

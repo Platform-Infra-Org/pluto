@@ -72,7 +72,7 @@ describe('createRouter', () => {
     const { app } = await makeApp({
       result: AuthorizeResult.ALLOW,
       // admin bypasses the owning-team gate
-      principalResolver: async () => ({ roles: ['platform-admin'], groups: [] }),
+      principalResolver: async () => ({ isAdmin: true, groups: [] }),
       submitWorkflow,
     });
     const created = await request(app).post('/requests').send(NEW_REQUEST);
@@ -112,7 +112,7 @@ describe('createRouter', () => {
       // resolve the request's owner team, and put the actor in it
       ownerResolver: async () => 'group:default/team-a',
       principalResolver: async () => ({
-        roles: [],
+        isAdmin: false,
         groups: ['group:default/team-a'],
       }),
       submitWorkflow: jest.fn().mockResolvedValue(undefined),
@@ -129,7 +129,7 @@ describe('createRouter', () => {
   it('rejects a request -> REJECTED', async () => {
     const { app } = await makeApp({
       result: AuthorizeResult.ALLOW,
-      principalResolver: async () => ({ roles: ['platform-admin'], groups: [] }),
+      principalResolver: async () => ({ isAdmin: true, groups: [] }),
     });
     const created = await request(app).post('/requests').send(NEW_REQUEST);
     const res = await request(app)
@@ -146,7 +146,7 @@ describe('createRouter', () => {
       ownerResolver: async rt =>
         rt === 'team-a-res' ? 'group:default/team-a' : 'group:default/team-b',
       principalResolver: async () => ({
-        roles: [],
+        isAdmin: false,
         groups: ['group:default/team-a'],
       }),
     });
@@ -181,7 +181,7 @@ describe('createRouter', () => {
     const { app } = await makeApp({
       result: AuthorizeResult.ALLOW,
       ownerResolver: async () => 'group:default/team-b',
-      principalResolver: async () => ({ roles: ['platform-admin'], groups: [] }),
+      principalResolver: async () => ({ isAdmin: true, groups: [] }),
     });
     await request(app).post('/requests').send(NEW_REQUEST);
     await request(app)
@@ -198,26 +198,29 @@ describe('createRouter', () => {
     expect(res.status).toBe(404);
   });
 
-  it('honors RBAC via the principal resolver', async () => {
-    // The approver owns the request (passes the team gate) and holds the
-    // 'approver' role required by the RBAC policy.
+  it('honors an N_OF_M policy: stays pending until a second distinct approver', async () => {
+    // An admin owns the decision here; two distinct approvers are needed.
     const { app } = await makeApp({
       result: AuthorizeResult.ALLOW,
-      ownerResolver: async () => 'group:default/team-x',
-      principalResolver: async () => ({
-        roles: ['approver'],
-        groups: ['group:default/team-x'],
-      }),
+      principalResolver: async () => ({ isAdmin: true, groups: [] }),
+      submitWorkflow: jest.fn().mockResolvedValue(undefined),
     });
     const created = await request(app)
       .post('/requests')
-      .send({ ...NEW_REQUEST, policy: { mode: 'RBAC', role: 'approver' } });
+      .send({ ...NEW_REQUEST, policy: { mode: 'N_OF_M', n: 2 } });
 
-    const res = await request(app)
+    // first approval (as admin) -> still pending
+    const first = await request(app)
       .post(`/requests/${created.body.id}/approve`)
       .set('Authorization', asAdmin)
       .send({});
-    expect(res.status).toBe(200);
-    expect(res.body.state).toBe('IN_PROGRESS');
+    expect(first.body.state).toBe('PENDING_APPROVAL');
+
+    // second, distinct approver -> APPROVED then IN_PROGRESS
+    const second = await request(app)
+      .post(`/requests/${created.body.id}/approve`)
+      .set('Authorization', mockCredentials.user.header('user:default/other'))
+      .send({});
+    expect(second.body.state).toBe('IN_PROGRESS');
   });
 });

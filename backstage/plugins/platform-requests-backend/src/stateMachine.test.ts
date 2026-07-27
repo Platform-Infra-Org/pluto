@@ -22,22 +22,14 @@ const baseRequest = (policy: ApprovalPolicy): Request => ({
   updatedAt: '2026-01-01T00:00:00.000Z',
 });
 
-const noRoles = () => false;
-
 // An admin (bypasses the owning-team gate) and a service owner (member of the
 // request's owning team), as applyDecision opts.
-const asAdmin = {
-  approverHasRole: (r: string) => r === 'platform-admin',
-  approverInGroup: () => false,
-};
+const asAdmin = { isAdmin: true, approverInGroup: () => false };
 const asOwner = {
-  approverHasRole: () => false,
+  isAdmin: false,
   approverInGroup: (g: string) => g === OWNER,
 };
-const asOutsider = {
-  approverHasRole: () => false,
-  approverInGroup: () => false,
-};
+const asOutsider = { isAdmin: false, approverInGroup: () => false };
 
 describe('policySatisfied', () => {
   const approve = (approver: string) => ({
@@ -47,28 +39,15 @@ describe('policySatisfied', () => {
   });
 
   it('SINGLE needs one approve', () => {
-    expect(policySatisfied({ mode: 'SINGLE' }, [], noRoles)).toBe(false);
-    expect(policySatisfied({ mode: 'SINGLE' }, [approve('bob')], noRoles)).toBe(
-      true,
-    );
+    expect(policySatisfied({ mode: 'SINGLE' }, [])).toBe(false);
+    expect(policySatisfied({ mode: 'SINGLE' }, [approve('bob')])).toBe(true);
   });
 
   it('N_OF_M needs n distinct approvers', () => {
     const p = { mode: 'N_OF_M', n: 2 } as const;
-    expect(policySatisfied(p, [approve('bob')], noRoles)).toBe(false);
-    expect(
-      policySatisfied(p, [approve('bob'), approve('bob')], noRoles),
-    ).toBe(false);
-    expect(
-      policySatisfied(p, [approve('bob'), approve('carol')], noRoles),
-    ).toBe(true);
-  });
-
-  it('RBAC needs an approve by a role holder', () => {
-    const p = { mode: 'RBAC', role: 'admin' } as const;
-    const hasRole = (a: string, role: string) => a === 'bob' && role === 'admin';
-    expect(policySatisfied(p, [approve('carol')], hasRole)).toBe(false);
-    expect(policySatisfied(p, [approve('bob')], hasRole)).toBe(true);
+    expect(policySatisfied(p, [approve('bob')])).toBe(false);
+    expect(policySatisfied(p, [approve('bob'), approve('bob')])).toBe(false);
+    expect(policySatisfied(p, [approve('bob'), approve('carol')])).toBe(true);
   });
 });
 
@@ -99,15 +78,14 @@ describe('applyDecision', () => {
     ).toBe('APPROVED');
   });
 
-  it('RBAC: role holder approves -> APPROVED, owning non-holder stays pending', () => {
-    const req = baseRequest({ mode: 'RBAC', role: 'platform-admin' });
+  it('N_OF_M: an admin and an owner can be the two distinct approvers', () => {
+    const req = baseRequest({ mode: 'N_OF_M', n: 2 });
+    const first = applyDecision(req, 'admin', 'approve', asAdmin);
+    expect(first.nextState).toBe('PENDING_APPROVAL');
+    const withOne: Request = { ...req, approvals: [first.approval] };
     expect(
-      applyDecision(req, 'bob', 'approve', asAdmin).nextState,
+      applyDecision(withOne, 'bob', 'approve', asOwner).nextState,
     ).toBe('APPROVED');
-    // an owner who lacks the role passes the gate but doesn't satisfy RBAC
-    expect(
-      applyDecision(req, 'carol', 'approve', asOwner).nextState,
-    ).toBe('PENDING_APPROVAL');
   });
 
   it('reject by the owning team -> REJECTED', () => {

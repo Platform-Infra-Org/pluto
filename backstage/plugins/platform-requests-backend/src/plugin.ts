@@ -162,24 +162,25 @@ export const platformRequestsPlugin = createBackendPlugin({
           );
         };
 
-        // The acting user's platform roles (admin bypass) + raw group refs
-        // (per-team ownership), both from their catalog ownership.
-        const GROUP_ROLE: Record<string, string> = {
-          'group:default/platform-admins': 'platform-admin',
-          'group:default/platform-auditors': 'auditor',
-        };
+        // Which groups count as platform admins (configurable). An admin
+        // bypasses the owning-team approval gate and sees all requests.
+        const adminGroups =
+          config.getOptionalStringArray('platform.rbac.adminGroups') ?? [
+            'group:default/platform-admins',
+          ];
+
+        // The acting user's admin flag + raw group refs (per-team ownership),
+        // both from their catalog ownership.
         const principalResolver = async (
           credentials: Parameters<typeof userInfo.getUserInfo>[0],
         ) => {
           try {
             const info = await userInfo.getUserInfo(credentials);
             const groups = info.ownershipEntityRefs;
-            const roles = groups
-              .map(ref => GROUP_ROLE[ref])
-              .filter((r): r is string => Boolean(r));
-            return { roles, groups };
+            const isAdmin = groups.some(g => adminGroups.includes(g));
+            return { isAdmin, groups };
           } catch {
-            return { roles: [], groups: [] };
+            return { isAdmin: false, groups: [] };
           }
         };
 

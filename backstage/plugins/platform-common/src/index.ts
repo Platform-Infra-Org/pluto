@@ -17,15 +17,14 @@ export type RequestState =
 export type RequestKind = 'CREATE' | 'UPDATE' | 'DELETE';
 
 /**
- * How many approvals a request needs.
- * - `SINGLE`: one approval from anyone privileged.
+ * How many approvals a request needs (all subject to the owning-team gate:
+ * only an admin or a member of the request's owning team may approve).
+ * - `SINGLE`: one approval.
  * - `N_OF_M`: `n` distinct approvals.
- * - `RBAC`: one approval from someone holding `role`.
  */
 export type ApprovalPolicy =
   | { mode: 'SINGLE' }
-  | { mode: 'N_OF_M'; n: number }
-  | { mode: 'RBAC'; role: string };
+  | { mode: 'N_OF_M'; n: number };
 
 /** A single approve/reject decision recorded against a request. */
 export interface Approval {
