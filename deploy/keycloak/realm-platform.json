@@ -120,95 +120,102 @@
       ]
     }
   ],
-  "groups": [
-    {
-      "name": "platform-admins"
-    },
-    {
-      "name": "platform-auditors"
-    },
-    {
-      "name": "owners-payments"
-    },
-    {
-      "name": "service-owner"
-    },
-    {
-      "name": "checkout"
-    }
-  ],
-  "users": [
-    {
-      "username": "admin",
-      "enabled": true,
-      "emailVerified": true,
-      "email": "admin@platform.dev",
-      "firstName": "Ada",
-      "lastName": "Admin",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "admin",
-          "temporary": false
+  "components": {
+    "org.keycloak.storage.UserStorageProvider": [
+      {
+        "name": "ldap",
+        "providerId": "ldap",
+        "config": {
+          "enabled": [
+            "true"
+          ],
+          "priority": [
+            "0"
+          ],
+          "editMode": [
+            "READ_ONLY"
+          ],
+          "syncRegistrations": [
+            "false"
+          ],
+          "vendor": [
+            "other"
+          ],
+          "usernameLDAPAttribute": [
+            "uid"
+          ],
+          "rdnLDAPAttribute": [
+            "uid"
+          ],
+          "uuidLDAPAttribute": [
+            "entryUUID"
+          ],
+          "userObjectClasses": [
+            "inetOrgPerson"
+          ],
+          "connectionUrl": [
+            "ldap://openldap:389"
+          ],
+          "usersDn": [
+            "ou=people,dc=platform,dc=local"
+          ],
+          "bindDn": [
+            "cn=admin,dc=platform,dc=local"
+          ],
+          "bindCredential": [
+            "admin"
+          ],
+          "searchScope": [
+            "1"
+          ],
+          "importEnabled": [
+            "true"
+          ],
+          "trustEmail": [
+            "true"
+          ]
+        },
+        "subComponents": {
+          "org.keycloak.storage.ldap.mappers.LDAPStorageMapper": [
+            {
+              "name": "group-ldap-mapper",
+              "providerId": "group-ldap-mapper",
+              "config": {
+                "mode": [
+                  "READ_ONLY"
+                ],
+                "membership.attribute.type": [
+                  "DN"
+                ],
+                "user.roles.retrieve.strategy": [
+                  "LOAD_GROUPS_BY_MEMBER_ATTRIBUTE"
+                ],
+                "group.name.ldap.attribute": [
+                  "cn"
+                ],
+                "membership.ldap.attribute": [
+                  "member"
+                ],
+                "membership.user.ldap.attribute": [
+                  "uid"
+                ],
+                "group.object.classes": [
+                  "groupOfNames"
+                ],
+                "groups.dn": [
+                  "ou=groups,dc=platform,dc=local"
+                ],
+                "preserve.group.inheritance": [
+                  "false"
+                ],
+                "drop.non.existing.groups.during.sync": [
+                  "false"
+                ]
+              }
+            }
+          ]
         }
-      ],
-      "groups": [
-        "/platform-admins"
-      ]
-    },
-    {
-      "username": "requester",
-      "enabled": true,
-      "emailVerified": true,
-      "email": "requester@platform.dev",
-      "firstName": "Rey",
-      "lastName": "Requester",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "requester",
-          "temporary": false
-        }
-      ],
-      "groups": [
-        "/owners-payments"
-      ]
-    },
-    {
-      "username": "auditor",
-      "enabled": true,
-      "emailVerified": true,
-      "email": "auditor@platform.dev",
-      "firstName": "Aud",
-      "lastName": "Itor",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "auditor",
-          "temporary": false
-        }
-      ],
-      "groups": [
-        "/platform-auditors"
-      ]
-    },
-    {
-      "username": "sam",
-      "enabled": true,
-      "emailVerified": true,
-      "email": "sam@platform.dev",
-      "firstName": "Sam",
-      "lastName": "Checkout",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "sam",
-          "temporary": false
-        }
-      ],
-      "groups": [
-        "/checkout"
-      ]
-    }
-  ]
+      }
+    ]
+  }
 }

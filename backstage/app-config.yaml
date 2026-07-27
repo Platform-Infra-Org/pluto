@@ -142,6 +142,38 @@ scaffolder:
   # see https://backstage.io/docs/features/software-templates/configuration for software template options
 
 catalog:
+  # Ingest Users + Groups from the local OpenLDAP (the same directory Keycloak
+  # federates to). User entity name = uid, so it matches the OIDC email
+  # local-part (the sign-in resolver). Membership comes from groupOfNames member.
+  providers:
+    ldapOrg:
+      default:
+        target: ldap://localhost:1389
+        bind:
+          dn: cn=admin,dc=platform,dc=local
+          secret: admin
+        users:
+          - dn: ou=people,dc=platform,dc=local
+            options:
+              filter: (objectClass=inetOrgPerson)
+            map:
+              name: uid
+              displayName: cn
+              email: mail
+        groups:
+          - dn: ou=groups,dc=platform,dc=local
+            options:
+              filter: (objectClass=groupOfNames)
+            map:
+              name: cn
+              displayName: cn
+              members: member
+            set:
+              spec.type: team
+        schedule:
+          frequency: { minutes: 30 }
+          timeout: { minutes: 2 }
+          initialDelay: { seconds: 5 }
   import:
     entityFilename: catalog-info.yaml
     pullRequestBranchName: backstage-integration

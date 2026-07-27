@@ -39,6 +39,8 @@ backend.add(
 
 // See https://backstage.io/docs/features/software-catalog/configuration#subscribing-to-catalog-errors
 backend.add(import('@backstage/plugin-catalog-backend-module-logs'));
+// Ingest Users + Groups from LDAP (see `ldap.providers` in app-config).
+backend.add(import('@backstage/plugin-catalog-backend-module-ldap'));
 
 // permission plugin
 backend.add(import('@backstage/plugin-permission-backend'));
