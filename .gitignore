@@ -25,3 +25,6 @@ dist/
 # backstage argo port-forward runtime
 .argo-pf.pid
 .argo-pf.log
+
+# SPA dev-server log
+.spa.log
