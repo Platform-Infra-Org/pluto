@@ -6,6 +6,9 @@ metadata:
     platform.io/resource-type: database
     # TechDocs source lives next to this file (mkdocs.yml + docs/).
     backstage.io/techdocs-ref: dir:.
+    # Full resource data JSON — rendered on the "Resource Data" tab as a
+    # collapsible tree. (Falls back to spec.definition when this is absent.)
+    platform.io/resource-data: '{"engine":"postgres","version":16,"size":"large","region":"eu-west-1","replicas":3,"storage":{"sizeGb":512,"iops":3000,"encrypted":true},"endpoints":{"primary":"payments-primary.db.internal:5432","replicas":["payments-primary-ro-1.db.internal:5432","payments-primary-ro-2.db.internal:5432"]},"backup":{"schedule":"0 2 * * *","retentionDays":30,"lastSnapshot":"2026-07-27T02:00:00Z"},"tags":["pci","tier-1"]}'
 spec:
   type: database
   owner: "group:default/payments"

@@ -15,6 +15,7 @@ export {
   Field,
   Dialog,
 } from './components';
+export { JsonTree } from './JsonTree';
 export { DynamicSelect, toChoiceOptions } from './DynamicSelect';
 export type { DynamicSelectProps, ChoiceOption, Fetcher } from './DynamicSelect';
 export { platformScaffolderFieldsModule } from './DynamicSelectField';

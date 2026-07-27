@@ -194,6 +194,27 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
 .sc-toolbar .sc-input { width: auto; flex: 1 1 220px; min-width: 180px; }
 .sc-toolbar .sc-select { width: auto; min-width: 150px; }
+/* collapsible JSON viewer */
+.sc-json { display: flex; flex-direction: column; gap: 10px; }
+.sc-json-bar { display: flex; gap: 8px; }
+.sc-json-body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px;
+  line-height: 1.7; background: hsl(var(--sc-muted) / .4); border: 1px solid hsl(var(--sc-border));
+  border-radius: var(--sc-radius); padding: 12px 14px; overflow-x: auto; }
+.sc-json-children { padding-left: 16px; border-left: 1px solid hsl(var(--sc-border)); margin-left: 4px; }
+.sc-json-row { white-space: nowrap; }
+.sc-json-toggle { cursor: pointer; border-radius: 4px; }
+.sc-json-toggle:hover { background: hsl(var(--sc-primary) / .08); }
+.sc-json-chevron { display: inline-block; width: 14px; color: hsl(var(--sc-muted-fg)); }
+.sc-json-key { color: hsl(var(--sc-fg)); font-weight: 600; }
+.sc-json-punc, .sc-json-collapsed { color: hsl(var(--sc-muted-fg)); }
+.sc-json-string { color: hsl(152 42% 42%); }
+.sc-json-number { color: hsl(217 60% 55%); }
+.sc-json-boolean { color: hsl(280 50% 58%); }
+.sc-json-null { color: hsl(var(--sc-muted-fg)); font-style: italic; }
+.sc-dark .sc-json-string { color: hsl(152 45% 60%); }
+.sc-dark .sc-json-number { color: hsl(217 70% 70%); }
+.sc-dark .sc-json-boolean { color: hsl(280 60% 72%); }
+
 /* success notice (e.g. created-resource link) */
 .sc-notice { padding: 10px 14px; border-radius: 8px; font-weight: 500;
   background: hsl(var(--sc-success) / .12); color: hsl(var(--sc-success));
