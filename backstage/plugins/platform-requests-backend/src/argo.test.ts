@@ -155,6 +155,32 @@ describe('ArgoClient.submitSpec', () => {
     expect(second.resourceName).toBe('demo-resource');
   });
 
+  it('routes through the Backstage proxy (auth injected) when proxyPath is set', async () => {
+    const deps = {
+      discovery: { getBaseUrl: async () => 'http://backstage/api/proxy' },
+      auth: {
+        getOwnServiceCredentials: async () => ({}),
+        getPluginRequestToken: async () => ({ token: 'svc-token' }),
+      },
+    } as unknown as import('./argo').ArgoDeps;
+    const proxied = new ArgoClient(
+      { ...cfg, proxyPath: '/argo-workflows' },
+      mockServices.logger.mock(),
+      deps,
+    );
+    const fetchMock = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(okResponse());
+    await proxied.submitSpec(undefined, ctx);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe(
+      'http://backstage/api/proxy/argo-workflows/api/v1/workflows/argo/submit',
+    );
+    expect((init as RequestInit).headers).toMatchObject({
+      Authorization: 'Bearer svc-token',
+    });
+  });
+
   it('does NOT fall back when workflowTemplate is pinned; throws on non-OK', async () => {
     const fetchMock = jest
       .spyOn(global, 'fetch')

@@ -1,4 +1,8 @@
-import { LoggerService } from '@backstage/backend-plugin-api';
+import {
+  AuthService,
+  DiscoveryService,
+  LoggerService,
+} from '@backstage/backend-plugin-api';
 import { ArgoSubmitSpec } from '@internal/plugin-platform-common';
 
 /** Values available to `<< token >>` templating in an ArgoSubmitSpec. */
@@ -88,6 +92,20 @@ export interface ArgoConfig {
   namespace: string;
   /** WorkflowTemplate used when no per-type template exists (P3 adds per-type). */
   defaultTemplate: string;
+  /**
+   * If set, Argo REST calls go through the Backstage proxy at this path (e.g.
+   * `/argo-workflows`) instead of `baseUrl` directly. The proxy endpoint
+   * (`proxy.endpoints.<proxyPath>`) targets the real argo-server and injects
+   * auth (token/mTLS) server-side — so credentials never live in this plugin.
+   * Leave unset for a direct, unauthenticated dev argo-server.
+   */
+  proxyPath?: string;
+}
+
+/** Services the ArgoClient needs to reach argo-server through the proxy. */
+export interface ArgoDeps {
+  discovery: DiscoveryService;
+  auth: AuthService;
 }
 
 export interface WorkflowStatus {
@@ -116,10 +134,34 @@ export class ArgoClient {
   constructor(
     private readonly cfg: ArgoConfig,
     private readonly logger: LoggerService,
+    private readonly deps?: ArgoDeps,
   ) {}
 
   label(requestId: number): string {
     return `platform.io/request-id=${requestId}`;
+  }
+
+  /**
+   * Base URL + headers for an argo-server call. With `proxyPath` set, routes
+   * through the Backstage proxy (which injects the upstream Argo auth) using a
+   * service token; otherwise hits `baseUrl` directly (dev).
+   */
+  private async endpoint(): Promise<{
+    base: string;
+    headers: Record<string, string>;
+  }> {
+    if (this.cfg.proxyPath && this.deps) {
+      const proxyBase = await this.deps.discovery.getBaseUrl('proxy');
+      const { token } = await this.deps.auth.getPluginRequestToken({
+        onBehalfOf: await this.deps.auth.getOwnServiceCredentials(),
+        targetPluginId: 'proxy',
+      });
+      return {
+        base: `${proxyBase}${this.cfg.proxyPath}`,
+        headers: { Authorization: `Bearer ${token}` },
+      };
+    }
+    return { base: this.cfg.baseUrl, headers: {} };
   }
 
   /**
@@ -168,10 +210,11 @@ export class ArgoClient {
       submitOptions.annotations = kvString(annotations);
     }
 
+    const { base, headers } = await this.endpoint();
     const submitWith = (template: string) =>
-      fetch(`${this.cfg.baseUrl}/api/v1/workflows/${namespace}/submit`, {
+      fetch(`${base}/api/v1/workflows/${namespace}/submit`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           namespace,
           resourceKind,
@@ -208,8 +251,10 @@ export class ArgoClient {
     namespace: string = this.cfg.namespace,
   ): Promise<WorkflowStatus> {
     const sel = encodeURIComponent(this.label(requestId));
+    const { base, headers } = await this.endpoint();
     const res = await fetch(
-      `${this.cfg.baseUrl}/api/v1/workflows/${namespace}?listOptions.labelSelector=${sel}`,
+      `${base}/api/v1/workflows/${namespace}?listOptions.labelSelector=${sel}`,
+      { headers },
     );
     if (!res.ok) throw new Error(`argo list failed: ${res.status}`);
     const data = (await res.json()) as {
@@ -246,8 +291,10 @@ export class ArgoClient {
     workflowName: string,
     namespace: string = this.cfg.namespace,
   ): Promise<Record<string, string>> {
+    const { base, headers } = await this.endpoint();
     const res = await fetch(
-      `${this.cfg.baseUrl}/api/v1/workflows/${namespace}/${workflowName}`,
+      `${base}/api/v1/workflows/${namespace}/${workflowName}`,
+      { headers },
     );
     if (!res.ok) return {};
     const wf = (await res.json()) as {
@@ -279,8 +326,10 @@ export class ArgoClient {
     workflowName: string,
     namespace: string = this.cfg.namespace,
   ): Promise<WorkflowNode[]> {
+    const { base, headers } = await this.endpoint();
     const res = await fetch(
-      `${this.cfg.baseUrl}/api/v1/workflows/${namespace}/${workflowName}`,
+      `${base}/api/v1/workflows/${namespace}/${workflowName}`,
+      { headers },
     );
     if (!res.ok) return [];
     const wf = (await res.json()) as {

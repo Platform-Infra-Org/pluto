@@ -23,6 +23,7 @@ export const platformRequestsPlugin = createBackendPlugin({
         logger: coreServices.logger,
         config: coreServices.rootConfig,
         auth: coreServices.auth,
+        discovery: coreServices.discovery,
         urlReader: coreServices.urlReader,
         httpAuth: coreServices.httpAuth,
         httpRouter: coreServices.httpRouter,
@@ -37,6 +38,7 @@ export const platformRequestsPlugin = createBackendPlugin({
         logger,
         config,
         auth,
+        discovery,
         urlReader,
         httpAuth,
         httpRouter,
@@ -60,8 +62,12 @@ export const platformRequestsPlugin = createBackendPlugin({
             defaultTemplate:
               config.getOptionalString('platform.argo.defaultTemplate') ??
               'demo-resource',
+            // If set, Argo calls route through the Backstage proxy at this path
+            // (which injects the real argo-server auth). Unset = direct baseUrl.
+            proxyPath: config.getOptionalString('platform.argo.proxyPath'),
           },
           logger,
+          { discovery, auth },
         );
 
         // Native Backstage notifications: approvers on new requests, requester

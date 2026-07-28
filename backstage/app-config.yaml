@@ -92,6 +92,15 @@ proxy:
       headers:
         Authorization: Bearer dev-smoke-token-please-change
 
+    # Production: route Argo REST calls through the proxy so the token/mTLS is
+    # injected here (server-side) and never lives in the plugin. Point
+    # platform.argo.proxyPath at this path to switch the ArgoClient onto it.
+    # '/argo-workflows':
+    #   target: https://argo-server.argo.svc.cluster.local:2746
+    #   changeOrigin: true
+    #   headers:
+    #     Authorization: Bearer ${ARGO_TOKEN}
+
 # Reference documentation http://backstage.io/docs/features/techdocs/configuration
 # Note: After experimenting with basic setup, use CI/CD to generate docs
 # and an external cloud storage when deploying TechDocs for production use-case.
@@ -219,9 +228,13 @@ platform:
       - pendingApprovals
     maxItems: 8
   argo:
+    # Dev: direct to the local argo-server (plain HTTP, no auth).
     baseUrl: http://localhost:2746
     namespace: argo
     defaultTemplate: demo-resource
+    # Production: set proxyPath to a proxy.endpoints entry (above) so Argo calls
+    # go through the proxy, which injects the argo-server auth server-side.
+    # proxyPath: /argo-workflows
   builder:
     gitea:
       baseUrl: http://localhost:3001

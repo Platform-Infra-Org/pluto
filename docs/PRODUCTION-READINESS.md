@@ -55,9 +55,11 @@ Every integration currently points at a local dev service. For production:
   (the LDAP federation + `catalog.providers.ldapOrg` config carry over; just
   repoint `target`/`connectionUrl`, use LDAPS, and a real bind secret).
 - **Argo**: **kind** + a plain-HTTP port-forward on `:2746` → a real Argo
-  Workflows cluster with TLS + token auth on the submit/status calls
-  (`platform.argo.baseUrl`). The Argo REST calls in `argo.ts` are currently
-  unauthenticated (dev argo-server `--auth-mode=server --secure=false`).
+  Workflows cluster. Auth is supported: set **`platform.argo.proxyPath`** to a
+  `proxy.endpoints` entry (e.g. `/argo-workflows`) that targets the real
+  argo-server and injects the token/mTLS server-side; the ArgoClient then routes
+  all calls through the proxy with a service token. Leave `proxyPath` unset only
+  for the dev argo-server (`--auth-mode=server --secure=false`).
 - **`host.docker.internal`** in `git-ops.yaml` (pod→host Gitea reachability) is a
   Docker-Desktop-only shim → an in-cluster Service URL for the real VCS.
 - **TLS everywhere** (backend baseUrl, OIDC, LDAP, Argo, VCS) and a real
@@ -84,7 +86,7 @@ Every integration currently points at a local dev service. For production:
 - [ ] All secrets in `app-config.production.yaml` as `${ENV}`; nothing sensitive in `app-config.yaml`.
 - [ ] `guest` provider removed; `auth.environment: production`; OIDC `production` block.
 - [ ] Real Gitea/GitHub, Keycloak/IdP, LDAP (LDAPS), Argo (TLS+auth) endpoints.
-- [ ] `argo.ts` submit/status/output calls send an auth token.
+- [ ] `platform.argo.proxyPath` set to a proxy endpoint that injects Argo auth.
 - [ ] `host.docker.internal` → in-cluster Service in `git-ops.yaml`.
 - [ ] TLS + real base URLs; `backend.reading.allow` scoped.
 - [ ] `yarn tsc` + `yarn test` green; smoke: login (LDAP), request→approve→workflow, edit/delete, Resource Data tab.
