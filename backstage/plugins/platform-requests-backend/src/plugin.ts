@@ -9,6 +9,7 @@ import { parse as parseYaml } from 'yaml';
 import { createRouter } from './router';
 import { RequestsStore } from './store';
 import { ArgoClient } from './argo';
+import { createNotifier } from './notifications';
 
 /**
  * platformRequestsPlugin backend plugin
@@ -70,69 +71,9 @@ export const platformRequestsPlugin = createBackendPlugin({
           { discovery, auth },
         );
 
-        // Native Backstage notifications: approvers on new requests, requester
-        // on terminal outcomes. Never let a notification failure break the flow.
-        const notify = {
-          async approvalNeeded(r: { id: number; kind: string; resourceType: string; resourceName: string; requester: string }) {
-            try {
-              await notifications.send({
-                recipients: { type: 'entity', entityRef: 'group:default/platform-admins' },
-                payload: {
-                  title: `Approval needed: ${r.kind} ${r.resourceType}/${r.resourceName}`,
-                  description: `Requested by ${r.requester}`,
-                  link: `/requests/${r.id}`,
-                  severity: 'normal',
-                },
-              });
-            } catch (e) {
-              logger.warn(`notify approvalNeeded failed for ${r.id}: ${e}`);
-            }
-          },
-          // Alert the requester when their request changes state after a
-          // decision (approved → workflow running, or rejected).
-          async decided(r: PlatformRequest) {
-            const map: Record<string, { title: string; sev: 'normal' | 'high' } | undefined> = {
-              IN_PROGRESS: { title: `Request #${r.id} approved — workflow running`, sev: 'normal' },
-              REJECTED: { title: `Request #${r.id} was rejected`, sev: 'high' },
-            };
-            const m = map[r.state];
-            if (!m) return; // still pending (e.g. partial N_OF_M) — no alert
-            try {
-              await notifications.send({
-                recipients: { type: 'entity', entityRef: `user:default/${r.requester}` },
-                payload: {
-                  title: m.title,
-                  description: `${r.resourceType}/${r.resourceName}`,
-                  link: `/requests/${r.id}`,
-                  severity: m.sev,
-                },
-              });
-            } catch (e) {
-              logger.warn(`notify decided failed for ${r.id}: ${e}`);
-            }
-          },
-          async finished(
-            r: { id: number; resourceType: string; resourceName: string; requester: string },
-            ok: boolean,
-            resultRef?: string,
-          ) {
-            try {
-              await notifications.send({
-                recipients: { type: 'entity', entityRef: `user:default/${r.requester}` },
-                payload: {
-                  title: `Request #${r.id} ${ok ? 'succeeded' : 'failed'}`,
-                  description: resultRef
-                    ? `${r.resourceType}/${r.resourceName} → ${resultRef}`
-                    : `${r.resourceType}/${r.resourceName}`,
-                  link: `/requests/${r.id}`,
-                  severity: ok ? 'normal' : 'high',
-                },
-              });
-            } catch (e) {
-              logger.warn(`notify finished failed for ${r.id}: ${e}`);
-            }
-          },
-        };
+        // Native Backstage notifications (approvers on new requests, requester
+        // on decisions + terminal outcomes) — best-effort, see notifications.ts.
+        const notify = createNotifier(notifications, logger);
 
         // Repo path from a Gitea raw URL (.../raw/branch/<b>/<path> -> <path>).
         const gitPathOf = (url: string): string | undefined => {

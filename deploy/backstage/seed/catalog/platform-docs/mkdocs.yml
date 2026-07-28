@@ -1,0 +1,30 @@
+site_name: Platform Plugin Suite
+site_description: Docs for the internal developer platform (Backstage plugin suite)
+
+# Diátaxis: tutorials (learning) · how-to (tasks) · reference (facts) ·
+# explanation (understanding).
+nav:
+  - Overview: index.md
+  - Tutorials:
+      - Provision your first resource: tutorials/provision-a-resource.md
+  - How-to guides:
+      - Author a software template: how-to/author-a-template.md
+      - Configure admins & per-team approval: how-to/configure-rbac.md
+      - Give a resource a data file: how-to/set-resource-data.md
+      - Add a live (DynamicSelect) field: how-to/add-a-dynamic-select-field.md
+      - Upgrade Backstage: how-to/upgrade-backstage.md
+  - Reference:
+      - Plugins: reference/plugins.md
+      - Annotations: reference/annotations.md
+      - Submit tokens (<< >>): reference/tokens.md
+      - Configuration keys: reference/configuration.md
+      - Request model: reference/request-model.md
+  - Explanation:
+      - Architecture: explanation/architecture.md
+      - Request lifecycle: explanation/request-lifecycle.md
+      - Per-team RBAC: explanation/rbac.md
+      - Workflows own Git: explanation/workflows-and-git.md
+      - Identity & LDAP: explanation/identity-and-ldap.md
+
+plugins:
+  - techdocs-core

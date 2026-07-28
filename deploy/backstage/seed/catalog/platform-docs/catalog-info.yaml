@@ -1,0 +1,19 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: platform-plugin-suite
+  title: Platform Plugin Suite
+  description: >
+    The internal developer platform built as a Backstage plugin suite — request
+    management, per-team RBAC, Argo-backed provisioning, the service/graph
+    builder, and the shadcn design system. Documentation follows Diátaxis.
+  annotations:
+    # TechDocs source is next to this file (mkdocs.yml + docs/).
+    backstage.io/techdocs-ref: dir:.
+  tags:
+    - platform
+    - documentation
+spec:
+  type: documentation
+  lifecycle: production
+  owner: group:default/platform-admins
