@@ -61,3 +61,7 @@ with an LDAP account (`admin`/`admin`, `sam`/`sam`).
   for production (this is a local demo instance).
 - **[docs/UPGRADING-BACKSTAGE.md](docs/UPGRADING-BACKSTAGE.md)** — how to bump
   Backstage without breaking the customization.
+- **[docs/RHDH-1.9-MIGRATION.md](docs/RHDH-1.9-MIGRATION.md)** — package the suite
+  for Red Hat Developer Hub 1.9 (Backstage 1.45.3) while keeping dev on 1.53.
+  General per-plugin feasibility: **[docs/RHDH-DYNAMIC-PLUGINS.md](docs/RHDH-DYNAMIC-PLUGINS.md)**.
+  In-app config guide: TechDocs → *How-to → Configure the suite in RHDH 1.9*.

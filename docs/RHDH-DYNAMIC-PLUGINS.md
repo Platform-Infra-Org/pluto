@@ -1,5 +1,10 @@
 # Plan: convert the plugin suite to RHDH dynamic plugins
 
+> **Targeting a specific release?** See [RHDH-1.9-MIGRATION.md](RHDH-1.9-MIGRATION.md)
+> for the concrete **RHDH 1.9 / Backstage 1.45.3** plan and the keep-both-runnable
+> (dev 1.53 + RHDH packaging) strategy. This doc is the general, version-agnostic
+> per-plugin feasibility + best-practice reference.
+
 Red Hat Developer Hub (RHDH) loads plugins **at runtime** — no rebuilding the app.
 Backend plugins load via RHDH's backend plugin manager; frontend plugins load via
 **Scalprum module federation**, wired by config (`dynamic-plugins.yaml`), not by
