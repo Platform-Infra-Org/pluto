@@ -44,8 +44,23 @@ export const SHADCN_CSS = `
 }
 
 /* ===== Reskin the Backstage/MUI native pages (catalog, scaffolder, search,
-   settings…) to the shadcn look, driven by the same tokens + color picker. ===== */
-/* Backstage UI (bui) design tokens — retarget the solid accent to our picker. */
+   settings…) to the shadcn look, driven by the same tokens + color picker. =====
+
+   UPGRADE STABILITY: we target the most stable hook available for each element:
+   - MUI global classes (.MuiButton-*, .MuiCard-*, .MuiTable-*, …)  — public API.
+   - Backstage UI (bui) CSS variables (--bui-*) + [data-variant]     — public API.
+   - react-flow classes (.react-flow__*)                            — public API.
+   These carry the bulk of the reskin and survive upgrades.
+   The ONLY fragile hooks are Backstage's own makeStyles classes, which are
+   hashed (BackstageHeader-header-42) and expose no stable alternative. They're
+   all in the "[FRAGILE]"-marked rules below, matched by the stable class *prefix*
+   via [class*="…"] (the hash is ignored) and, where possible, PAIRED with a
+   stable companion (a MUI class or element) so styling degrades gracefully if
+   Backstage renames the class. On an upgrade, if a native page looks unstyled,
+   re-derive the affected [FRAGILE] prefix from the new DOM — nothing else. */
+
+/* [stable: bui tokens] retarget bui's accent/link/focus to the picker. These
+   CSS variables are the primary, upgrade-safe mechanism for bui components. */
 :root {
   --bui-bg-solid: hsl(var(--sc-primary));
   --bui-bg-solid-hover: hsl(var(--sc-primary) / 0.92);
@@ -53,20 +68,26 @@ export const SHADCN_CSS = `
   --bui-fg-link: hsl(var(--sc-primary));
   --bui-border-focus: hsl(var(--sc-primary));
 }
-[class*="bui-ButtonLink"], [class*="bui-Button"] { border-radius: calc(var(--sc-radius) - 2px) !important; }
-/* bui primary buttons resolve their own token — retarget by variant attribute. */
+/* [stable: data-variant] primary bui buttons resolve their own token — the
+   [data-variant] attribute is a stable hook; the class fragment is only a scope. */
 [data-variant="primary"][class*="bui-Button"] { background-color: hsl(var(--sc-primary)) !important; color: hsl(var(--sc-primary-fg)) !important; }
 [data-variant="primary"][class*="bui-Button"]:hover { background-color: hsl(var(--sc-primary) / 0.9) !important; }
-/* NB: Backstage makeStyles classes are hashed (BackstageHeader-header-42), so
-   we match them with [class*="…"] attribute-contains selectors. */
-body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); }
-/* flatten the wave header everywhere */
+[class*="bui-ButtonLink"], [class*="bui-Button"] { border-radius: calc(var(--sc-radius) - 2px) !important; }
+body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); } /* body = stable companion */
+/* flatten the wave header everywhere. header.MuiPaper-root is the stable
+   companion (the Backstage Header renders as a MUI Paper <header>). [FRAGILE] */
 header.MuiPaper-root, [class*="BackstageHeader-header"] {
   background-image: none !important; background-color: hsl(var(--sc-card)) !important;
   box-shadow: none !important; border-bottom: 1px solid hsl(var(--sc-border)) !important; }
-[class*="BackstageHeader-title"], [class*="BackstageHeader-title"] * { color: hsl(var(--sc-fg)) !important; }
-[class*="BackstageHeader-subtitle"], [class*="HeaderLabel-label"], [class*="BackstageHeader-type"] { color: hsl(var(--sc-muted-fg)) !important; }
+/* header title = fg. 'header.MuiPaper-root h1' is the stable companion (the
+   title Typography renders as the header's h1). [FRAGILE: BackstageHeader-title] */
+header.MuiPaper-root h1, [class*="BackstageHeader-title"], [class*="BackstageHeader-title"] * { color: hsl(var(--sc-fg)) !important; }
+/* header subtitle/labels = muted. 'header.MuiPaper-root p' companions the
+   subtitle. [FRAGILE: BackstageHeader-subtitle / -type / HeaderLabel-label] */
+header.MuiPaper-root p, [class*="BackstageHeader-subtitle"], [class*="HeaderLabel-label"], [class*="BackstageHeader-type"] { color: hsl(var(--sc-muted-fg)) !important; }
 /* cards / surfaces */
+/* cards/surfaces via stable MUI classes; the InfoCard header is [FRAGILE] but
+   the card body it sits in is already caught by .MuiCard-root above. */
 .MuiCard-root, .MuiPaper-elevation1, .MuiPaper-elevation2, .MuiAccordion-root, [class*="BackstageInfoCard-header"] {
   background-color: hsl(var(--sc-card)) !important; color: hsl(var(--sc-fg));
   border: 1px solid hsl(var(--sc-border)) !important; box-shadow: none !important;
@@ -84,7 +105,11 @@ header.MuiPaper-root, [class*="BackstageHeader-header"] {
 .MuiSwitch-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiCheckbox-colorPrimary.Mui-checked, .MuiRadio-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiChip-root { border-radius: 6px !important; }
-/* ===== Graphs: React-Flow look — dark canvas + dots, compact dark nodes ===== */
+/* ===== Graphs: React-Flow look — dark canvas + dots, compact dark nodes =====
+   Our own graphs use the stable .react-flow__* API (below). These rules restyle
+   Backstage's built-in catalog/dependency graph SVG.
+   [FRAGILE: PluginCatalogGraph* / DependencyGraph* — no stable hook; re-derive
+   on upgrade, or drop if the built-in graph is no longer surfaced.] */
 /* The graph svg IS the dark dotted canvas and fills its container (no smaller
    inner box inside a larger canvas). */
 svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultNode"]) {
@@ -110,12 +135,14 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .react-flow__controls button svg, .react-flow__controls-button svg { fill: #e7e7ef !important; }
 .react-flow__attribution { display: none !important; }
 
-/* ===== Compact headers (title bar too tall / oversized title) ===== */
-[class*="BackstageHeader-header"] { padding-top: 16px !important; padding-bottom: 14px !important; min-height: 0 !important; }
-[class*="BackstageHeader-title"] { font-size: 1.6rem !important; line-height: 1.2 !important; }
+/* ===== Compact headers (title bar too tall / oversized title). Companioned by
+   header.MuiPaper-root / its <h1>. [FRAGILE: BackstageHeader-header / -title] ===== */
+header.MuiPaper-root, [class*="BackstageHeader-header"] { padding-top: 16px !important; padding-bottom: 14px !important; min-height: 0 !important; }
+header.MuiPaper-root h1, [class*="BackstageHeader-title"] { font-size: 1.6rem !important; line-height: 1.2 !important; }
 [class*="BackstageHeader-title"] * { font-size: inherit !important; }
 
-/* flatten the gradient card headers (template / entity cards) */
+/* flatten the gradient card headers (template / entity cards).
+   [FRAGILE: ItemCardHeader — no stable companion; re-derive on upgrade] */
 [class*="ItemCardHeader"] {
   background-image: none !important; background: hsl(var(--sc-muted)) !important;
   border-bottom: 1px solid hsl(var(--sc-border)) !important; }
@@ -301,6 +328,9 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-nav.collapsed .sc-nav-item { justify-content: center; padding: 9px; }
 .sc-nav.collapsed .sc-nav-top { justify-content: center; }
 /* Force the content gutter to match the nav width (hashed SidebarPage class). */
+/* Offset the content so it clears our fixed custom nav. [FRAGILE:
+   BackstageSidebarPage-root — the layout root, no stable hook. If the nav and
+   content misalign after an upgrade, re-derive this prefix from the new DOM.] */
 [class*="BackstageSidebarPage-root"] { padding-left: var(--sc-nav-w) !important; transition: padding-left .16s ease; }
 @media (max-width: 600px) { .sc-nav { display: none; } [class*="BackstageSidebarPage-root"] { padding-left: 0 !important; } }
 

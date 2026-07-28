@@ -29,13 +29,17 @@ an upgrade can affect, roughly in decreasing order of risk:
    occasionally (we already hit `EntityContentBlueprint`'s `defaultPath`→`path`
    deprecation). tsc catches these.
 
-3. **The shadcn reskin CSS — the single most fragile file:**
-   `plugins/platform-ui/src/styles.ts` has **22 attribute-contains selectors**
-   (`[class*="BackstageHeader-header"]`, `[class*="bui-Button"]`, …) that key on
-   Backstage's **hashed makeStyles / BUI class names**. These are *not* a public
-   API. They can silently break (no tsc/test failure) when Backstage renames a
-   component, changes its class-name scheme, or **bumps MUI (v5→v6)**. This needs
-   a **visual smoke test** on every upgrade — it won't fail the build.
+3. **The shadcn reskin CSS** (`plugins/platform-ui/src/styles.ts`). Most of it
+   is on **stable hooks** now — MUI global classes (`.MuiButton-*`, `.MuiCard-*`,
+   …), the BUI `--bui-*` CSS variables + `[data-variant]`, and `.react-flow__*`.
+   The residual risk is Backstage's own **hashed makeStyles** components, which
+   expose no stable hook. Those are all tagged **`[FRAGILE]`** in the file, each
+   matched by the stable class *prefix* (the hash ignored) and, where possible,
+   paired with a stable companion (a MUI class / element) so they degrade
+   gracefully. A `[FRAGILE]` selector can break silently (no tsc/test failure)
+   on a component rename or an **MUI major (v5→v6)** — so a **visual smoke test**
+   is still required, but the fix is scoped: grep `[FRAGILE]`, re-derive only the
+   affected prefix from the new DOM.
 
 4. **`theme.tsx`** uses `createUnifiedTheme` + `palettes`/`shapes` from
    `@backstage/theme`; a MUI major bump is the risk.
@@ -88,9 +92,9 @@ Automated (fails the build):
 
 Manual smoke (the parts tests + tsc *cannot* catch):
 - [ ] **The shadcn reskin still applies** — headers flat, sidebar nav, cards,
-      the color picker recolors buttons/links/badges. If broken, the hashed
-      `[class*="…"]` selectors in `styles.ts` need re-deriving against the new
-      class names (inspect the DOM for the new hashed prefixes).
+      the color picker recolors buttons/links/badges. If a native page looks
+      unstyled, grep `[FRAGILE]` in `styles.ts` and re-derive only the affected
+      class prefix against the new DOM — the MUI/BUI/react-flow parts are stable.
 - [ ] **Entity tabs/cards** (alpha blueprints): Resource Data tab, Manage
       resource card, Relations graph render on a Resource page.
 - [ ] **Custom sign-in page** + LDAP login work (SignInPageBlueprint).
