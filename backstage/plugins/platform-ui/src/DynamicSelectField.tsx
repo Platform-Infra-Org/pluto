@@ -10,6 +10,7 @@ import {
   FormFieldBlueprint,
 } from '@backstage/plugin-scaffolder-react/alpha';
 import { DynamicSelect } from './DynamicSelect';
+import { secretFormField } from './SecretField';
 
 interface UiOptions {
   /** Direct URL (used as-is; fetchApi still injects the Backstage user token). */
@@ -103,8 +104,8 @@ const dynamicSelectFormField = FormFieldBlueprint.make({
   },
 });
 
-/** Registers the DynamicSelect scaffolder field. Add to the app's `features`. */
+/** Registers the DynamicSelect + Secret scaffolder fields. Add to `features`. */
 export const platformScaffolderFieldsModule = createFrontendModule({
   pluginId: 'scaffolder',
-  extensions: [dynamicSelectFormField],
+  extensions: [dynamicSelectFormField, secretFormField],
 });
