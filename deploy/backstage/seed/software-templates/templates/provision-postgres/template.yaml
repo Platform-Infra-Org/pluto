@@ -42,6 +42,21 @@ spec:
             Optional. If set, it is stored encrypted until approval, then written
             into the request Secret alongside the generated DB password.
           ui:field: Secret # scaffolder Secret field → ${{ secrets.apiKey }}, redacted
+  # Server-side validation of the secret bag (scaffolder-common >= 2.2.x). The
+  # backend checks the collected ${{ secrets.* }} against this at task creation
+  # and 400s on failure — the secret-side analogue of the parameters schema, and
+  # a front-door check *before* platform:request:submit runs. Complements
+  # ui:field: Secret (which captures the value); it does not replace it.
+  secrets:
+    schema:
+      type: object
+      properties:
+        # apiKey is optional; when supplied it must look like a real key. The
+        # trailing `?` allows an empty string so clearing the optional field
+        # (which still lands as '') doesn't 400.
+        apiKey:
+          type: string
+          pattern: "^(sk-[A-Za-z0-9]{16,})?$"
   steps:
     - id: submit
       name: Submit request
