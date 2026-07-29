@@ -33,6 +33,7 @@
     "@backstage/plugin-permission-common": "^0.9.9",
     "@backstage/types": "^1.2.2",
     "@internal/plugin-platform-common": "workspace:^",
+    "@kubernetes/client-node": "^1.4.0",
     "express": "^4.14.0",
     "express-promise-router": "^4.1.0",
     "knex": "^3.0.0",
@@ -47,6 +48,8 @@
     "supertest": "^6.2.4"
   },
   "files": [
-    "dist"
-  ]
+    "dist",
+    "config.d.ts"
+  ],
+  "configSchema": "config.d.ts"
 }
