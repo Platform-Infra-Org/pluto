@@ -41,7 +41,9 @@ spec:
           description: >
             Optional. If set, it is stored encrypted until approval, then written
             into the request Secret alongside the generated DB password.
-          ui:field: Secret # scaffolder Secret field → ${{ secrets.apiKey }}, redacted
+          # Our reveal-toggle secret field (built-in `Secret` works too but has no
+          # eye). Value → ${{ secrets.apiKey }}, redacted, never in form data.
+          ui:field: PlatformSecret
   # Server-side validation of the secret bag (scaffolder-common >= 2.2.x). The
   # backend checks the collected ${{ secrets.* }} against this at task creation
   # and 400s on failure — the secret-side analogue of the parameters schema, and

@@ -40,10 +40,11 @@ const EyeOffIcon = () => (
 );
 
 /**
- * Scaffolder `ui:field: Secret` for the new frontend system, which — unlike the
- * classic system — does not register Backstage's built-in `Secret` field. This
- * is a faithful port of `@backstage/plugin-scaffolder`'s internal `SecretInput`
- * (which isn't publicly exported): the typed value goes ONLY into the scaffolder
+ * Scaffolder `ui:field: PlatformSecret` — like Backstage's built-in
+ * `ui:field: Secret` (which the new frontend DOES ship: a masked TextField), but
+ * adds a reveal (eye) toggle. Deliberately named PlatformSecret, not Secret, so
+ * it doesn't collide with the built-in Secret field (which would otherwise
+ * shadow it). Same security model: the typed value goes ONLY into the scaffolder
  * secrets context via `useTemplateSecrets().setSecrets`, and only a mask of `*`
  * lands in the form data — so the real value never reaches the request params,
  * the task record, Argo, Git, or logs. Reference `${{ secrets.<propertyName> }}`
@@ -115,11 +116,14 @@ function SecretFieldComponent(props: any) {
   );
 }
 
-/** `ui:field: Secret` — add to the scaffolder fields module's extensions. */
+/** `ui:field: PlatformSecret` — add to the scaffolder fields module's extensions. */
 export const secretFormField = FormFieldBlueprint.make({
-  name: 'secret',
+  name: 'platform-secret',
   params: {
     field: async () =>
-      createFormField({ name: 'Secret', component: SecretFieldComponent }),
+      createFormField({
+        name: 'PlatformSecret',
+        component: SecretFieldComponent,
+      }),
   },
 });
