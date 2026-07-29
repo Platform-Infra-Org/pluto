@@ -283,12 +283,11 @@ export const platformRequestsPlugin = createBackendPlugin({
         ): Promise<
           { argoSubmit?: unknown; resultOutput?: string } | undefined
         > => {
-          const key =
-            kind === 'UPDATE'
-              ? 'platform.io/verb-update'
-              : kind === 'DELETE'
-              ? 'platform.io/verb-delete'
-              : undefined;
+          const verbKeys: Record<string, string> = {
+            UPDATE: 'platform.io/verb-update',
+            DELETE: 'platform.io/verb-delete',
+          };
+          const key = verbKeys[kind];
           if (!key) return undefined;
           try {
             const { items } = await catalog.getEntities(

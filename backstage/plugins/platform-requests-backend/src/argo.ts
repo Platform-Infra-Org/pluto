@@ -63,11 +63,11 @@ export function resolveTemplate(str: string, ctx: ResolveCtx): string {
       default: {
         if (token.startsWith('params.')) {
           const v = ctx.params?.[token.slice('params.'.length)];
-          return v == null ? '' : String(v);
+          return v === null || v === undefined ? '' : String(v);
         }
         if (token.startsWith('resourceData.')) {
           const v = ctx.resourceData?.[token.slice('resourceData.'.length)];
-          return v == null ? '' : String(v);
+          return v === null || v === undefined ? '' : String(v);
         }
         return '';
       }
@@ -279,7 +279,7 @@ export class ArgoClient {
     const wf = data.items?.[0];
     const outputs: Record<string, string> = {};
     for (const p of wf?.status?.outputs?.parameters ?? []) {
-      if (p.name != null && p.value != null) outputs[p.name] = p.value;
+      if (p.name !== undefined && p.value !== undefined) outputs[p.name] = p.value;
     }
     return {
       name: wf?.metadata?.name,
@@ -320,7 +320,7 @@ export class ArgoClient {
       params?: Array<{ name?: string; value?: string }>,
     ): void => {
       for (const p of params ?? []) {
-        if (p.name != null && p.value != null) out[p.name] = p.value;
+        if (p.name !== undefined && p.value !== undefined) out[p.name] = p.value;
       }
     };
     for (const n of Object.values(wf.status?.nodes ?? {})) {

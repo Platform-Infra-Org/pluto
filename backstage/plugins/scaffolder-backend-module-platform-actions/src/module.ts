@@ -142,7 +142,7 @@ export function createRequestSubmitAction(services: {
       // field the user left blank — drop it entirely (the Scaffolder form already
       // enforced any required ones, so an empty value here means "not supplied").
       const secrets = (ctx.input.secrets ?? []).filter(
-        s => s.source === 'generate' || (s.value != null && s.value !== ''),
+        s => s.source === 'generate' || Boolean(s.value),
       );
       const secretSpec = secrets.map(s => ({
         name: s.name,

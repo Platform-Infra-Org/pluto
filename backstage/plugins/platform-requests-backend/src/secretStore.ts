@@ -185,8 +185,6 @@ export class KubernetesSecretStore implements SecretStore {
 /** No-op store used when platform.secrets is disabled. */
 export class DisabledSecretStore implements SecretStore {
   readonly enabled = false;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  constructor(_logger: LoggerService) {}
   newName(requestId: number): string {
     return `platform-req-${requestId}`;
   }
@@ -211,7 +209,7 @@ export function createSecretStore(opts: {
 }): SecretStore {
   const { config, logger } = opts;
   if (!(config.getOptionalBoolean('platform.secrets.enabled') ?? false)) {
-    return new DisabledSecretStore(logger);
+    return new DisabledSecretStore();
   }
   const namespace =
     config.getOptionalString('platform.secrets.namespace') ?? 'argo';

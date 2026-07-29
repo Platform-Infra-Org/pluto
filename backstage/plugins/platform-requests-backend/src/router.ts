@@ -137,7 +137,7 @@ export async function createRouter(
       const values: Record<string, string> = {};
       for (const f of provided) {
         const v = secretValues?.[f.name];
-        if (v == null) {
+        if (v === undefined) {
           throw new InputError(`missing value for provided secret '${f.name}'`);
         }
         values[f.name] = v;
