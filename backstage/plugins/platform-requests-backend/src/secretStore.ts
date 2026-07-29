@@ -38,10 +38,19 @@ export interface SecretStore {
   readonly enabled: boolean;
 
   /**
+   * An unguessable Secret name for a request. Generated *before* the Workflow is
+   * submitted so it can be passed as a workflow parameter (the WorkflowTemplate
+   * secretKeyRefs it), then handed back to {@link create} once the Workflow —
+   * the Secret's owner — exists.
+   */
+  newName(requestId: number): string;
+
+  /**
    * Create the request's Secret, owned by its Workflow (so Argo's ttlStrategy
-   * cascade-deletes it). Returns the generated name + the keys stored.
+   * cascade-deletes it). Returns the name + the keys stored.
    */
   create(opts: {
+    name: string;
     requestId: number;
     data: Record<string, string>;
     owner: OwnerWorkflow;
@@ -84,15 +93,19 @@ export class KubernetesSecretStore implements SecretStore {
     private readonly now: () => number = () => Date.now(),
   ) {}
 
+  newName(requestId: number): string {
+    // Unguessable name; correlation is via the request-id label, not the name.
+    return `platform-req-${requestId}-${randomBytes(6).toString('hex')}`;
+  }
+
   async create(opts: {
+    name: string;
     requestId: number;
     data: Record<string, string>;
     owner: OwnerWorkflow;
     keep?: boolean;
   }): Promise<SecretRef> {
-    const { requestId, data, owner, keep } = opts;
-    // Unguessable name; correlation is via the request-id label, not the name.
-    const name = `platform-req-${requestId}-${randomBytes(6).toString('hex')}`;
+    const { name, requestId, data, owner, keep } = opts;
     const ownerReference: V1OwnerReference = {
       apiVersion: owner.apiVersion ?? 'argoproj.io/v1alpha1',
       kind: owner.kind ?? 'Workflow',
@@ -174,6 +187,9 @@ export class DisabledSecretStore implements SecretStore {
   readonly enabled = false;
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   constructor(_logger: LoggerService) {}
+  newName(requestId: number): string {
+    return `platform-req-${requestId}`;
+  }
   async create(): Promise<SecretRef> {
     throw new Error(
       'platform.secrets.enabled is false, but a request requires a secret — ' +

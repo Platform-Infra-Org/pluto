@@ -10,6 +10,7 @@ import express from 'express';
 import request from 'supertest';
 import { createRouter, PrincipalResolver } from './router';
 import { RequestsStore } from './store';
+import { Cipher, createCipher } from './crypto';
 
 jest.setTimeout(60_000);
 
@@ -28,6 +29,8 @@ describe('createRouter', () => {
     principalResolver?: PrincipalResolver;
     ownerResolver?: (resourceType: string) => Promise<string | undefined>;
     submitWorkflow?: jest.Mock<Promise<void>, [PlatformRequest]>;
+    cipher?: Cipher;
+    secretsEnabled?: boolean;
   }) {
     const knex = await databases.init('SQLITE_3');
     const store = await RequestsStore.create(mockServices.database({ knex }));
@@ -38,6 +41,8 @@ describe('createRouter', () => {
       principalResolver: opts.principalResolver,
       ownerResolver: opts.ownerResolver,
       submitWorkflow: opts.submitWorkflow,
+      cipher: opts.cipher,
+      secretsEnabled: opts.secretsEnabled,
     });
     const app = express();
     app.use(router);
@@ -222,5 +227,77 @@ describe('createRouter', () => {
       .set('Authorization', mockCredentials.user.header('user:default/other'))
       .send({});
     expect(second.body.state).toBe('IN_PROGRESS');
+  });
+
+  describe('secret lifecycle', () => {
+    const cipher = createCipher('unit-test-key');
+    const withSecret = {
+      ...NEW_REQUEST,
+      secretSpec: [
+        { name: 'dbPassword', source: 'generate' as const },
+        { name: 'apiKey', source: 'provided' as const },
+      ],
+      secretValues: { apiKey: 'super-secret-value' },
+    };
+
+    it('stores provided secrets encrypted, never plaintext, and redacts them from the DTO', async () => {
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        secretsEnabled: true,
+        cipher,
+      });
+      const res = await request(app).post('/requests').send(withSecret);
+      expect(res.status).toBe(201);
+
+      // DTO carries the (non-sensitive) spec but no values / secret_enc.
+      expect(res.body.secretSpec).toHaveLength(2);
+      expect(JSON.stringify(res.body)).not.toContain('super-secret-value');
+      expect(res.body.secretValues).toBeUndefined();
+      expect(res.body.secret_enc).toBeUndefined();
+
+      // The stored blob decrypts back to the provided value — and is not plaintext.
+      const enc = await store.getSecretEnc(res.body.id);
+      expect(enc).toBeDefined();
+      expect(enc).not.toContain('super-secret-value');
+      expect(JSON.parse(cipher.decrypt(enc!))).toEqual({ apiKey: 'super-secret-value' });
+    });
+
+    it('rejects a request with a required provided value missing (400)', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        secretsEnabled: true,
+        cipher,
+      });
+      const res = await request(app)
+        .post('/requests')
+        .send({ ...withSecret, secretValues: {} });
+      expect(res.status).toBe(400);
+    });
+
+    it('refuses a request needing secrets when secrets are disabled (400)', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        secretsEnabled: false,
+      });
+      const res = await request(app).post('/requests').send(withSecret);
+      expect(res.status).toBe(400);
+    });
+
+    it('reject clears the held encrypted blob', async () => {
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        secretsEnabled: true,
+        cipher,
+        principalResolver: async () => ({ isAdmin: true, groups: [] }),
+      });
+      const created = await request(app).post('/requests').send(withSecret);
+      expect(await store.getSecretEnc(created.body.id)).toBeDefined();
+
+      await request(app)
+        .post(`/requests/${created.body.id}/reject`)
+        .set('Authorization', asAdmin)
+        .send({});
+      expect(await store.getSecretEnc(created.body.id)).toBeUndefined();
+    });
   });
 });

@@ -58,6 +58,20 @@ export interface ArgoSubmitSpec {
   generateName?: string;
 }
 
+/**
+ * A secret field a request needs materialised into its Kubernetes Secret at
+ * approval. `generate` = the backend mints the value at approval (never captured
+ * from the user); `provided` = the user supplied it at submit (held
+ * envelope-encrypted until approval). See docs/SECRETS-LIFECYCLE.md.
+ */
+export interface SecretFieldSpec {
+  /** Key inside the request's Secret (what the WorkflowTemplate secretKeyRefs). */
+  name: string;
+  source: 'generate' | 'provided';
+  /** Generated secrets only: random byte length before base64url (default 24). */
+  length?: number;
+}
+
 /** A resource request tracked through approval + workflow execution. */
 export interface Request {
   id: number;
@@ -94,6 +108,14 @@ export interface Request {
   workflowPhase?: string;
   /** Error message when the request FAILED. */
   error?: string;
+  /**
+   * Secret fields this request materialises into a Kubernetes Secret at approval.
+   * The encrypted values (for `provided` fields) live in a private DB column that
+   * is **never** part of this DTO — the UI only ever sees field names/sources.
+   */
+  secretSpec?: SecretFieldSpec[];
+  /** Name of the per-request Kubernetes Secret, once created at approval. */
+  secretName?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -107,6 +129,8 @@ export interface NewRequest {
   policy?: ApprovalPolicy;
   argoSubmit?: ArgoSubmitSpec;
   resultOutput?: string;
+  /** Secret fields to materialise at approval (see {@link SecretFieldSpec}). */
+  secretSpec?: SecretFieldSpec[];
 }
 
 /** Permission ids exposed by the platform suite. */

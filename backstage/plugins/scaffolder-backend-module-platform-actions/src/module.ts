@@ -93,6 +93,36 @@ export function createRequestSubmitAction(services: {
                 'templating: requestId, resourceName, resourceType, requester, paramsJson, ' +
                 'params.<field>. Omit for default behavior.',
             ),
+        secrets: z =>
+          z
+            .array(
+              z.object({
+                name: z.string().describe('Key inside the request Secret.'),
+                source: z
+                  .enum(['generate', 'provided'])
+                  .describe(
+                    'generate = backend mints it at approval; provided = supply `value`.',
+                  ),
+                length: z
+                  .number()
+                  .int()
+                  .positive()
+                  .optional()
+                  .describe('generate: random byte length (default 24).'),
+                value: z
+                  .string()
+                  .optional()
+                  .describe(
+                    'provided secrets: the value, wired from `${{ secrets.<x> }}` ' +
+                      'so the Scaffolder redacts it from logs and stored task state.',
+                  ),
+              }),
+            )
+            .optional()
+            .describe(
+              'Secret fields materialised into the request Kubernetes Secret at ' +
+                'approval — the value never lands in params, Argo, Git, or logs.',
+            ),
       },
       output: {
         requestId: z => z.number().describe('Id of the created request.'),
@@ -105,6 +135,25 @@ export function createRequestSubmitAction(services: {
         targetPluginId: 'platform-requests',
       });
       const baseUrl = await discovery.getBaseUrl('platform-requests');
+
+      // Split the secret inputs into the (non-sensitive) spec and the plaintext
+      // provided values. The backend encrypts the values on receipt; only the
+      // spec is persisted here. A `provided` secret with no value is an optional
+      // field the user left blank — drop it entirely (the Scaffolder form already
+      // enforced any required ones, so an empty value here means "not supplied").
+      const secrets = (ctx.input.secrets ?? []).filter(
+        s => s.source === 'generate' || (s.value != null && s.value !== ''),
+      );
+      const secretSpec = secrets.map(s => ({
+        name: s.name,
+        source: s.source,
+        ...(s.length ? { length: s.length } : {}),
+      }));
+      const secretValues: Record<string, string> = {};
+      for (const s of secrets) {
+        if (s.source === 'provided') secretValues[s.name] = s.value!;
+      }
+
       const res = await fetch(`${baseUrl}/requests`, {
         method: 'POST',
         headers: {
@@ -119,6 +168,9 @@ export function createRequestSubmitAction(services: {
           ...(ctx.input.argoSubmit ? { argoSubmit: ctx.input.argoSubmit } : {}),
           ...(ctx.input.resultOutput
             ? { resultOutput: ctx.input.resultOutput }
+            : {}),
+          ...(secretSpec.length
+            ? { secretSpec, secretValues }
             : {}),
           requester,
         }),

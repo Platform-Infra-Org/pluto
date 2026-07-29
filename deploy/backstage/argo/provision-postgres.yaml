@@ -1,0 +1,56 @@
+# Example provisioning WorkflowTemplate that consumes a per-request Secret.
+#
+# The platform-requests backend creates a Secret (named << secretName >>, owned
+# by THIS workflow) at approval and passes its name in as the `secretName`
+# parameter. The container reads the password via env `valueFrom.secretKeyRef`
+# — the kubelet injects it, so the pod needs no `get` on the Secret and the
+# value is never a workflow parameter, never logged, never in Git.
+#
+# `ttlStrategy` deletes the workflow after it finishes; because the Secret has an
+# ownerReference to this workflow, Kubernetes cascade-deletes the Secret with it.
+# The workflow owns the secret's lifetime — no Backstage timer on the happy path.
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: provision-postgres
+  namespace: argo
+spec:
+  entrypoint: provision
+  ttlStrategy:
+    secondsAfterCompletion: 300 # GC the workflow (and its owned Secret) 5m after done
+    secondsAfterSuccess: 300
+    secondsAfterFailure: 3600 # keep failures a little longer for debugging
+  arguments:
+    parameters:
+      - { name: request, value: "{}" } # the request params JSON (name, size, …)
+      - { name: secretName, value: "" } # the per-request Secret (<< secretName >>)
+  templates:
+    - name: provision
+      inputs:
+        parameters:
+          - { name: request }
+          - { name: secretName }
+      container:
+        image: alpine:3.20
+        command: [sh, -c]
+        env:
+          # Injected by the kubelet from the request's Secret. `dbPassword` is a
+          # `generate` secret field, so the backend minted it straight into the
+          # Secret at approval — nobody, including this workflow's params, saw it.
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: "{{inputs.parameters.secretName}}"
+                key: dbPassword
+        args:
+          - |
+            set -eu
+            REQ='{{inputs.parameters.request}}'
+            echo "provisioning postgres for request: $REQ"
+            # DB_PASSWORD is present in the environment but MUST NOT be echoed.
+            if [ -n "${DB_PASSWORD:-}" ]; then
+              echo "db password injected from Secret (${#DB_PASSWORD} chars) — not printed"
+            else
+              echo "ERROR: DB_PASSWORD not injected" >&2; exit 1
+            fi
+            echo "postgres provisioned"

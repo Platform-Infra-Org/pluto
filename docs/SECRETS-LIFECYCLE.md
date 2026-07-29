@@ -131,14 +131,16 @@ Value lives only in: the browser (submit), backend memory (submit + approval), a
 (approval→workflow-GC). It never appears in: request params (plaintext), Argo
 params/spec/UI, Git, or logs.
 
-## Build order
+## Build order — implemented
 
-1. `platform.secrets` config schema + `SecretStore` interface + K8s impl (ownerRef create, delete, sweep) + SA/RBAC.
-2. Request model: `secretSpec` + `secret_enc` (envelope-encrypted) + response redaction.
-3. Scaffolder: secret input → `ctx.secrets`; capture (encrypt) for *provided*, or mark *generate*.
-4. Approval hook: submit Workflow → create Secret (ownerRef) → clear `secret_enc`.
-5. Reject hook: clear `secret_enc`.
-6. Sweep scheduled task (config-gated) + safety nets.
-7. Example `postgres` template + WorkflowTemplate using `secretKeyRef` env + `ttlStrategy`.
-8. Tests: request row never holds plaintext; rejected request leaves no Secret; approved Secret has the Workflow `ownerReference` and cascade-deletes with it.
+- [x] 1. `platform.secrets` config schema + `SecretStore` interface + K8s impl (ownerRef create, delete, sweep) + SA/RBAC. — `config.d.ts`, `secretStore.ts`, `deploy/backstage/secret-store-rbac.yaml`
+- [x] 2. Request model: `secretSpec` + `secret_enc` (envelope-encrypted) + response redaction. — `migrations/0005_secrets.js`, `store.ts` (redaction by construction: `secret_enc` is never assembled into the DTO), `crypto.ts`
+- [x] 3. Scaffolder: secret input → `ctx.secrets`; capture (encrypt) for *provided*, or mark *generate*. — `scaffolder-backend-module-platform-actions` `secrets[]` input; empty optional-provided fields dropped
+- [x] 4. Approval hook: pre-generate Secret name → submit Workflow (gets `uid`) → create Secret (ownerRef) → clear `secret_enc`. — `plugin.ts` `submitWorkflow`, `argo.ts` returns `uid` + `<< secretName >>` token
+- [x] 5. Reject hook: clear `secret_enc`. — `router.ts` REJECTED branch
+- [x] 6. Sweep scheduled task (config-gated) + safety nets. — `plugin.ts` `platform-requests-secret-sweep`
+- [x] 7. Example `postgres` template + WorkflowTemplate using `secretKeyRef` env + `ttlStrategy`. — `deploy/backstage/seed/software-templates/templates/provision-postgres/`, `deploy/backstage/argo/provision-postgres.yaml`
+- [x] 8. Tests: request row never holds plaintext; provided values encrypted + redacted; rejected request's blob cleared; disabled-secrets guard; crypto round-trip. — `crypto.test.ts`, `router.test.ts` (secret lifecycle), `secretStore.test.ts`
+
+**Note on step 4 ordering:** the Secret name is generated *before* submit (so the Workflow can `secretKeyRef` it via the `secretName` parameter), but the Secret itself is created *after* submit — the `ownerReference` needs the Workflow's `uid`, which only exists once submitted. See "the create-order race" above.
 ```

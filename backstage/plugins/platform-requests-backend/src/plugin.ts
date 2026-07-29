@@ -10,6 +10,8 @@ import { createRouter } from './router';
 import { RequestsStore } from './store';
 import { ArgoClient } from './argo';
 import { createNotifier } from './notifications';
+import { createSecretStore } from './secretStore';
+import { createCipher, generateSecret } from './crypto';
 
 /**
  * platformRequestsPlugin backend plugin
@@ -74,6 +76,13 @@ export const platformRequestsPlugin = createBackendPlugin({
         // Native Backstage notifications (approvers on new requests, requester
         // on decisions + terminal outcomes) — best-effort, see notifications.ts.
         const notify = createNotifier(notifications, logger);
+
+        // Per-request Secret provisioning (docs/SECRETS-LIFECYCLE.md). Disabled
+        // unless platform.secrets.enabled; then Kubernetes-backed.
+        const secretStore = createSecretStore({ config, logger });
+        const cipher = createCipher(
+          config.getOptionalString('platform.secrets.encryptionKey'),
+        );
 
         // Repo path from a Gitea raw URL (.../raw/branch/<b>/<path> -> <path>).
         const gitPathOf = (url: string): string | undefined => {
@@ -160,20 +169,63 @@ export const platformRequestsPlugin = createBackendPlugin({
             request.kind === 'CREATE'
               ? { data: {}, resourcePath: undefined, dataPath: undefined }
               : await resolveResource(request.resourceName);
-          const { name, namespace } = await argo.submitSpec(request.argoSubmit, {
-            requestId: request.id,
-            resourceName: request.resourceName,
-            resourceType: request.resourceType,
-            requester: request.requester,
-            params: request.params ?? {},
-            resourceData: r.data,
-            resourcePath: r.resourcePath,
-            resourceDataPath: r.dataPath,
-          });
+
+          // Secret name is generated up-front so the workflow can secretKeyRef it
+          // (as << secretName >>); the Secret itself is created just after submit,
+          // owned by the Workflow.
+          const needsSecret = !!request.secretSpec?.length;
+          if (needsSecret && !secretStore.enabled) {
+            throw new Error(
+              `request ${request.id} needs secrets but platform.secrets is disabled`,
+            );
+          }
+          const secretName = needsSecret
+            ? secretStore.newName(request.id)
+            : undefined;
+
+          const { name, namespace, uid } = await argo.submitSpec(
+            request.argoSubmit,
+            {
+              requestId: request.id,
+              resourceName: request.resourceName,
+              resourceType: request.resourceType,
+              requester: request.requester,
+              params: request.params ?? {},
+              resourceData: r.data,
+              resourcePath: r.resourcePath,
+              resourceDataPath: r.dataPath,
+              secretName,
+            },
+          );
           await store.setWorkflow(request.id, { name, namespace });
           logger.info(
             `request ${request.id}: submitted workflow ${name} in ${namespace}`,
           );
+
+          if (needsSecret && secretName) {
+            if (!uid) {
+              throw new Error(
+                `request ${request.id}: Argo returned no workflow uid; cannot own the Secret`,
+              );
+            }
+            // Generated values are minted now; provided values are decrypted from
+            // the held blob. Neither is ever logged.
+            const data: Record<string, string> = {};
+            for (const f of request.secretSpec!) {
+              if (f.source === 'generate') data[f.name] = generateSecret(f.length);
+            }
+            const enc = await store.getSecretEnc(request.id);
+            if (enc) Object.assign(data, JSON.parse(cipher.decrypt(enc)));
+
+            await secretStore.create({
+              name: secretName,
+              requestId: request.id,
+              data,
+              owner: { name, uid },
+            });
+            await store.setSecretName(request.id, secretName);
+            await store.clearSecretEnc(request.id); // blob consumed
+          }
         };
 
         // Which groups count as platform admins (configurable). An admin
@@ -276,6 +328,8 @@ export const platformRequestsPlugin = createBackendPlugin({
             ownerResolver,
             verbConfigResolver,
             resourceDataFor,
+            cipher,
+            secretsEnabled: secretStore.enabled,
           }),
         );
 
@@ -347,6 +401,36 @@ export const platformRequestsPlugin = createBackendPlugin({
             }
           },
         });
+
+        // Safety-net sweep for orphaned/expired request Secrets (the happy path
+        // is the Workflow ownerReference). Config-gated; off when secrets are.
+        const sweepCfg = config.getOptionalConfig('platform.secrets.sweep');
+        if (secretStore.enabled && (sweepCfg?.getOptionalBoolean('enabled') ?? true)) {
+          const freqCfg = sweepCfg?.getOptionalConfig('frequency');
+          const frequency = freqCfg
+            ? {
+                hours: freqCfg.getOptionalNumber('hours'),
+                minutes: freqCfg.getOptionalNumber('minutes'),
+                seconds: freqCfg.getOptionalNumber('seconds'),
+              }
+            : { minutes: 15 };
+          const maxAgeMs =
+            (sweepCfg?.getOptionalNumber('maxAgeHours') ?? 24) * 3600_000;
+          await scheduler.scheduleTask({
+            id: 'platform-requests-secret-sweep',
+            frequency,
+            timeout: { minutes: 2 },
+            fn: async () => {
+              // A Secret exists only for IN_PROGRESS requests (created at approval,
+              // GC'd by the Workflow after). Anything else labelled ours is orphaned.
+              const inProgress = await store.list({ state: 'IN_PROGRESS' });
+              await secretStore.sweep({
+                activeRequestIds: new Set(inProgress.map(r => r.id)),
+                maxAgeMs,
+              });
+            },
+          });
+        }
       },
     });
   },

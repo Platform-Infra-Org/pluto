@@ -11,6 +11,7 @@ import {
   Request,
   RequestKind,
   RequestState,
+  SecretFieldSpec,
 } from '@internal/plugin-platform-common';
 
 const migrationsDir = resolvePackagePath(
@@ -35,6 +36,10 @@ type RequestRow = {
   workflow_namespace: string | null;
   workflow_phase: string | null;
   error: string | null;
+  secret_spec: string | null;
+  secret_name: string | null;
+  // secret_enc is deliberately absent: it is read only via getSecretEnc, never
+  // selected into a Request DTO (redaction by construction).
   created_at: string | Date;
   updated_at: string | Date;
 };
@@ -62,7 +67,12 @@ export class RequestsStore {
   }
 
   async create(
-    input: NewRequest & { requester: string; ownerGroup?: string },
+    input: NewRequest & {
+      requester: string;
+      ownerGroup?: string;
+      /** Envelope-encrypted provided secret values (never plaintext). */
+      secretEnc?: string;
+    },
   ): Promise<Request> {
     const now = new Date().toISOString();
     const [row] = await this.db('platform_requests')
@@ -77,6 +87,8 @@ export class RequestsStore {
         owner_group: input.ownerGroup ?? null,
         argo_submit: input.argoSubmit ? JSON.stringify(input.argoSubmit) : null,
         result_output: input.resultOutput ?? null,
+        secret_spec: input.secretSpec ? JSON.stringify(input.secretSpec) : null,
+        secret_enc: input.secretEnc ?? null,
         created_at: now,
         updated_at: now,
       })
@@ -157,6 +169,28 @@ export class RequestsStore {
     if (patch.error !== undefined) update.error = patch.error;
     await this.db('platform_requests').where({ id }).update(update);
   }
+
+  /** The request's encrypted provided-secret blob, if any (approval-only read). */
+  async getSecretEnc(id: number): Promise<string | undefined> {
+    const row = await this.db<RequestRow>('platform_requests')
+      .where({ id })
+      .first('secret_enc as secret_enc');
+    return (row as { secret_enc?: string | null })?.secret_enc ?? undefined;
+  }
+
+  /** Clear the encrypted blob (after it's written to the Secret, or on reject). */
+  async clearSecretEnc(id: number): Promise<void> {
+    await this.db('platform_requests')
+      .where({ id })
+      .update({ secret_enc: null, updated_at: new Date().toISOString() });
+  }
+
+  /** Record the per-request Secret's name (set at approval). */
+  async setSecretName(id: number, name: string): Promise<void> {
+    await this.db('platform_requests')
+      .where({ id })
+      .update({ secret_name: name, updated_at: new Date().toISOString() });
+  }
 }
 
 function assemble(row: RequestRow, approvals: ApprovalRow[]): Request {
@@ -185,6 +219,10 @@ function assemble(row: RequestRow, approvals: ApprovalRow[]): Request {
     workflowNamespace: row.workflow_namespace ?? undefined,
     workflowPhase: row.workflow_phase ?? undefined,
     error: row.error ?? undefined,
+    secretSpec: row.secret_spec
+      ? (JSON.parse(row.secret_spec) as SecretFieldSpec[])
+      : undefined,
+    secretName: row.secret_name ?? undefined,
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at),
   };

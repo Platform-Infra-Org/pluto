@@ -19,13 +19,16 @@ describe('KubernetesSecretStore', () => {
   it('create: one Secret per request, owned by the Workflow, no plaintext in metadata', async () => {
     const api = mockApi();
     const store = new KubernetesSecretStore(api, NS, logger, () => 1_700_000_000_000);
+    const name = store.newName(42);
+    expect(name).toMatch(/^platform-req-42-/);
     const ref = await store.create({
+      name,
       requestId: 42,
       data: { dbPassword: 's3cr3t', apiKey: 'abc' },
       owner: { name: 'git-ops-xyz', uid: 'uid-123' },
     });
 
-    expect(ref).toEqual({ name: expect.stringMatching(/^platform-req-42-/), keys: ['dbPassword', 'apiKey'] });
+    expect(ref).toEqual({ name, keys: ['dbPassword', 'apiKey'] });
     const body: V1Secret = (api as any).createNamespacedSecret.mock.calls[0][0].body;
     // values only in stringData (which K8s encodes), never in labels/annotations/name
     expect(body.stringData).toEqual({ dbPassword: 's3cr3t', apiKey: 'abc' });
@@ -48,7 +51,7 @@ describe('KubernetesSecretStore', () => {
   it('create: keep=true adds the keep label so the sweep leaves it alone', async () => {
     const api = mockApi();
     const store = new KubernetesSecretStore(api, NS, logger);
-    await store.create({ requestId: 1, data: { x: 'y' }, owner: { name: 'w', uid: 'u' }, keep: true });
+    await store.create({ name: 'platform-req-1-aa', requestId: 1, data: { x: 'y' }, owner: { name: 'w', uid: 'u' }, keep: true });
     const body: V1Secret = (api as any).createNamespacedSecret.mock.calls[0][0].body;
     expect(body.metadata?.labels?.['platform.io/keep']).toBe('true');
   });

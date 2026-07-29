@@ -1,0 +1,75 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: provision-postgres
+  title: Provision Postgres (with secret)
+  description: >
+    Request a Postgres instance whose admin password is materialised as a
+    per-request Kubernetes Secret at approval and injected into the provisioning
+    workflow via secretKeyRef — the value never touches params, Argo, Git, or
+    logs. Demonstrates a `generate` secret (the DB password) alongside an
+    optional `provided` secret (an existing API key wired via ${{ secrets.* }}).
+  tags:
+    - platform
+    - database
+    - secrets
+  annotations:
+    platform.io/resource-type: postgres
+spec:
+  owner: group:default/payments
+  type: resource
+  parameters:
+    - title: Database
+      required:
+        - resourceName
+        - size
+      properties:
+        resourceName:
+          type: string
+          title: Name
+          description: Name of the Postgres instance to provision
+        size:
+          type: string
+          title: Size
+          default: small
+          enum: [small, medium, large]
+    - title: Credentials (optional)
+      properties:
+        apiKey:
+          type: string
+          title: Existing API key
+          description: >
+            Optional. If set, it is stored encrypted until approval, then written
+            into the request Secret alongside the generated DB password.
+          ui:field: Secret # scaffolder Secret field → ${{ secrets.apiKey }}, redacted
+  steps:
+    - id: submit
+      name: Submit request
+      action: platform:request:submit
+      input:
+        resourceType: postgres
+        resourceName: ${{ parameters.resourceName }}
+        kind: CREATE
+        params:
+          size: ${{ parameters.size }}
+        argoSubmit:
+          namespace: argo
+          workflowTemplate: provision-postgres
+          parameters:
+            request: "<< paramsJson >>"
+            # The backend fills << secretName >> with the request's Secret name.
+            secretName: "<< secretName >>"
+        secrets:
+          # Minted by the backend at approval, straight into the Secret.
+          - name: dbPassword
+            source: generate
+            length: 24
+          # Supplied now (if any), wired from the redacted Secret field so it is
+          # never logged or stored in the task; the backend encrypts it at rest.
+          - name: apiKey
+            source: provided
+            value: ${{ secrets.apiKey }}
+  output:
+    links:
+      - title: Open request
+        url: /requests/${{ steps.submit.output.requestId }}

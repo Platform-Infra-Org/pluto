@@ -15,6 +15,7 @@ import { z } from 'zod/v3';
 import { requestApprovePermission, requestCreatePermission } from './permissions';
 import { applyDecision } from './stateMachine';
 import { RequestsStore } from './store';
+import { Cipher, NO_CIPHER } from './crypto';
 
 /**
  * Resolves the acting user's admin flag + raw group memberships (from their
@@ -43,6 +44,10 @@ export interface RouterOptions {
   ) => Promise<Record<string, unknown>>;
   /** Called on APPROVED before flipping to IN_PROGRESS. No-op until P2. */
   submitWorkflow?: (request: PlatformRequest) => Promise<void>;
+  /** Envelope cipher for user-provided secrets. Defaults to NO_CIPHER. */
+  cipher?: Cipher;
+  /** Whether platform.secrets is enabled (gates requests that need a Secret). */
+  secretsEnabled?: boolean;
   /** Called after a request is created (for approver notifications). */
   onCreated?: (request: PlatformRequest) => Promise<void>;
   /** Called after an approve/reject decision resolves (for requester alerts). */
@@ -68,6 +73,19 @@ const newRequestSchema = z.object({
   argoSubmit: z.record(z.any()).optional(),
   // Argo output parameter to read on success (created resource ref/URL).
   resultOutput: z.string().optional(),
+  // Secret fields to materialise at approval (see SecretFieldSpec).
+  secretSpec: z
+    .array(
+      z.object({
+        name: z.string(),
+        source: z.enum(['generate', 'provided']),
+        length: z.number().int().positive().optional(),
+      }),
+    )
+    .optional(),
+  // Plaintext values for `provided` secret fields. Encrypted the instant they
+  // arrive and never persisted in the clear; dropped from the stored request.
+  secretValues: z.record(z.string()).optional(),
   // Only honored for service callers (the Scaffolder action creating on behalf
   // of the initiating user); ignored for user callers (requester = the actor).
   requester: z.string().optional(),
@@ -88,6 +106,7 @@ export async function createRouter(
     options.principalResolver ?? (async () => ({ isAdmin: false, groups: [] }));
   const submitWorkflow =
     options.submitWorkflow ?? (async () => undefined);
+  const cipher: Cipher = options.cipher ?? NO_CIPHER;
 
   const router = Router();
   router.use(express.json());
@@ -101,7 +120,30 @@ export async function createRouter(
   router.post('/requests', async (req, res) => {
     const parsed = newRequestSchema.safeParse(req.body);
     if (!parsed.success) throw new InputError(parsed.error.toString());
-    const { requester: onBehalf, ...data } = parsed.data;
+    const { requester: onBehalf, secretValues, ...data } = parsed.data;
+
+    // A request that needs a Secret is only accepted when secrets are enabled —
+    // fail at submit, not silently at approval.
+    if (data.secretSpec?.length && options.secretsEnabled === false) {
+      throw new InputError(
+        'this request requires secrets but platform.secrets is disabled',
+      );
+    }
+    // Encrypt provided values immediately; plaintext is never stored, and
+    // `secretValues` is dropped from the persisted request entirely.
+    let secretEnc: string | undefined;
+    const provided = (data.secretSpec ?? []).filter(f => f.source === 'provided');
+    if (provided.length) {
+      const values: Record<string, string> = {};
+      for (const f of provided) {
+        const v = secretValues?.[f.name];
+        if (v == null) {
+          throw new InputError(`missing value for provided secret '${f.name}'`);
+        }
+        values[f.name] = v;
+      }
+      secretEnc = cipher.encrypt(JSON.stringify(values));
+    }
 
     // Service callers (the Scaffolder action) create on behalf of a named user;
     // user callers create for themselves and must hold the create permission.
@@ -151,6 +193,7 @@ export async function createRouter(
       resultOutput,
       requester,
       ownerGroup,
+      secretEnc,
     });
     if (options.onCreated) await options.onCreated(created);
     res.status(201).json(created);
@@ -271,6 +314,9 @@ export async function createRouter(
       if (nextState === 'APPROVED') {
         await submitWorkflow((await store.get(request.id))!);
         await store.setState(request.id, 'IN_PROGRESS');
+      } else if (nextState === 'REJECTED') {
+        // No Workflow, no Secret was ever created — just drop the held blob.
+        await store.clearSecretEnc(request.id);
       }
 
       const resolved = (await store.get(request.id))!;

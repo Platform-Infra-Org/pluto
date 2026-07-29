@@ -22,6 +22,11 @@ export interface ResolveCtx {
   resourcePath?: string;
   /** Repo path of the resource's data file, from its ref (`<< resourceDataPath >>`). */
   resourceDataPath?: string;
+  /**
+   * Name of the per-request Kubernetes Secret (`<< secretName >>`), so the
+   * WorkflowTemplate can `secretKeyRef` it. Pre-generated before submit.
+   */
+  secretName?: string;
 }
 
 /**
@@ -53,6 +58,8 @@ export function resolveTemplate(str: string, ctx: ResolveCtx): string {
         return ctx.resourcePath ?? '';
       case 'resourceDataPath':
         return ctx.resourceDataPath ?? '';
+      case 'secretName':
+        return ctx.secretName ?? '';
       default: {
         if (token.startsWith('params.')) {
           const v = ctx.params?.[token.slice('params.'.length)];
@@ -173,7 +180,7 @@ export class ArgoClient {
   async submitSpec(
     spec: ArgoSubmitSpec | undefined,
     ctx: ResolveCtx,
-  ): Promise<{ name: string; namespace: string }> {
+  ): Promise<{ name: string; namespace: string; uid?: string }> {
     const namespace =
       (spec?.namespace && resolveTemplate(spec.namespace, ctx)) ||
       this.cfg.namespace;
@@ -239,10 +246,12 @@ export class ArgoClient {
     if (!res.ok) {
       throw new Error(`argo submit failed: ${res.status} ${await res.text()}`);
     }
-    const wf = (await res.json()) as { metadata?: { name?: string } };
+    const wf = (await res.json()) as {
+      metadata?: { name?: string; uid?: string };
+    };
     const name = wf.metadata?.name;
     if (!name) throw new Error('argo submit returned no workflow name');
-    return { name, namespace };
+    return { name, namespace, uid: wf.metadata?.uid };
   }
 
   /** Current status of the workflow for a request (by label), if any. */
