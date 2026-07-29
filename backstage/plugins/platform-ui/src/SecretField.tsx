@@ -4,6 +4,8 @@ import {
   FormFieldBlueprint,
 } from '@backstage/plugin-scaffolder-react/alpha';
 import { useTemplateSecrets } from '@backstage/plugin-scaffolder-react';
+import Visibility from '@material-ui/icons/Visibility';
+import VisibilityOff from '@material-ui/icons/VisibilityOff';
 
 /**
  * Scaffolder `ui:field: Secret` for the new frontend system, which — unlike the
@@ -51,11 +53,28 @@ function SecretFieldComponent(props: any) {
         />
         <button
           type="button"
-          className="sc-select"
-          style={{ width: 'auto', padding: '0 12px', cursor: 'pointer' }}
+          aria-label={shown ? 'Hide secret' : 'Show secret'}
+          title={shown ? 'Hide' : 'Show'}
           onClick={() => setShown(s => !s)}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 36,
+            height: 36,
+            flex: '0 0 auto',
+            padding: 0,
+            border: 'none',
+            background: 'transparent',
+            color: 'hsl(var(--sc-muted-fg))',
+            cursor: 'pointer',
+          }}
         >
-          {shown ? 'Hide' : 'Show'}
+          {shown ? (
+            <VisibilityOff fontSize="small" />
+          ) : (
+            <Visibility fontSize="small" />
+          )}
         </button>
       </div>
       {schema?.description && (
