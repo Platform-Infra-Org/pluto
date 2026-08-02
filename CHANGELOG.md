@@ -1,0 +1,242 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- Fastapi skeleton + healthz
+- Db session + alembic baseline
+- Vite+headless skeleton, router, api client
+- Keycloak jwt validation
+- Principal + group→role rbac
+- Rbac fastapi dependencies + /api/me
+- Oidc pkce login, route guard, role gating
+- Status model + failed-step extraction
+- Submit + get client
+- Watch stream + proven failed-step reporting
+- Resource index model
+- Ownership resolution
+- Git sync worker
+- Git webhook + reconcile
+- Rbac-filtered catalog api
+- Resource list + detail
+- Request + audit models
+- Approval policy engine
+- State machine + policy-satisfied guard
+- Approver authz + admin bypass
+- Payload validation + staleness
+- Request api
+- Request form + approval queue
+- Workflow binding + param map
+- Approved->submit executor
+- Watcher + failed-step persistence
+- Reindex on success
+- Status api + live node tree
+- Trigger submit+watch on APPROVED
+- Model + service
+- Event -> recipient mapping
+- Sse stream + pg fan-out
+- Notification center
+- Definition model + pinned versioning + retire guard
+- Shared schema form renderer + formalize E05/E06 seams
+- Groups picker
+- File upload -> artifact repo
+- External-api option source poller
+- Onboarding approval lane
+- Service builder + onboarding queue
+- Auditor role + audit views
+- Dashboard aggregation apis + management actions
+- Resilience — startup reconcile + stuck-workflow timeout
+- Otel observability + secret-safe structured logs
+- Admin dashboard
+- Accessibility pass
+- Wire SPA auth glue for browser login
+- Docker-compose stack + Keycloak realm + seed catalog
+- Run scripts, README, and authenticated API smoke test
+- Role-aware navigation shell
+- Theme system + switcher
+- Modern restyle across all pages
+- Clickable home cards + request entry points (New request CTA, type picker, per-resource Request update/delete)
+- Manifest schema + parser + type assignability
+- Function block model
+- Derive service-block manifests
+- Registry + admin-gated blocks api
+- Seed v1 built-in function blocks
+- Block-onboarding screen
+- Graph model + validation
+- Wave grouping
+- Emit build-json.j2
+- Emit workflowtemplate (per-verb)
+- Generate() orchestration + recursion
+- Generate preview endpoint
+- Graph types + block/generate client
+- Graph palette + canvas
+- Node inspector
+- Per-verb graph tabs
+- Live generated preview
+- Definition graphs + generated
+- Compose+regenerate on save
+- Opt-in verbs + editable + versioned
+- Drift detection vs pinned versions
+- Review generated yaml + print-for-git
+- Jinja render/resolve engine
+- Api-call + secretRef
+- Json-extractor + set-value
+- Git-commit
+- Argo wrappers + runner image
+- New-block form (structured manifest_json), logout returns home, approved onboarding makes type requestable (available endpoint + form derived from graph request fields), onboarding review shows generated WorkflowTemplate + jinja
+- Block manifest entrypoint (templateRef.template)
+- Block form IO type choice boxes + entrypoint + edit existing
+- Richer example resources with payload + mapping (orders-db, audit-logs)
+- Resource edit (prefilled JSON) → UPDATE approval, delete → DELETE approval
+- Import entity screen — upload JSON, choose type → CREATE approval
+- F3 groups registry (JSON/CSV import) + projects mapped to a group
+- F3 admin Projects + Groups panels
+- Emoji icon picker for block creation (searchable grid) replacing the free-text icon field
+- Per-service id_field + id-field-options endpoint
+- ID-field choice box in the graph builder
+- Add resource dependency-graph endpoint + demo seed refs
+- Scaffold create-app shell (Backstage 1.53, yarn 4)
+- Docker stack (postgres, keycloak, gitea, minio) + backstage OIDC client
+- Seed gitea catalog + templates repos
+- Kind cluster + argo workflows + seed templates
+- Keycloak OIDC sign-in + postgres backend
+- Ingest catalog resources + templates from gitea
+- Custom platform theme (indigo/violet, light+dark)
+- Backstage-up/down orchestration + README
+- Shared request/approval types + permissions
+- Pure approval state machine (policySatisfied + applyDecision)
+- Knex-backed RequestsStore + 0001_init migration
+- HTTP router with permission checks + workflow hook
+- Wire platform-requests plugin, drop TodoList example
+- RBAC permission policy + seeded users/groups
+- Frontend plugin (queue + detail + approvals)
+- Submit + poll Argo on approval, gate request completion
+- Platform:request:submit action + demo template
+- Pure generator for Scaffolder template + Argo WorkflowTemplate
+- Gitea + argo-server publisher
+- Router, plugin wiring, backend registration and config
+- Service Builder UI + publisher fixes (basic-auth, POST-create)
+- Edit/delete via approval + catalog-writer
+- Native notifications + Argo workflow DAG view
+- Allow admins + service-owners to self-approve
+- Modern shadcn-flavored theme + Platform logo
+- Shadcn design layer + live color-scheme picker
+- Custom shadcn nav replacing the Backstage sidebar (as a plugin)
+- Single platform-ui plugin + reskin native Backstage pages
+- Polish nav (collapsible, aligned, stylish), calmer palette, bui accent
+- Reskin native graphs + fix hashed-class selectors
+- React-Flow-style graphs (dark canvas + dots), smaller nodes, compact headers
+- DynamicSelect — API-driven choice box with configurable polling
+- DynamicSelect as a Scaffolder field extension
+- DynamicSelect field can call APIs via the Backstage proxy
+- Shadcn React Flow relations graph card (replaces catalog-graph)
+- Add ArgoSubmitSpec type + request fields
+- Persist argoSubmit spec + workflow namespace
+- Configurable submit with ${{ token }} resolver
+- Wire per-request submit spec end-to-end
+- Configurable home page, TechDocs, richer Argo action schema, theme fixes
+- Greek-temple logo glyph instead of a plain color block
+- Edit/delete resources inline on the entity page
+- Per-team service-owner approvals (template owner = service owner)
+- My requests / For approval tabs + scoped visibility
+- Session restore on refresh, 3rd "All requests" tab, filter + sort
+- Show timestamps (created column + created/updated + approval times)
+- Generate templates to current standards (owner, annotation, argoSubmit)
+- Status-change notifications + created-resource link from workflow output
+- Resource Data tab with a collapsible JSON tree
+- << resourceData >> token + per-verb update/delete workflow config
+- Resource-data ref supports dir:/url: prefixes (like techdocs-ref)
+- Resolve resource/data file paths from the annotation (any layout)
+- Move users to LDAP; Keycloak federates + Backstage ingests them
+- Route Argo REST calls through a configurable Backstage proxy
+- Step 1 — SecretStore interface + Kubernetes impl + config + RBAC
+- Steps 2-8 — wire per-request Secret lifecycle end to end
+- Register a Secret scaffolder field + wire the postgres example live
+- Add secrets.schema to the provision-postgres example
+- Eye-icon show/hide toggle on the Secret field
+- Add git-cliff config and generate CHANGELOG
+
+### Changed
+
+- Initial planning docs + gitignore
+- Containers, k8s dev deploy, CI pipeline
+- Track empty package __init__
+- Jsonschema type stubs + is_stale nullable sha
+- Dedupe CI, remove dead BFF-session-cookie scaffolding
+- Design for composable graph-based service builder (11)
+- Resolve open questions in service-builder design (per-verb opt-in graphs, editability, secrets, recursion, versioning)
+- Phased implementation plan for composable service builder (CB01-CB05 epics)
+- Unify node inputs under input_bindings in the generator
+- Unify inputs in the graph inspector into one Inputs section
+- Resource detail: form view + raw-JSON toggle + dependency graph
+- Resource form/raw toggle + dependency graph + id-field choice box
+- Dependency graph: include parents (bidirectional traversal + signed layout)
+- Backstage plugin-suite design (spec)
+- P0 backstage-shell implementation plan
+- P1 requests-approvals implementation plan
+- Use << token >> delimiter for submit templating
+- Graph builder Backstage integration design (composable builder, current standards)
+- Drop roles + RBAC policy mode; make admin/auditor groups configurable
+- Production-readiness audit + Backstage upgrade playbook; untrack .spa.log
+- Make the reskin upgrade-resilient (stable hooks + companions)
+- Diátaxis MkDocs site served via TechDocs; tidy structure
+- Plan to convert the plugin suite to RHDH dynamic plugins
+- RHDH 1.9 migration plan (align dev to Backstage 1.45.3) + in-app config guide
+- Secret lifecycle plan (create-on-approve, workflow-owned, per-request)
+- Lint clean the secret-lifecycle files (eqeqeq, no-nested-ternary, useless-ctor)
+
+### Fixed
+
+- Run alembic upgrade head via initContainer before BFF starts
+- Enforce aud/iss, in-memory token store, jwks kid refresh
+- Accurate failed-step — ignore recovered retries, deterministic multi-leaf choice
+- Validate N_OF_M n, scope read endpoints, real staleness re-confirm, 409 on non-pending
+- Live-Argo end-to-end acceptance (skipped without cluster)
+- Exactly-once submit via deterministic workflow name + AlreadyExists handling
+- Short-lived SSE replay session, id-only durable pg_notify, redact access_token in logs
+- Upload size pre-check (413), declare boto3, version-pin execution binding
+- Clear mypy debt (E04 catalog + E08 fields/onboarding)
+- Mypy-clean overview aggregation
+- Auditor strict read-only, ownership validation, axe table coverage, safer stuck-timeout, rm .DS_Store
+- Playwright browser verification of login + core flows
+- Scope vitest to src/, exclude playwright e2e specs
+- Client-side <Link> navigation so in-memory token survives resource/request/notification clicks
+- Pre-paint theme script (no FOUC) + e2e specs for resource-click regression and redesign/theme verification
+- Validate OutRef targets exist (clean error, no KeyError) + cleanups
+- Parse-safe generate endpoint, request-field + main-body wiring, node deletion
+- Assert zero-verb definition is rejected
+- Assert set-value sandbox blocks real escape payloads
+- Graph editor loads blocks from API + live generate round-trip
+- /edit returns clean error (not 500) on non-GenerationError generation failures
+- Align node input/output handles with labeled rows, enum config/literal as choice box, request fields in a sub-tab
+- Draggable nodes, canvas fills column height (aligned with sidebars), theme React Flow canvas/controls/attribution/handles to the motif
+- Map-input sub-editor uses isBinding (not 'kind' in v) so a body key named 'kind' isn't hidden
+- Keep CORS headers on unhandled 500s so failed fetches surface as HTTP errors, not browser NetworkError
+- NetworkError regression (no failed /api fetches) + scope stale Resources nav selector
+- New-block form, logout→home, onboarded type available to request
+- Block edit + choice-box types, admin projects/groups panels, resource edit/delete + import entity
+- Dedupe platform-rbac module registration
+- Shrink graph nodes (cap zoom-to-fit)
+- Dependency graph svg fills its canvas (no smaller inner box)
+- Custom themed sign-in page + home table overflow
+- Scroll wide tables instead of clipping them
+- Portal dialogs to body so they aren't trapped behind the graph
+- Checkout service-owner fixture (user sam, team checkout, template + workflow)
+- Read workflow output from node outputs, not just global
+- Expose resource-ref as a global workflow output (globalName)
+- Show owner team as bare name, not group:namespace/name
+- Edit reads/writes resource data from the annotation or the yaml
+- Use inline SVG for the eye toggle so it can't render invisibly
+- Rename custom secret field to PlatformSecret to beat the built-in
+
+### Removed
+
+- Remove catalogWriter; workflows own Git; resource-data is a file ref
+
+<!-- generated by git-cliff -->
