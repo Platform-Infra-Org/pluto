@@ -374,6 +374,33 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     animation: sc-cursor-in .12s steps(2) both;
   }
   .sc-nav-item.active:hover .sc-nav-cursor::before { content: none; }
+
+  /* Ambient: presence, not information. */
+  @keyframes sc-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-2px); }
+  }
+  @keyframes sc-caret { 50% { opacity: 0; } }
+  .sc-empty .sc-state-ic { animation: sc-bob 1.2s steps(2) infinite; }
+  .sc-h1::after {
+    content: '\\2588';
+    margin-left: 4px;
+    color: hsl(var(--sc-primary));
+    animation: sc-caret 1s steps(1) infinite;
+  }
+}
+
+/* The scanline layer is texture, not motion, so it sits outside the media query
+   and survives reduced-motion. pointer-events: none keeps clicks passing
+   through it. */
+.sc-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(0deg,
+    hsl(var(--sc-fg) / .03) 0 1px, transparent 1px 3px);
 }
 
 /* ===== 8-bit chrome =====
