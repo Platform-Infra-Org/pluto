@@ -2,6 +2,7 @@ export { SHADCN_CSS } from './styles';
 export { SCHEMES, SchemePicker } from './SchemeRoot';
 export { platformUiModule } from './theme';
 export {
+  PixelSprite,
   PlatformMark,
   Page,
   PageHeader,
@@ -15,6 +16,8 @@ export {
   Field,
   Dialog,
 } from './components';
+export { STATE_SPRITES, TEMPLE } from './sprites';
+export type { Sprite } from './sprites';
 export { JsonTree } from './JsonTree';
 export { DynamicSelect, toChoiceOptions } from './DynamicSelect';
 export type { DynamicSelectProps, ChoiceOption, Fetcher } from './DynamicSelect';

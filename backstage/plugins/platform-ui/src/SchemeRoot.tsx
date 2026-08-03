@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
-import { MARK_SHAPES, MARK_VIEWBOX } from './markShapes';
+import { SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
 
 // Muted, shadcn-calm accents (lower saturation — not neon).
 export const SCHEMES = [
@@ -91,24 +91,14 @@ function updateFavicon(accentHsl: string) {
     return;
   }
 
-  // Default: the same glyph the sidebar draws, in the tile's foreground colour.
+  // Default: the same pixel glyph the sidebar draws.
   drawTile(g, accentHsl);
-  const scale = (ICON_SIZE - ICON_INSET * 2) / MARK_VIEWBOX;
+  const scale = (ICON_SIZE - ICON_INSET * 2) / SPRITE_SIZE;
   g.save();
   g.translate(ICON_INSET, ICON_INSET);
   g.scale(scale, scale);
   g.fillStyle = '#fff'; // --sc-primary-fg
-  for (const s of MARK_SHAPES) {
-    if ('path' in s) {
-      g.fill(new Path2D(s.path));
-    } else if (typeof g.roundRect === 'function') {
-      g.beginPath();
-      g.roundRect(s.x, s.y, s.w, s.h, s.r);
-      g.fill();
-    } else {
-      g.fillRect(s.x, s.y, s.w, s.h);
-    }
-  }
+  for (const r of spriteRects(TEMPLE)) g.fillRect(r.x, r.y, r.w, 1);
   g.restore();
   publish();
 }

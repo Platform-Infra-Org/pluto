@@ -6,7 +6,35 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { configApiRef, useApi } from '@backstage/core-plugin-api';
-import { MARK_SHAPES, MARK_VIEWBOX } from './markShapes';
+import { Sprite, SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
+
+/**
+ * Renders a pixel grid as SVG rects. `shape-rendering: crispEdges` is what keeps
+ * the edges hard at every size — without it the browser antialiases the pixels
+ * back into a smooth shape.
+ */
+export function PixelSprite({
+  sprite,
+  className,
+}: {
+  sprite: Sprite;
+  className?: string;
+}) {
+  return (
+    <svg
+      className={className}
+      viewBox={`0 0 ${SPRITE_SIZE} ${SPRITE_SIZE}`}
+      fill="currentColor"
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {spriteRects(sprite).map(r => (
+        <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
+      ))}
+    </svg>
+  );
+}
 
 /**
  * The Platform logo glyph. `app.branding.mark` replaces it with an image drawn
@@ -27,23 +55,7 @@ export function PlatformMark({ className }: { className?: string }) {
     // that already names the product.
     return <img className={className} src={mark} alt="" aria-hidden="true" />;
   }
-  return (
-    <svg
-      className={className}
-      viewBox={`0 0 ${MARK_VIEWBOX} ${MARK_VIEWBOX}`}
-      fill="currentColor"
-      aria-hidden="true"
-      focusable="false"
-    >
-      {MARK_SHAPES.map((s, i) =>
-        'path' in s ? (
-          <path key={i} d={s.path} />
-        ) : (
-          <rect key={i} x={s.x} y={s.y} width={s.w} height={s.h} rx={s.r} />
-        ),
-      )}
-    </svg>
-  );
+  return <PixelSprite sprite={TEMPLE} className={className} />;
 }
 
 export function Page({ children }: { children: ReactNode }) {
