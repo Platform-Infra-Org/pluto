@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useApi } from '@backstage/core-plugin-api';
 import { Link } from '@backstage/core-components';
-import { Page, PageHeader, Card, Badge } from '@internal/plugin-platform-ui';
+import {
+  Page,
+  PageHeader,
+  Card,
+  Badge,
+  PixelSprite,
+  STATE_SPRITES,
+} from '@internal/plugin-platform-ui';
 import { Request, RequestState } from '@internal/plugin-platform-common';
 import { requestsApiRef } from '../api';
 
@@ -12,42 +19,41 @@ export const formatTs = (iso: string) =>
     timeStyle: 'short',
   });
 
+/**
+ * The state badge, with its sprite. The sprite is decoration on top of the
+ * badge text — never instead of it, so the accessible name is unchanged. The
+ * gear spins while a workflow is actually running.
+ */
 export function stateBadge(s: RequestState) {
-  switch (s) {
-    case 'PENDING_APPROVAL':
-      return (
-        <Badge tone="warning" dot>
-          Pending approval
-        </Badge>
-      );
-    case 'APPROVED':
-    case 'IN_PROGRESS':
-      return (
-        <Badge tone="primary" dot>
-          {s === 'APPROVED' ? 'Approved' : 'In progress'}
-        </Badge>
-      );
-    case 'SUCCEEDED':
-      return (
-        <Badge tone="success" dot>
-          Succeeded
-        </Badge>
-      );
-    case 'FAILED':
-      return (
-        <Badge tone="destructive" dot>
-          Failed
-        </Badge>
-      );
-    case 'REJECTED':
-      return (
-        <Badge tone="muted" dot>
-          Rejected
-        </Badge>
-      );
-    default:
-      return <Badge>{s}</Badge>;
-  }
+  const label: Record<RequestState, string> = {
+    PENDING_APPROVAL: 'Pending approval',
+    APPROVED: 'Approved',
+    IN_PROGRESS: 'In progress',
+    SUCCEEDED: 'Succeeded',
+    FAILED: 'Failed',
+    REJECTED: 'Rejected',
+  };
+  const tone: Record<RequestState, 'warning' | 'primary' | 'success' | 'destructive' | 'muted'> = {
+    PENDING_APPROVAL: 'warning',
+    APPROVED: 'primary',
+    IN_PROGRESS: 'primary',
+    SUCCEEDED: 'success',
+    FAILED: 'destructive',
+    REJECTED: 'muted',
+  };
+  const sprite = STATE_SPRITES[s];
+  if (!sprite) return <Badge>{s}</Badge>;
+  return (
+    <span className="sc-state">
+      <PixelSprite
+        sprite={sprite}
+        className={`sc-state-ic${s === 'IN_PROGRESS' ? ' spinning' : ''}`}
+      />
+      <Badge tone={tone[s]} dot>
+        {label[s]}
+      </Badge>
+    </span>
+  );
 }
 
 type Tab = 'mine' | 'approval' | 'all';

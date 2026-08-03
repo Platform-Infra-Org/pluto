@@ -370,6 +370,11 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-badge { border: var(--sc-border-w) solid hsl(var(--sc-border)); box-shadow: none; }
 .sc-input, .sc-select { border-width: var(--sc-border-w); box-shadow: none; }
 
+/* State sprite beside its badge. 16px is one screen pixel per sprite pixel —
+   the size at which pixel art is sharpest; avoid non-integer multiples. */
+.sc-state { display: inline-flex; align-items: center; gap: var(--sc-unit); }
+.sc-state-ic { width: 16px; height: 16px; flex: 0 0 auto; color: currentColor; }
+
 /* Sidebar: the active row is marked by a cursor, the way a menu selection is. */
 .sc-nav-cursor { font-family: var(--sc-font-pixel); font-size: 11px; width: 12px;
   flex: 0 0 auto; color: hsl(var(--sc-primary)); }
