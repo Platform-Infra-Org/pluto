@@ -13,7 +13,6 @@ nav:
       - Give a resource a data file: how-to/set-resource-data.md
       - Add a live (DynamicSelect) field: how-to/add-a-dynamic-select-field.md
       - Upgrade Backstage: how-to/upgrade-backstage.md
-      - Configure the suite in RHDH 1.9: how-to/configure-rhdh.md
   - Reference:
       - Plugins: reference/plugins.md
       - Annotations: reference/annotations.md
