@@ -43,7 +43,6 @@ auth:
 # scaffold placeholder) so nothing in production can resolve to them.
 integrations:
   gitea: []
-  github: []
   bitbucketServer:
     - host: ${BITBUCKET_HOST}
       apiBaseUrl: https://${BITBUCKET_HOST}/rest/api/1.0

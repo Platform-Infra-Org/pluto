@@ -27,7 +27,6 @@
     "@backstage/core-plugin-api": "*",
     "@backstage/frontend-plugin-api": "*",
     "@backstage/plugin-catalog-react": "*",
-    "@backstage/theme": "*",
     "@internal/plugin-platform-common": "workspace:^",
     "@internal/plugin-platform-ui": "workspace:^",
     "@material-ui/core": "^4.12.2",

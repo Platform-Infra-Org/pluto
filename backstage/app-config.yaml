@@ -79,15 +79,6 @@ integrations:
       baseUrl: http://localhost:3001
       username: platform
       password: platform
-  github:
-    - host: github.com
-      # This is a Personal Access Token or PAT from GitHub. You can find out how to generate this token, and more information
-      # about setting up the GitHub integration here: https://backstage.io/docs/integrations/github/locations#configuration
-      token: ${GITHUB_TOKEN}
-    ### Example for how to add your GitHub Enterprise instance using the API:
-    # - host: ghe.example.net
-    #   apiBaseUrl: https://ghe.example.net/api/v3
-    #   token: ${GHE_TOKEN}
 
 proxy:
   endpoints:
@@ -244,14 +235,6 @@ platform:
     # Production: set proxyPath to a proxy.endpoints entry (above) so Argo calls
     # go through the proxy, which injects the argo-server auth server-side.
     # proxyPath: /argo-workflows
-  # Where request results (edit/update, delete) are applied on workflow success.
-  catalog:
-    gitea:
-      baseUrl: http://localhost:3001
-      owner: platform
-      repo: catalog
-      user: platform
-      password: platform
 
 # see https://backstage.io/docs/ai/mcp-actions for more details
 mcpActions:
