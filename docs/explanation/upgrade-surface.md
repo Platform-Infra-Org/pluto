@@ -33,22 +33,38 @@ before anything else.
 Param shapes shift occasionally — `EntityContentBlueprint`'s `defaultPath` →
 `path` deprecation already caught us once. The type checker catches these too.
 
-## 3. The shadcn reskin CSS — the only build-invisible risk
+## 3. The reskin CSS — mostly not a risk any more
 
-`plugins/platform-ui/src/styles.ts` is mostly on **stable hooks**: MUI global
-classes (`.MuiButton-*`, `.MuiCard-*`, …), the BUI `--bui-*` variables with
+`plugins/platform-ui/src/styles.ts` sits on **stable hooks**: MUI global classes
+(`.MuiButton-*`, `.MuiCard-*`, …), the BUI `--bui-*` variables with
 `[data-variant]`, and `.react-flow__*`.
 
-The residual risk is Backstage's own **hashed `makeStyles` components**, which
-expose no stable hook. Every one of those is tagged **`[FRAGILE]`** in the file,
-matched by the stable class *prefix* with the hash ignored, and paired where
-possible with a stable companion so it degrades gracefully rather than
-disappearing.
+Backstage's own components used to be styled here too, by matching hashed
+`makeStyles` prefixes like `[class*="BackstageHeader-title"]`. They are now
+styled in `theme.tsx` through `createUnifiedTheme`'s `components` block, using
+the override keys and slot names `@backstage/core-components` publishes:
 
-A `[FRAGILE]` selector can break **silently** — no type error, no failing test —
-on a component rename or an MUI major bump. That is the whole reason the upgrade
-checklist keeps a manual visual pass. The fix is scoped, though: grep
-`[FRAGILE]`, re-derive only the affected prefix from the new DOM.
+```ts
+components: {
+  BackstageHeader: { styleOverrides: { header: {…}, title: {…} } },
+  BackstageInfoCard: { styleOverrides: { header: {…} } },
+  …
+}
+```
+
+Those slot names are **typed**, so a rename fails `yarn tsc` instead of silently
+rendering an unstyled page. The class hash — the thing that actually changes
+between versions — no longer matters.
+
+One caveat worth knowing: theme overrides apply at the component's own
+specificity, so where Backstage sets a value inside a breakpoint it can still
+win. `BackstageSidebarPage` needs `!important` for exactly that reason (it sets
+its own 224px `padding-left`), and it is commented as such.
+
+What remains `[FRAGILE]` is the catalog/dependency graph, which the
+catalog-graph plugin styles privately with no published override key. That is
+two rules, and it can still break silently on a rename — which is why the
+upgrade checklist keeps a visual pass.
 
 ## 4. The theme
 

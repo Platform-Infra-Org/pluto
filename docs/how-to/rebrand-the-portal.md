@@ -100,8 +100,9 @@ The tile is 26px in the sidebar and 52px on sign-in; the mark inside is 17px and
 rounded corners. Keep that ratio if you change the sizes. The generated tab icon
 uses the same proportions on a 64px canvas.
 
-An SVG mark should be authored on a **24×24 artboard** (`viewBox="0 0 24 24"`),
-which is the coordinate space the built-in glyph uses. Below about 32px fine
+An SVG mark should be authored on a **16×16 artboard** (`viewBox="0 0 16 16"`),
+which is the coordinate space the built-in sprite uses — one grid cell per
+pixel. Below about 32px fine
 detail disappears — the tab icon is rendered at 16–32px, so a busy logo will turn
 to mush there. Simple marks win.
 
@@ -109,7 +110,7 @@ to mush there. Simple marks win.
 
 | | Where |
 |---|---|
-| The built-in glyph (fallback when `branding.mark` is unset) | `backstage/plugins/platform-ui/src/components.tsx` → `PlatformMark` |
+| The built-in glyph (fallback when `branding.mark` is unset) | `backstage/plugins/platform-ui/src/sprites.ts` → `TEMPLE`, a 16×16 character grid rendered by `PixelSprite` |
 | Tile size, radius, and the accent gradient | `platform-ui/src/styles.ts` (`.sc-nav-mark`, `.sc-login-mark`) |
 | The colour palette itself | `platform-ui/src/SchemeRoot.tsx` → `SCHEMES` |
 | Tab icon generation | `platform-ui/src/SchemeRoot.tsx` → `updateFavicon` |

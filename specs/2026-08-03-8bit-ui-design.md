@@ -19,7 +19,7 @@ The colour picker survives intact: six swatches, same code path, same
 |---|---|---|
 | Motif intensity | **Pixel chrome, readable body** | Headings, nav, buttons, badges and numbers in pixel type; body copy, tables and JSON stay Inter/mono. Request descriptions and workflow output are read under pressure |
 | Mark | **Pixel temple + per-state sprites** | Keeps the existing identity (a temple on its platform) and carries the motif into the pages that matter |
-| Font | **Silkscreen**, self-hosted | ~30% narrower than Press Start 2P, so `PENDING APPROVAL` still fits a badge. SIL OFL, ~14KB woff2 |
+| Font | **Silkscreen**, self-hosted | ~30% narrower than Press Start 2P, so `PENDING APPROVAL` still fits a badge. SIL OFL, 3.4KB woff2 (latin subset) |
 | Animation | **State-driven + ambient**, reduced-motion gated | Motion tied to real state changes, plus light idle presence |
 | Palette | **Saturate the existing six** | Same hues and identities, pushed toward NES-era saturation. The picker is untouched |
 | Mechanics | **None** | No XP, points, achievements, leaderboards or sound. A motif, not a game loop |
