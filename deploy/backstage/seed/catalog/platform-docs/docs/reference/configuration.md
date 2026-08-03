@@ -2,6 +2,20 @@
 
 App-config keys the suite reads (all under `app-config.yaml` unless noted).
 
+## `app.branding`
+
+```yaml
+app:
+  branding:
+    mark: /branding/mark.svg     # logo in the accent tile; also the source for the tab icon
+    favicon: /branding/tab.png   # optional: pins the tab icon instead of generating it
+```
+
+Both optional and both frontend-visible. Same-origin only (`img-src 'self'
+data:`). Unset `mark` falls back to the built-in glyph; unset `favicon` generates
+the tab icon from `mark` over the picked accent colour. See
+**[Change the logo, favicon and title](../how-to/rebrand-the-portal.md)**.
+
 ## `platform.rbac`
 
 ```yaml

@@ -163,6 +163,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add git-cliff config and generate CHANGELOG
 - Read the catalog from Bitbucket Data Center in production
 - Rotate the envelope key without re-encrypting
+- Configurable platform mark and tab icon
 
 ### Changed
 
@@ -195,6 +196,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ignore the Backstage dev-server log
 - Explain the secret lifecycle and key rotation
 - Document where the logo, favicon and title are changed
+- How to configure the logo and tab icon
 
 ### Fixed
 
