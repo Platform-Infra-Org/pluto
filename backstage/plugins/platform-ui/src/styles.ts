@@ -3,11 +3,26 @@
 // picker can swap the accent live. Scoped under `.sc` so it never fights
 // Backstage's own MUI styles outside our pages.
 export const SHADCN_CSS = `
+/* Self-hosted so the CSP (font-src 'self') is satisfied and the app works
+   offline. Latin subset, 3.4KB. SIL OFL — see public/fonts/LICENSE.txt. */
+@font-face {
+  font-family: 'Silkscreen';
+  src: url('/fonts/silkscreen.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 .sc, .sc * { box-sizing: border-box; }
 /* Tokens live on :root so BOTH our .sc components and the MUI/Backstage reskin
    below read the same variables (and follow the color picker). */
 :root {
-  --sc-radius: 0.5rem;
+  /* 8-bit: square corners, hard 2px outlines, and a shadow with no blur —
+     the offset shadow is what reads as pixel art more than anything else. */
+  --sc-radius: 0;
+  --sc-border-w: 2px;
+  --sc-shadow: 2px 2px 0 hsl(var(--sc-fg) / .9);
+  --sc-font-pixel: 'Silkscreen', ui-monospace, SFMono-Regular, monospace;
+  --sc-unit: 4px;
   --sc-nav-w: 240px;
   --sc-bg: 240 10% 98%;
   --sc-fg: 240 10% 12%;
@@ -70,19 +85,19 @@ export const SHADCN_CSS = `
    [data-variant] attribute is a stable hook; the class fragment is only a scope. */
 [data-variant="primary"][class*="bui-Button"] { background-color: hsl(var(--sc-primary)) !important; color: hsl(var(--sc-primary-fg)) !important; }
 [data-variant="primary"][class*="bui-Button"]:hover { background-color: hsl(var(--sc-primary) / 0.9) !important; }
-[class*="bui-ButtonLink"], [class*="bui-Button"] { border-radius: calc(var(--sc-radius) - 2px) !important; }
+[class*="bui-ButtonLink"], [class*="bui-Button"] { border-radius: var(--sc-radius) !important; }
 body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); } /* body = stable companion */
 /* cards / surfaces */
 /* cards/surfaces via stable MUI classes. The InfoCard header is styled in the
    theme (BackstageInfoCard.styleOverrides.header). */
 .MuiCard-root, .MuiPaper-elevation1, .MuiPaper-elevation2, .MuiAccordion-root {
   background-color: hsl(var(--sc-card)) !important; color: hsl(var(--sc-fg));
-  border: 1px solid hsl(var(--sc-border)) !important; box-shadow: none !important;
+  border: var(--sc-border-w) solid hsl(var(--sc-border)) !important; box-shadow: none !important;
   border-radius: var(--sc-radius) !important; }
-.MuiInputBase-root, .MuiOutlinedInput-root { border-radius: calc(var(--sc-radius) - 2px) !important; }
+.MuiInputBase-root, .MuiOutlinedInput-root { border-radius: var(--sc-radius) !important; }
 .MuiOutlinedInput-notchedOutline { border-color: hsl(var(--sc-input)) !important; }
 /* accent — buttons, links, tabs, selection (all follow the picker) */
-.MuiButton-root { text-transform: none !important; border-radius: calc(var(--sc-radius) - 2px) !important; box-shadow: none !important; font-weight: 600 !important; }
+.MuiButton-root { text-transform: none !important; border-radius: var(--sc-radius) !important; box-shadow: none !important; font-weight: 600 !important; }
 .MuiButton-containedPrimary { background-color: hsl(var(--sc-primary)) !important; color: hsl(var(--sc-primary-fg)) !important; }
 .MuiButton-outlinedPrimary, .MuiButton-textPrimary { color: hsl(var(--sc-primary)) !important; }
 .MuiLink-root, a.MuiTypography-colorPrimary, .MuiTypography-colorPrimary { color: hsl(var(--sc-primary)) !important; }
@@ -91,7 +106,7 @@ body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); } /* body = s
 .MuiTab-textColorPrimary.Mui-selected, .Mui-selected { color: hsl(var(--sc-primary)) !important; }
 .MuiSwitch-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiCheckbox-colorPrimary.Mui-checked, .MuiRadio-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
-.MuiChip-root { border-radius: 6px !important; }
+.MuiChip-root { border-radius: var(--sc-radius) !important; }
 /* ===== Graphs: React-Flow look — dark canvas + dots, compact dark nodes =====
    Our own graphs use the stable .react-flow__* API (below). These rules restyle
    Backstage's built-in catalog/dependency graph SVG.
@@ -102,7 +117,7 @@ body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); } /* body = s
 svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultNode"]) {
   background-color: #0a0a10 !important;
   background-image: radial-gradient(circle, rgba(255,255,255,.16) 1px, transparent 1px) !important;
-  background-size: 17px 17px !important; border-radius: 10px;
+  background-size: 17px 17px !important; border-radius: var(--sc-radius);
   width: 100% !important; display: block !important; }
 [class*="PluginCatalogGraphCustomNode-node"], [class*="DependencyGraphDefaultNode-node"] {
   fill: #17171f !important; stroke: #32303e !important; rx: 8 !important; ry: 8 !important; }
@@ -116,7 +131,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   fill: hsl(var(--sc-primary) / .22) !important; stroke: hsl(var(--sc-primary)) !important; }
 /* our React Flow workflow DAG — dark + dots (dot color set in the component). */
 .react-flow, .react-flow__renderer, .react-flow__pane { background: #0a0a10 !important; }
-.react-flow__node { border-radius: 8px !important; }
+.react-flow__node { border-radius: var(--sc-radius) !important; }
 .react-flow__controls { box-shadow: none !important; }
 .react-flow__controls button { background: #17171f !important; border-color: #32303e !important; }
 .react-flow__controls button svg, .react-flow__controls-button svg { fill: #e7e7ef !important; }
@@ -138,15 +153,15 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
 .sc-grid { display: grid; gap: 16px; }
 .sc-grid-2 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items: start; }
-.sc-action { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 8px;
-  border: 1px solid hsl(var(--sc-border)); text-decoration: none; transition: background .12s, border-color .12s; }
+.sc-action { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: var(--sc-radius);
+  border: var(--sc-border-w) solid hsl(var(--sc-border)); text-decoration: none; transition: background .12s, border-color .12s; }
 .sc-action:hover { background: hsl(var(--sc-primary) / .06); border-color: hsl(var(--sc-primary) / .4); }
 .sc-action-l { font-weight: 600; color: hsl(var(--sc-fg)); }
 .sc-action-h { font-size: 12px; }
 
 /* card */
 .sc-card { background: hsl(var(--sc-card)); color: hsl(var(--sc-card-fg));
-  border: 1px solid hsl(var(--sc-border)); border-radius: var(--sc-radius); overflow: hidden; }
+  border: var(--sc-border-w) solid hsl(var(--sc-border)); border-radius: var(--sc-radius); overflow: hidden; }
 .sc-card-h { padding: 18px 20px 0; }
 .sc-card-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
 .sc-card-desc { color: hsl(var(--sc-muted-fg)); font-size: 13px; margin-top: 2px; }
@@ -154,7 +169,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 
 /* buttons */
 .sc-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  height: 36px; padding: 0 14px; border-radius: calc(var(--sc-radius) - 2px);
+  height: 36px; padding: 0 14px; border-radius: var(--sc-radius);
   font-size: 13.5px; font-weight: 500; cursor: pointer; border: 1px solid transparent;
   transition: background .15s, opacity .15s; white-space: nowrap; text-decoration: none; }
 .sc-btn:disabled { opacity: .5; cursor: not-allowed; }
@@ -170,9 +185,9 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 
 /* badge */
 .sc-badge { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px;
-  border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid transparent;
+  border-radius: var(--sc-radius); font-size: 12px; font-weight: 600; border: 1px solid transparent;
   white-space: nowrap; max-width: 100%; }
-.sc-dot { width: 7px; height: 7px; border-radius: 999px; background: currentColor; }
+.sc-dot { width: 7px; height: 7px; border-radius: var(--sc-radius); background: currentColor; }
 .sc-badge-muted { background: hsl(var(--sc-muted)); color: hsl(var(--sc-muted-fg)); }
 .sc-badge-primary { background: hsl(var(--sc-primary) / .12); color: hsl(var(--sc-primary)); }
 .sc-badge-success { background: hsl(var(--sc-success) / .14); color: hsl(var(--sc-success)); }
@@ -203,11 +218,11 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-json { display: flex; flex-direction: column; gap: 10px; }
 .sc-json-bar { display: flex; gap: 8px; }
 .sc-json-body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px;
-  line-height: 1.7; background: hsl(var(--sc-muted) / .4); border: 1px solid hsl(var(--sc-border));
+  line-height: 1.7; background: hsl(var(--sc-muted) / .4); border: var(--sc-border-w) solid hsl(var(--sc-border));
   border-radius: var(--sc-radius); padding: 12px 14px; overflow-x: auto; }
 .sc-json-children { padding-left: 16px; border-left: 1px solid hsl(var(--sc-border)); margin-left: 4px; }
 .sc-json-row { white-space: nowrap; }
-.sc-json-toggle { cursor: pointer; border-radius: 4px; }
+.sc-json-toggle { cursor: pointer; border-radius: var(--sc-radius); }
 .sc-json-toggle:hover { background: hsl(var(--sc-primary) / .08); }
 .sc-json-chevron { display: inline-block; width: 14px; color: hsl(var(--sc-muted-fg)); }
 .sc-json-key { color: hsl(var(--sc-fg)); font-weight: 600; }
@@ -221,7 +236,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-dark .sc-json-boolean { color: hsl(280 60% 72%); }
 
 /* success notice (e.g. created-resource link) */
-.sc-notice { padding: 10px 14px; border-radius: 8px; font-weight: 500;
+.sc-notice { padding: 10px 14px; border-radius: var(--sc-radius); font-weight: 500;
   background: hsl(var(--sc-success) / .12); color: hsl(var(--sc-success));
   border: 1px solid hsl(var(--sc-success) / .3); }
 
@@ -229,13 +244,13 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-login { min-height: 100vh; display: flex; align-items: center; justify-content: center;
   background: hsl(var(--sc-bg)); padding: 24px; }
 .sc-login-card { width: 360px; max-width: 100%; padding: 36px 32px; text-align: center;
-  background: hsl(var(--sc-card)); border: 1px solid hsl(var(--sc-border));
-  border-radius: var(--sc-radius); box-shadow: 0 10px 40px hsl(240 20% 10% / .12);
+  background: hsl(var(--sc-card)); border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-radius: var(--sc-radius); box-shadow: var(--sc-shadow);
   display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.sc-login-mark { width: 52px; height: 52px; border-radius: 14px; margin-bottom: 8px;
+.sc-login-mark { width: 52px; height: 52px; border-radius: var(--sc-radius); margin-bottom: 8px;
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, hsl(var(--sc-primary)), hsl(var(--sc-primary) / .6));
-  box-shadow: 0 4px 16px hsl(var(--sc-primary) / .4); }
+  box-shadow: var(--sc-shadow); }
 /* svg = the built-in glyph (takes the tile's foreground color); img = a
    configured app.branding.mark (keeps its own colors, tile shows through its
    transparency). Both sit at ~65% of the tile so the shape clears the corners. */
@@ -250,9 +265,9 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 
 /* input */
 .sc-input, .sc-select { height: 36px; width: 100%; padding: 0 10px; font-size: 14px;
-  border-radius: calc(var(--sc-radius) - 2px); border: 1px solid hsl(var(--sc-input));
+  border-radius: var(--sc-radius); border: 1px solid hsl(var(--sc-input));
   background: hsl(var(--sc-bg)); color: hsl(var(--sc-fg)); outline: none; font-family: inherit; }
-.sc-input:focus, .sc-select:focus { border-color: hsl(var(--sc-ring)); box-shadow: 0 0 0 3px hsl(var(--sc-ring) / .25); }
+.sc-input:focus, .sc-select:focus { border-color: hsl(var(--sc-ring)); outline: var(--sc-border-w) solid hsl(var(--sc-ring)); outline-offset: 2px; box-shadow: none; }
 .sc-label { font-size: 13px; font-weight: 500; color: hsl(var(--sc-fg)); display: block; margin-bottom: 6px; }
 .sc-field { margin-bottom: 14px; }
 .sc-link { color: hsl(var(--sc-primary)); text-decoration: none; font-weight: 500; }
@@ -267,8 +282,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1600;
   display: flex; align-items: center; justify-content: center; }
 .sc-dialog { background: hsl(var(--sc-card)); color: hsl(var(--sc-fg));
-  border: 1px solid hsl(var(--sc-border)); border-radius: var(--sc-radius);
-  width: min(480px, 92vw); max-height: 88vh; overflow: auto; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+  border: var(--sc-border-w) solid hsl(var(--sc-border)); border-radius: var(--sc-radius);
+  width: min(480px, 92vw); max-height: 88vh; overflow: auto; box-shadow: var(--sc-shadow); }
 .sc-dialog-h { padding: 20px 22px 0; font-size: 17px; font-weight: 600; }
 .sc-dialog-b { padding: 16px 22px; }
 .sc-dialog-f { padding: 12px 22px 20px; display: flex; justify-content: flex-end; gap: 8px; }
@@ -280,18 +295,18 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   transition: width .16s ease; }
 .sc-nav-top { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 14px; }
 .sc-nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; min-width: 0; }
-.sc-nav-mark { width: 26px; height: 26px; border-radius: 8px; flex: 0 0 auto;
+.sc-nav-mark { width: 26px; height: 26px; border-radius: var(--sc-radius); flex: 0 0 auto;
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, hsl(var(--sc-primary)), hsl(var(--sc-primary) / .65));
-  box-shadow: 0 2px 8px hsl(var(--sc-primary) / .35); }
+  box-shadow: var(--sc-shadow); }
 .sc-nav-mark svg, .sc-nav-mark img { width: 17px; height: 17px; color: hsl(var(--sc-primary-fg)); object-fit: contain; }
 .sc-nav-word { font-weight: 700; font-size: 17px; letter-spacing: -0.02em; color: hsl(var(--sc-fg)); white-space: nowrap; }
-.sc-nav-toggle { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 7px; border: 1px solid hsl(var(--sc-border));
+.sc-nav-toggle { flex: 0 0 auto; width: 26px; height: 26px; border-radius: var(--sc-radius); border: var(--sc-border-w) solid hsl(var(--sc-border));
   background: transparent; color: hsl(var(--sc-muted-fg)); cursor: pointer; font-size: 13px; line-height: 1;
   display: flex; align-items: center; justify-content: center; }
 .sc-nav-toggle:hover { background: hsl(var(--sc-accent)); color: hsl(var(--sc-fg)); }
 .sc-nav-list { display: flex; flex-direction: column; gap: 2px; }
-.sc-nav-item { position: relative; display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: 9px;
+.sc-nav-item { position: relative; display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: var(--sc-radius);
   text-decoration: none; font-size: 14px; font-weight: 500; transition: background .12s, color .12s; white-space: nowrap; }
 .sc-nav-ic { display: flex; align-items: center; color: hsl(var(--sc-muted-fg)); flex: 0 0 auto; }
 .sc-nav-ic svg { width: 19px; height: 19px; }
@@ -303,7 +318,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-nav-item.active .sc-nav-tx { color: hsl(var(--sc-primary)); font-weight: 600; }
 .sc-nav-item.active .sc-nav-ic { color: hsl(var(--sc-fg)); }
 .sc-nav-item.active::before { content: ''; position: absolute; left: 3px; top: 8px; bottom: 8px; width: 3px;
-  border-radius: 3px; background: hsl(var(--sc-primary)); }
+  border-radius: var(--sc-radius); background: hsl(var(--sc-primary)); }
 /* collapsed: icons only */
 .sc-nav.collapsed .sc-nav-word, .sc-nav.collapsed .sc-nav-tx { display: none; }
 .sc-nav.collapsed .sc-nav-item { justify-content: center; padding: 9px; }
@@ -315,8 +330,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 
 /* color scheme picker */
 .sc-picker { position: fixed; right: 14px; bottom: 14px; z-index: 1500;
-  display: flex; align-items: center; gap: 6px; padding: 7px 9px; border-radius: 999px;
-  background: hsl(var(--sc-card)); border: 1px solid hsl(var(--sc-border)); box-shadow: 0 6px 20px rgba(0,0,0,.18); }
-.sc-swatch { width: 18px; height: 18px; border-radius: 999px; border: 2px solid transparent; cursor: pointer; padding: 0; }
+  display: flex; align-items: center; gap: 6px; padding: 7px 9px; border-radius: var(--sc-radius);
+  background: hsl(var(--sc-card)); border: var(--sc-border-w) solid hsl(var(--sc-border)); box-shadow: var(--sc-shadow); }
+.sc-swatch { width: 18px; height: 18px; border-radius: var(--sc-radius); border: 2px solid transparent; cursor: pointer; padding: 0; }
 .sc-swatch[aria-pressed="true"] { border-color: hsl(var(--sc-fg)); }
 `;
