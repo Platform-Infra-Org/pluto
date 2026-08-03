@@ -6,67 +6,22 @@ on:
   pull_request:
 
 jobs:
-  bff:
-    name: BFF (lint, typecheck, test)
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: bff
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-    defaults:
-      run:
-        working-directory: apps/bff
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v3
-        with:
-          version: "0.11.7"
-      - run: uv sync --locked
-      - run: uv run ruff check .
-      - run: uv run mypy app
-      - run: uv run alembic upgrade head
-        env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/bff
-      - run: uv run pytest
-        env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/bff
-
-  web:
-    name: Web (lint, typecheck, test, build)
+  backstage:
+    name: Backstage (typecheck, lint, test, build)
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: apps/web
+        working-directory: backstage
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.10.0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
-          cache-dependency-path: apps/web/pnpm-lock.yaml
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm exec tsc -b
-      - run: pnpm test
-      - run: pnpm build
-
-  images:
-    name: Build container images
-    runs-on: ubuntu-latest
-    needs: [bff, web]
-    steps:
-      - uses: actions/checkout@v4
-      - run: docker build -f deploy/bff.Dockerfile -t platform-bff:ci .
-      - run: docker build -f deploy/web.Dockerfile -t platform-web:ci .
+      - run: corepack enable
+      - run: yarn install --immutable
+      - run: yarn tsc
+      - run: yarn lint:all
+      - run: yarn test
+        env:
+          CI: "true"
+      - run: yarn build:all
