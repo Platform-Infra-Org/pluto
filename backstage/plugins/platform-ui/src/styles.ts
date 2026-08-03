@@ -370,6 +370,14 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-badge { border: var(--sc-border-w) solid hsl(var(--sc-border)); box-shadow: none; }
 .sc-input, .sc-select { border-width: var(--sc-border-w); box-shadow: none; }
 
+/* Sidebar: the active row is marked by a cursor, the way a menu selection is. */
+.sc-nav-cursor { font-family: var(--sc-font-pixel); font-size: 11px; width: 12px;
+  flex: 0 0 auto; color: hsl(var(--sc-primary)); }
+.sc-nav-item { border-radius: 0; border-left: var(--sc-border-w) solid transparent; }
+.sc-nav-item.active { border-left-color: hsl(var(--sc-primary)); }
+.sc-nav-mark { border-radius: 0; border: var(--sc-border-w) solid hsl(var(--sc-fg));
+  box-shadow: var(--sc-shadow); }
+
 /* The tree's values are data people read and copy; only its structure is pixel. */
 .sc-json-key, .sc-json-toggle { font-family: var(--sc-font-pixel); font-size: 11px; }
 `;

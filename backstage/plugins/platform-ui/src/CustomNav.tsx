@@ -72,6 +72,10 @@ function CustomNav({ navItems }: { navItems: any }) {
         title={item.title}
         className={`sc-nav-item${active ? ' active' : ''}`}
       >
+        {/* Non-breaking space when inactive so rows never shift horizontally. */}
+        <span className="sc-nav-cursor" aria-hidden="true">
+          {active ? '\u25B6' : '\u00A0'}
+        </span>
         <span className="sc-nav-ic">{item.icon}</span>
         <span className="sc-nav-tx">{item.title}</span>
       </Link>
