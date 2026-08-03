@@ -181,8 +181,14 @@ export function Dialog({
   // Portal to <body> so the overlay escapes any ancestor stacking context
   // (e.g. the React Flow graph card) instead of rendering behind it.
   return createPortal(
-    <div className="sc sc-overlay" onClick={onClose}>
-      <div className="sc-dialog" onClick={e => e.stopPropagation()}>
+    // Backdrop click closes; the dialog itself swallows the click. Both are
+    // presentational — Escape and the footer buttons are the keyboard paths.
+    <div className="sc sc-overlay" role="presentation" onClick={onClose}>
+      <div
+        className="sc-dialog"
+        role="presentation"
+        onClick={e => e.stopPropagation()}
+      >
         <div className="sc-dialog-h">{title}</div>
         <div className="sc-dialog-b">{children}</div>
         {footer && <div className="sc-dialog-f">{footer}</div>}

@@ -6,7 +6,7 @@ app:
   # and the generated tab icon alike. See TechDocs → How-to → Change the logo,
   # favicon and title.
   branding:
-    mark: /branding/trident.svg # drawn in the accent tile; transparency shows the picked color
+    mark: /branding/hades.png # drawn in the accent tile; transparency shows the picked color
     # favicon: /branding/tab.png # optional: pins the tab icon instead of generating it from `mark`
   baseUrl: http://localhost:3000
 

@@ -83,13 +83,10 @@ export const platformRequestsPlugin = createBackendPlugin({
         // One key or a list; the first encrypts, the rest only open blobs from
         // before a rotation (see crypto.ts).
         const keyCfg = config.getOptional('platform.secrets.encryptionKey');
-        const cipher = createCipher(
-          typeof keyCfg === 'string'
-            ? [keyCfg]
-            : Array.isArray(keyCfg)
-              ? keyCfg.map(String)
-              : [],
-        );
+        const keys = Array.isArray(keyCfg)
+          ? keyCfg.map(String)
+          : [keyCfg].filter(k => typeof k === 'string');
+        const cipher = createCipher(keys);
 
         // Repo path from a Gitea raw URL (.../raw/branch/<b>/<path> -> <path>).
         const gitPathOf = (url: string): string | undefined => {

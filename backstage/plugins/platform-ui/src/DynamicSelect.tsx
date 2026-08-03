@@ -103,6 +103,9 @@ export function DynamicSelect({
   }, [url, intervalMs]);
 
   const showError = !!error && options.length === 0;
+  let placeholderText = placeholder;
+  if (loading && options.length === 0) placeholderText = 'Loading…';
+  else if (showError) placeholderText = 'Failed to load';
 
   return (
     <div className={`sc ${className}`}>
@@ -113,11 +116,7 @@ export function DynamicSelect({
         onChange={e => onChange?.(e.target.value)}
       >
         <option value="" disabled>
-          {loading && options.length === 0
-            ? 'Loading…'
-            : showError
-            ? 'Failed to load'
-            : placeholder}
+          {placeholderText}
         </option>
         {options.map(o => (
           <option key={`${o.value}::${o.label}`} value={o.value}>

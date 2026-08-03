@@ -111,12 +111,11 @@ export function RequestsPage() {
     })
     .sort((a, b) => (sort === 'newest' ? b.id - a.id : a.id - b.id));
 
-  const empty =
-    tab === 'mine'
-      ? "You haven't made any requests yet."
-      : tab === 'approval'
-      ? 'Nothing awaiting your approval.'
-      : 'No requests in your scope.';
+  const EMPTY_MESSAGE: Record<string, string> = {
+    mine: "You haven't made any requests yet.",
+    approval: 'Nothing awaiting your approval.',
+  };
+  const empty = EMPTY_MESSAGE[tab] ?? 'No requests in your scope.';
 
   return (
     <Page>

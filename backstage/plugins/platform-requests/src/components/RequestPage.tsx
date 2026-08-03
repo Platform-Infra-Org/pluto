@@ -74,11 +74,12 @@ export function RequestPage() {
   const pending = request.state === 'PENDING_APPROVAL';
   // Link to the created resource once the workflow reports it: a bare ref -> the
   // catalog entity page; anything with a scheme -> that URL.
-  const resourceLink = request.resultRef
-    ? request.resultRef.includes('://')
+  let resourceLink: string | undefined;
+  if (request.resultRef) {
+    resourceLink = request.resultRef.includes('://')
       ? request.resultRef
-      : `/catalog/default/resource/${request.resultRef}`
-    : undefined;
+      : `/catalog/default/resource/${request.resultRef}`;
+  }
   // Only an admin, or a member of the owning service team, may decide it.
   const canApprove =
     myGroups.some(g => adminGroups.includes(g)) ||

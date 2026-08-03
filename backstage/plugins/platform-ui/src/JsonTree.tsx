@@ -29,7 +29,9 @@ function JsonNode({ name, value, depth, forceOpen, last }: NodeProps) {
   // Default: top two levels open, deeper collapsed (large objects stay tidy).
   const [open, setOpen] = useState(forceOpen ?? depth < 2);
 
-  const key = name != null && <span className="sc-json-key">{name}: </span>;
+  const key = name !== undefined && (
+    <span className="sc-json-key">{name}: </span>
+  );
 
   if (!branch) {
     return (

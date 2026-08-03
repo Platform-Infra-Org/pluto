@@ -225,17 +225,20 @@ export function HomePage() {
     <Page>
       <PageHeader title={title} subtitle={subtitle} />
       <div className="sc-grid-2">
-        {sections.map(s =>
-          s === 'quickActions' ? (
-            <QuickActions key={s} />
-          ) : s === 'ownedResources' ? (
-            <OwnedResources key={s} max={maxItems} />
-          ) : s === 'standingRequests' ? (
-            <StandingRequests key={s} max={maxItems} />
-          ) : s === 'pendingApprovals' ? (
-            <PendingApprovals key={s} max={maxItems} />
-          ) : null,
-        )}
+        {sections.map(s => {
+          switch (s) {
+            case 'quickActions':
+              return <QuickActions key={s} />;
+            case 'ownedResources':
+              return <OwnedResources key={s} max={maxItems} />;
+            case 'standingRequests':
+              return <StandingRequests key={s} max={maxItems} />;
+            case 'pendingApprovals':
+              return <PendingApprovals key={s} max={maxItems} />;
+            default:
+              return null;
+          }
+        })}
       </div>
     </Page>
   );

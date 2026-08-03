@@ -35,7 +35,8 @@
     "@xyflow/react": "^12"
   },
   "peerDependencies": {
-    "react": "^17 || ^18 || ^19"
+    "react": "^17 || ^18 || ^19",
+    "react-router-dom": "^6 || ^7"
   },
   "devDependencies": {
     "@backstage/test-utils": "*",

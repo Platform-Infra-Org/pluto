@@ -1928,7 +1928,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@backstage/core-app-api@npm:*, @backstage/core-app-api@npm:^1.20.3":
+"@backstage/core-app-api@npm:*, @backstage/core-app-api@npm:^1.20.0, @backstage/core-app-api@npm:^1.20.3":
   version: 1.20.3
   resolution: "@backstage/core-app-api@npm:1.20.3"
   dependencies:
@@ -5225,6 +5225,7 @@ __metadata:
     "@xyflow/react": "npm:^12"
   peerDependencies:
     react: ^17 || ^18 || ^19
+    react-router-dom: ^6 || ^7
   languageName: unknown
   linkType: soft
 
@@ -5245,6 +5246,7 @@ __metadata:
     "@testing-library/react": "npm:*"
   peerDependencies:
     react: ^17 || ^18 || ^19
+    react-dom: ^17 || ^18 || ^19
   languageName: unknown
   linkType: soft
 
@@ -12714,6 +12716,7 @@ __metadata:
   resolution: "app@workspace:packages/app"
   dependencies:
     "@backstage/cli": "npm:^0.36.4"
+    "@backstage/core-app-api": "npm:^1.20.0"
     "@backstage/core-components": "npm:^0.18.12"
     "@backstage/core-plugin-api": "npm:^1.12.8"
     "@backstage/frontend-defaults": "npm:^0.5.4"
