@@ -25,8 +25,9 @@ what you're trying to do:
 - **Argo provisioning** — every request submits an Argo Workflow; the request is
   only "done" once the workflow succeeds (completion gating). The workflow is the
   sole writer of the catalog Git repo.
-- **Service / graph builder** — author a software template (and its workflow)
-  from a form or a composable graph, published to Git + Argo.
+- **Per-request secrets** — a password or API key becomes a Kubernetes Secret
+  owned by the provisioning workflow, and never appears in the request row, in
+  Argo's parameters, in Git, or in a log line.
 - **Design system** — a shadcn reskin, custom nav, live colour picker, and a
   collapsible JSON viewer, all as one UI plugin.
 - **Identity** — Keycloak (SSO) federates to LDAP; Backstage ingests LDAP users

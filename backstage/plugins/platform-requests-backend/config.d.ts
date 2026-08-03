@@ -5,7 +5,7 @@ export interface Config {
      * fields (a DB password, an API key, …) the backend materialises them as a
      * Kubernetes Secret at approval time, owned by the Argo Workflow, so the
      * value never appears in the request row, Argo params/UI, Git, or logs.
-     * See docs/SECRETS-LIFECYCLE.md.
+     * See TechDocs: Explanation -> Secret lifecycle.
      */
     secrets?: {
       /**

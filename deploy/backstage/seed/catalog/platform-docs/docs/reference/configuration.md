@@ -76,5 +76,5 @@ for Argo). Inject upstream auth here so secrets never reach the browser/plugin.
 ## Auth
 
 `auth.providers.oidc` (Keycloak), `auth.session.secret`. See
-**[Production Readiness](../../..)** (repo `docs/PRODUCTION-READINESS.md`) for the
-must-externalize list.
+**[Prepare for production](../how-to/prepare-for-production.md)** for the
+must-externalise list.

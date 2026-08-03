@@ -32,7 +32,7 @@ export interface SecretRef {
 
 /**
  * Stores a request's secret values as a Kubernetes Secret, one per request,
- * owned by the request's Argo Workflow. See docs/SECRETS-LIFECYCLE.md.
+ * owned by the request's Argo Workflow. See TechDocs: Explanation -> Secret lifecycle.
  */
 export interface SecretStore {
   /**

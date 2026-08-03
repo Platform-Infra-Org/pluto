@@ -1,38 +1,58 @@
-# How to upgrade Backstage
+# How-to: upgrade Backstage
 
-The customization uses the new frontend/backend systems (Blueprints + extension
-points), so most of it is upgrade-stable. Full detail lives in the repo at
-`docs/UPGRADING-BACKSTAGE.md`; this is the short recipe.
+Pinned to the version in `backstage/backstage.json`. This is the playbook for
+bumping to a newer release without breaking the platform plugin suite.
+
+For *what* a bump can break and why, read
+**[what an upgrade can break](../explanation/upgrade-surface.md)** first — it
+explains the manual checks below.
 
 ## Procedure
 
 ```bash
 cd backstage
-yarn backstage-cli versions:bump      # bump all @backstage/* + backstage.json
-yarn backstage-cli migrate            # automated codemods
-yarn install && yarn dedupe           # resolve; collapse duplicate @backstage/* copies
 
-yarn tsc                              # FIRST — /alpha + Blueprint breakages surface here
-CI=true yarn workspace @internal/backstage-plugin-platform-requests-backend test
-CI=true yarn workspace @internal/backstage-plugin-permission-backend-module-platform-rbac test
-yarn backstage-cli config:check --lax # catch config-schema drift
+# 1. Bump all @backstage/* and run the codemods.
+yarn backstage-cli versions:bump          # add --release <version> to pin
+yarn backstage-cli migrate                # applies available automated migrations
+yarn install && yarn dedupe               # collapse duplicate @backstage/* copies
 
-yarn start                            # boot + manual smoke
+# 2. Type-check FIRST — /alpha and Blueprint breakages surface here.
+yarn tsc
+
+# 3. The regression gate.
+CI=true yarn test
+
+# 4. Config schema still valid?
+yarn backstage-cli config:check --lax
+
+# 5. Boot and smoke-test.
+yarn start
 ```
 
-Do it on a branch off `backstage-plugins`, as an isolated commit.
+Keep the bump as its own commit on its own branch, so a regression is easy to
+bisect and revert.
 
-## What to watch (the parts tsc/tests can't catch)
+## Verification
 
-- **The shadcn reskin.** If a native page looks unstyled, `grep '[FRAGILE]'` in
-  `plugins/platform-ui/src/styles.ts` and re-derive only the affected hashed
-  class prefix from the new DOM. The MUI/BUI/react-flow selectors are stable.
-- **Entity tabs/cards, sign-in + LDAP, DynamicSelect** (alpha/blueprint APIs).
-- **The full flow:** request → approve → workflow → SUCCEEDED; edit/delete.
+Automated — these fail the build, and CI runs them on every PR:
 
-## Reduce future cost
+- [ ] `yarn tsc` clean (fixes any `/alpha` or Blueprint signature changes)
+- [ ] `yarn test` green across all suites
+- [ ] `yarn lint:all` clean
+- [ ] `config:check --lax` passes
 
-- Migrate imports off `@backstage/*/alpha` to the stable path as each API
-  graduates.
-- Re-check third-party module config keys (e.g. the LDAP module reads
-  `catalog.providers.ldapOrg`) after a bump.
+Manual — the parts tests and the type checker **cannot** catch:
+
+- [ ] **The shadcn reskin still applies.** Headers flat, sidebar nav, cards, and
+      the colour picker recolouring buttons/links/badges. If a native page looks
+      unstyled, grep `[FRAGILE]` in `plugins/platform-ui/src/styles.ts` and
+      re-derive only the affected hashed class prefix from the new DOM — the
+      MUI/BUI/react-flow selectors are stable.
+- [ ] **Entity tabs and cards** render on a Resource page: Resource Data tab,
+      Manage resource card, relations graph (alpha blueprints).
+- [ ] **The custom sign-in page** and LDAP login work (`SignInPageBlueprint`).
+- [ ] **DynamicSelect** renders in a scaffolder form (`FormFieldBlueprint`).
+- [ ] **The full flow:** request → approve → workflow → `SUCCEEDED`, then edit
+      and delete.
+- [ ] **LDAP ingestion** logs `Read N LDAP users and M LDAP groups`.

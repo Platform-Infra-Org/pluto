@@ -14,6 +14,7 @@ nav:
       - Add a live (DynamicSelect) field: how-to/add-a-dynamic-select-field.md
       - Change the logo, favicon and title: how-to/rebrand-the-portal.md
       - Upgrade Backstage: how-to/upgrade-backstage.md
+      - Prepare for production: how-to/prepare-for-production.md
   - Reference:
       - Plugins: reference/plugins.md
       - Annotations: reference/annotations.md
@@ -27,6 +28,7 @@ nav:
       - Per-team RBAC: explanation/rbac.md
       - Workflows own Git: explanation/workflows-and-git.md
       - Identity & LDAP: explanation/identity-and-ldap.md
+      - What an upgrade can break: explanation/upgrade-surface.md
 
 plugins:
   - techdocs-core

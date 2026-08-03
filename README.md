@@ -57,9 +57,19 @@ cd backstage && yarn start        # app on :3000, backend on :7007
 Log in with an LDAP account (`admin`/`admin`, `sam`/`sam`).
 `bash scripts/backstage-down.sh` tears the stack back down.
 
-## Production & upgrades
+## Documentation
 
-- **[docs/PRODUCTION-READINESS.md](docs/PRODUCTION-READINESS.md)** — what to change
-  for production (this is a local demo instance).
-- **[docs/UPGRADING-BACKSTAGE.md](docs/UPGRADING-BACKSTAGE.md)** — how to bump
-  Backstage without breaking the customization.
+One Diátaxis site, `deploy/backstage/seed/catalog/platform-docs/`, published two
+ways: **inside Backstage** via TechDocs (Platform Plugin Suite → Docs) and to
+**GitHub Pages** by the `docs` workflow on every push to `main`.
+
+Start with *How-to → Prepare for production* and *Upgrade Backstage*; the
+*Explanation* section covers the request and secret lifecycles, per-team RBAC,
+and why workflows own Git.
+
+To preview it locally:
+
+```bash
+pip install mkdocs-techdocs-core
+mkdocs serve -f deploy/backstage/seed/catalog/platform-docs/mkdocs.yml
+```

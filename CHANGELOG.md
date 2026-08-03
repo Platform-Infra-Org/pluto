@@ -205,6 +205,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Commit with plain git instead of the Gitea contents API
 - Lift provisioning out of the plugin wiring
 - Adopt the checks + release-pr + release-manual pipeline
+- Publish the Diataxis site to GitHub Pages and fold in the repo docs
 
 ### Fixed
 

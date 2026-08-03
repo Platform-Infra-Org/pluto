@@ -62,7 +62,7 @@ export interface ArgoSubmitSpec {
  * A secret field a request needs materialised into its Kubernetes Secret at
  * approval. `generate` = the backend mints the value at approval (never captured
  * from the user); `provided` = the user supplied it at submit (held
- * envelope-encrypted until approval). See docs/SECRETS-LIFECYCLE.md.
+ * envelope-encrypted until approval). See TechDocs: Explanation -> Secret lifecycle.
  */
 export interface SecretFieldSpec {
   /** Key inside the request's Secret (what the WorkflowTemplate secretKeyRefs). */

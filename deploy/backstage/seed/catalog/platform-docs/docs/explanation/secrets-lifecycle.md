@@ -38,6 +38,28 @@ The scheme is AES-256-GCM. The stored blob is `iv:tag:ciphertext`, all base64.
 GCM is authenticated, so tampering with a stored blob fails loudly at decrypt
 rather than silently yielding garbage that gets written into a Secret.
 
+## The lifecycle, end to end
+
+```text
+SUBMIT     request.secretSpec = { fields: [{name, source: generate|provided}],
+                                  secret_enc?: <encrypted, provided only> }
+           → no Kubernetes Secret, no plaintext anywhere.
+
+APPROVE    1. submit the workflow → Argo returns {name, uid, namespace}
+           2. create Secret platform-req-<rand> in the workflow namespace:
+                ownerReferences: [{ Workflow, uid, blockOwnerDeletion: true }]
+                labels:          { platform.io/request-id: <id> }
+                data:            generated now, or decrypted from secret_enc
+           3. clear request.secret_enc
+           Workflow pods read it via env.valueFrom.secretKeyRef — never logged.
+
+SUCCESS /  Backstage does nothing. The workflow's ttlStrategy deletes the
+FAILURE    Workflow, and Kubernetes cascade-deletes the Secret with it.
+
+REJECT     No workflow, no Secret ever existed. Backstage clears secret_enc.
+           This is the only cleanup Backstage performs.
+```
+
 ## The Workflow owns the Secret
 
 The Secret carries an `ownerReference` pointing at the Argo Workflow that
@@ -51,10 +73,34 @@ passes it to the workflow as a parameter, submits, and only then creates the
 Secret with the returned workflow UID as its owner. The workflow's first step
 waits for the Secret to appear.
 
-A sweep runs on a schedule as a safety net, deleting managed Secrets whose
-request is no longer active or that are older than `maxAgeHours`. It is a net,
-not the mechanism — Secrets labelled `platform.io/keep` (resource-owned, meant to
-outlive the workflow) are left alone.
+Three constraints come with `ownerReference`, and they explain the shape:
+
+- Owner and dependent must be in the **same namespace**, which is why the Secret
+  lives in the workflow's namespace (`argo`), locked down by RBAC, rather than
+  one of its own.
+- `blockOwnerDeletion: true`, so foreground deletion takes the Secret with the
+  Workflow.
+- Timing is entirely the workflow's `ttlStrategy` — there is no Backstage timer
+  on the happy path.
+
+### The create-order race
+
+The workflow's pods reference the Secret via `secretKeyRef`, but the Secret is
+created *just after* the workflow is submitted, because the owner must exist
+first. If a pod starts before the Secret lands, the kubelet returns
+`CreateContainerConfigError` and **retries until it appears** — self-healing,
+and the window is small.
+
+If the first step is time-sensitive and you want a zero-race path, submit the
+workflow suspended, create the Secret, then resume.
+
+### The sweep
+
+A scheduled sweep deletes managed Secrets whose request is no longer active or
+that are older than `maxAgeHours`. It exists for the gaps `ownerReference` can't
+close: a workflow lingering with no TTL, an owner GC that didn't fire, a stuck
+request. It is a net, not the mechanism — Secrets labelled `platform.io/keep`
+(resource-owned, meant to outlive the workflow) are left alone.
 
 ## Key rotation
 
@@ -91,6 +137,20 @@ crypto layer.
 If no key is configured at all, there is no cipher, and any request carrying a
 **provided** secret is rejected at submit. Generated secrets don't touch this
 path and keep working.
+
+## Why not a scaffolder action on approve or reject
+
+It was considered and rejected. The post-decision behaviours are well-defined
+backend operations, already parameterised per resource type by the template's
+`platform.io/verb-*` annotations. Running a scaffolder action after a decision
+fights the scaffolder's own model — its task finished at submit, so you would
+need a headless runner or a second task, and it would duplicate what the
+workflow already does.
+
+If a hook is ever genuinely needed, the small version is letting a verb
+annotation name an `onReject` workflow — not a general post-decision action
+engine. Custom post-approval behaviour belongs in a WorkflowTemplate, which is
+already how provisioning works.
 
 ## What this does not protect against
 

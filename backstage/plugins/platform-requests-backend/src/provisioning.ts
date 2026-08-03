@@ -105,7 +105,7 @@ export function createResourceResolver(deps: {
  * The APPROVED hook: submit the request's Argo workflow, record it, and — when
  * the request carries a secretSpec — create the per-request Kubernetes Secret
  * owned by that workflow. The router calls this, then flips the request to
- * IN_PROGRESS. See docs/SECRETS-LIFECYCLE.md for the ordering constraint.
+ * IN_PROGRESS. See TechDocs: Explanation -> Secret lifecycle for the ordering constraint.
  */
 export function createSubmitWorkflow(deps: {
   argo: ArgoClient;

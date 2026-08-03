@@ -77,7 +77,7 @@ export const platformRequestsPlugin = createBackendPlugin({
         // on decisions + terminal outcomes) — best-effort, see notifications.ts.
         const notify = createNotifier(notifications, logger);
 
-        // Per-request Secret provisioning (docs/SECRETS-LIFECYCLE.md). Disabled
+        // Per-request Secret provisioning (TechDocs: Explanation -> Secret lifecycle). Disabled
         // unless platform.secrets.enabled; then Kubernetes-backed.
         const secretStore = createSecretStore({ config, logger });
         // One key or a list; the first encrypts, the rest only open blobs from

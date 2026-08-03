@@ -1,0 +1,49 @@
+# Publish the docs site to GitHub Pages.
+#
+# The same MkDocs site that TechDocs serves inside Backstage — one source, two
+# audiences. MkDocs is a Python tool, hence the only Python in this repo's CI;
+# mkdocs-techdocs-core pulls in mkdocs + the Material theme and matches how
+# TechDocs renders it, so the two stay visually consistent.
+#
+# One-time setup: Settings -> Pages -> Build and deployment -> Source =
+# "Deploy from a branch" -> Branch = gh-pages / (root).
+name: docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "deploy/backstage/seed/catalog/platform-docs/**"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write # gh-deploy force-pushes the built site to gh-pages
+
+concurrency:
+  group: docs
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: deploy/backstage/seed/catalog/platform-docs
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # gh-deploy needs history to push the gh-pages branch
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install MkDocs
+        run: pip install mkdocs-techdocs-core
+
+      # --strict turns broken internal links and nav references into failures,
+      # so a page renamed without updating its links breaks the build here.
+      - name: Deploy to gh-pages
+        run: mkdocs gh-deploy --force --strict
