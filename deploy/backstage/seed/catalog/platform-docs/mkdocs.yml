@@ -12,6 +12,7 @@ nav:
       - Configure admins & per-team approval: how-to/configure-rbac.md
       - Give a resource a data file: how-to/set-resource-data.md
       - Add a live (DynamicSelect) field: how-to/add-a-dynamic-select-field.md
+      - Change the logo, favicon and title: how-to/rebrand-the-portal.md
       - Upgrade Backstage: how-to/upgrade-backstage.md
   - Reference:
       - Plugins: reference/plugins.md

@@ -10,6 +10,9 @@ import { createPortal } from 'react-dom';
  * The Platform logo glyph: an ancient Greek temple facade (pediment, columns,
  * stylobate) — the temple resting on its raised platform. Uses `currentColor`,
  * so it inherits whatever color the surrounding mark tile sets.
+ *
+ * Rebranding this (and the favicons, which are separate static assets): see
+ * TechDocs → How-to → *Change the logo, favicon and title*.
  */
 export function PlatformMark({ className }: { className?: string }) {
   return (

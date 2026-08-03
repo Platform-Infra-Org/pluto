@@ -194,6 +194,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lint clean the secret-lifecycle files (eqeqeq, no-nested-ternary, useless-ctor)
 - Ignore the Backstage dev-server log
 - Explain the secret lifecycle and key rotation
+- Document where the logo, favicon and title are changed
 
 ### Fixed
 
