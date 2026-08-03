@@ -118,16 +118,9 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
           },
         },
       },
-      BackstageItemCardHeader: {
-        styleOverrides: {
-          root: {
-            backgroundImage: 'none',
-            background: 'hsl(var(--sc-muted))',
-            color: 'hsl(var(--sc-fg))',
-            borderBottom: '1px solid hsl(var(--sc-border))',
-          },
-        },
-      },
+      // ItemCardHeader is left to the stylesheet: its pixel-art background is a
+      // layered gradient keyed to --sc-primary, which is simpler to express in
+      // CSS than in a style object.
       BackstageSidebarPage: {
         styleOverrides: {
           root: {

@@ -144,10 +144,16 @@ body, body *, input, select, textarea, button, optgroup {
 /* The BUI page title is the biggest type on a native page. */
 [class*="bui-HeaderTitle"] { font-size: 22px !important; }
 .MuiButton-root { font-size: 13px !important; }
-.MuiTypography-h1 { font-size: 26px !important; }
-.MuiTypography-h2 { font-size: 22px !important; }
-.MuiTypography-h3, .MuiCardHeader-title, .MuiDialogTitle-root { font-size: 18px !important; }
-.MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 { font-size: 15px !important; }
+/* Heading scale for the pixel face. Silkscreen sets much wider than Inter at
+   the same size, so Backstage's native scale (28-34px) wraps a single sentence
+   over three lines. These are the equivalent optical sizes. */
+h1, .MuiTypography-h1 { font-size: 22px !important; line-height: 1.35 !important; }
+h2, .MuiTypography-h2 { font-size: 18px !important; line-height: 1.35 !important; }
+h3, .MuiTypography-h3, .MuiCardHeader-title,
+[class*="BackstageInfoCard-header"] * { font-size: 16px !important; }
+h4, h5, h6, .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 { font-size: 14px !important; }
+[class*="BackstageContentHeader-title"] { font-size: 18px !important; line-height: 1.35 !important; }
+.MuiDialogTitle-root { font-size: 16px !important; }
 
 /* Native buttons get the same press as ours: the shadow collapses and the
    button moves into the space it occupied. */
@@ -229,7 +235,51 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 
 
 /* flatten the gradient card headers (template / entity cards).
-   Styled in the theme (BackstageItemCardHeader.styleOverrides.root). */
+   The template card header is pixel art rather than a flat wash: four hard
+   bands of the picked accent, dithered at each seam with a checkerboard, so it
+   reads as an 8-bit sky. Every colour derives from --sc-primary, so the motif
+   changes with the swatch. */
+[class*="ItemCardHeader"] {
+  /* A pixel scene, not a wash: a square sun, a stepped skyline along the
+     bottom, an 8px dither over the sky, and four hard sky bands. Every colour
+     is derived from --sc-primary / --sc-primary-fg, so the motif re-paints
+     itself when the picker changes. Nothing here is a soft gradient — the only
+     colour transitions are hard stops, which is what keeps it 8-bit. */
+  background-color: hsl(var(--sc-primary)) !important;
+  background-image:
+    /* sun: a plain block, the way a tile-based game draws one */
+    linear-gradient(hsl(var(--sc-primary-fg) / .5) 0 0),
+    /* skyline: four blocks of different heights along the bottom edge */
+    linear-gradient(hsl(var(--sc-fg) / .28) 0 0),
+    linear-gradient(hsl(var(--sc-fg) / .22) 0 0),
+    linear-gradient(hsl(var(--sc-fg) / .32) 0 0),
+    linear-gradient(hsl(var(--sc-fg) / .20) 0 0),
+    /* dither: the classic way an 8-bit palette fakes a shade it lacks */
+    repeating-conic-gradient(
+      hsl(var(--sc-primary-fg) / .13) 0% 25%, transparent 0% 50%),
+    /* sky: four hard bands, no blend between them */
+    linear-gradient(180deg,
+      hsl(var(--sc-primary) / .45) 0 30%,
+      hsl(var(--sc-primary) / .68) 30% 52%,
+      hsl(var(--sc-primary) / .86) 52% 74%,
+      hsl(var(--sc-primary) / 1) 74% 100%) !important;
+  background-size:
+    28px 28px,
+    22% 34%, 16% 20%, 26% 46%, 14% 26%,
+    16px 16px,
+    100% 100% !important;
+  background-position:
+    78% 26%,
+    2% 100%, 27% 100%, 52% 100%, 84% 100%,
+    0 0,
+    0 0 !important;
+  background-repeat:
+    no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat, no-repeat !important;
+  color: hsl(var(--sc-primary-fg)) !important;
+  border-bottom: var(--sc-border-w) solid hsl(var(--sc-fg) / .18) !important;
+  image-rendering: pixelated;
+}
+[class*="ItemCardHeader"] * { color: hsl(var(--sc-primary-fg)) !important; }
 /* tables */
 .MuiTableCell-head, .MuiTableCell-root.MuiTableCell-head {
   text-transform: uppercase !important; font-size: 11px !important; font-weight: 700 !important;
@@ -474,8 +524,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   .sc-empty .sc-state-ic { animation: sc-bob 1.2s steps(2) infinite; }
   .sc-h1::after,
   :is(h1, h2, h3)[class*="bui-HeaderTitle"]::after,
-  [class*="BackstageHeader-title"]::after,
-  [class*="BackstageContentHeader-title"]::after {
+  [class*="BackstageHeader-title"]::after {
     animation: sc-caret 1s steps(1) infinite;
   }
 }
@@ -486,9 +535,11 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
    reduced motion still gets the mark, just a steady one. */
 .sc-h1::after,
 :is(h1, h2, h3)[class*="bui-HeaderTitle"]::after,
-[class*="BackstageHeader-title"]::after,
-[class*="BackstageContentHeader-title"]::after {
-  /* The slash-empty-string suffix is the alt text of generated content: it keeps
+[class*="BackstageHeader-title"]::after {
+  /* ContentHeader is deliberately absent: it renders empty on the create page
+     (a lone floating block) and, where it does have text, it sits under a
+     Header title that already carries the caret.
+     The slash-empty-string suffix is the alt text of generated content: it keeps
      the caret out of the accessible name, so a screen reader announces
      "Platform Catalog", not "Platform Catalog block". The element selector
      matters too — bui also renders a HeaderTitleStack wrapper, which would
