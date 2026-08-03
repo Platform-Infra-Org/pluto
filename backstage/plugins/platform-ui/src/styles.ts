@@ -334,6 +334,48 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   background: hsl(var(--sc-card)); border: var(--sc-border-w) solid hsl(var(--sc-border)); box-shadow: var(--sc-shadow); }
 .sc-swatch { width: 18px; height: 18px; border-radius: var(--sc-radius); border: 2px solid transparent; cursor: pointer; padding: 0; }
 .sc-swatch[aria-pressed="true"] { border-color: hsl(var(--sc-fg)); }
+/* ===== Motion =====
+   Everything timed lives behind prefers-reduced-motion and uses steps(), never
+   ease: smooth interpolation is what makes a pixel interface look like a modern
+   interface wearing a costume. Nothing conveys state through motion alone. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes sc-march { to { background-position: 32px 0; } }
+  @keyframes sc-gear { to { transform: rotate(360deg); } }
+  @keyframes sc-flash {
+    0%, 100% { box-shadow: var(--sc-shadow); }
+    50% { box-shadow: 0 0 0 4px hsl(var(--sc-primary)); }
+  }
+  @keyframes sc-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+  }
+  @keyframes sc-cursor-in {
+    from { transform: translateX(-4px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  /* A workflow is running: 4px blocks stepping right, never sliding. */
+  .sc-progress.running {
+    background-image: repeating-linear-gradient(90deg,
+      hsl(var(--sc-primary)) 0 16px, transparent 16px 32px);
+    animation: sc-march .8s steps(8) infinite;
+  }
+  /* The gear turns in quarter steps, like a four-frame sprite sheet. */
+  .sc-state-ic.spinning { animation: sc-gear 1s steps(4) infinite; }
+  .sc-flash { animation: sc-flash .4s steps(2) 2; }
+  .sc-shake { animation: sc-shake .2s steps(2) 2; }
+
+  /* The marker steps in from the left on hover; .active is excluded so a
+     second cursor never appears beside the real one. */
+  .sc-nav-item:hover .sc-nav-cursor::before {
+    content: '\\25B6';
+    display: inline-block;
+    animation: sc-cursor-in .12s steps(2) both;
+  }
+  .sc-nav-item.active:hover .sc-nav-cursor::before { content: none; }
+}
+
 /* ===== 8-bit chrome =====
    Pixel type is for chrome only — headings, nav, buttons, badges, counters.
    Body copy, table cells, JSON values and log output keep Inter/mono, because
