@@ -16,11 +16,13 @@ export const SHADCN_CSS = `
 /* Tokens live on :root so BOTH our .sc components and the MUI/Backstage reskin
    below read the same variables (and follow the color picker). */
 :root {
-  /* 8-bit: square corners, hard 2px outlines, and a shadow with no blur —
-     the offset shadow is what reads as pixel art more than anything else. */
-  --sc-radius: 0;
+  /* 8-bit, softened: the shadow keeps its offset and its hard edge — that is
+     the pixel signature — but drops most of its weight, and corners are rounded
+     rather than square. Chunky 2px outlines stay. */
+  --sc-radius: 6px;
+  --sc-radius-sm: 4px;
   --sc-border-w: 2px;
-  --sc-shadow: 2px 2px 0 hsl(var(--sc-fg) / .9);
+  --sc-shadow: 3px 3px 0 hsl(var(--sc-fg) / .16);
   --sc-font-pixel: 'Silkscreen', ui-monospace, SFMono-Regular, monospace;
   --sc-unit: 4px;
   --sc-nav-w: 240px;
@@ -134,7 +136,7 @@ body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); } /* body = s
    button moves into the space it occupied. */
 .MuiButton-root, [class*="bui-Button"] {
   border-radius: var(--sc-radius) !important;
-  border: var(--sc-border-w) solid hsl(var(--sc-fg)) !important;
+  border: var(--sc-border-w) solid hsl(var(--sc-fg) / .8) !important;
   box-shadow: var(--sc-shadow) !important;
   transition: none !important;
 }
@@ -147,7 +149,7 @@ body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); } /* body = s
 }
 .MuiChip-root {
   border: var(--sc-border-w) solid hsl(var(--sc-border)) !important;
-  border-radius: var(--sc-radius) !important;
+  border-radius: var(--sc-radius-sm) !important;
   /* Silkscreen is wider than Inter, so a tag that used to fit its column now
      overflows. Cap the chip and ellipsise rather than letting it escape. */
   max-width: 100%;
@@ -449,12 +451,31 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   }
   @keyframes sc-caret { 50% { opacity: 0; } }
   .sc-empty .sc-state-ic { animation: sc-bob 1.2s steps(2) infinite; }
-  .sc-h1::after {
-    content: '\\2588';
-    margin-left: 4px;
-    color: hsl(var(--sc-primary));
+  .sc-h1::after,
+  :is(h1, h2, h3)[class*="bui-HeaderTitle"]::after,
+  [class*="BackstageHeader-title"]::after,
+  [class*="BackstageContentHeader-title"]::after {
     animation: sc-caret 1s steps(1) infinite;
   }
+}
+
+/* The block caret marks a page title, wherever the page comes from: ours,
+   Backstage's Header, or the BUI header the catalog uses. The caret itself sits
+   outside the motion query — only its blink is animation, so a reader with
+   reduced motion still gets the mark, just a steady one. */
+.sc-h1::after,
+:is(h1, h2, h3)[class*="bui-HeaderTitle"]::after,
+[class*="BackstageHeader-title"]::after,
+[class*="BackstageContentHeader-title"]::after {
+  /* The slash-empty-string suffix is the alt text of generated content: it keeps
+     the caret out of the accessible name, so a screen reader announces
+     "Platform Catalog", not "Platform Catalog block". The element selector
+     matters too — bui also renders a HeaderTitleStack wrapper, which would
+     otherwise draw a second caret.
+     (No backticks in this file: the whole stylesheet is one template literal.) */
+  content: '\\2588' / '';
+  margin-left: 4px;
+  color: hsl(var(--sc-primary));
 }
 
 /* The scanline layer is texture, not motion, so it sits outside the media query
@@ -492,7 +513,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 /* The press IS the shadow collapsing: the button moves into the space its
    shadow occupied, which is how a 2-frame sprite button reads. */
 .sc-btn {
-  border: var(--sc-border-w) solid hsl(var(--sc-fg));
+  border: var(--sc-border-w) solid hsl(var(--sc-fg) / .8);
   box-shadow: var(--sc-shadow);
   transition: none;
 }
@@ -503,8 +524,10 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   outline-offset: 2px;
   box-shadow: none;
 }
-.sc-badge { border: var(--sc-border-w) solid hsl(var(--sc-border)); box-shadow: none; }
-.sc-input, .sc-select { border-width: var(--sc-border-w); box-shadow: none; }
+.sc-badge { border: var(--sc-border-w) solid hsl(var(--sc-border)); box-shadow: none;
+  border-radius: var(--sc-radius-sm); }
+.sc-input, .sc-select { border-width: var(--sc-border-w); box-shadow: none;
+  border-radius: var(--sc-radius-sm); }
 
 /* The resize handle: a 6px hit area straddling the nav's right edge, showing a
    2px accent line on hover/focus. Wider than it looks, because a 2px target is
@@ -527,9 +550,9 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 /* Sidebar: the active row is marked by a cursor, the way a menu selection is. */
 .sc-nav-cursor { font-family: var(--sc-font-pixel); font-size: 11px; width: 12px;
   flex: 0 0 auto; color: hsl(var(--sc-primary)); }
-.sc-nav-item { border-radius: 0; border-left: var(--sc-border-w) solid transparent; }
+.sc-nav-item { border-radius: var(--sc-radius); border-left: var(--sc-border-w) solid transparent; }
 .sc-nav-item.active { border-left-color: hsl(var(--sc-primary)); }
-.sc-nav-mark { border-radius: 0; border: var(--sc-border-w) solid hsl(var(--sc-fg));
+.sc-nav-mark { border-radius: var(--sc-radius); border: var(--sc-border-w) solid hsl(var(--sc-fg) / .8);
   box-shadow: var(--sc-shadow); }
 
 /* The tree's values are data people read and copy; only its structure is pixel. */
