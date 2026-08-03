@@ -7,7 +7,7 @@ App-config keys the suite reads (all under `app-config.yaml` unless noted).
 ```yaml
 app:
   branding:
-    mark: /branding/mark.svg     # logo in the accent tile; also the source for the tab icon
+    mark: /branding/trident.svg  # logo in the accent tile; also the source for the tab icon
     favicon: /branding/tab.png   # optional: pins the tab icon instead of generating it
 ```
 

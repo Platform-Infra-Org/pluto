@@ -13,15 +13,18 @@ glyph) is code.
 
 ```yaml
 app:
-  title: Platform                 # the browser tab text
+  title: Platform                   # the browser tab text
   branding:
-    mark: /branding/mark.svg      # sidebar + sign-in tile, and the tab icon
+    mark: /branding/trident.svg     # sidebar + sign-in tile, and the tab icon
 ```
 
 That's it. The mark appears in the sidebar header, on the sign-in card, and —
 composited over the accent colour — as the browser tab icon.
 
-To go back to the built-in temple glyph, remove the key.
+This repo ships one: `/branding/trident.svg`, Poseidon's trident, wired up in
+`app-config.yaml`. It's a useful worked example — white fill, transparent
+background, `width`/`height` on the root, heavy strokes so it survives 16px.
+Remove the key and you fall back to the built-in temple glyph.
 
 ## What the tile does to your logo
 

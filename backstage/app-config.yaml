@@ -1,13 +1,13 @@
 app:
   title: Platform
-  # Logo + tab icon. Both optional; without them the built-in temple glyph is
-  # used, in the sidebar and in the generated tab icon alike. Drop files in
-  # packages/app/public/branding/ and reference them by path — same-origin only
-  # (the CSP is `img-src 'self' data:`). See TechDocs → How-to → Change the
-  # logo, favicon and title.
-  # branding:
-  #   mark: /branding/mark.svg   # drawn in the accent tile; transparency shows the picked color
-  #   favicon: /branding/tab.png # optional: pins the tab icon instead of generating it from `mark`
+  # Logo + tab icon. Files live in packages/app/public/branding/ and are
+  # referenced by path — same-origin only (the CSP is `img-src 'self' data:`).
+  # Drop `mark` and the built-in temple glyph is used instead, in the sidebar
+  # and the generated tab icon alike. See TechDocs → How-to → Change the logo,
+  # favicon and title.
+  branding:
+    mark: /branding/trident.svg # drawn in the accent tile; transparency shows the picked color
+    # favicon: /branding/tab.png # optional: pins the tab icon instead of generating it from `mark`
   baseUrl: http://localhost:3000
 
   # Enable all packages by default, this will discover packages from packages/app/package.json

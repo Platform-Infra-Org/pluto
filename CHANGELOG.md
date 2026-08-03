@@ -164,6 +164,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Read the catalog from Bitbucket Data Center in production
 - Rotate the envelope key without re-encrypting
 - Configurable platform mark and tab icon
+- Ship a Poseidon trident mark and wire it up
 
 ### Changed
 
