@@ -55,10 +55,13 @@ export const SHADCN_CSS = `
   --sc-accent: 240 3.7% 15.9%;
   --sc-accent-fg: 0 0% 98%;
 }
-.sc {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+.sc, .sc * {
+  /* Full arcade: the pixel face is the base font everywhere, not only on
+     chrome. 12px is the floor — Silkscreen drops strokes below it. */
+  font-family: var(--sc-font-pixel);
   color: hsl(var(--sc-fg));
 }
+.sc, .sc * { font-size: max(12px, 1em); }
 
 /* ===== Reskin the Backstage/MUI native pages (catalog, scaffolder, search,
    settings…) to the shadcn look, driven by the same tokens + color picker. =====
@@ -99,6 +102,20 @@ body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); } /* body = s
   border-radius: var(--sc-radius) !important; }
 .MuiInputBase-root, .MuiOutlinedInput-root { border-radius: var(--sc-radius) !important; }
 .MuiOutlinedInput-notchedOutline { border-color: hsl(var(--sc-input)) !important; }
+/* Every native surface takes the pixel face too — headings, body, table cells,
+   inputs, menus, tooltips. The universal selector is deliberate: the goal is
+   that no regular-font text survives anywhere in the app. */
+body, body *, input, select, textarea, button, optgroup {
+  font-family: var(--sc-font-pixel) !important;
+}
+/* Icon fonts are glyph lookups, not text — leave them alone or every icon
+   turns into a letter. */
+.material-icons, .material-icons-outlined, .MuiIcon-root, [class*="material-icons"],
+.MuiSvgIcon-root, .MuiSvgIcon-root * {
+  font-family: 'Material Icons' !important;
+}
+.MuiSvgIcon-root { font-family: inherit !important; }
+
 /* ===== Native Backstage pages wear the same 8-bit chrome =====
    Catalog, scaffolder, search and settings are built from MUI components we
    don't own, so they are matched by MUI's global classes — the public, stable
@@ -158,6 +175,10 @@ body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); } /* body = s
 .MuiChip-label { overflow: hidden; text-overflow: ellipsis; }
 .MuiOutlinedInput-notchedOutline { border-width: var(--sc-border-w) !important; }
 .MuiTableCell-head { color: hsl(var(--sc-muted-fg)) !important; }
+/* Silkscreen is wider than Inter, so dense table text hits Backstage's own
+   word-break sooner and snaps mid-word. 12px is the floor for this face and
+   buys back roughly a fifth of the line. */
+.MuiTableCell-body, .MuiTableCell-body * { font-size: 12px !important; }
 /* Focus is a hard offset outline everywhere, never a glow. */
 .MuiButton-root:focus-visible, .MuiTab-root:focus-visible,
 .MuiIconButton-root:focus-visible, [class*="bui-Button"]:focus-visible {
@@ -555,6 +576,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-nav-mark { border-radius: var(--sc-radius); border: var(--sc-border-w) solid hsl(var(--sc-fg) / .8);
   box-shadow: var(--sc-shadow); }
 
-/* The tree's values are data people read and copy; only its structure is pixel. */
-.sc-json-key, .sc-json-toggle { font-family: var(--sc-font-pixel); font-size: 11px; }
+/* The JSON tree is pixel throughout now; keys keep their weight so the
+   structure still reads at a glance. */
+.sc-json-key, .sc-json-toggle { font-family: var(--sc-font-pixel); font-size: 12px; }
+.sc-json-body { font-family: var(--sc-font-pixel); font-size: 12px; }
 `;

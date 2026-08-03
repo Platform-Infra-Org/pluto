@@ -22,8 +22,9 @@ import { navContent } from './CustomNav';
 const PRIMARY = '#6366f1';
 const PRIMARY_DARK = '#818cf8';
 const ACCENT = '#8b5cf6';
-const FONT =
-  "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+// Full arcade: the MUI theme's base face is the pixel one, so native Backstage
+// components inherit it rather than falling back to Inter.
+const FONT = "'Silkscreen', ui-monospace, SFMono-Regular, monospace";
 
 type Tone = {
   primary: string;
