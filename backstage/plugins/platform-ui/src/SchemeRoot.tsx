@@ -3,14 +3,17 @@ import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api
 import { SHADCN_CSS } from './styles';
 import { SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
 
-// Muted, shadcn-calm accents (lower saturation — not neon).
+// Saturated toward NES-era values. `fg` is the text colour that sits on the
+// accent: white where it clears 4.5:1, near-black where it doesn't. Green and
+// amber are the reason this field exists — darkening them enough for white text
+// would have turned them to mud. Ratios are measured, see SchemeRoot.test.ts.
 export const SCHEMES = [
-  { id: 'violet', label: 'Violet', hsl: '250 52% 55%' },
-  { id: 'blue', label: 'Blue', hsl: '217 60% 52%' },
-  { id: 'green', label: 'Green', hsl: '152 42% 40%' },
-  { id: 'rose', label: 'Rose', hsl: '345 55% 52%' },
-  { id: 'amber', label: 'Amber', hsl: '32 70% 48%' },
-  { id: 'slate', label: 'Slate', hsl: '215 20% 40%' },
+  { id: 'violet', label: 'Violet', hsl: '250 75% 60%', fg: '0 0% 100%' }, // 5.60
+  { id: 'blue', label: 'Blue', hsl: '217 85% 52%', fg: '0 0% 100%' }, // 4.74
+  { id: 'green', label: 'Green', hsl: '145 75% 42%', fg: '240 10% 8%' }, // 7.41
+  { id: 'rose', label: 'Rose', hsl: '345 80% 49%', fg: '0 0% 100%' }, // 4.73
+  { id: 'amber', label: 'Amber', hsl: '38 90% 52%', fg: '240 10% 8%' }, // 8.85
+  { id: 'slate', label: 'Slate', hsl: '215 30% 45%', fg: '0 0% 100%' }, // 5.29
 ];
 
 /**
@@ -50,7 +53,7 @@ function drawTile(g: CanvasRenderingContext2D, accentHsl: string) {
  * image or — by default — the built-in glyph is drawn on top. The static icons
  * in `packages/app/public` remain the pre-JavaScript first paint.
  */
-function updateFavicon(accentHsl: string) {
+function updateFavicon(accentHsl: string, fgHsl: string) {
   const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
   if (!link) return;
   if (branding.favicon) {
@@ -97,7 +100,7 @@ function updateFavicon(accentHsl: string) {
   g.save();
   g.translate(ICON_INSET, ICON_INSET);
   g.scale(scale, scale);
-  g.fillStyle = '#fff'; // --sc-primary-fg
+  g.fillStyle = `hsl(${fgHsl})`; // the scheme's own foreground
   for (const r of spriteRects(TEMPLE)) g.fillRect(r.x, r.y, r.w, 1);
   g.restore();
   publish();
@@ -127,8 +130,11 @@ export function applyScheme(scheme?: string) {
       : null;
   const id = scheme || stored || 'violet';
   const s = SCHEMES.find(x => x.id === id) ?? SCHEMES[0];
-  ensureStyle('sc-accent', `:root{--sc-primary:${s.hsl};--sc-ring:${s.hsl}}`);
-  updateFavicon(s.hsl);
+  ensureStyle(
+    'sc-accent',
+    `:root{--sc-primary:${s.hsl};--sc-ring:${s.hsl};--sc-primary-fg:${s.fg}}`,
+  );
+  updateFavicon(s.hsl, s.fg);
 }
 
 // Theme the login gate immediately, before React mounts anything.
