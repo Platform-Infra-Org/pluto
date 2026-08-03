@@ -1,5 +1,10 @@
 # Plan: secret lifecycle for provisioning (standalone Backstage)
 
+> This is the **design record** — the decisions and why they were taken. For how
+> the shipped system behaves (including key rotation), read the in-app TechDocs:
+> *Explanation → Secret lifecycle*
+> (`deploy/backstage/seed/catalog/platform-docs/docs/explanation/secrets-lifecycle.md`).
+
 How the requests suite collects a secret from a user (e.g. a DB password) and
 gets it to the provisioning Argo Workflow, so the value **never** appears in the
 request row, Argo params/spec/UI, Git, or logs.
@@ -89,7 +94,9 @@ lingers with no TTL, a Secret whose owner GC didn't fire, a stuck request):
     secrets:
       enabled: true
       namespace: argo                 # where Secrets + Workflows live (ownerRef)
-      encryptionKeyRef: ${SECRET_ENC_KEY}   # envelope key for provided secrets
+      encryptionKey:                  # envelope key(s) for provided secrets;
+        - ${SECRET_ENC_KEY}           # the first encrypts, all are tried on
+        - ${SECRET_ENC_KEY_PREVIOUS}  # decrypt (that's how rotation works)
       sweep:
         enabled: true                 # opt-out available
         frequency: { minutes: 15 }

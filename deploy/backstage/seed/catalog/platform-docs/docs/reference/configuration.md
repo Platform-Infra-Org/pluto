@@ -38,10 +38,15 @@ platform:
 ```
 Frontend-visible. Configures the home page cards; omit for all sections.
 
-## `platform.builder` / `platform.catalog`
+## `platform.secrets`
 
-Gitea coordinates the builder publishes to / the catalog repo (baseUrl, owner,
-repo, user, password). Replace with real VCS + tokens for production.
+`enabled`, `namespace` (where per-request Secrets and Workflows live — must match
+`platform.argo.namespace`, since an `ownerReference` is namespaced),
+`encryptionKey`, and `sweep` (`enabled`, `frequency`, `maxAgeHours`).
+
+`encryptionKey` takes a string **or a list**: the first entry encrypts, every
+entry is tried on decrypt, which is how the key rotates without re-encrypting
+held blobs. See **[Secret lifecycle](../explanation/secrets-lifecycle.md)**.
 
 ## `catalog.providers.ldapOrg`
 

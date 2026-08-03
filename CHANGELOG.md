@@ -162,6 +162,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Eye-icon show/hide toggle on the Secret field
 - Add git-cliff config and generate CHANGELOG
 - Read the catalog from Bitbucket Data Center in production
+- Rotate the envelope key without re-encrypting
 
 ### Changed
 
@@ -192,6 +193,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Secret lifecycle plan (create-on-approve, workflow-owned, per-request)
 - Lint clean the secret-lifecycle files (eqeqeq, no-nested-ternary, useless-ctor)
 - Ignore the Backstage dev-server log
+- Explain the secret lifecycle and key rotation
 
 ### Fixed
 

@@ -22,6 +22,7 @@ nav:
   - Explanation:
       - Architecture: explanation/architecture.md
       - Request lifecycle: explanation/request-lifecycle.md
+      - Secret lifecycle: explanation/secrets-lifecycle.md
       - Per-team RBAC: explanation/rbac.md
       - Workflows own Git: explanation/workflows-and-git.md
       - Identity & LDAP: explanation/identity-and-ldap.md
