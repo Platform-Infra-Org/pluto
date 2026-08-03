@@ -28,3 +28,6 @@ dist/
 
 # SPA dev-server log
 .spa.log
+
+# Backstage dev-server log
+.backstage.log
