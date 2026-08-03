@@ -29,6 +29,18 @@ entrypoints. Every resource type's template points its `argoSubmit` (create) and
 - **update** — rewrite the data file in place.
 - **delete** — remove both files and unregister.
 
+## Plain git, so the host is just config
+
+Each verb clones the repo, edits files, commits and pushes — ordinary git over
+HTTPS, not a hosting provider's REST API. That matters for portability: Gitea's
+contents API, Bitbucket's and GitHub's all differ in shape, but `git clone` is
+`git clone`. Moving from Gitea in dev to Bitbucket in production is a change to
+one parameter, `repoUrl`.
+
+Credentials arrive as an env var and are spliced into the remote URL at push
+time, so they never appear in the workflow spec, the Argo UI, or the log. An
+unchanged tree is not an error — re-running a workflow is idempotent.
+
 ## The backend resolves the paths
 
 `git-ops` doesn't assume a layout. The backend resolves a resource's real git
