@@ -1,5 +1,0 @@
-.venv/
-tests/
-argo/
-**/__pycache__/
-*.pyc

@@ -27,9 +27,9 @@ deploy/                        Local dev infrastructure + seed data
   keycloak/                    Realm (OIDC + LDAP federation)
   ldap/                        OpenLDAP bootstrap LDIF (users + groups)
 
-docs/                          Repo-level docs (specs, plans, prod, upgrade)
-scripts/                       dev-up / backstage-up helpers
-apps/, runtime/, planning/     Legacy pre-Backstage stack + composable-builder design
+docs/                          Repo-level docs (specs, prod, upgrade, secrets)
+scripts/                       backstage-up / backstage-down helpers
+planning/                      Pre-Backstage design record (historical)
 ```
 
 ## The plugins (`backstage/plugins/`)
@@ -49,10 +49,13 @@ Each plugin keeps one responsibility per file (`store.ts`, `stateMachine.ts`,
 
 ## Run it locally
 
-See **[README-RUN.md](README-RUN.md)**. In short: `docker compose -p backstage -f
-deploy/backstage/docker-compose.yml up -d`, `bash deploy/backstage/gitea-seed.sh`,
-`bash deploy/backstage/kind-argo-up.sh`, then `cd backstage && yarn start`. Log in
-with an LDAP account (`admin`/`admin`, `sam`/`sam`).
+```bash
+bash scripts/backstage-up.sh      # docker services + Gitea seed + kind cluster with Argo
+cd backstage && yarn start        # app on :3000, backend on :7007
+```
+
+Log in with an LDAP account (`admin`/`admin`, `sam`/`sam`).
+`bash scripts/backstage-down.sh` tears the stack back down.
 
 ## Production & upgrades
 

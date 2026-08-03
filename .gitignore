@@ -1,33 +1,15 @@
 node_modules/
-__pycache__/
-*.pyc
-.venv/
 dist/
 .env
-.env.integration
-# Public dev-only VITE_* SPA config (no secrets) — shipped so `pnpm dev` runs out of the box.
-!apps/web/.env
-.catalog-cache/
-.catalog-seed/
-.bff.log
-.bff.pid
 .superpowers/
-*.egg-info/
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
 .DS_Store
-
-# Playwright
-/apps/web/test-results/
-/apps/web/playwright-report/
 
 # backstage argo port-forward runtime
 .argo-pf.pid
 .argo-pf.log
 
-# SPA dev-server log
-.spa.log
-
 # Backstage dev-server log
 .backstage.log
+
+# RHDH dynamic-plugin export output
+dist-dynamic/
