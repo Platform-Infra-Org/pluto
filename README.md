@@ -5,9 +5,8 @@ resource requests with approval, Argo-backed provisioning, per-team RBAC, and a
 shadcn design system, with identity from LDAP.
 
 > **Docs:** the full documentation (Diátaxis: tutorials / how-to / reference /
-> explanation) is served **inside Backstage** via TechDocs — open the
-> **Platform Plugin Suite** component → **Docs** tab, or `/docs`. Source lives in
-> `deploy/backstage/seed/catalog/platform-docs/`.
+> explanation) lives in `docs/`, built by the `mkdocs.yml` at the repo root. See
+> [Documentation](#documentation) for the two places it's published.
 
 ## Repository layout
 
@@ -15,21 +14,20 @@ shadcn design system, with identity from LDAP.
 backstage/                     The Backstage app (the product)
   packages/app                 Frontend app shell (features wired in App.tsx)
   packages/backend             Backend (plugins/modules wired in index.ts)
-  plugins/                     The 8 platform plugins (see below)
+  plugins/                     The platform plugins (see below)
   app-config*.yaml             Config (dev + production split)
 
+docs/, mkdocs.yml              The documentation site (Diátaxis)
 deploy/                        Local dev infrastructure + seed data
-  backstage/docker-compose.yml Postgres, Keycloak, OpenLDAP, Gitea, MinIO
+  backstage/docker-compose.yml Postgres, Keycloak, OpenLDAP, Gitea
   backstage/kind-argo-up.sh    kind cluster + Argo Workflows + git-ops
   backstage/argo/              Argo WorkflowTemplates (git-ops, function-blocks)
-  backstage/seed/catalog/      Catalog Git repo: resources + the docs component
+  backstage/seed/catalog/      Catalog Git repo: resources + an example docs component
   backstage/seed/software-templates/  Templates Git repo
   keycloak/                    Realm (OIDC + LDAP federation)
   ldap/                        OpenLDAP bootstrap LDIF (users + groups)
 
-docs/                          Repo-level docs (specs, prod, upgrade, secrets)
 scripts/                       backstage-up / backstage-down helpers
-planning/                      Pre-Backstage design record (historical)
 ```
 
 ## The plugins (`backstage/plugins/`)
@@ -59,9 +57,10 @@ Log in with an LDAP account (`admin`/`admin`, `sam`/`sam`).
 
 ## Documentation
 
-One Diátaxis site, `deploy/backstage/seed/catalog/platform-docs/`, published two
-ways: **inside Backstage** via TechDocs (Platform Plugin Suite → Docs) and to
-**GitHub Pages** by the `docs` workflow on every push to `main`.
+One Diátaxis site at the repo root — `mkdocs.yml` + `docs/` — published two
+ways: to **GitHub Pages** by the `docs` workflow on every push to `main`, and
+**inside Backstage** via TechDocs once this repo is registered as a catalog
+location (`catalog-info.yaml` at the root carries `techdocs-ref: dir:.`).
 
 Start with *How-to → Prepare for production* and *Upgrade Backstage*; the
 *Explanation* section covers the request and secret lifecycles, per-team RBAC,
@@ -71,5 +70,9 @@ To preview it locally:
 
 ```bash
 pip install mkdocs-techdocs-core
-mkdocs serve -f deploy/backstage/seed/catalog/platform-docs/mkdocs.yml
+mkdocs serve
 ```
+
+`deploy/backstage/seed/catalog/example-docs/` is a *separate, small* example: how
+to document an application whose source you don't own (the docs live in the
+catalog repo, next to the entity).

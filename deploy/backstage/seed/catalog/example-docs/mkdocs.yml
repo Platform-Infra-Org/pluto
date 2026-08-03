@@ -1,0 +1,12 @@
+site_name: ACME Billing (vendor)
+site_description: Docs we maintain for an application whose source we don't own
+
+nav:
+  - Overview: index.md
+  - How-to:
+      - Rotate the API credentials: how-to/rotate-credentials.md
+  - Reference:
+      - Endpoints and owners: reference/endpoints.md
+
+plugins:
+  - techdocs-core

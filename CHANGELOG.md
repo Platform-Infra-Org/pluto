@@ -206,6 +206,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lift provisioning out of the plugin wiring
 - Adopt the checks + release-pr + release-manual pipeline
 - Publish the Diataxis site to GitHub Pages and fold in the repo docs
+- Move the site to the repo root
 
 ### Fixed
 
