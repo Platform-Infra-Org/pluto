@@ -4,7 +4,6 @@ import techdocsPlugin from '@backstage/plugin-techdocs/alpha';
 import platformRequestsPlugin, {
   platformRelationsCardModule,
 } from '@internal/plugin-platform-requests';
-import platformBuilderPlugin from '@internal/plugin-platform-builder';
 import {
   platformUiModule,
   platformScaffolderFieldsModule,
@@ -17,7 +16,6 @@ export default createApp({
     // Docs-like-code: renders each entity's Markdown docs (Docs tab + /docs).
     techdocsPlugin,
     platformRequestsPlugin,
-    platformBuilderPlugin,
     // One plugin: shadcn theme + global styles + color picker + custom nav.
     platformUiModule,
     // Registers the DynamicSelect scaffolder field (ui:field: DynamicSelect).

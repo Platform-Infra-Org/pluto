@@ -64,7 +64,8 @@ backend:
 
 integrations:
   # Local Gitea, so the reader can fetch directory trees (needed by TechDocs to
-  # pull an entity's mkdocs.yml + docs/). Dev-only basic-auth creds.
+  # pull an entity's mkdocs.yml + docs/). Dev-only basic-auth creds — production
+  # empties this and uses bitbucketServer instead (app-config.production.yaml).
   gitea:
     - host: localhost:3001
       baseUrl: http://localhost:3001
@@ -235,14 +236,6 @@ platform:
     # Production: set proxyPath to a proxy.endpoints entry (above) so Argo calls
     # go through the proxy, which injects the argo-server auth server-side.
     # proxyPath: /argo-workflows
-  builder:
-    gitea:
-      baseUrl: http://localhost:3001
-      owner: platform
-      repo: software-templates
-      # Basic-auth against the seeded Gitea admin (dev-only, reproducible).
-      user: platform
-      password: platform
   # Where request results (edit/update, delete) are applied on workflow success.
   catalog:
     gitea:
