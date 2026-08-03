@@ -203,6 +203,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Build the product instead of the deleted stack
 - Drop the DisabledSecretStore null object
 - Commit with plain git instead of the Gitea contents API
+- Lift provisioning out of the plugin wiring
 
 ### Fixed
 
