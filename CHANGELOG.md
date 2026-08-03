@@ -204,6 +204,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Drop the DisabledSecretStore null object
 - Commit with plain git instead of the Gitea contents API
 - Lift provisioning out of the plugin wiring
+- Adopt the checks + release-pr + release-manual pipeline
 
 ### Fixed
 
