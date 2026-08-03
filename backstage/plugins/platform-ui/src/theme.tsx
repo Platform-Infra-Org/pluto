@@ -95,8 +95,11 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
           },
           title: {
             color: 'hsl(var(--sc-fg))',
-            fontSize: '1.6rem',
-            lineHeight: 1.2,
+            fontFamily: "'Silkscreen', ui-monospace, monospace",
+            textTransform: 'uppercase',
+            fontWeight: 400,
+            fontSize: '1.3rem',
+            lineHeight: 1.3,
           },
           subtitle: { color: 'hsl(var(--sc-muted-fg))' },
           type: { color: 'hsl(var(--sc-muted-fg))' },

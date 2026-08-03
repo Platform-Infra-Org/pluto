@@ -92,12 +92,79 @@ body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); } /* body = s
    theme (BackstageInfoCard.styleOverrides.header). */
 .MuiCard-root, .MuiPaper-elevation1, .MuiPaper-elevation2, .MuiAccordion-root {
   background-color: hsl(var(--sc-card)) !important; color: hsl(var(--sc-fg));
-  border: var(--sc-border-w) solid hsl(var(--sc-border)) !important; box-shadow: none !important;
+  border: var(--sc-border-w) solid hsl(var(--sc-border)) !important;
+  box-shadow: var(--sc-shadow) !important;
   border-radius: var(--sc-radius) !important; }
 .MuiInputBase-root, .MuiOutlinedInput-root { border-radius: var(--sc-radius) !important; }
 .MuiOutlinedInput-notchedOutline { border-color: hsl(var(--sc-input)) !important; }
+/* ===== Native Backstage pages wear the same 8-bit chrome =====
+   Catalog, scaffolder, search and settings are built from MUI components we
+   don't own, so they are matched by MUI's global classes — the public, stable
+   hook. Pixel type goes on chrome (buttons, tabs, table headers, filter labels,
+   chips, headings); table bodies and descriptions stay Inter, exactly as on our
+   own pages. */
+.MuiButton-root, .MuiTab-root, .MuiChip-root, .MuiTableCell-head,
+.MuiTableSortLabel-root, .MuiFormLabel-root, .MuiInputLabel-root,
+.MuiTypography-h1, .MuiTypography-h2, .MuiTypography-h3,
+.MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6,
+.MuiCardHeader-title, .MuiDialogTitle-root, .MuiAlertTitle-root,
+[class*="BackstageContentHeader-title"], [class*="BackstageItemCardHeader"],
+[class*="bui-Button"], [class*="bui-HeaderTitle"], [class*="bui-HeaderBreadcrumb"],
+[class*="BackstageAutocomplete-label"] {
+  font-family: var(--sc-font-pixel) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0 !important;
+  font-weight: 400 !important;
+}
+/* Silkscreen is a bitmap face — it loses strokes below 12px. */
+.MuiTab-root, .MuiChip-root, .MuiTableCell-head, .MuiTableSortLabel-root,
+.MuiFormLabel-root, .MuiInputLabel-root, [class*="bui-Button"],
+[class*="BackstageAutocomplete-label"] {
+  font-size: 12px !important;
+}
+/* The BUI page title is the biggest type on a native page. */
+[class*="bui-HeaderTitle"] { font-size: 22px !important; }
+.MuiButton-root { font-size: 13px !important; }
+.MuiTypography-h1 { font-size: 26px !important; }
+.MuiTypography-h2 { font-size: 22px !important; }
+.MuiTypography-h3, .MuiCardHeader-title, .MuiDialogTitle-root { font-size: 18px !important; }
+.MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 { font-size: 15px !important; }
+
+/* Native buttons get the same press as ours: the shadow collapses and the
+   button moves into the space it occupied. */
+.MuiButton-root, [class*="bui-Button"] {
+  border-radius: var(--sc-radius) !important;
+  border: var(--sc-border-w) solid hsl(var(--sc-fg)) !important;
+  box-shadow: var(--sc-shadow) !important;
+  transition: none !important;
+}
+.MuiButton-root:active:not(.Mui-disabled), [class*="bui-Button"]:active {
+  transform: translate(2px, 2px);
+  box-shadow: none !important;
+}
+.MuiButton-text, .MuiButton-textPrimary, .MuiIconButton-root {
+  border: none !important; box-shadow: none !important;
+}
+.MuiChip-root {
+  border: var(--sc-border-w) solid hsl(var(--sc-border)) !important;
+  border-radius: var(--sc-radius) !important;
+  /* Silkscreen is wider than Inter, so a tag that used to fit its column now
+     overflows. Cap the chip and ellipsise rather than letting it escape. */
+  max-width: 100%;
+  font-size: 11px !important;
+}
+.MuiChip-label { overflow: hidden; text-overflow: ellipsis; }
+.MuiOutlinedInput-notchedOutline { border-width: var(--sc-border-w) !important; }
+.MuiTableCell-head { color: hsl(var(--sc-muted-fg)) !important; }
+/* Focus is a hard offset outline everywhere, never a glow. */
+.MuiButton-root:focus-visible, .MuiTab-root:focus-visible,
+.MuiIconButton-root:focus-visible, [class*="bui-Button"]:focus-visible {
+  outline: var(--sc-border-w) solid hsl(var(--sc-ring)) !important;
+  outline-offset: 2px;
+}
+
 /* accent — buttons, links, tabs, selection (all follow the picker) */
-.MuiButton-root { text-transform: none !important; border-radius: var(--sc-radius) !important; box-shadow: none !important; font-weight: 600 !important; }
+.MuiButton-root { box-shadow: var(--sc-shadow) !important; }
 .MuiButton-containedPrimary { background-color: hsl(var(--sc-primary)) !important; color: hsl(var(--sc-primary-fg)) !important; }
 .MuiButton-outlinedPrimary, .MuiButton-textPrimary { color: hsl(var(--sc-primary)) !important; }
 .MuiLink-root, a.MuiTypography-colorPrimary, .MuiTypography-colorPrimary { color: hsl(var(--sc-primary)) !important; }
@@ -290,7 +357,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 
 /* custom shadcn nav (replaces the Backstage sidebar) */
 .sc-nav { position: fixed; top: 0; left: 0; bottom: 0; width: var(--sc-nav-w); z-index: 1200;
-  background: hsl(var(--sc-card)); border-right: 1px solid hsl(var(--sc-border));
+  background: hsl(var(--sc-card)); border-right: var(--sc-border-w) solid hsl(var(--sc-border));
   display: flex; flex-direction: column; padding: 12px 12px 16px; overflow-x: hidden;
   transition: width .16s ease; }
 .sc-nav-top { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 14px; }
@@ -438,6 +505,19 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 }
 .sc-badge { border: var(--sc-border-w) solid hsl(var(--sc-border)); box-shadow: none; }
 .sc-input, .sc-select { border-width: var(--sc-border-w); box-shadow: none; }
+
+/* The resize handle: a 6px hit area straddling the nav's right edge, showing a
+   2px accent line on hover/focus. Wider than it looks, because a 2px target is
+   a miss. */
+.sc-nav-resize {
+  position: absolute; top: 0; right: 0; width: 6px; height: 100%;
+  cursor: col-resize; background: transparent; z-index: 5; }
+.sc-nav-resize:hover, .sc-nav-resize:focus-visible {
+  background: linear-gradient(90deg, transparent 2px, hsl(var(--sc-primary)) 2px 4px, transparent 4px);
+  outline: none; }
+.sc-nav.dragging { transition: none; user-select: none; }
+.sc-nav.dragging .sc-nav-resize {
+  background: linear-gradient(90deg, transparent 2px, hsl(var(--sc-primary)) 2px 4px, transparent 4px); }
 
 /* State sprite beside its badge. 16px is one screen pixel per sprite pixel —
    the size at which pixel art is sharpest; avoid non-integer multiples. */
