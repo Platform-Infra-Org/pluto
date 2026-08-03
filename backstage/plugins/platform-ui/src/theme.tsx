@@ -76,6 +76,67 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
       },
     },
     pageTheme: pageThemes,
+    // Backstage's own components are styled here, through their published
+    // override keys and slot names, rather than by matching hashed class
+    // prefixes from injected CSS. The slots are typed by @backstage/core-components
+    // (HeaderClassKey, InfoCardClassKey, …), so a renamed slot fails tsc instead
+    // of silently rendering unstyled.
+    components: {
+      BackstageHeader: {
+        styleOverrides: {
+          header: {
+            backgroundImage: 'none',
+            backgroundColor: 'hsl(var(--sc-card))',
+            boxShadow: 'none',
+            borderBottom: '1px solid hsl(var(--sc-border))',
+            paddingTop: 16,
+            paddingBottom: 14,
+            minHeight: 0,
+          },
+          title: {
+            color: 'hsl(var(--sc-fg))',
+            fontSize: '1.6rem',
+            lineHeight: 1.2,
+          },
+          subtitle: { color: 'hsl(var(--sc-muted-fg))' },
+          type: { color: 'hsl(var(--sc-muted-fg))' },
+        },
+      },
+      BackstageHeaderLabel: {
+        styleOverrides: { label: { color: 'hsl(var(--sc-muted-fg))' } },
+      },
+      BackstageInfoCard: {
+        styleOverrides: {
+          header: {
+            backgroundColor: 'hsl(var(--sc-card))',
+            color: 'hsl(var(--sc-fg))',
+            borderBottom: '1px solid hsl(var(--sc-border))',
+          },
+        },
+      },
+      BackstageItemCardHeader: {
+        styleOverrides: {
+          root: {
+            backgroundImage: 'none',
+            background: 'hsl(var(--sc-muted))',
+            color: 'hsl(var(--sc-fg))',
+            borderBottom: '1px solid hsl(var(--sc-border))',
+          },
+        },
+      },
+      BackstageSidebarPage: {
+        styleOverrides: {
+          root: {
+            // !important is load-bearing here: SidebarPage sets its own
+            // padding-left (224px, its default sidebar width) inside a
+            // breakpoint, which otherwise wins and misaligns the content
+            // against our 240px nav.
+            paddingLeft: 'var(--sc-nav-w) !important',
+            transition: 'padding-left .16s ease',
+          },
+        },
+      },
+    },
     typography: {
       fontFamily: FONT,
       h1: { fontWeight: 700, letterSpacing: '-0.02em' },
