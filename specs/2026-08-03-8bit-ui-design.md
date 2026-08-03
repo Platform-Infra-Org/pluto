@@ -42,12 +42,12 @@ Files touched:
 
 | File | Change |
 |---|---|
-| `styles.ts` | Token retune, `@font-face`, pixel component classes, keyframes, `[FRAGILE]` overrides squared off |
+| `styles.ts` | Token retune, `@font-face`, pixel component classes, keyframes; the `[FRAGILE]` block leaves for `theme.tsx` (see below) |
 | `sprites.ts` *(new)* | Pixel-grid format + the sprite set; replaces `markShapes.ts` |
 | `components.tsx` | `PlatformMark` renders from the grid; `Button`/`Badge` gain press depth and sprite slots |
 | `CustomNav.tsx` | Pixel nav rows, `▶` active marker, sprite icons |
 | `SchemeRoot.tsx` | Saturated `SCHEMES` values; favicon draws the pixel temple |
-| `theme.tsx` | MUI theme: radius 0, Silkscreen for headings |
+| `theme.tsx` | Gains a `components` block: the migrated Backstage overrides, radius 0, Silkscreen for headings |
 | `packages/app/public/fonts/` *(new)* | `silkscreen.woff2` |
 
 ## The token layer
@@ -158,13 +158,61 @@ is what makes a pixel interface look like a modern interface wearing a costume.
 - The scanline overlay is `pointer-events: none` and drops out under reduced
   motion.
 
-## Risks
+## Retiring the `[FRAGILE]` overrides
 
-**The `[FRAGILE]` MUI overrides are the effort sink.** `styles.ts` reskins
-Backstage's own components by hashed class prefix. Every one of those needs a
-pixel pass too, or the app looks half-converted the moment you open a native
-page (catalog tables, TechDocs chrome, the scaffolder form). This is the part
-most likely to be underestimated.
+`styles.ts` reskins Backstage's own components by matching hashed class
+prefixes — `[class*="BackstageHeader-title"]` and friends, eight of them, each
+carrying a comment about re-deriving the prefix after an upgrade. Restyling
+those for pixel would double down on the fragility.
+
+It turns out none of it is necessary. `createUnifiedTheme` accepts a
+`components` block (`UnifiedThemeOptions.components?: ThemeOptions['components']`),
+and `@backstage/core-components` publishes a typed override map — every
+component we hack at has a key and named slots:
+
+```ts
+type HeaderClassKey =
+  | 'header' | 'title' | 'subtitle' | 'type'
+  | 'leftItemsBox' | 'rightItemsBox' | 'breadcrumb' | …;
+```
+
+So the pixel pass migrates them instead of extending them:
+
+| Today, in `styles.ts` | Becomes, in `theme.tsx` |
+|---|---|
+| `[class*="BackstageHeader-header"]` | `BackstageHeader.styleOverrides.header` |
+| `[class*="BackstageHeader-title"]` | `BackstageHeader.styleOverrides.title` |
+| `[class*="BackstageHeader-subtitle"]` / `-type` | `.subtitle` / `.type` |
+| `[class*="HeaderLabel-label"]` | `BackstageHeaderLabel.styleOverrides.label` |
+| `[class*="BackstageInfoCard-header"]` | `BackstageInfoCard.styleOverrides.header` |
+| `[class*="ItemCardHeader"]` | `BackstageItemCardHeader.styleOverrides.root` |
+| `[class*="BackstageSidebarPage-root"]` | `BackstageSidebarPage.styleOverrides.root` |
+| `[class*="PluginCatalogGraph"]` / `DependencyGraph*` | delete — the relations card is disabled in `app-config.yaml:25` and replaced by ours. Verify the standalone graph page first |
+
+What this buys, beyond the restyle:
+
+- **The hash stops mattering.** The class hash is what changes between versions;
+  the component key and slot name are the public contract.
+- **Breakage becomes a build error.** Slot names are typed, so a removed slot
+  fails `tsc` instead of silently rendering an unstyled header.
+- **`!important` mostly goes away.** Theme overrides apply at the right
+  specificity; the CSS layer only fought MUI because it was injected from
+  outside.
+
+Residual risk, stated honestly: `createUnifiedTheme` takes MUI v5 shapes and
+Backstage transforms them for its v4 components, so each migrated override needs
+a visual check rather than a blind port. And the override map covers
+`core-components` only — anything a plugin styles privately (TechDocs chrome,
+for one) still needs CSS. The `[FRAGILE]` marker survives for that remainder,
+which should be two or three rules rather than eight.
+
+This work lands **before** the pixel pass: migrate first, verify the app looks
+identical, then square the corners. Mixing the two would make a regression
+impossible to attribute. It also means `docs/explanation/upgrade-surface.md`
+needs updating when it's done — that page currently describes re-deriving hashed
+prefixes as the standing upgrade tax.
+
+## Risks
 
 **Font width.** Silkscreen is narrower than Press Start 2P but still wider than
 Inter. Nav labels, badges and table headers need checking at the collapsed
@@ -177,6 +225,9 @@ formality — if a value fails, the palette moves, not the threshold.
 ## Verification
 
 - The existing 65 tests stay green; `tsc` and `lint:all` clean.
+- The override migration is verified **before** any pixel work: screenshots of a
+  catalog entity page, a table and the app shell, compared against the same
+  pages on `main`. They must be indistinguishable.
 - A unit test for the sprite renderer: a known grid produces the expected rect
   count and coordinates.
 - A component test that `PlatformMark` renders the grid, extending the existing
