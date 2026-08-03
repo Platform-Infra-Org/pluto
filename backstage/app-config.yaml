@@ -1,5 +1,13 @@
 app:
   title: Platform
+  # Logo + tab icon. Both optional; without them you get the built-in temple
+  # glyph and the static icons in packages/app/public. Drop files in
+  # packages/app/public/branding/ and reference them by path — same-origin only
+  # (the CSP is `img-src 'self' data:`). See TechDocs → How-to → Change the
+  # logo, favicon and title.
+  # branding:
+  #   mark: /branding/mark.svg   # drawn in the accent tile; transparency shows the picked color
+  #   favicon: /branding/tab.png # optional: pins the tab icon instead of generating it from `mark`
   baseUrl: http://localhost:3000
 
   # Enable all packages by default, this will discover packages from packages/app/package.json

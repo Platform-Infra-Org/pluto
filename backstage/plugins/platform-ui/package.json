@@ -13,6 +13,7 @@
   "backstage": {
     "role": "web-library"
   },
+  "configSchema": "config.d.ts",
   "sideEffects": false,
   "scripts": {
     "build": "backstage-cli package build",
@@ -33,9 +34,13 @@
     "react": "^17 || ^18 || ^19"
   },
   "files": [
-    "dist"
+    "dist",
+    "config.d.ts"
   ],
   "devDependencies": {
+    "@backstage/config": "*",
+    "@backstage/core-app-api": "*",
+    "@backstage/test-utils": "*",
     "@testing-library/react": "*"
   }
 }

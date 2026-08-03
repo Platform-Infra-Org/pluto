@@ -5,16 +5,27 @@ import {
   SelectHTMLAttributes,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { configApiRef, useApi } from '@backstage/core-plugin-api';
 
 /**
- * The Platform logo glyph: an ancient Greek temple facade (pediment, columns,
- * stylobate) — the temple resting on its raised platform. Uses `currentColor`,
- * so it inherits whatever color the surrounding mark tile sets.
+ * The Platform logo glyph. `app.branding.mark` replaces it with an image drawn
+ * over the same tile: the image keeps its own colors where it is opaque, and
+ * its transparent areas show the tile, which follows the color picker.
  *
- * Rebranding this (and the favicons, which are separate static assets): see
- * TechDocs → How-to → *Change the logo, favicon and title*.
+ * Without that config it falls back to the built-in glyph — an ancient Greek
+ * temple facade (pediment, columns, stylobate), the temple resting on its
+ * raised platform — which uses `currentColor`, so it inherits whatever color
+ * the surrounding mark tile sets.
+ *
+ * See TechDocs → How-to → *Change the logo, favicon and title*.
  */
 export function PlatformMark({ className }: { className?: string }) {
+  const mark = useApi(configApiRef).getOptionalString('app.branding.mark');
+  if (mark) {
+    // Decorative: every tile that renders the mark is inside a link or heading
+    // that already names the product.
+    return <img className={className} src={mark} alt="" aria-hidden="true" />;
+  }
   return (
     <svg
       className={className}

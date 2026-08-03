@@ -258,7 +258,10 @@ header.MuiPaper-root h1, [class*="BackstageHeader-title"] { font-size: 1.6rem !i
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, hsl(var(--sc-primary)), hsl(var(--sc-primary) / .6));
   box-shadow: 0 4px 16px hsl(var(--sc-primary) / .4); }
-.sc-login-mark svg { width: 34px; height: 34px; color: hsl(var(--sc-primary-fg)); }
+/* svg = the built-in glyph (takes the tile's foreground color); img = a
+   configured app.branding.mark (keeps its own colors, tile shows through its
+   transparency). Both sit at ~65% of the tile so the shape clears the corners. */
+.sc-login-mark svg, .sc-login-mark img { width: 34px; height: 34px; color: hsl(var(--sc-primary-fg)); object-fit: contain; }
 .sc-login-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: hsl(var(--sc-fg)); margin: 0; }
 .sc-login-sub { font-size: 14px; color: hsl(var(--sc-muted-fg)); margin: 0 0 16px; }
 .sc-login-card .sc-btn { width: 100%; }
@@ -303,7 +306,7 @@ header.MuiPaper-root h1, [class*="BackstageHeader-title"] { font-size: 1.6rem !i
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, hsl(var(--sc-primary)), hsl(var(--sc-primary) / .65));
   box-shadow: 0 2px 8px hsl(var(--sc-primary) / .35); }
-.sc-nav-mark svg { width: 17px; height: 17px; color: hsl(var(--sc-primary-fg)); }
+.sc-nav-mark svg, .sc-nav-mark img { width: 17px; height: 17px; color: hsl(var(--sc-primary-fg)); object-fit: contain; }
 .sc-nav-word { font-weight: 700; font-size: 17px; letter-spacing: -0.02em; color: hsl(var(--sc-fg)); white-space: nowrap; }
 .sc-nav-toggle { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 7px; border: 1px solid hsl(var(--sc-border));
   background: transparent; color: hsl(var(--sc-muted-fg)); cursor: pointer; font-size: 13px; line-height: 1;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { appThemeApiRef, useApi } from '@backstage/core-plugin-api';
+import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
 
 // Muted, shadcn-calm accents (lower saturation — not neon).
@@ -11,6 +11,64 @@ export const SCHEMES = [
   { id: 'amber', label: 'Amber', hsl: '32 70% 48%' },
   { id: 'slate', label: 'Slate', hsl: '215 20% 40%' },
 ];
+
+/**
+ * Branding from `app.branding`, handed over once by {@link SchemeRoot}.
+ * `applyScheme` runs at module load — before React, so before configApi exists —
+ * hence this module-level relay rather than a prop.
+ */
+let branding: { mark?: string; favicon?: string } = {};
+
+export function setBranding(next: { mark?: string; favicon?: string }) {
+  branding = next;
+  applyScheme(); // redraw the tab icon now that the mark is known
+}
+
+/**
+ * The tab icon. An explicit `app.branding.favicon` is used as-is; otherwise a
+ * configured mark is composited over the picked accent, so the tab recolours
+ * with the sidebar tile. With neither set, the static icons in
+ * `packages/app/public` are left alone.
+ */
+function updateFavicon(accentHsl: string) {
+  const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+  if (!link) return;
+  if (branding.favicon) {
+    link.href = branding.favicon;
+    return;
+  }
+  if (!branding.mark) return;
+
+  // 64px downscales cleanly to the 32/16 the tab actually uses. Tile radius and
+  // logo inset follow the same proportions as the in-app tile (styles.ts).
+  const S = 64;
+  const inset = Math.round(S * 0.175);
+  const canvas = document.createElement('canvas');
+  canvas.width = S;
+  canvas.height = S;
+  const g = canvas.getContext('2d');
+  if (!g) return;
+
+  const img = new Image();
+  img.onload = () => {
+    try {
+      g.fillStyle = `hsl(${accentHsl})`;
+      if (typeof g.roundRect === 'function') {
+        g.beginPath();
+        g.roundRect(0, 0, S, S, Math.round(S * 0.27));
+        g.fill();
+      } else {
+        g.fillRect(0, 0, S, S);
+      }
+      g.drawImage(img, inset, inset, S - inset * 2, S - inset * 2);
+      link.href = canvas.toDataURL('image/png');
+    } catch {
+      // Cross-origin mark (tainted canvas) or an SVG with no intrinsic size —
+      // keep whatever favicon is already there.
+    }
+  };
+  img.src = branding.mark;
+}
 
 function ensureStyle(id: string, css: string) {
   let el = document.getElementById(id) as HTMLStyleElement | null;
@@ -37,6 +95,7 @@ export function applyScheme(scheme?: string) {
   const id = scheme || stored || 'violet';
   const s = SCHEMES.find(x => x.id === id) ?? SCHEMES[0];
   ensureStyle('sc-accent', `:root{--sc-primary:${s.hsl};--sc-ring:${s.hsl}}`);
+  updateFavicon(s.hsl);
 }
 
 // Theme the login gate immediately, before React mounts anything.
@@ -87,6 +146,14 @@ export function SchemePicker() {
  */
 export function SchemeRoot() {
   const appTheme = useApi(appThemeApiRef);
+  const config = useApi(configApiRef);
+
+  useEffect(() => {
+    setBranding({
+      mark: config.getOptionalString('app.branding.mark'),
+      favicon: config.getOptionalString('app.branding.favicon'),
+    });
+  }, [config]);
 
   useEffect(() => {
     const sub = appTheme.activeThemeId$().subscribe(id => {
