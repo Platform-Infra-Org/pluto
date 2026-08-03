@@ -166,6 +166,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable platform mark and tab icon
 - Ship a Poseidon trident mark and wire it up
 - Drop unused dependencies and dead config
+- Drop the unused MinIO service
 
 ### Changed
 

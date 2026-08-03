@@ -37,10 +37,8 @@ scripts/backstage-down.sh
 | Backstage   | http://localhost:3000   | backend on :7007                        |
 | Keycloak    | http://localhost:8081   | realm `platform`, admin/admin           |
 | Gitea       | http://localhost:3001   | `platform/catalog`, `platform/software-templates` (platform/platform) |
-| MinIO       | http://localhost:9002   | console :9003, minioadmin/minioadmin    |
 | argo-server | http://localhost:2746   | port-forwarded from the kind cluster    |
 
-Distinct ports let this coexist with the legacy stack (`scripts/dev-up.sh`).
 
 ## Layout
 
