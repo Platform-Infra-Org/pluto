@@ -1,8 +1,8 @@
 # Platform (new-ui)
 
 An internal developer platform built as a **Backstage plugin suite** — self-service
-resource requests with approval, Argo-backed provisioning, per-team RBAC, a
-service/graph builder, and a shadcn design system, with identity from LDAP.
+resource requests with approval, Argo-backed provisioning, per-team RBAC, and a
+shadcn design system, with identity from LDAP.
 
 > **Docs:** the full documentation (Diátaxis: tutorials / how-to / reference /
 > explanation) is served **inside Backstage** via TechDocs — open the
@@ -41,7 +41,6 @@ apps/, runtime/, planning/     Legacy pre-Backstage stack + composable-builder d
 | `platform-requests` | frontend pages + Resource entity cards/tab |
 | `platform-ui` | shadcn design system, colour picker, nav, DynamicSelect, JsonTree |
 | `scaffolder-backend-module-platform-actions` | the `platform:request:submit` action |
-| `platform-builder-backend` / `platform-builder` | the service/graph builder |
 | `permission-backend-module-platform-rbac` | the RBAC permission policy |
 
 Each plugin keeps one responsibility per file (`store.ts`, `stateMachine.ts`,
@@ -61,7 +60,3 @@ with an LDAP account (`admin`/`admin`, `sam`/`sam`).
   for production (this is a local demo instance).
 - **[docs/UPGRADING-BACKSTAGE.md](docs/UPGRADING-BACKSTAGE.md)** — how to bump
   Backstage without breaking the customization.
-- **[docs/RHDH-1.9-MIGRATION.md](docs/RHDH-1.9-MIGRATION.md)** — package the suite
-  for Red Hat Developer Hub 1.9 (Backstage 1.45.3) while keeping dev on 1.53.
-  General per-plugin feasibility: **[docs/RHDH-DYNAMIC-PLUGINS.md](docs/RHDH-DYNAMIC-PLUGINS.md)**.
-  In-app config guide: TechDocs → *How-to → Configure the suite in RHDH 1.9*.

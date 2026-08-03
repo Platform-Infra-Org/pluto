@@ -70,7 +70,6 @@ yarn tsc
 
 # 3. Run the regression gate (our suites).
 CI=true yarn workspace @internal/backstage-plugin-platform-requests-backend test
-CI=true yarn workspace @internal/backstage-plugin-platform-builder-backend test
 CI=true yarn workspace @internal/backstage-plugin-permission-backend-module-platform-rbac test
 
 # 4. Config schema still valid?

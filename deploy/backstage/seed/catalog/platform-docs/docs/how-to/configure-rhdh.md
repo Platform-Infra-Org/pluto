@@ -42,7 +42,6 @@ plugins:
   - package: oci://REGISTRY/ORG/scaffolder-backend-module-platform-actions:0.1.0!internal-backstage-plugin-scaffolder-backend-module-platform-actions
     disabled: false
 
-  - package: oci://REGISTRY/ORG/platform-builder-backend:0.1.0!internal-backstage-plugin-platform-builder-backend
     disabled: false
 
   - package: oci://REGISTRY/ORG/permission-backend-module-platform-rbac:0.1.0!internal-backstage-plugin-permission-backend-module-platform-rbac

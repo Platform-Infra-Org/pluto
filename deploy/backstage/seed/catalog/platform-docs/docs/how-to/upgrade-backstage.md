@@ -14,7 +14,6 @@ yarn install && yarn dedupe           # resolve; collapse duplicate @backstage/*
 
 yarn tsc                              # FIRST — /alpha + Blueprint breakages surface here
 CI=true yarn workspace @internal/backstage-plugin-platform-requests-backend test
-CI=true yarn workspace @internal/backstage-plugin-platform-builder-backend test
 CI=true yarn workspace @internal/backstage-plugin-permission-backend-module-platform-rbac test
 yarn backstage-cli config:check --lax # catch config-schema drift
 

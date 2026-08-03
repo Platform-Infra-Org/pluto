@@ -9,8 +9,6 @@ The suite is eight `@internal/*` workspace packages under `backstage/plugins/`.
 | `plugin-platform-requests` | frontend plugin | Pages (Home, Requests, Request detail), the Resource entity **cards/tab** (relations graph, manage, resource data), the requests API client. |
 | `plugin-platform-ui` | web library | The shadcn design system: injected CSS, colour picker, custom nav, themes, the `DynamicSelect` scaffolder field, the `JsonTree` viewer, the custom sign-in. |
 | `backstage-plugin-scaffolder-backend-module-platform-actions` | scaffolder module | The `platform:request:submit` action. |
-| `backstage-plugin-platform-builder-backend` | backend plugin | Generates + publishes templates & Argo WorkflowTemplates (the service/graph builder). |
-| `plugin-platform-builder` | frontend plugin | The builder UI. |
 | `backstage-plugin-permission-backend-module-platform-rbac` | permission module | The coarse permission policy (auditors read-only; admin/auditor groups configurable). |
 
 **Dependency order:** `platform-common` first (everyone depends on it);
