@@ -241,6 +241,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Edit reads/writes resource data from the annotation or the yaml
 - Use inline SVG for the eye toggle so it can't render invisibly
 - Rename custom secret field to PlatformSecret to beat the built-in
+- Generate the tab icon from the built-in glyph too
 
 ### Removed
 

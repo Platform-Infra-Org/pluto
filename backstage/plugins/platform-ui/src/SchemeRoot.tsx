@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
+import { MARK_SHAPES, MARK_VIEWBOX } from './markShapes';
 
 // Muted, shadcn-calm accents (lower saturation — not neon).
 export const SCHEMES = [
@@ -24,11 +25,30 @@ export function setBranding(next: { mark?: string; favicon?: string }) {
   applyScheme(); // redraw the tab icon now that the mark is known
 }
 
+// 64px downscales cleanly to the 32/16 the tab actually uses. Radius and inset
+// match the in-app tile's proportions (styles.ts): glyph at ~65% of the tile.
+const ICON_SIZE = 64;
+const ICON_INSET = Math.round(ICON_SIZE * 0.175);
+
+/** The accent tile every generated icon sits on. */
+function drawTile(g: CanvasRenderingContext2D, accentHsl: string) {
+  g.fillStyle = `hsl(${accentHsl})`;
+  if (typeof g.roundRect === 'function') {
+    g.beginPath();
+    g.roundRect(0, 0, ICON_SIZE, ICON_SIZE, Math.round(ICON_SIZE * 0.27));
+    g.fill();
+  } else {
+    g.fillRect(0, 0, ICON_SIZE, ICON_SIZE); // jsdom, and Safari before 16.4
+  }
+}
+
 /**
- * The tab icon. An explicit `app.branding.favicon` is used as-is; otherwise a
- * configured mark is composited over the picked accent, so the tab recolours
- * with the sidebar tile. With neither set, the static icons in
- * `packages/app/public` are left alone.
+ * The tab icon, redrawn on every accent change so it tracks the sidebar tile.
+ *
+ * `app.branding.favicon` pins a fixed icon and wins outright. Otherwise the tile
+ * is drawn in the picked accent and either the configured `app.branding.mark`
+ * image or — by default — the built-in glyph is drawn on top. The static icons
+ * in `packages/app/public` remain the pre-JavaScript first paint.
  */
 function updateFavicon(accentHsl: string) {
   const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
@@ -37,37 +57,60 @@ function updateFavicon(accentHsl: string) {
     link.href = branding.favicon;
     return;
   }
-  if (!branding.mark) return;
 
-  // 64px downscales cleanly to the 32/16 the tab actually uses. Tile radius and
-  // logo inset follow the same proportions as the in-app tile (styles.ts).
-  const S = 64;
-  const inset = Math.round(S * 0.175);
   const canvas = document.createElement('canvas');
-  canvas.width = S;
-  canvas.height = S;
+  canvas.width = ICON_SIZE;
+  canvas.height = ICON_SIZE;
   const g = canvas.getContext('2d');
   if (!g) return;
 
-  const img = new Image();
-  img.onload = () => {
+  const publish = () => {
     try {
-      g.fillStyle = `hsl(${accentHsl})`;
-      if (typeof g.roundRect === 'function') {
-        g.beginPath();
-        g.roundRect(0, 0, S, S, Math.round(S * 0.27));
-        g.fill();
-      } else {
-        g.fillRect(0, 0, S, S);
-      }
-      g.drawImage(img, inset, inset, S - inset * 2, S - inset * 2);
       link.href = canvas.toDataURL('image/png');
     } catch {
-      // Cross-origin mark (tainted canvas) or an SVG with no intrinsic size —
-      // keep whatever favicon is already there.
+      // Tainted canvas (a cross-origin mark) — keep the static icon.
     }
   };
-  img.src = branding.mark;
+
+  if (branding.mark) {
+    const img = new Image();
+    img.onload = () => {
+      drawTile(g, accentHsl);
+      g.drawImage(
+        img,
+        ICON_INSET,
+        ICON_INSET,
+        ICON_SIZE - ICON_INSET * 2,
+        ICON_SIZE - ICON_INSET * 2,
+      );
+      publish();
+    };
+    // An SVG with no intrinsic width/height cannot be drawn; keep the static icon.
+    img.onerror = () => {};
+    img.src = branding.mark;
+    return;
+  }
+
+  // Default: the same glyph the sidebar draws, in the tile's foreground colour.
+  drawTile(g, accentHsl);
+  const scale = (ICON_SIZE - ICON_INSET * 2) / MARK_VIEWBOX;
+  g.save();
+  g.translate(ICON_INSET, ICON_INSET);
+  g.scale(scale, scale);
+  g.fillStyle = '#fff'; // --sc-primary-fg
+  for (const s of MARK_SHAPES) {
+    if ('path' in s) {
+      g.fill(new Path2D(s.path));
+    } else if (typeof g.roundRect === 'function') {
+      g.beginPath();
+      g.roundRect(s.x, s.y, s.w, s.h, s.r);
+      g.fill();
+    } else {
+      g.fillRect(s.x, s.y, s.w, s.h);
+    }
+  }
+  g.restore();
+  publish();
 }
 
 function ensureStyle(id: string, css: string) {

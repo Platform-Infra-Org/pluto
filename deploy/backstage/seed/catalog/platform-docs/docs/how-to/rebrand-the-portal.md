@@ -53,13 +53,14 @@ The six accents all sit in a narrow lightness band (40–55%):
 
 Check all six swatches before shipping. It takes ten seconds.
 
-## Set the tab icon
+## The tab icon
 
-By default the tab icon is **generated**: your `mark` drawn over the picked
-accent on a 64×64 rounded tile, redrawn every time the user changes swatch, so
-the tab matches the sidebar.
+The tab icon is **generated**, always: a 64×64 rounded tile in the picked accent
+colour with the logo drawn on it, redrawn every time the user changes swatch, so
+the tab matches the sidebar. With no config at all that logo is the built-in
+temple glyph; set `branding.mark` and it becomes your logo instead.
 
-To pin a fixed icon instead:
+To pin a fixed icon and opt out of the theming:
 
 ```yaml
 app:
@@ -68,8 +69,10 @@ app:
     favicon: /branding/tab.png    # used as-is; ignores the colour picker
 ```
 
-With neither key set, the static files shipped in `packages/app/public`
-(`favicon.ico`, `favicon-32x32.png`, …) are used, exactly as before.
+The static files in `packages/app/public` (`favicon.ico`, `favicon-32x32.png`, …)
+are still what the browser shows for the split second before JavaScript runs, and
+they're the fallback if icon generation fails. Replace them too if that first
+paint matters to you.
 
 ## Supported file types
 

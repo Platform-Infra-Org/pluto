@@ -12,8 +12,9 @@ app:
 ```
 
 Both optional and both frontend-visible. Same-origin only (`img-src 'self'
-data:`). Unset `mark` falls back to the built-in glyph; unset `favicon` generates
-the tab icon from `mark` over the picked accent colour. See
+data:`). Unset `mark` falls back to the built-in glyph. Unset `favicon`, the tab
+icon is generated from whichever glyph applies — configured or built-in — over
+the picked accent colour, and follows the colour picker. See
 **[Change the logo, favicon and title](../how-to/rebrand-the-portal.md)**.
 
 ## `platform.rbac`

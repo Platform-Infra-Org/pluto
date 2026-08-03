@@ -6,6 +6,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { configApiRef, useApi } from '@backstage/core-plugin-api';
+import { MARK_SHAPES, MARK_VIEWBOX } from './markShapes';
 
 /**
  * The Platform logo glyph. `app.branding.mark` replaces it with an image drawn
@@ -29,23 +30,18 @@ export function PlatformMark({ className }: { className?: string }) {
   return (
     <svg
       className={className}
-      viewBox="0 0 24 24"
+      viewBox={`0 0 ${MARK_VIEWBOX} ${MARK_VIEWBOX}`}
       fill="currentColor"
       aria-hidden="true"
       focusable="false"
     >
-      {/* pediment (roof) */}
-      <path d="M12 3.2 20.6 8.4 3.4 8.4Z" />
-      {/* architrave */}
-      <rect x="4.2" y="8.7" width="15.6" height="1.5" rx="0.3" />
-      {/* columns */}
-      <rect x="6" y="10.7" width="1.5" height="6.1" rx="0.2" />
-      <rect x="9.4" y="10.7" width="1.5" height="6.1" rx="0.2" />
-      <rect x="13.1" y="10.7" width="1.5" height="6.1" rx="0.2" />
-      <rect x="16.5" y="10.7" width="1.5" height="6.1" rx="0.2" />
-      {/* stylobate (the platform) */}
-      <rect x="3.8" y="17.2" width="16.4" height="1.6" rx="0.3" />
-      <rect x="2.6" y="19.3" width="18.8" height="1.7" rx="0.4" />
+      {MARK_SHAPES.map((s, i) =>
+        'path' in s ? (
+          <path key={i} d={s.path} />
+        ) : (
+          <rect key={i} x={s.x} y={s.y} width={s.w} height={s.h} rx={s.r} />
+        ),
+      )}
     </svg>
   );
 }

@@ -20,9 +20,10 @@ export interface Config {
       mark?: string;
 
       /**
-       * Browser tab icon. Omit it and the tab icon is generated from `mark`
-       * over the picked accent colour, so it recolours with the theme; set it
-       * to pin a fixed icon instead.
+       * Browser tab icon. Omit it and the tab icon is generated from the glyph
+       * — `mark` if set, the built-in one otherwise — drawn over the picked
+       * accent colour, so it recolours with the theme. Set it to pin a fixed
+       * icon instead.
        * @visibility frontend
        */
       favicon?: string;

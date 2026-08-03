@@ -1,7 +1,7 @@
 app:
   title: Platform
-  # Logo + tab icon. Both optional; without them you get the built-in temple
-  # glyph and the static icons in packages/app/public. Drop files in
+  # Logo + tab icon. Both optional; without them the built-in temple glyph is
+  # used, in the sidebar and in the generated tab icon alike. Drop files in
   # packages/app/public/branding/ and reference them by path — same-origin only
   # (the CSP is `img-src 'self' data:`). See TechDocs → How-to → Change the
   # logo, favicon and title.
