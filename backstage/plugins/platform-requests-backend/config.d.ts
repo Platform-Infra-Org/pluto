@@ -26,9 +26,13 @@ export interface Config {
       /**
        * Envelope-encryption key for user-*provided* secrets held (encrypted)
        * between submit and approval. Not needed for generated secrets.
+       *
+       * A list rotates the key without re-encrypting: the first entry encrypts,
+       * every entry is tried on decrypt. Prepend the new key, and drop the old
+       * one once no pending request still holds a blob from its era.
        * @visibility secret
        */
-      encryptionKey?: string;
+      encryptionKey?: string | string[];
 
       /**
        * Safety-net garbage collector for orphaned/expired request Secrets

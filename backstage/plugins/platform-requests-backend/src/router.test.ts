@@ -230,7 +230,7 @@ describe('createRouter', () => {
   });
 
   describe('secret lifecycle', () => {
-    const cipher = createCipher('unit-test-key');
+    const cipher = createCipher(['unit-test-key'])!;
     const withSecret = {
       ...NEW_REQUEST,
       secretSpec: [

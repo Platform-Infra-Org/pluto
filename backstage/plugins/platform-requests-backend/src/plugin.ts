@@ -80,8 +80,15 @@ export const platformRequestsPlugin = createBackendPlugin({
         // Per-request Secret provisioning (docs/SECRETS-LIFECYCLE.md). Disabled
         // unless platform.secrets.enabled; then Kubernetes-backed.
         const secretStore = createSecretStore({ config, logger });
+        // One key or a list; the first encrypts, the rest only open blobs from
+        // before a rotation (see crypto.ts).
+        const keyCfg = config.getOptional('platform.secrets.encryptionKey');
         const cipher = createCipher(
-          config.getOptionalString('platform.secrets.encryptionKey'),
+          typeof keyCfg === 'string'
+            ? [keyCfg]
+            : Array.isArray(keyCfg)
+              ? keyCfg.map(String)
+              : [],
         );
 
         // Repo path from a Gitea raw URL (.../raw/branch/<b>/<path> -> <path>).
@@ -215,7 +222,15 @@ export const platformRequestsPlugin = createBackendPlugin({
               if (f.source === 'generate') data[f.name] = generateSecret(f.length);
             }
             const enc = await store.getSecretEnc(request.id);
-            if (enc) Object.assign(data, JSON.parse(cipher.decrypt(enc)));
+            if (enc) {
+              if (!cipher) {
+                throw new Error(
+                  `request ${request.id} holds an encrypted secret but ` +
+                    'platform.secrets.encryptionKey is unset',
+                );
+              }
+              Object.assign(data, JSON.parse(cipher.decrypt(enc)));
+            }
 
             await secretStore.create({
               name: secretName,

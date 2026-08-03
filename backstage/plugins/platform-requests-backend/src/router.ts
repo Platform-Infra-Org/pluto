@@ -15,7 +15,7 @@ import { z } from 'zod/v3';
 import { requestApprovePermission, requestCreatePermission } from './permissions';
 import { applyDecision } from './stateMachine';
 import { RequestsStore } from './store';
-import { Cipher, NO_CIPHER } from './crypto';
+import { Cipher } from './crypto';
 
 /**
  * Resolves the acting user's admin flag + raw group memberships (from their
@@ -44,7 +44,7 @@ export interface RouterOptions {
   ) => Promise<Record<string, unknown>>;
   /** Called on APPROVED before flipping to IN_PROGRESS. No-op until P2. */
   submitWorkflow?: (request: PlatformRequest) => Promise<void>;
-  /** Envelope cipher for user-provided secrets. Defaults to NO_CIPHER. */
+  /** Envelope cipher for user-provided secrets; absent when no key is configured. */
   cipher?: Cipher;
   /** Whether platform.secrets is enabled (gates requests that need a Secret). */
   secretsEnabled?: boolean;
@@ -106,7 +106,7 @@ export async function createRouter(
     options.principalResolver ?? (async () => ({ isAdmin: false, groups: [] }));
   const submitWorkflow =
     options.submitWorkflow ?? (async () => undefined);
-  const cipher: Cipher = options.cipher ?? NO_CIPHER;
+  const cipher: Cipher | undefined = options.cipher;
 
   const router = Router();
   router.use(express.json());
@@ -141,6 +141,11 @@ export async function createRouter(
           throw new InputError(`missing value for provided secret '${f.name}'`);
         }
         values[f.name] = v;
+      }
+      if (!cipher) {
+        throw new Error(
+          'a request supplies a provided secret but platform.secrets.encryptionKey is unset',
+        );
       }
       secretEnc = cipher.encrypt(JSON.stringify(values));
     }
