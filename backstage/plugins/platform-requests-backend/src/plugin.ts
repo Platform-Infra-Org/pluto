@@ -178,14 +178,15 @@ export const platformRequestsPlugin = createBackendPlugin({
           // (as << secretName >>); the Secret itself is created just after submit,
           // owned by the Workflow.
           const needsSecret = !!request.secretSpec?.length;
-          if (needsSecret && !secretStore.enabled) {
+          if (needsSecret && !secretStore) {
             throw new Error(
               `request ${request.id} needs secrets but platform.secrets is disabled`,
             );
           }
-          const secretName = needsSecret
-            ? secretStore.newName(request.id)
-            : undefined;
+          const secretName =
+            needsSecret && secretStore
+              ? secretStore.newName(request.id)
+              : undefined;
 
           const { name, namespace, uid } = await argo.submitSpec(
             request.argoSubmit,
@@ -229,7 +230,7 @@ export const platformRequestsPlugin = createBackendPlugin({
               Object.assign(data, JSON.parse(cipher.decrypt(enc)));
             }
 
-            await secretStore.create({
+            await secretStore!.create({
               name: secretName,
               requestId: request.id,
               data,
@@ -340,7 +341,7 @@ export const platformRequestsPlugin = createBackendPlugin({
             verbConfigResolver,
             resourceDataFor,
             cipher,
-            secretsEnabled: secretStore.enabled,
+            secretsEnabled: !!secretStore,
           }),
         );
 
@@ -416,7 +417,7 @@ export const platformRequestsPlugin = createBackendPlugin({
         // Safety-net sweep for orphaned/expired request Secrets (the happy path
         // is the Workflow ownerReference). Config-gated; off when secrets are.
         const sweepCfg = config.getOptionalConfig('platform.secrets.sweep');
-        if (secretStore.enabled && (sweepCfg?.getOptionalBoolean('enabled') ?? true)) {
+        if (secretStore && (sweepCfg?.getOptionalBoolean('enabled') ?? true)) {
           const freqCfg = sweepCfg?.getOptionalConfig('frequency');
           const frequency = freqCfg
             ? {

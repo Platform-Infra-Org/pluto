@@ -20,7 +20,7 @@ export const SCHEMES = [
  */
 let branding: { mark?: string; favicon?: string } = {};
 
-export function setBranding(next: { mark?: string; favicon?: string }) {
+function setBranding(next: { mark?: string; favicon?: string }) {
   branding = next;
   applyScheme(); // redraw the tab icon now that the mark is known
 }

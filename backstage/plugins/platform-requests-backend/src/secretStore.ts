@@ -35,8 +35,6 @@ export interface SecretRef {
  * owned by the request's Argo Workflow. See docs/SECRETS-LIFECYCLE.md.
  */
 export interface SecretStore {
-  readonly enabled: boolean;
-
   /**
    * An unguessable Secret name for a request. Generated *before* the Workflow is
    * submitted so it can be passed as a workflow parameter (the WorkflowTemplate
@@ -83,7 +81,6 @@ function statusCode(e: unknown): number | undefined {
 
 /** Kubernetes-backed store: one Secret per request, owned by its Workflow. */
 export class KubernetesSecretStore implements SecretStore {
-  readonly enabled = true;
 
   constructor(
     private readonly api: CoreV1Api,
@@ -182,34 +179,18 @@ export class KubernetesSecretStore implements SecretStore {
   }
 }
 
-/** No-op store used when platform.secrets is disabled. */
-export class DisabledSecretStore implements SecretStore {
-  readonly enabled = false;
-  newName(requestId: number): string {
-    return `platform-req-${requestId}`;
-  }
-  async create(): Promise<SecretRef> {
-    throw new Error(
-      'platform.secrets.enabled is false, but a request requires a secret — ' +
-        'enable and configure platform.secrets',
-    );
-  }
-  async delete(): Promise<void> {
-    /* no-op */
-  }
-  async sweep(): Promise<number> {
-    return 0;
-  }
-}
-
-/** Build a SecretStore from config: Kubernetes-backed if enabled, else disabled. */
+/**
+ * Build a SecretStore from config, or `undefined` when platform.secrets is
+ * disabled — callers reject requests that need a Secret rather than pretending
+ * to store one.
+ */
 export function createSecretStore(opts: {
   config: RootConfigService;
   logger: LoggerService;
-}): SecretStore {
+}): SecretStore | undefined {
   const { config, logger } = opts;
   if (!(config.getOptionalBoolean('platform.secrets.enabled') ?? false)) {
-    return new DisabledSecretStore();
+    return undefined;
   }
   const namespace =
     config.getOptionalString('platform.secrets.namespace') ?? 'argo';
