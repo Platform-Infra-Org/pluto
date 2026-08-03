@@ -240,41 +240,56 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
    reads as an 8-bit sky. Every colour derives from --sc-primary, so the motif
    changes with the swatch. */
 [class*="ItemCardHeader"] {
-  /* A pixel scene, not a wash: a square sun, a stepped skyline along the
-     bottom, an 8px dither over the sky, and four hard sky bands. Every colour
-     is derived from --sc-primary / --sc-primary-fg, so the motif re-paints
-     itself when the picker changes. Nothing here is a soft gradient — the only
-     colour transitions are hard stops, which is what keeps it 8-bit. */
+  /* Ancient Greek, drawn entirely with hard colour stops.
+
+     The dominant motif is a meander — the Greek key — running the full width as
+     a frieze: two rails with alternating teeth between them, which is the
+     pattern reduced to what still reads at this size. A colonnade was tried
+     first and failed: at the 12px the header allows, columns read as sprocket
+     holes rather than marble. Above the frieze sits a stepped pediment, the
+     temple roof from the platform mark, drawn as four stacked bars.
+
+     Every colour derives from --sc-primary and --sc-primary-fg, so the scene
+     re-paints when the picker changes. */
   background-color: hsl(var(--sc-primary)) !important;
   background-image:
-    /* sun: a plain block, the way a tile-based game draws one */
-    linear-gradient(hsl(var(--sc-primary-fg) / .5) 0 0),
-    /* skyline: four blocks of different heights along the bottom edge */
-    linear-gradient(hsl(var(--sc-fg) / .28) 0 0),
-    linear-gradient(hsl(var(--sc-fg) / .22) 0 0),
-    linear-gradient(hsl(var(--sc-fg) / .32) 0 0),
-    linear-gradient(hsl(var(--sc-fg) / .20) 0 0),
-    /* dither: the classic way an 8-bit palette fakes a shade it lacks */
+    /* pediment: four stacked bars, widening downward — a stepped triangle */
+    linear-gradient(hsl(var(--sc-primary-fg) / .82) 0 0),
+    linear-gradient(hsl(var(--sc-primary-fg) / .82) 0 0),
+    linear-gradient(hsl(var(--sc-primary-fg) / .82) 0 0),
+    linear-gradient(hsl(var(--sc-primary-fg) / .82) 0 0),
+    /* meander frieze: top rail, bottom rail, and the teeth that join them */
+    linear-gradient(hsl(var(--sc-primary-fg) / .85) 0 0),
+    linear-gradient(hsl(var(--sc-primary-fg) / .85) 0 0),
+    repeating-linear-gradient(90deg,
+      hsl(var(--sc-primary-fg) / .85) 0 4px, transparent 4px 24px),
+    repeating-linear-gradient(90deg,
+      transparent 0 12px, hsl(var(--sc-primary-fg) / .85) 12px 16px, transparent 16px 24px),
+    /* dither over the sky */
     repeating-conic-gradient(
-      hsl(var(--sc-primary-fg) / .13) 0% 25%, transparent 0% 50%),
-    /* sky: four hard bands, no blend between them */
+      hsl(var(--sc-primary-fg) / .12) 0% 25%, transparent 0% 50%),
+    /* sky: hard bands, lightest at the top */
     linear-gradient(180deg,
-      hsl(var(--sc-primary) / .45) 0 30%,
-      hsl(var(--sc-primary) / .68) 30% 52%,
-      hsl(var(--sc-primary) / .86) 52% 74%,
-      hsl(var(--sc-primary) / 1) 74% 100%) !important;
+      hsl(var(--sc-primary) / .5) 0 40%,
+      hsl(var(--sc-primary) / .74) 40% 66%,
+      hsl(var(--sc-primary) / .92) 66% 86%,
+      hsl(var(--sc-primary) / 1) 86% 100%) !important;
   background-size:
-    28px 28px,
-    22% 34%, 16% 20%, 26% 46%, 14% 26%,
+    6px 3px, 18px 3px, 30px 3px, 42px 3px,
+    100% 2px, 100% 2px, 100% 8px, 100% 8px,
     16px 16px,
     100% 100% !important;
   background-position:
-    78% 26%,
-    2% 100%, 27% 100%, 52% 100%, 84% 100%,
+    88% calc(100% - 26px), 88% calc(100% - 23px),
+    88% calc(100% - 20px), 88% calc(100% - 17px),
+    0 calc(100% - 14px), 0 calc(100% - 4px),
+    0 calc(100% - 12px), 0 calc(100% - 12px),
     0 0,
     0 0 !important;
   background-repeat:
-    no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat, no-repeat !important;
+    no-repeat, no-repeat, no-repeat, no-repeat,
+    repeat-x, repeat-x, repeat-x, repeat-x,
+    repeat, no-repeat !important;
   color: hsl(var(--sc-primary-fg)) !important;
   border-bottom: var(--sc-border-w) solid hsl(var(--sc-fg) / .18) !important;
   image-rendering: pixelated;
