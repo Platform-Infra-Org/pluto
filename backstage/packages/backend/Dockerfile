@@ -24,13 +24,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get install -y --no-install-recommends python3 g++ build-essential && \
     rm -rf /var/lib/apt/lists/*
 
-# Install sqlite3 dependencies. You can skip this if you don't use sqlite3 in the image,
-# in which case you should also move better-sqlite3 to "devDependencies" in package.json.
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
-    apt-get install -y --no-install-recommends libsqlite3-dev && \
-    rm -rf /var/lib/apt/lists/*
+# No sqlite3 dependencies: every app-config uses `client: pg`, and better-sqlite3
+# was dropped from the backend's dependencies.
 
 # From here on we use the least-privileged `node` user to run the backend.
 USER node
@@ -60,10 +55,8 @@ RUN tar xzf skeleton.tar.gz && rm skeleton.tar.gz
 RUN --mount=type=cache,target=/home/node/.cache/yarn,sharing=locked,uid=1000,gid=1000 \
     yarn workspaces focus --all --production && rm -rf "$(yarn cache clean)"
 
-# This will include the examples, if you don't need these simply remove this line
-COPY --chown=node:node examples ./examples
-
-# Then copy the rest of the backend bundle, along with any other files we might want.
+# The bundle carries every workspace package the backend depends on — the four
+# platform plugins and the built frontend in packages/app/dist among them.
 COPY --chown=node:node packages/backend/dist/bundle.tar.gz app-config*.yaml ./
 RUN tar xzf bundle.tar.gz && rm bundle.tar.gz
 
