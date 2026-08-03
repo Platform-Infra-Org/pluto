@@ -334,4 +334,42 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   background: hsl(var(--sc-card)); border: var(--sc-border-w) solid hsl(var(--sc-border)); box-shadow: var(--sc-shadow); }
 .sc-swatch { width: 18px; height: 18px; border-radius: var(--sc-radius); border: 2px solid transparent; cursor: pointer; padding: 0; }
 .sc-swatch[aria-pressed="true"] { border-color: hsl(var(--sc-fg)); }
+/* ===== 8-bit chrome =====
+   Pixel type is for chrome only — headings, nav, buttons, badges, counters.
+   Body copy, table cells, JSON values and log output keep Inter/mono, because
+   they are read under pressure. Silkscreen is a bitmap face: below 12px whole
+   strokes drop out, hence the floor. Uppercase is the authentic treatment and
+   avoids Silkscreen's uneven lowercase baselines. */
+.sc-h1, .sc-card-title, .sc-btn, .sc-badge, .sc-nav-word, .sc-nav-tx,
+.sc-dialog-h, .sc-login-title, .sc-label {
+  font-family: var(--sc-font-pixel);
+  letter-spacing: 0;
+  text-transform: uppercase;
+  font-weight: 400;
+  font-size: max(12px, 1em);
+}
+.sc-h1 { font-size: 24px; }
+.sc-login-title { font-size: 20px; }
+.sc-card-title, .sc-dialog-h { font-size: 14px; }
+.sc-btn, .sc-badge, .sc-nav-tx, .sc-nav-word, .sc-label { font-size: 13px; }
+
+/* The press IS the shadow collapsing: the button moves into the space its
+   shadow occupied, which is how a 2-frame sprite button reads. */
+.sc-btn {
+  border: var(--sc-border-w) solid hsl(var(--sc-fg));
+  box-shadow: var(--sc-shadow);
+  transition: none;
+}
+.sc-btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: none; }
+.sc-btn:focus-visible,
+.sc-input:focus-visible, .sc-select:focus-visible {
+  outline: var(--sc-border-w) solid hsl(var(--sc-ring));
+  outline-offset: 2px;
+  box-shadow: none;
+}
+.sc-badge { border: var(--sc-border-w) solid hsl(var(--sc-border)); box-shadow: none; }
+.sc-input, .sc-select { border-width: var(--sc-border-w); box-shadow: none; }
+
+/* The tree's values are data people read and copy; only its structure is pixel. */
+.sc-json-key, .sc-json-toggle { font-family: var(--sc-font-pixel); font-size: 11px; }
 `;
