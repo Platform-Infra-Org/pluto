@@ -77,6 +77,45 @@ are still what the browser shows for the split second before JavaScript runs, an
 they're the fallback if icon generation fails. Replace them too if that first
 paint matters to you.
 
+## Template card headers
+
+The software-template cards on `/create` carry a header image. With none
+supplied they show built-in pixel art — a Greek meander keyed to the accent
+colour. To use your own:
+
+1. Copy images into `backstage/packages/app/src/branding/template-headers/`.
+2. There is no step 2. The bundler picks them up in filename order.
+
+They cycle across the cards: with three images and five templates, the cards
+show 1, 2, 3, 1, 2. Filtering the template list reshuffles which card gets which
+image — the rotation follows position, not template identity.
+
+| | |
+|---|---|
+| Recommended size | **752×180** (headers render at 376×90; double for retina) |
+| Formats | `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.svg` |
+| Oversized images | cropped to fill, never squashed |
+
+Three optional keys change the defaults:
+
+```yaml
+app:
+  branding:
+    templateHeaders:
+      dir: template-headers   # subfolder of packages/app/src/branding/
+      height: 90px            # any CSS length
+      position: center        # any CSS background-position, anchors the crop
+```
+
+`dir` selects a **subfolder of `packages/app/src/branding/`** rather than an
+arbitrary path: the folder is read by the bundler at build time, before any
+config exists, so the root has to be fixed. Create a sibling folder and point
+`dir` at it to keep several sets around.
+
+A new image needs a rebuild — automatic while `yarn start` is running, and part
+of the normal image build in production. Config changes need the dev server
+restarted.
+
 ## Supported file types
 
 | Use | Works | Notes |
