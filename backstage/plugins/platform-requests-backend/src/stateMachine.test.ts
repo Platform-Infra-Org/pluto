@@ -140,4 +140,15 @@ describe('applyDecision', () => {
       applyDecision(req, 'bob', 'approve', asAdmin),
     ).toThrow(ConflictError);
   });
+
+  it('refuses to decide a request that already expired', () => {
+    expect(() =>
+      applyDecision(
+        { ...baseRequest({ mode: 'SINGLE' }), state: 'EXPIRED' },
+        'user:default/admin',
+        'approve',
+        { isAdmin: true, approverInGroup: () => true },
+      ),
+    ).toThrow(ConflictError);
+  });
 });

@@ -163,6 +163,26 @@ export const CROSS: Sprite = [
   '................',
 ];
 
+/** The same hourglass as PENDING_APPROVAL, run out: nobody decided in time. */
+export const HOURGLASS_SPENT: Sprite = [
+  '................',
+  '..############..',
+  '..############..',
+  '...#........#...',
+  '....#......#....',
+  '.....#....#.....',
+  '......#..#......',
+  '.......##.......',
+  '.......##.......',
+  '......####......',
+  '.....######.....',
+  '....########....',
+  '...##########...',
+  '..############..',
+  '..############..',
+  '................',
+];
+
 export const STATE_SPRITES: Record<RequestState, Sprite> = {
   PENDING_APPROVAL: HOURGLASS,
   APPROVED: SCROLL,
@@ -170,4 +190,5 @@ export const STATE_SPRITES: Record<RequestState, Sprite> = {
   SUCCEEDED: CHEST,
   FAILED: SKULL,
   REJECTED: CROSS,
+  EXPIRED: HOURGLASS_SPENT,
 };
