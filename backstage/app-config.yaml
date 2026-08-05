@@ -8,6 +8,13 @@ app:
   branding:
     mark: /branding/hades.png # drawn in the accent tile; transparency shows the picked color
     # favicon: /branding/tab.png # optional: pins the tab icon instead of generating it from `mark`
+    # Software-template card headers. Drop images into
+    # packages/app/src/branding/<dir>/ and they are used in filename order,
+    # cycling across the cards; with no images the built-in pixel art is used.
+    # templateHeaders:
+    #   dir: template-headers   # subfolder of packages/app/src/branding/
+    #   height: 90px            # any CSS length
+    #   position: center        # any CSS background-position
   baseUrl: http://localhost:3000
 
   # Enable all packages by default, this will discover packages from packages/app/package.json

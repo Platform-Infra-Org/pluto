@@ -7,8 +7,14 @@ import platformRequestsPlugin, {
 import {
   platformUiModule,
   platformScaffolderFieldsModule,
+  setBrandingImages,
 } from '@internal/plugin-platform-ui';
+import { BRANDING_IMAGES } from './branding';
 import { authModule } from './modules/auth';
+
+// Images bundled from src/branding, handed to the UI plugin; config decides
+// which subfolder becomes the template card headers.
+setBrandingImages(BRANDING_IMAGES);
 
 export default createApp({
   features: [

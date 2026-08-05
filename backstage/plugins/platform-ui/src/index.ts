@@ -1,5 +1,5 @@
 export { SHADCN_CSS } from './styles';
-export { SCHEMES, SchemePicker } from './SchemeRoot';
+export { SCHEMES, SchemePicker, setBrandingImages } from './SchemeRoot';
 export { platformUiModule } from './theme';
 export {
   PixelSprite,

@@ -27,6 +27,34 @@ export interface Config {
        * @visibility frontend
        */
       favicon?: string;
+
+      /**
+       * Software-template card headers, supplied as images.
+       *
+       * Drop files into `packages/app/src/branding/<dir>/` and they are used in
+       * filename order, cycling across the cards. With no images, the built-in
+       * pixel art is used instead.
+       */
+      templateHeaders?: {
+        /**
+         * Subfolder of `packages/app/src/branding/` to read.
+         * @default template-headers
+         * @visibility frontend
+         */
+        dir?: string;
+        /**
+         * Header height, any CSS length.
+         * @default 90px
+         * @visibility frontend
+         */
+        height?: string;
+        /**
+         * How the crop is anchored, any CSS background-position.
+         * @default center
+         * @visibility frontend
+         */
+        position?: string;
+      };
     };
   };
 }

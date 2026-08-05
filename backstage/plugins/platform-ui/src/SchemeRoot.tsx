@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
 import { SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
+import { templateHeaderCss } from './templateHeaders';
 
 // Saturated toward NES-era values. `fg` is the text colour that sits on the
 // accent: white where it clears 4.5:1, near-black where it doesn't. Green and
@@ -21,9 +22,27 @@ export const SCHEMES = [
  * `applyScheme` runs at module load — before React, so before configApi exists —
  * hence this module-level relay rather than a prop.
  */
-let branding: { mark?: string; favicon?: string } = {};
+let branding: {
+  mark?: string;
+  favicon?: string;
+  headerDir?: string;
+  headerHeight?: string;
+  headerPosition?: string;
+} = {};
 
-function setBranding(next: { mark?: string; favicon?: string }) {
+/**
+ * Images bundled from packages/app/src/branding, keyed by subfolder. The app
+ * owns them — platform-ui cannot import from the app — so the app hands the
+ * whole map over and config picks which subfolder to use.
+ */
+let brandingImages: Record<string, string[]> = {};
+
+export function setBrandingImages(images: Record<string, string[]>) {
+  brandingImages = images;
+  applyScheme();
+}
+
+function setBranding(next: typeof branding) {
   branding = next;
   applyScheme(); // redraw the tab icon now that the mark is known
 }
@@ -134,6 +153,15 @@ export function applyScheme(scheme?: string) {
     'sc-accent',
     `:root{--sc-primary:${s.hsl};--sc-ring:${s.hsl};--sc-primary-fg:${s.fg}}`,
   );
+  // Empty when no images are supplied, which leaves the pixel-art headers.
+  ensureStyle(
+    'sc-template-headers',
+    templateHeaderCss({
+      images: brandingImages[branding.headerDir ?? 'template-headers'] ?? [],
+      height: branding.headerHeight,
+      position: branding.headerPosition,
+    }),
+  );
   updateFavicon(s.hsl, s.fg);
 }
 
@@ -191,6 +219,13 @@ export function SchemeRoot() {
     setBranding({
       mark: config.getOptionalString('app.branding.mark'),
       favicon: config.getOptionalString('app.branding.favicon'),
+      headerDir: config.getOptionalString('app.branding.templateHeaders.dir'),
+      headerHeight: config.getOptionalString(
+        'app.branding.templateHeaders.height',
+      ),
+      headerPosition: config.getOptionalString(
+        'app.branding.templateHeaders.position',
+      ),
     });
   }, [config]);
 
