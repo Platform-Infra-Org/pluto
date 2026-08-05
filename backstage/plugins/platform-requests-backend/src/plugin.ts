@@ -12,6 +12,7 @@ import { createNotifier } from './notifications';
 import { createSecretStore } from './secretStore';
 import { createCipher } from './crypto';
 import { createResourceResolver, createSubmitWorkflow } from './provisioning';
+import { planRetention, readRetentionConfig } from './retention';
 
 /**
  * platformRequestsPlugin backend plugin
@@ -304,6 +305,65 @@ export const platformRequestsPlugin = createBackendPlugin({
                 activeRequestIds: new Set(inProgress.map(r => r.id)),
                 maxAgeMs,
               });
+            },
+          });
+        }
+
+        // Retention: expire undecided requests, then delete terminal ones past
+        // their window. Off unless configured — see docs.
+        const retention = readRetentionConfig(config);
+        if (retention.enabled) {
+          const retFreq = config.getOptionalConfig(
+            'platform.requests.retention.frequency',
+          );
+          await scheduler.scheduleTask({
+            id: 'platform-requests-retention',
+            frequency: retFreq
+              ? {
+                  hours: retFreq.getOptionalNumber('hours'),
+                  minutes: retFreq.getOptionalNumber('minutes'),
+                  seconds: retFreq.getOptionalNumber('seconds'),
+                }
+              : { hours: 6 },
+            timeout: { minutes: 5 },
+            fn: async () => {
+              const plan = planRetention(retention, new Date());
+
+              if (plan.expirePendingBefore) {
+                if (retention.dryRun) {
+                  const stale = await store.list({ state: 'PENDING_APPROVAL' });
+                  const n = stale.filter(
+                    r => r.updatedAt < plan.expirePendingBefore!,
+                  ).length;
+                  logger.info(
+                    `retention (dry run): would expire ${n} pending requests`,
+                  );
+                } else {
+                  const n = await store.expireStale(plan.expirePendingBefore);
+                  if (n > 0) {
+                    logger.info(`retention: expired ${n} pending requests`);
+                  }
+                }
+              }
+
+              for (const { state, before } of plan.deleteBefore) {
+                if (retention.dryRun) {
+                  const rows = await store.list({ state });
+                  const n = rows.filter(r => r.updatedAt < before).length;
+                  logger.info(
+                    `retention (dry run): would delete ${n} ${state} requests`,
+                  );
+                  continue;
+                }
+                const n = await store.deleteTerminalBefore(
+                  state,
+                  before,
+                  retention.batchSize,
+                );
+                if (n > 0) {
+                  logger.info(`retention: deleted ${n} ${state} requests`);
+                }
+              }
             },
           });
         }
