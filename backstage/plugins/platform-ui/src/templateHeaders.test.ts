@@ -45,4 +45,22 @@ describe('templateHeaderCss', () => {
     expect(css).not.toContain('url("/a"b.png")');
     expect(css).toContain('%22');
   });
+
+  it('colours the title for the image behind it', () => {
+    const css = templateHeaderCss({
+      images: ['/dark.png', '/bright.png'],
+      tones: ['light', 'dark'],
+    });
+    // Light tone: white text, dark outline.
+    expect(css).toContain('color: hsl(0 0% 100%)');
+    // Dark tone: ink text, white outline.
+    expect(css).toContain('color: hsl(240 10% 8%)');
+    expect(css).toContain('text-shadow');
+  });
+
+  it('leaves the colour alone when a tone is unknown', () => {
+    const css = templateHeaderCss({ images: ['/a.png'], tones: [undefined] });
+    expect(css).not.toContain('color:');
+    expect(css).not.toContain('text-shadow');
+  });
 });

@@ -3,6 +3,7 @@ import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api
 import { SHADCN_CSS } from './styles';
 import { SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
 import { templateHeaderCss } from './templateHeaders';
+import { sampleImageTone, Tone } from './imageTone';
 
 /** The two foreground tones a scheme can use, and each other's shade. */
 const WHITE = '0 0% 100%';
@@ -40,6 +41,26 @@ let branding: {
  * whole map over and config picks which subfolder to use.
  */
 let brandingImages: Record<string, string[]> = {};
+
+/**
+ * Text tone per header image, filled in asynchronously once each image has been
+ * measured. Unmeasured images fall back to the accent's own foreground.
+ */
+const imageTones: Record<string, Tone> = {};
+const pending = new Set<string>();
+
+/** Measure any image we have not seen yet, then restyle once each lands. */
+function ensureTones(images: string[]) {
+  for (const src of images) {
+    if (src in imageTones || pending.has(src)) continue;
+    pending.add(src);
+    sampleImageTone(src).then(tone => {
+      imageTones[src] = tone;
+      pending.delete(src);
+      applyScheme();
+    });
+  }
+}
 
 export function setBrandingImages(images: Record<string, string[]>) {
   brandingImages = images;
@@ -162,10 +183,15 @@ export function applyScheme(scheme?: string) {
       `--sc-primary-shade:${s.fg === WHITE ? INK : WHITE}}`,
   );
   // Empty when no images are supplied, which leaves the pixel-art headers.
+  const headerImages =
+    brandingImages[branding.headerDir ?? 'template-headers'] ?? [];
+  ensureTones(headerImages);
   ensureStyle(
     'sc-template-headers',
     templateHeaderCss({
-      images: brandingImages[branding.headerDir ?? 'template-headers'] ?? [],
+      images: headerImages,
+      // Each header's text is coloured for the image behind it, not the accent.
+      tones: headerImages.map(src => imageTones[src]),
       height: branding.headerHeight,
       position: branding.headerPosition,
     }),
