@@ -156,19 +156,29 @@ h4, h5, h6, .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 { font-size:
 .MuiDialogTitle-root { font-size: 16px !important; }
 
 /* Native buttons get the same press as ours: the shadow collapses and the
-   button moves into the space it occupied. */
-.MuiButton-root, [class*="bui-Button"] {
+   button moves into the space it occupied.
+
+   Element-qualified on purpose: bui renders a bui-ButtonContent span *inside*
+   bui-Button, and a bare [class*="bui-Button"] matches both, drawing the border
+   and shadow twice — the inner box. */
+.MuiButton-root, button[class*="bui-Button"], a[class*="bui-Button"] {
   border-radius: var(--sc-radius) !important;
   border: var(--sc-border-w) solid hsl(var(--sc-fg) / .8) !important;
   box-shadow: var(--sc-shadow) !important;
   transition: none !important;
 }
-.MuiButton-root:active:not(.Mui-disabled), [class*="bui-Button"]:active {
+.MuiButton-root:active:not(.Mui-disabled),
+button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   transform: translate(2px, 2px);
   box-shadow: none !important;
 }
 .MuiButton-text, .MuiButton-textPrimary, .MuiIconButton-root {
   border: none !important; box-shadow: none !important;
+}
+/* Never a border or shadow on the inner content span. */
+[class*="bui-ButtonContent"], [class*="bui-ButtonIcon"] {
+  border: none !important;
+  box-shadow: none !important;
 }
 .MuiChip-root {
   border: var(--sc-border-w) solid hsl(var(--sc-border)) !important;
@@ -293,6 +303,18 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   color: hsl(var(--sc-primary-fg)) !important;
   border-bottom: var(--sc-border-w) solid hsl(var(--sc-fg) / .18) !important;
   image-rendering: pixelated;
+}
+/* The title sits on art, so it needs its own contrast: a 1px outline in the
+   opposite tone (dark behind light text, light behind dark) plus weight. The
+   shade token flips with the scheme, alongside --sc-primary-fg. */
+[class*="ItemCardHeader"], [class*="ItemCardHeader"] * {
+  font-weight: 700 !important;
+  text-shadow:
+    1px 0 0 hsl(var(--sc-primary-shade)),
+    -1px 0 0 hsl(var(--sc-primary-shade)),
+    0 1px 0 hsl(var(--sc-primary-shade)),
+    0 -1px 0 hsl(var(--sc-primary-shade)),
+    2px 2px 0 hsl(var(--sc-primary-shade) / .55);
 }
 [class*="ItemCardHeader"] * { color: hsl(var(--sc-primary-fg)) !important; }
 /* tables */
