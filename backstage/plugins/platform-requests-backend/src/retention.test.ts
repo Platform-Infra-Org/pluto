@@ -1,4 +1,8 @@
-import { planRetention, RETENTION_DEFAULTS } from './retention';
+import {
+  planRetention,
+  RETENTION_DEFAULTS,
+  sanitiseDays,
+} from './retention';
 
 const NOW = new Date('2026-08-05T12:00:00.000Z');
 const cfg = (over: Partial<typeof RETENTION_DEFAULTS> = {}) => ({
@@ -56,5 +60,33 @@ describe('planRetention', () => {
 
   it('defaults to disabled, so an upgrade deletes nothing', () => {
     expect(RETENTION_DEFAULTS.enabled).toBe(false);
+  });
+});
+
+describe('sanitiseDays', () => {
+  it('keeps a sane window', () => {
+    expect(sanitiseDays('succeededDays', 90, () => {})).toBe(90);
+  });
+
+  it('keeps 0, which already means never', () => {
+    const warn = jest.fn();
+    expect(sanitiseDays('rejectedDays', 0, warn)).toBe(0);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('refuses a sub-day window and says why', () => {
+    const warn = jest.fn();
+    // The exact value that expired a request two seconds after it was created.
+    expect(sanitiseDays('pendingExpiryDays', 0.00001, warn)).toBe(0);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('under a day'),
+    );
+  });
+
+  it('refuses a negative or non-finite window', () => {
+    const warn = jest.fn();
+    expect(sanitiseDays('failedDays', -5, warn)).toBe(0);
+    expect(sanitiseDays('failedDays', NaN, warn)).toBe(0);
+    expect(warn).toHaveBeenCalledTimes(2);
   });
 });

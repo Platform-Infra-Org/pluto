@@ -311,7 +311,7 @@ export const platformRequestsPlugin = createBackendPlugin({
 
         // Retention: expire undecided requests, then delete terminal ones past
         // their window. Off unless configured — see docs.
-        const retention = readRetentionConfig(config);
+        const retention = readRetentionConfig(config, m => logger.warn(m));
         if (retention.enabled) {
           const retFreq = config.getOptionalConfig(
             'platform.requests.retention.frequency',

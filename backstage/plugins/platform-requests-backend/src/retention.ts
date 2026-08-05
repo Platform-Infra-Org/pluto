@@ -63,14 +63,42 @@ export function planRetention(cfg: RetentionConfig, now: Date): RetentionPlan {
   };
 }
 
-export function readRetentionConfig(root: RootConfigService): RetentionConfig {
+/**
+ * A window below a day is a typo, not an intent — and an intent that would
+ * expire or delete requests seconds after they are created. Treat it as 0
+ * ("keep forever") and say so, rather than acting on it.
+ */
+export function sanitiseDays(
+  key: string,
+  value: number,
+  warn: (msg: string) => void,
+): number {
+  if (value === 0) return 0;
+  if (!Number.isFinite(value) || value < 0) {
+    warn(`platform.requests.retention.${key} is not a valid number of days; treating it as 0 (never)`);
+    return 0;
+  }
+  if (value < 1) {
+    warn(`platform.requests.retention.${key} is ${value} days, which is under a day and almost certainly a mistake; treating it as 0 (never)`);
+    return 0;
+  }
+  return value;
+}
+
+export function readRetentionConfig(
+  root: RootConfigService,
+  warn: (msg: string) => void = () => {},
+): RetentionConfig {
   const c = root.getOptionalConfig('platform.requests.retention');
   if (!c) return RETENTION_DEFAULTS;
-  const num = (key: string, dflt: number) => c.getOptionalNumber(key) ?? dflt;
+  const num = (key: string, dflt: number) =>
+    sanitiseDays(key, c.getOptionalNumber(key) ?? dflt, warn);
   return {
     enabled: c.getOptionalBoolean('enabled') ?? RETENTION_DEFAULTS.enabled,
     dryRun: c.getOptionalBoolean('dryRun') ?? RETENTION_DEFAULTS.dryRun,
-    batchSize: num('batchSize', RETENTION_DEFAULTS.batchSize),
+    // Not a day count — read it raw.
+    batchSize:
+      c.getOptionalNumber('batchSize') ?? RETENTION_DEFAULTS.batchSize,
     pendingExpiryDays: num(
       'pendingExpiryDays',
       RETENTION_DEFAULTS.pendingExpiryDays,
