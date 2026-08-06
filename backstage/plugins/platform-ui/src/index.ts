@@ -18,6 +18,7 @@ export {
 } from './components';
 export { STATE_SPRITES, TEMPLE } from './sprites';
 export type { Sprite } from './sprites';
+export { useTabActivity } from './tabActivity';
 export { JsonTree } from './JsonTree';
 export { DynamicSelect, toChoiceOptions } from './DynamicSelect';
 export type { DynamicSelectProps, ChoiceOption, Fetcher } from './DynamicSelect';

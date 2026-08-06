@@ -14,6 +14,7 @@ import {
   CardBody,
   Button,
   Input,
+  useTabActivity,
 } from '@internal/plugin-platform-ui';
 import {
   Request,
@@ -69,6 +70,10 @@ export function RequestPage() {
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+
+  // While this request's workflow runs, the tab says so — the page is worth
+  // leaving open and coming back to.
+  useTabActivity(request?.state === 'IN_PROGRESS');
 
   const load = useCallback(() => {
     api.get(Number(id)).then(setRequest).catch(e => setError(String(e)));
