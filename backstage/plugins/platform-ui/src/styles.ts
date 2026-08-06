@@ -607,10 +607,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   letter-spacing: .06em; color: hsl(var(--sc-primary)); }
 .sc-login-pick { margin-top: 20px; padding-top: 18px; border-top: 1px solid hsl(var(--sc-border)); width: 100%;
   display: flex; justify-content: center; }
-/* The sign-in card carries its own picker. Left fixed it lands exactly on top
-   of the floating one — two identical shelves stacked in the same corner, with
-   the card's own slot empty. In the card it stands in the flow. */
-.sc-login-pick .sc-picker { position: static; }
+
 .sc-table tr:last-child td { border-bottom: none; }
 /* Hover is a dither too, so the selected row reads as a filled cell block
    rather than a soft tint. Row text is --sc-fg, so contrast is unaffected. */
@@ -703,8 +700,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 /* [flare] The colour picker is a potion box: a shelf of bottles, each holding
    its scheme as liquid. The shelf floor is a hard 3px rule the potions stand
    on, so they read as objects placed rather than icons laid out. */
-.sc-picker { position: fixed; right: 14px; bottom: 14px; z-index: 1500;
-  display: flex; align-items: flex-end; gap: 2px;
+.sc-picker { display: flex; align-items: flex-end; gap: 2px;
   padding: 8px 10px 5px; border-radius: var(--sc-radius);
   background: hsl(var(--sc-card));
   border: var(--sc-border-w) solid hsl(var(--sc-border));
@@ -714,6 +710,13 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     0 0 0 2px hsl(var(--sc-card)),
     0 0 0 4px hsl(var(--sc-fg) / .85),
     var(--sc-shadow); }
+/* Only the floating instance is pinned to the corner; in the flow it is a
+   shelf like any other block, which is how the sign-in card carries one. */
+.sc-picker-float { position: fixed; right: 14px; bottom: 14px; z-index: 1500; }
+/* The sign-in card has its own shelf under the button, so the corner one would
+   be a second identical picker on the same screen. */
+:root.sc-signed-out .sc-picker-float { display: none; }
+
 /* Each bottle sits in its own slot on the shelf. */
 .sc-potion { width: 26px; height: 26px; padding: 0; cursor: pointer;
   background: none; border: none; line-height: 0;

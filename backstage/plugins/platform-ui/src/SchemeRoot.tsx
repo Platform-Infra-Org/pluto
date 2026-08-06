@@ -208,7 +208,15 @@ applyScheme();
  * The live color-scheme swatches. Self-contained (own state, persisted +
  * applied on click), so it works both inside the app and on the login gate.
  */
-export function SchemePicker() {
+/**
+ * The scheme picker.
+ *
+ * `floating` is the corner shelf that follows you around the app. Without it
+ * the picker sits in the flow, which is how the sign-in card carries its own —
+ * the card is the only place the floating one is suppressed, so there is never
+ * a second shelf stacked on the first.
+ */
+export function SchemePicker({ floating }: { floating?: boolean } = {}) {
   const [scheme, setScheme] = useState(
     () =>
       (typeof localStorage !== 'undefined' &&
@@ -227,7 +235,11 @@ export function SchemePicker() {
   }, [scheme]);
 
   return (
-    <div className="sc sc-picker" role="group" aria-label="Color scheme">
+    <div
+      className={`sc sc-picker${floating ? ' sc-picker-float' : ''}`}
+      role="group"
+      aria-label="Color scheme"
+    >
       {SCHEMES.map(s => (
         <button
           key={s.id}
@@ -286,5 +298,5 @@ export function SchemeRoot() {
     return () => sub.unsubscribe();
   }, [appTheme]);
 
-  return <SchemePicker />;
+  return <SchemePicker floating />;
 }

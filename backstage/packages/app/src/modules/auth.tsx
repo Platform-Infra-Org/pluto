@@ -114,6 +114,14 @@ function PlatformSignInPage(props: SignInPageProps) {
     }
   };
 
+  // The sign-in card carries its own picker, so the floating one is hidden
+  // while the gate is up. Marking the document rather than passing state down:
+  // the floating picker is rendered by SchemeRoot, which is nowhere near here.
+  useEffect(() => {
+    document.documentElement.classList.add('sc-signed-out');
+    return () => document.documentElement.classList.remove('sc-signed-out');
+  }, []);
+
   // While restoring a session, don't flash the login card.
   if (checking) {
     return (
