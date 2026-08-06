@@ -549,6 +549,21 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-approvals-count { font-family: var(--sc-font-pixel); font-size: 12px;
   color: hsl(var(--sc-muted-fg)); }
 
+/* [flare] Empty states are panels, not stray sentences. The bobbing sprite
+   already had a rule here and no component to hang it on. */
+.sc-empty { display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 22px 16px; text-align: center;
+  border: var(--sc-border-w) dashed hsl(var(--sc-border));
+  border-radius: var(--sc-radius); color: hsl(var(--sc-muted-fg)); }
+/* The rects need the colour too, not just the svg: fill="currentColor" resolves
+   per element, and the global .sc * rule gives each rect its own dark colour. */
+.sc-empty .sc-state-ic, .sc-empty .sc-state-ic * {
+  color: hsl(var(--sc-primary)); }
+.sc-empty .sc-state-ic { width: 24px; height: 24px; }
+.sc-empty-title { font-family: var(--sc-font-pixel); text-transform: uppercase;
+  font-size: 13px; color: hsl(var(--sc-fg)); }
+.sc-empty-hint { font-size: 12px; max-width: 32ch; }
+
 /* success notice (e.g. created-resource link) */
 .sc-notice { padding: 10px 14px; border-radius: var(--sc-radius); font-weight: 500;
   --sc-cell: hsl(var(--sc-success) / .26);

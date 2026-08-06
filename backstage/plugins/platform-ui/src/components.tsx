@@ -37,6 +37,31 @@ export function PixelSprite({
 }
 
 /**
+ * An empty list, framed as a panel rather than left as a stray sentence.
+ *
+ * The hint is the part that earns its place: a heading saying NO DATA tells
+ * someone what they can already see, while the hint says what would put
+ * something here. The sprite is decorative and bobs under the motion rules.
+ */
+export function EmptyState({
+  sprite,
+  title = 'No data',
+  hint,
+}: {
+  sprite: Sprite;
+  title?: string;
+  hint: string;
+}) {
+  return (
+    <div className="sc-empty">
+      <PixelSprite sprite={sprite} className="sc-state-ic" />
+      <div className="sc-empty-title">{title}</div>
+      <div className="sc-empty-hint">{hint}</div>
+    </div>
+  );
+}
+
+/**
  * The Platform logo glyph. `app.branding.mark` replaces it with an image drawn
  * over the same tile: the image keeps its own colors where it is opaque, and
  * its transparent areas show the tile, which follows the color picker.

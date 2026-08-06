@@ -15,6 +15,8 @@ import {
   Button,
   Input,
   useTabActivity,
+  EmptyState,
+  HOURGLASS,
 } from '@internal/plugin-platform-ui';
 import {
   Request,
@@ -184,7 +186,15 @@ export function RequestPage() {
           <CardBody>
             <ApprovalProgress request={request} />
             {request.approvals.length === 0 && (
-              <div className="sc-muted">No decisions yet.</div>
+              <EmptyState
+                sprite={HOURGLASS}
+                title="No decisions"
+                hint={
+                  pending
+                    ? 'Waiting on the owning service team or an admin.'
+                    : 'This request was never decided.'
+                }
+              />
             )}
             {request.approvals.map((a, i) => (
               <div key={i} style={{ marginBottom: 6 }}>

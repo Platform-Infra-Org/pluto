@@ -15,8 +15,9 @@ export {
   Select,
   Field,
   Dialog,
+  EmptyState,
 } from './components';
-export { STATE_SPRITES, TEMPLE } from './sprites';
+export { STATE_SPRITES, TEMPLE, SCROLL, HOURGLASS } from './sprites';
 export type { Sprite } from './sprites';
 export { useTabActivity } from './tabActivity';
 export { JsonTree } from './JsonTree';
