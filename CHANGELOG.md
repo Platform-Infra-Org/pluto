@@ -206,6 +206,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Konami code easter egg
 - Turn on the fantasy screen names
 - Approve and resume a suspended workflow step
+- Provision With Review — a clickable suspend-gate example
 
 ### Changed
 
@@ -264,6 +265,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Regenerate for the 8-bit flare pass
 - Regenerate after enabling the fantasy names
 - Plan mid-workflow suspend approval
+- Regenerate for the suspend approval gate
 
 ### Fixed
 
