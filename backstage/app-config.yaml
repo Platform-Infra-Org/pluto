@@ -15,6 +15,10 @@ app:
     #   dir: template-headers   # subfolder of packages/app/src/branding/
     #   height: 90px            # any CSS length
     #   position: center        # any CSS background-position
+    # Optional fantasy naming for the sidebar. Renames screens only —
+    # Requests -> Quests, Create -> Summon, Catalog -> Atlas. Request states
+    # are records and are never renamed. Omit for the literal names.
+    # flavour: fantasy
   baseUrl: http://localhost:3000
 
   # Enable all packages by default, this will discover packages from packages/app/package.json

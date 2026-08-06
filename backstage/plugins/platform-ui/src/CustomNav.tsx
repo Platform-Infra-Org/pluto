@@ -11,8 +11,10 @@ import {
   useState,
 } from 'react';
 import { Link } from '@backstage/core-components';
+import { useApi, configApiRef } from '@backstage/core-plugin-api';
 import { NavContentBlueprint } from '@backstage/plugin-app-react';
 import { PlatformMark } from './components';
+import { screenName, Flavour } from './flavour';
 
 // The nav renders outside react-router's context, so derive the active path
 // from the browser location + history events rather than useLocation().
@@ -123,12 +125,22 @@ function CustomNav({ navItems }: { navItems: any }) {
 
   // withComponent maps each discovered nav item (icon node + href + title) to
   // our shadcn link; rest() returns them all (sorted).
+  // Screen names only, and only when app.branding.flavour says so. Read through
+  // the hook rather than the module-level branding relay: that relay is filled
+  // from an effect and mutating it re-injects CSS, which never re-renders this
+  // component — the labels would stay literal whatever the config said.
+  const config = useApi(configApiRef);
+  const flavour: Flavour =
+    config.getOptionalString('app.branding.flavour') === 'fantasy'
+      ? 'fantasy'
+      : undefined;
   const bag = navItems.withComponent((item: any) => {
     const active = isActive(pathname, item.href);
+    const label = screenName(item.title, flavour);
     return (
       <Link
         to={item.href}
-        title={item.title}
+        title={label}
         className={`sc-nav-item${active ? ' active' : ''}`}
       >
         {/* Non-breaking space when inactive so rows never shift horizontally. */}
@@ -136,7 +148,7 @@ function CustomNav({ navItems }: { navItems: any }) {
           {active ? '\u25B6' : '\u00A0'}
         </span>
         <span className="sc-nav-ic">{item.icon}</span>
-        <span className="sc-nav-tx">{item.title}</span>
+        <span className="sc-nav-tx">{label}</span>
       </Link>
     );
   });
