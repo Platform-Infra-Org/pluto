@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
 import { SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
+import { PixelPotion } from './components';
 import { templateHeaderCss } from './templateHeaders';
 import { listenForKonami } from './konami';
 import { sampleImageTone, Tone } from './imageTone';
@@ -231,12 +232,15 @@ export function SchemePicker() {
         <button
           key={s.id}
           type="button"
-          className="sc-swatch"
+          className="sc-potion"
           aria-pressed={s.id === scheme}
+          // The sprite is decorative, so the button carries the name itself.
+          aria-label={s.label}
           title={s.label}
-          style={{ background: `hsl(${s.hsl})` }}
           onClick={() => setScheme(s.id)}
-        />
+        >
+          <PixelPotion liquid={`hsl(${s.hsl})`} />
+        </button>
       ))}
     </div>
   );

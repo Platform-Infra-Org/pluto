@@ -9,6 +9,7 @@ import {
   HELM,
   TORCH,
   SCROLL,
+  POTION,
 } from './sprites';
 
 const grid = (...rows: string[]) => rows;
@@ -39,7 +40,7 @@ describe('spriteRects', () => {
 
 describe('sprite data', () => {
   it('every sprite is a square grid of the declared size', () => {
-    const items = { AMPHORA, KEY, LAUREL, HELM, TORCH, SCROLL };
+    const items = { AMPHORA, KEY, LAUREL, HELM, TORCH, SCROLL, POTION };
     for (const [name, sprite] of Object.entries({
       TEMPLE,
       ...items,
@@ -83,5 +84,21 @@ describe('sprite data', () => {
       'REJECTED',
       'SUCCEEDED',
     ]);
+  });
+
+  it('draws the potion in two layers that do not overlap', () => {
+    const glass = spriteRects(POTION, '#');
+    const liquid = spriteRects(POTION, '~');
+    expect(glass.length).toBeGreaterThan(0);
+    expect(liquid.length).toBeGreaterThan(0);
+    // Every cell belongs to one layer or the other, never both.
+    const cells = (rs: ReturnType<typeof spriteRects>) =>
+      new Set(rs.flatMap(r => Array.from({ length: r.w }, (_, i) => `${r.x + i},${r.y}`)));
+    const g = cells(glass);
+    for (const c of cells(liquid)) expect(g.has(c)).toBe(false);
+  });
+
+  it('reads the default layer when none is named', () => {
+    expect(spriteRects(POTION)).toEqual(spriteRects(POTION, '#'));
   });
 });

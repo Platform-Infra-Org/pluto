@@ -1,6 +1,12 @@
 import { RequestState } from '@internal/plugin-platform-common';
 
-/** Sprites are authored on a 16x16 grid: '#' is a filled pixel, '.' is empty. */
+/**
+ * Sprites are authored on a 16x16 grid: '#' is a filled pixel, '.' is empty.
+ *
+ * A sprite may carry a second layer under another character — '~' for a
+ * potion's liquid — so one grid can be drawn twice in two colours rather than
+ * kept as two sprites that have to stay aligned by hand.
+ */
 export const SPRITE_SIZE = 16;
 
 export type Sprite = readonly string[];
@@ -12,17 +18,18 @@ export type Sprite = readonly string[];
  */
 export function spriteRects(
   sprite: Sprite,
+  layer: string = '#',
 ): Array<{ x: number; y: number; w: number }> {
   const rects: Array<{ x: number; y: number; w: number }> = [];
   sprite.forEach((row, y) => {
     let x = 0;
     while (x < row.length) {
-      if (row[x] !== '#') {
+      if (row[x] !== layer) {
         x++;
         continue;
       }
       const start = x;
-      while (x < row.length && row[x] === '#') x++;
+      while (x < row.length && row[x] === layer) x++;
       rects.push({ x: start, y, w: x - start });
     }
   });
@@ -286,6 +293,32 @@ export const TORCH: Sprite = [
   '......####......',
   '....########....',
   '..############..',
+];
+
+/**
+ * A potion, in two layers: '#' is the glass and '~' is the liquid.
+ *
+ * The liquid is drawn in the scheme's own colour, which is what makes the
+ * colour picker a shelf of potions rather than a row of coloured squares. The
+ * air gap under the neck is what stops it reading as a solid bottle.
+ */
+export const POTION: Sprite = [
+  '......####......',
+  '......####......',
+  '.......##.......',
+  '.......##.......',
+  '......####......',
+  '.....##..##.....',
+  '....##....##....',
+  '...##~~~~~~##...',
+  '..##~~~~~~~~##..',
+  '..##~~~~~~~~##..',
+  '..##~~~~~~~~##..',
+  '..##~~~~~~~~##..',
+  '...##~~~~~~##...',
+  '....########....',
+  '................',
+  '................',
 ];
 
 export const STATE_SPRITES: Record<RequestState, Sprite> = {

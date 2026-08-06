@@ -6,7 +6,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { configApiRef, useApi } from '@backstage/core-plugin-api';
-import { Sprite, SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
+import { Sprite, SPRITE_SIZE, spriteRects, TEMPLE, POTION } from './sprites';
 
 /**
  * Renders a pixel grid as SVG rects. `shape-rendering: crispEdges` is what keeps
@@ -32,6 +32,42 @@ export function PixelSprite({
       {spriteRects(sprite).map(r => (
         <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
       ))}
+    </svg>
+  );
+}
+
+/**
+ * A potion whose liquid is a given colour: the glass in the current text
+ * colour, the contents in `liquid`.
+ *
+ * Two passes over one sprite grid rather than two sprites, so the glass and
+ * what is inside it can never drift out of alignment.
+ */
+export function PixelPotion({
+  liquid,
+  className,
+}: {
+  liquid: string;
+  className?: string;
+}) {
+  return (
+    <svg
+      className={className}
+      viewBox={`0 0 ${SPRITE_SIZE} ${SPRITE_SIZE}`}
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <g fill={liquid}>
+        {spriteRects(POTION, '~').map(r => (
+          <rect key={`l-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
+        ))}
+      </g>
+      <g fill="currentColor">
+        {spriteRects(POTION, '#').map(r => (
+          <rect key={`g-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
+        ))}
+      </g>
     </svg>
   );
 }

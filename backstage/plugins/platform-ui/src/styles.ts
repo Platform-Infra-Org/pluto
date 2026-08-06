@@ -607,6 +607,10 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   letter-spacing: .06em; color: hsl(var(--sc-primary)); }
 .sc-login-pick { margin-top: 20px; padding-top: 18px; border-top: 1px solid hsl(var(--sc-border)); width: 100%;
   display: flex; justify-content: center; }
+/* The sign-in card carries its own picker. Left fixed it lands exactly on top
+   of the floating one — two identical shelves stacked in the same corner, with
+   the card's own slot empty. In the card it stands in the flow. */
+.sc-login-pick .sc-picker { position: static; }
 .sc-table tr:last-child td { border-bottom: none; }
 /* Hover is a dither too, so the selected row reads as a filled cell block
    rather than a soft tint. Row text is --sc-fg, so contrast is unaffected. */
@@ -696,16 +700,38 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 @media (max-width: 600px) { .sc-nav { display: none; } [class*="BackstageSidebarPage-root"] { padding-left: 0 !important; } }
 
 /* color scheme picker */
+/* [flare] The colour picker is a potion box: a shelf of bottles, each holding
+   its scheme as liquid. The shelf floor is a hard 3px rule the potions stand
+   on, so they read as objects placed rather than icons laid out. */
 .sc-picker { position: fixed; right: 14px; bottom: 14px; z-index: 1500;
-  display: flex; align-items: center; gap: 6px; padding: 7px 9px; border-radius: var(--sc-radius);
-  background: hsl(var(--sc-card)); border: var(--sc-border-w) solid hsl(var(--sc-border));
+  display: flex; align-items: flex-end; gap: 2px;
+  padding: 8px 10px 5px; border-radius: var(--sc-radius);
+  background: hsl(var(--sc-card));
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-bottom: 5px solid hsl(var(--sc-fg) / .8);
   /* A floating window, so it takes the command-window frame too. */
   box-shadow:
     0 0 0 2px hsl(var(--sc-card)),
     0 0 0 4px hsl(var(--sc-fg) / .85),
     var(--sc-shadow); }
-.sc-swatch { width: 18px; height: 18px; border-radius: var(--sc-radius); border: 2px solid transparent; cursor: pointer; padding: 0; }
-.sc-swatch[aria-pressed="true"] { border-color: hsl(var(--sc-fg)); }
+/* Each bottle sits in its own slot on the shelf. */
+.sc-potion { width: 26px; height: 26px; padding: 0; cursor: pointer;
+  background: none; border: none; line-height: 0;
+  color: hsl(var(--sc-fg) / .85); }
+/* The sprite is decoration inside the button, and an svg child will otherwise
+   take the click for itself — the button is the target, always. */
+.sc-potion svg { width: 100%; height: 100%; display: block; pointer-events: none; }
+/* Picking one lifts it off the shelf — the same 2px the buttons press by,
+   in the other direction. */
+.sc-potion:hover { transform: translateY(-2px); }
+.sc-potion[aria-pressed="true"] { transform: translateY(-3px); }
+.sc-potion[aria-pressed="true"] svg {
+  /* The chosen bottle is the only one that glows, and the glow is its own
+     liquid colour rather than the accent — which is the same thing here. */
+  filter: drop-shadow(0 0 3px hsl(var(--sc-primary)));
+}
+.sc-potion:focus-visible { outline: var(--sc-border-w) solid hsl(var(--sc-ring));
+  outline-offset: 2px; }
 /* [flare] Scrollbars are furniture, and the OS default is the most modern
    object left on the page. Square thumb, hard edge, accent fill. The Firefox
    pair cannot express the border, so it degrades to a plain accent bar. */
