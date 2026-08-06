@@ -36,7 +36,7 @@ Check it came up:
 NOTE: platform.secrets.enabled is false, so no Role was created and requests
 that declare a secrets.schema will be refused.
 {{- end }}
-{{- if eq .Values.image.repository "ghcr.io/OWNER/REPO/backstage" }}
+{{- if eq .Values.image.repository "ghcr.io/owner/repo/backstage" }}
 
 WARNING: image.repository is still the placeholder. Set it to your registry.
 {{- end }}

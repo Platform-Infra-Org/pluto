@@ -30,7 +30,7 @@ env:
   # git-cliff is a Rust binary — installed from its release tarball rather than
   # through a package manager, since this repo has no Python toolchain.
   GIT_CLIFF_VERSION: "2.13.1"
-  IMAGE: ghcr.io/${{ github.repository }}/backstage
+  # IMAGE is computed per job — see "Resolve the image name".
 
 jobs:
   # ------------------------------------------------------------------ open / update
@@ -39,6 +39,16 @@ jobs:
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
+      # GHCR rejects an uppercase repository name, and github.repository keeps
+      # the owner's capitals (Platform-Infra-Org). GitHub expressions have no
+      # lower(), so it is lowercased here and read as env.IMAGE from now on.
+      - name: Resolve the image name
+        run: |
+          # tr, not ${VAR,,}: the latter is bash 4+ and cannot be checked
+          # on a machine shipping bash 3.2, so it would only ever be
+          # verified by the runner.
+          repo="$(echo "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+          echo "IMAGE=ghcr.io/${repo}/backstage" >> "$GITHUB_ENV"
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # full history + tags so git-cliff sees them
@@ -95,6 +105,16 @@ jobs:
       id-token: write # OIDC for keyless provenance signing
       attestations: write # actions/attest-build-provenance
     steps:
+      # GHCR rejects an uppercase repository name, and github.repository keeps
+      # the owner's capitals (Platform-Infra-Org). GitHub expressions have no
+      # lower(), so it is lowercased here and read as env.IMAGE from now on.
+      - name: Resolve the image name
+        run: |
+          # tr, not ${VAR,,}: the latter is bash 4+ and cannot be checked
+          # on a machine shipping bash 3.2, so it would only ever be
+          # verified by the runner.
+          repo="$(echo "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+          echo "IMAGE=ghcr.io/${repo}/backstage" >> "$GITHUB_ENV"
       # Mint a short-lived token for the release App so the CHANGELOG commit +
       # tag push to main authenticate as the App (which is on the
       # branch-protection bypass list — the default GITHUB_TOKEN can't be).

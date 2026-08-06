@@ -7,7 +7,9 @@
 replicaCount: 2
 
 image:
-  repository: ghcr.io/OWNER/REPO/backstage
+  # Lowercase: a registry rejects an uppercase repository path, and the owner's
+  # name in GitHub may well have capitals.
+  repository: ghcr.io/owner/repo/backstage
   # Defaults to .Chart.AppVersion. Pin a digest in production if you can.
   tag: ""
   pullPolicy: IfNotPresent
