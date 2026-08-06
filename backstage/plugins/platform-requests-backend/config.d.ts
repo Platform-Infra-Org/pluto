@@ -7,6 +7,32 @@ export interface Config {
      * value never appears in the request row, Argo params/UI, Git, or logs.
      * See TechDocs: Explanation -> Secret lifecycle.
      */
+    /** Request retention. Off by default — deleting rows is irreversible. */
+    requests?: {
+      retention?: {
+        /** @default false */
+        enabled?: boolean;
+        /** Log what would be expired and deleted, change nothing. @default false */
+        dryRun?: boolean;
+        /** Rows deleted per state per run. @default 500 */
+        batchSize?: number;
+        /**
+         * Days a PENDING_APPROVAL waits before becoming EXPIRED. 0 disables.
+         * @default 14
+         */
+        pendingExpiryDays?: number;
+        /** @default 90 */
+        succeededDays?: number;
+        /** @default 90 */
+        failedDays?: number;
+        /** @default 30 */
+        rejectedDays?: number;
+        /** @default 30 */
+        expiredDays?: number;
+        frequency?: { hours?: number; minutes?: number; seconds?: number };
+      };
+    };
+
     secrets?: {
       /**
        * Enable secret provisioning. When false a request that requires a secret

@@ -63,6 +63,29 @@ Frontend-visible. Configures the home page cards; omit for all sections.
 entry is tried on decrypt, which is how the key rotates without re-encrypting
 held blobs. See **[Secret lifecycle](../explanation/secrets-lifecycle.md)**.
 
+## `platform.requests.retention`
+
+Off by default — deleting rows cannot be undone.
+
+```yaml
+platform:
+  requests:
+    retention:
+      enabled: true
+      dryRun: false           # log what would go, change nothing
+      frequency: { hours: 6 }
+      batchSize: 500          # rows deleted per state per run
+      pendingExpiryDays: 14   # PENDING_APPROVAL -> EXPIRED (0 = never)
+      succeededDays: 90
+      failedDays: 90
+      rejectedDays: 30
+      expiredDays: 30
+```
+
+Any window may be `0` to keep that state forever. `APPROVED` and `IN_PROGRESS`
+are never deleted regardless of configuration. See
+**[the request lifecycle](../explanation/request-lifecycle.md)**.
+
 ## `catalog.providers.ldapOrg`
 
 The LDAP ingestion (users + groups). Target, bind, user/group search + mapping,

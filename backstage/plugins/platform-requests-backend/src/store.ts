@@ -186,6 +186,58 @@ export class RequestsStore {
   }
 
   /** Record the per-request Secret's name (set at approval). */
+  /**
+   * PENDING_APPROVAL rows last touched before `before` become EXPIRED.
+   *
+   * The held secret is cleared in the same statement. A request nobody decided
+   * must not keep its ciphertext: approve and reject both clear it, and expiry
+   * is the third way a request ends.
+   */
+  async expireStale(before: string): Promise<number> {
+    const now = new Date().toISOString();
+    return this.db('platform_requests')
+      .where('state', 'PENDING_APPROVAL')
+      .andWhere('updated_at', '<', before)
+      .update({ state: 'EXPIRED', secret_enc: null, updated_at: now });
+  }
+
+  /**
+   * Delete up to `limit` rows in `state` last touched before `before`, with
+   * their approvals. Callers must never pass a non-terminal state; planRetention
+   * is what guarantees that, and it is unit-tested.
+   */
+  async deleteTerminalBefore(
+    state: RequestState,
+    before: string,
+    limit: number,
+  ): Promise<number> {
+    const rows = await this.db<{ id: number }>('platform_requests')
+      .select('id')
+      .where('state', state)
+      .andWhere('updated_at', '<', before)
+      .orderBy('id', 'asc')
+      .limit(limit);
+    const ids = rows.map(r => r.id);
+    if (ids.length === 0) return 0;
+
+    // Approvals first: the FK points at the request.
+    await this.db('platform_approvals').whereIn('request_id', ids).del();
+    return this.db('platform_requests').whereIn('id', ids).del();
+  }
+
+  /** Test-only: backdate a row so retention can be exercised without waiting. */
+  async testOnlySetUpdatedAt(id: number, at: string): Promise<void> {
+    await this.db('platform_requests').where({ id }).update({ updated_at: at });
+  }
+
+  /** Test-only: how many approvals a request still has. */
+  async testOnlyCountApprovals(id: number): Promise<number> {
+    const [{ c }] = await this.db('platform_approvals')
+      .where({ request_id: id })
+      .count({ c: '*' });
+    return Number(c);
+  }
+
   async setSecretName(id: number, name: string): Promise<void> {
     await this.db('platform_requests')
       .where({ id })

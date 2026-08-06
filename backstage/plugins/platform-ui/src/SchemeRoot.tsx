@@ -3,18 +3,23 @@ import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api
 import { SHADCN_CSS } from './styles';
 import { SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
 import { templateHeaderCss } from './templateHeaders';
+import { sampleImageTone, Tone } from './imageTone';
+
+/** The two foreground tones a scheme can use, and each other's shade. */
+const WHITE = '0 0% 100%';
+const INK = '240 10% 8%';
 
 // Saturated toward NES-era values. `fg` is the text colour that sits on the
 // accent: white where it clears 4.5:1, near-black where it doesn't. Green and
 // amber are the reason this field exists — darkening them enough for white text
 // would have turned them to mud. Ratios are measured, see SchemeRoot.test.ts.
 export const SCHEMES = [
-  { id: 'violet', label: 'Violet', hsl: '250 75% 60%', fg: '0 0% 100%' }, // 5.60
-  { id: 'blue', label: 'Blue', hsl: '217 85% 52%', fg: '0 0% 100%' }, // 4.74
-  { id: 'green', label: 'Green', hsl: '145 75% 42%', fg: '240 10% 8%' }, // 7.41
-  { id: 'rose', label: 'Rose', hsl: '345 80% 49%', fg: '0 0% 100%' }, // 4.73
-  { id: 'amber', label: 'Amber', hsl: '38 90% 52%', fg: '240 10% 8%' }, // 8.85
-  { id: 'slate', label: 'Slate', hsl: '215 30% 45%', fg: '0 0% 100%' }, // 5.29
+  { id: 'violet', label: 'Violet', hsl: '250 75% 60%', fg: WHITE }, // 5.60
+  { id: 'blue', label: 'Blue', hsl: '217 85% 52%', fg: WHITE }, // 4.74
+  { id: 'green', label: 'Green', hsl: '145 75% 42%', fg: INK }, // 7.41
+  { id: 'rose', label: 'Rose', hsl: '345 80% 49%', fg: WHITE }, // 4.73
+  { id: 'amber', label: 'Amber', hsl: '38 90% 52%', fg: INK }, // 8.85
+  { id: 'slate', label: 'Slate', hsl: '215 30% 45%', fg: WHITE }, // 5.29
 ];
 
 /**
@@ -36,6 +41,26 @@ let branding: {
  * whole map over and config picks which subfolder to use.
  */
 let brandingImages: Record<string, string[]> = {};
+
+/**
+ * Text tone per header image, filled in asynchronously once each image has been
+ * measured. Unmeasured images fall back to the accent's own foreground.
+ */
+const imageTones: Record<string, Tone> = {};
+const pending = new Set<string>();
+
+/** Measure any image we have not seen yet, then restyle once each lands. */
+function ensureTones(images: string[]) {
+  for (const src of images) {
+    if (src in imageTones || pending.has(src)) continue;
+    pending.add(src);
+    sampleImageTone(src).then(tone => {
+      imageTones[src] = tone;
+      pending.delete(src);
+      applyScheme();
+    });
+  }
+}
 
 export function setBrandingImages(images: Record<string, string[]>) {
   brandingImages = images;
@@ -151,13 +176,22 @@ export function applyScheme(scheme?: string) {
   const s = SCHEMES.find(x => x.id === id) ?? SCHEMES[0];
   ensureStyle(
     'sc-accent',
-    `:root{--sc-primary:${s.hsl};--sc-ring:${s.hsl};--sc-primary-fg:${s.fg}}`,
+    // --sc-primary-shade is the opposite of the foreground: it is what text on
+    // the header art is outlined with, so light text gets a dark edge and dark
+    // text a light one.
+    `:root{--sc-primary:${s.hsl};--sc-ring:${s.hsl};--sc-primary-fg:${s.fg};` +
+      `--sc-primary-shade:${s.fg === WHITE ? INK : WHITE}}`,
   );
   // Empty when no images are supplied, which leaves the pixel-art headers.
+  const headerImages =
+    brandingImages[branding.headerDir ?? 'template-headers'] ?? [];
+  ensureTones(headerImages);
   ensureStyle(
     'sc-template-headers',
     templateHeaderCss({
-      images: brandingImages[branding.headerDir ?? 'template-headers'] ?? [],
+      images: headerImages,
+      // Each header's text is coloured for the image behind it, not the accent.
+      tones: headerImages.map(src => imageTones[src]),
       height: branding.headerHeight,
       position: branding.headerPosition,
     }),

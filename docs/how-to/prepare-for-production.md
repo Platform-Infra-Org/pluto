@@ -82,5 +82,8 @@ page and `argoSubmit` / `resource-data` conventions.
 - [ ] IdP, LDAPS and Argo (TLS + auth) endpoints real; `platform.argo.proxyPath` set
 - [ ] TLS and real base URLs; `backend.reading.allow` scoped
 - [ ] `platform.secrets.encryptionKey` set from the secret manager
+- [ ] A retention policy decided: either `platform.requests.retention.enabled`
+      with windows that suit your compliance position, or a deliberate choice to
+      keep every request forever
 - [ ] `yarn tsc`, `yarn lint:all` and `yarn test` green
 - [ ] Smoke: LDAP login, request → approve → workflow, edit, delete, Resource Data tab

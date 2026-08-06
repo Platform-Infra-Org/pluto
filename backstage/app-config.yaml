@@ -234,6 +234,19 @@ platform:
       - standingRequests
       - pendingApprovals
     maxItems: 8
+  # Request retention. Off by default: deleting rows cannot be undone.
+  # Expiry moves an undecided request to EXPIRED; the windows below then delete
+  # terminal requests. APPROVED and IN_PROGRESS are never deleted.
+  # requests:
+  #   retention:
+  #     enabled: true
+  #     dryRun: false           # log what would go, change nothing
+  #     frequency: { hours: 6 }
+  #     pendingExpiryDays: 14   # PENDING_APPROVAL -> EXPIRED (0 = never)
+  #     succeededDays: 90
+  #     failedDays: 90
+  #     rejectedDays: 30
+  #     expiredDays: 30
   argo:
     # Dev: direct to the local argo-server (plain HTTP, no auth).
     baseUrl: http://localhost:2746

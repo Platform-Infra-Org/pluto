@@ -32,6 +32,7 @@ export function stateBadge(s: RequestState) {
     SUCCEEDED: 'Succeeded',
     FAILED: 'Failed',
     REJECTED: 'Rejected',
+    EXPIRED: 'Expired',
   };
   const tone: Record<RequestState, 'warning' | 'primary' | 'success' | 'destructive' | 'muted'> = {
     PENDING_APPROVAL: 'warning',
@@ -40,6 +41,7 @@ export function stateBadge(s: RequestState) {
     SUCCEEDED: 'success',
     FAILED: 'destructive',
     REJECTED: 'muted',
+    EXPIRED: 'muted',
   };
   const sprite = STATE_SPRITES[s];
   if (!sprite) return <Badge>{s}</Badge>;

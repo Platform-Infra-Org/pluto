@@ -11,7 +11,9 @@ export type RequestState =
   | 'IN_PROGRESS'
   | 'SUCCEEDED'
   | 'FAILED'
-  | 'REJECTED';
+  | 'REJECTED'
+  /** Nobody decided it in time. Terminal; set by the retention task. */
+  | 'EXPIRED';
 
 /** The verb a request performs against a resource. */
 export type RequestKind = 'CREATE' | 'UPDATE' | 'DELETE';

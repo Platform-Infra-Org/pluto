@@ -39,6 +39,7 @@ describe('sprite data', () => {
   it('covers every request state', () => {
     expect(Object.keys(STATE_SPRITES).sort()).toEqual([
       'APPROVED',
+      'EXPIRED',
       'FAILED',
       'IN_PROGRESS',
       'PENDING_APPROVAL',

@@ -24,6 +24,43 @@ backend.
    parameter (`resultOutput`) off the finished workflow and stores it as
    `resultRef` — the request page links to the created resource.
 
+## When nobody decides
+
+A request can also end without a decision. If it sits in `PENDING_APPROVAL`
+longer than `platform.requests.retention.pendingExpiryDays`, the retention task
+moves it to **`EXPIRED`** — a terminal state like `REJECTED`, visible in the
+list with its own badge.
+
+Expiry is not deletion, and that is the point: a request that silently
+disappeared from the requester's list would be indistinguishable from a bug.
+
+Expiring clears the held secret. A request carrying a *provided* secret keeps it
+envelope-encrypted until a decision; approve consumes it, reject clears it, and
+expiry clears it for the same reason — a request nobody ever decided must not
+keep its ciphertext indefinitely.
+
+## What is kept, and for how long
+
+Nothing is deleted unless `platform.requests.retention.enabled` is set. With it
+on, each terminal state has its own window, counted from when the request was
+last touched:
+
+| State | Default window |
+|---|---|
+| `SUCCEEDED` | 90 days |
+| `FAILED` | 90 days |
+| `REJECTED` | 30 days |
+| `EXPIRED` | 30 days |
+
+Deleting a request deletes its approvals with it. Any window set to `0` means
+that state is kept forever.
+
+**`APPROVED` and `IN_PROGRESS` are never deleted**, at any age, and that is not
+configurable. A live Argo workflow still references its request, and the secret
+sweep reads the set of `IN_PROGRESS` ids to decide which Kubernetes Secrets are
+orphaned — removing one of those rows would make the sweep delete a Secret a
+running workflow is mounting.
+
 ## Why poll instead of webhooks
 
 Argo is the source of truth for workflow state; the backend **mirrors** it by
