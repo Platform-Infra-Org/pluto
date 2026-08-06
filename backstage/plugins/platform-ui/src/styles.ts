@@ -110,8 +110,18 @@ body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); } /* body = s
   background-color: hsl(var(--sc-card)) !important;
   border: var(--sc-border-w) solid hsl(var(--sc-border)) !important;
   border-radius: var(--sc-radius) !important;
-  box-shadow: var(--sc-shadow) !important;
   overflow: hidden; /* so the header and footer edges follow the corners */
+  /* [flare] The command window: a double rule with a gap, the way an RPG menu
+     frames a decision. Three stacked shadows — a card-coloured ring for the
+     gap, the outer rule, then the hard offset every surface already has. No
+     image, no border-image, and it composes with the rounded corner.
+     Windows only, never cards: every surface double-framed is a page of noise,
+     and the difference between a panel of content and a window demanding an
+     answer is worth keeping. */
+  box-shadow:
+    0 0 0 2px hsl(var(--sc-card)),
+    0 0 0 4px hsl(var(--sc-fg) / .85),
+    var(--sc-shadow) !important;
 }
 .MuiOutlinedInput-notchedOutline { border-color: hsl(var(--sc-input)) !important; }
 /* [flare] Loading is a loading screen. Backstage's Progress is MUI LinearProgress,
@@ -607,7 +617,12 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 /* color scheme picker */
 .sc-picker { position: fixed; right: 14px; bottom: 14px; z-index: 1500;
   display: flex; align-items: center; gap: 6px; padding: 7px 9px; border-radius: var(--sc-radius);
-  background: hsl(var(--sc-card)); border: var(--sc-border-w) solid hsl(var(--sc-border)); box-shadow: var(--sc-shadow); }
+  background: hsl(var(--sc-card)); border: var(--sc-border-w) solid hsl(var(--sc-border));
+  /* A floating window, so it takes the command-window frame too. */
+  box-shadow:
+    0 0 0 2px hsl(var(--sc-card)),
+    0 0 0 4px hsl(var(--sc-fg) / .85),
+    var(--sc-shadow); }
 .sc-swatch { width: 18px; height: 18px; border-radius: var(--sc-radius); border: 2px solid transparent; cursor: pointer; padding: 0; }
 .sc-swatch[aria-pressed="true"] { border-color: hsl(var(--sc-fg)); }
 /* [flare] Scrollbars are furniture, and the OS default is the most modern
