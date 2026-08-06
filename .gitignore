@@ -13,3 +13,5 @@ dist/
 
 # RHDH dynamic-plugin export output
 dist-dynamic/
+
+specs/
