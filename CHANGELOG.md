@@ -220,6 +220,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Workflow progress from leaf nodes only
 - Experience bar with level-up and game-over
 - Tour button opposite the title, and a home grid of equals
+- The experience bar reads status, not the picked accent
 
 ### Changed
 
@@ -291,6 +292,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Commit the specs/ ignore rule
 - Regenerate for home, quickstart and the experience bar
 - Regenerate for the home layout pass
+- Regenerate for the tour button and home layout fixes
 
 ### Fixed
 
