@@ -290,6 +290,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Regenerate after untracking specs
 - Commit the specs/ ignore rule
 - Regenerate for home, quickstart and the experience bar
+- Regenerate for the home layout pass
 
 ### Fixed
 
@@ -343,6 +344,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Round the dialog surface so popups match the cards
 - One colour picker per screen
 - Step the workflow graph edges and respect reduced motion
+- Real stars on the tour button, sidebar-style hover, wider standing requests
 
 ### Removed
 
