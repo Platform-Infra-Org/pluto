@@ -222,6 +222,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tour button opposite the title, and a home grid of equals
 - The experience bar reads status, not the picked accent
 - Open the catalog on Resource instead of Component
+- Merge the home, quickstart and experience-bar pass
 
 ### Changed
 
@@ -295,6 +296,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Regenerate for the home layout pass
 - Regenerate for the tour button and home layout fixes
 - Regenerate for the experience bar tones
+- Regenerate for the catalog default kind
 
 ### Fixed
 
