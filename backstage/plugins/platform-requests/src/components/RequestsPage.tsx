@@ -32,6 +32,7 @@ export function stateBadge(s: RequestState) {
     SUCCEEDED: 'Succeeded',
     FAILED: 'Failed',
     REJECTED: 'Rejected',
+    AWAITING_INPUT: 'Awaiting input',
     EXPIRED: 'Expired',
   };
   const tone: Record<RequestState, 'warning' | 'primary' | 'success' | 'destructive' | 'muted'> = {
@@ -41,6 +42,8 @@ export function stateBadge(s: RequestState) {
     SUCCEEDED: 'success',
     FAILED: 'destructive',
     REJECTED: 'muted',
+    // Yellow, the same signal the suspended node carries in the graph.
+    AWAITING_INPUT: 'warning',
     EXPIRED: 'muted',
   };
   const sprite = STATE_SPRITES[s];

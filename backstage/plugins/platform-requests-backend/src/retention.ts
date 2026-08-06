@@ -39,9 +39,12 @@ const cutoff = (now: Date, days: number) =>
  * What this run should do, given the clock. Pure — the caller supplies `now`,
  * which is what makes "is this stale" testable without waiting or faking timers.
  *
- * APPROVED and IN_PROGRESS never appear in the plan. That is deliberate and not
- * configurable: a live Argo workflow still references its request, and the
- * secret sweep reads IN_PROGRESS ids to decide which Secrets are orphaned.
+ * APPROVED, IN_PROGRESS and AWAITING_INPUT never appear in the plan. That is
+ * deliberate and not configurable: a live Argo workflow still references its
+ * request, and the secret sweep reads IN_PROGRESS ids to decide which Secrets
+ * are orphaned. AWAITING_INPUT is the longest-lived of the three — a suspended
+ * workflow waits on a human and can sit for weeks — which makes it the one most
+ * likely to look stale to a sweep that only reads timestamps.
  */
 export function planRetention(cfg: RetentionConfig, now: Date): RetentionPlan {
   if (!cfg.enabled) return { deleteBefore: [] };

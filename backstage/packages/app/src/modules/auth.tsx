@@ -114,6 +114,14 @@ function PlatformSignInPage(props: SignInPageProps) {
     }
   };
 
+  // The sign-in card carries its own picker, so the floating one is hidden
+  // while the gate is up. Marking the document rather than passing state down:
+  // the floating picker is rendered by SchemeRoot, which is nowhere near here.
+  useEffect(() => {
+    document.documentElement.classList.add('sc-signed-out');
+    return () => document.documentElement.classList.remove('sc-signed-out');
+  }, []);
+
   // While restoring a session, don't flash the login card.
   if (checking) {
     return (
@@ -135,7 +143,10 @@ function PlatformSignInPage(props: SignInPageProps) {
           <PlatformMark />
         </div>
         <h1 className="sc-login-title">Platform</h1>
-        <p className="sc-login-sub">Sign in to continue</p>
+        {/* The one screen where game copy costs nothing: no task is in flight
+            and no state is being reported. The button keeps its literal label,
+            so the actionable text stays honest — only the decoration plays. */}
+        <p className="sc-login-sub sc-press-start">Press start</p>
         <Button onClick={signIn} disabled={busy}>
           {busy ? 'Signing in…' : 'Sign in with Keycloak'}
         </Button>

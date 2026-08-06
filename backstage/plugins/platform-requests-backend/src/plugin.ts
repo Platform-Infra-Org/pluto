@@ -201,6 +201,11 @@ export const platformRequestsPlugin = createBackendPlugin({
             onCreated: notify.approvalNeeded,
             onDecided: notify.decided,
             workflowNodesFor: (name, namespace) => argo.nodesFor(name, namespace),
+            suspendedNodesFor: (name, namespace) =>
+              argo.suspendedNodesFor(name, namespace),
+            resumeNode: (name, nodeId, opts) =>
+              argo.resumeNode(name, nodeId, opts),
+            stopWorkflow: (name, opts) => argo.stopWorkflow(name, opts),
             principalResolver,
             ownerResolver,
             verbConfigResolver,
@@ -231,15 +236,40 @@ export const platformRequestsPlugin = createBackendPlugin({
           frequency: { seconds: 5 },
           timeout: { seconds: 30 },
           fn: async () => {
-            const inProgress = await store.list({ state: 'IN_PROGRESS' });
+            // AWAITING_INPUT is polled alongside IN_PROGRESS: its workflow is
+            // still running, and someone may have resumed the node from the
+            // Argo UI, which has to bring the request back by itself.
+            const inProgress = [
+              ...(await store.list({ state: 'IN_PROGRESS' })),
+              ...(await store.list({ state: 'AWAITING_INPUT' })),
+            ];
             for (const r of inProgress) {
               try {
-                const { phase, message } = await argo.statusFor(
+                const { phase, message, suspendedNodes } = await argo.statusFor(
                   r.id,
                   r.workflowNamespace,
                 );
                 if (!phase) continue;
-                await store.setWorkflow(r.id, { phase });
+                await store.setWorkflow(r.id, { phase, suspendedNodes });
+
+                // A suspend step reports phase Running, and so does the
+                // workflow around it — without this the request would sit in
+                // IN_PROGRESS indefinitely, looking healthy.
+                if (suspendedNodes.length > 0 && r.state !== 'AWAITING_INPUT') {
+                  await store.setState(r.id, 'AWAITING_INPUT');
+                  await notify.approvalNeeded(r);
+                  logger.info(
+                    `request ${r.id}: workflow suspended at ${suspendedNodes
+                      .map(n => n.name)
+                      .join(', ')} — awaiting input`,
+                  );
+                  continue;
+                }
+                if (suspendedNodes.length === 0 && r.state === 'AWAITING_INPUT') {
+                  // Resumed here or in the Argo UI; either way it is moving again.
+                  await store.setState(r.id, 'IN_PROGRESS');
+                  logger.info(`request ${r.id}: resumed, back in progress`);
+                }
                 if (phase === 'Succeeded') {
                   // The workflow is the sole Git writer — it created/updated/
                   // deleted the resource in the catalog repo itself.

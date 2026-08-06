@@ -12,6 +12,7 @@ import {
   RequestKind,
   RequestState,
   SecretFieldSpec,
+  SuspendedNode,
 } from '@internal/plugin-platform-common';
 
 const migrationsDir = resolvePackagePath(
@@ -35,6 +36,7 @@ type RequestRow = {
   workflow_name: string | null;
   workflow_namespace: string | null;
   workflow_phase: string | null;
+  suspended_nodes: string | null;
   error: string | null;
   secret_spec: string | null;
   secret_name: string | null;
@@ -158,7 +160,14 @@ export class RequestsStore {
 
   async setWorkflow(
     id: number,
-    patch: { name?: string; namespace?: string; phase?: string; error?: string },
+    patch: {
+      name?: string;
+      namespace?: string;
+      phase?: string;
+      error?: string;
+      /** Replaces the cached list wholesale; [] clears it. */
+      suspendedNodes?: SuspendedNode[];
+    },
   ): Promise<void> {
     const update: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
@@ -167,6 +176,9 @@ export class RequestsStore {
     if (patch.namespace !== undefined) update.workflow_namespace = patch.namespace;
     if (patch.phase !== undefined) update.workflow_phase = patch.phase;
     if (patch.error !== undefined) update.error = patch.error;
+    if (patch.suspendedNodes !== undefined) {
+      update.suspended_nodes = JSON.stringify(patch.suspendedNodes);
+    }
     await this.db('platform_requests').where({ id }).update(update);
   }
 
@@ -270,6 +282,9 @@ function assemble(row: RequestRow, approvals: ApprovalRow[]): Request {
     workflowName: row.workflow_name ?? undefined,
     workflowNamespace: row.workflow_namespace ?? undefined,
     workflowPhase: row.workflow_phase ?? undefined,
+    suspendedNodes: row.suspended_nodes
+      ? (JSON.parse(row.suspended_nodes) as SuspendedNode[])
+      : undefined,
     error: row.error ?? undefined,
     secretSpec: row.secret_spec
       ? (JSON.parse(row.secret_spec) as SecretFieldSpec[])

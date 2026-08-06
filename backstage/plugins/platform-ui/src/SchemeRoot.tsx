@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
 import { SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
+import { PixelPotion } from './components';
 import { templateHeaderCss } from './templateHeaders';
+import { listenForKonami } from './konami';
 import { sampleImageTone, Tone } from './imageTone';
 
 /** The two foreground tones a scheme can use, and each other's shade. */
@@ -206,7 +208,15 @@ applyScheme();
  * The live color-scheme swatches. Self-contained (own state, persisted +
  * applied on click), so it works both inside the app and on the login gate.
  */
-export function SchemePicker() {
+/**
+ * The scheme picker.
+ *
+ * `floating` is the corner shelf that follows you around the app. Without it
+ * the picker sits in the flow, which is how the sign-in card carries its own —
+ * the card is the only place the floating one is suppressed, so there is never
+ * a second shelf stacked on the first.
+ */
+export function SchemePicker({ floating }: { floating?: boolean } = {}) {
   const [scheme, setScheme] = useState(
     () =>
       (typeof localStorage !== 'undefined' &&
@@ -225,17 +235,24 @@ export function SchemePicker() {
   }, [scheme]);
 
   return (
-    <div className="sc sc-picker" role="group" aria-label="Color scheme">
+    <div
+      className={`sc sc-picker${floating ? ' sc-picker-float' : ''}`}
+      role="group"
+      aria-label="Color scheme"
+    >
       {SCHEMES.map(s => (
         <button
           key={s.id}
           type="button"
-          className="sc-swatch"
+          className="sc-potion"
           aria-pressed={s.id === scheme}
+          // The sprite is decorative, so the button carries the name itself.
+          aria-label={s.label}
           title={s.label}
-          style={{ background: `hsl(${s.hsl})` }}
           onClick={() => setScheme(s.id)}
-        />
+        >
+          <PixelPotion liquid={`hsl(${s.hsl})`} />
+        </button>
       ))}
     </div>
   );
@@ -263,6 +280,14 @@ export function SchemeRoot() {
     });
   }, [config]);
 
+  useEffect(
+    () =>
+      listenForKonami(() =>
+        document.documentElement.classList.toggle('sc-konami'),
+      ),
+    [],
+  );
+
   useEffect(() => {
     const sub = appTheme.activeThemeId$().subscribe(id => {
       document.documentElement.classList.toggle(
@@ -273,5 +298,5 @@ export function SchemeRoot() {
     return () => sub.unsubscribe();
   }, [appTheme]);
 
-  return <SchemePicker />;
+  return <SchemePicker floating />;
 }

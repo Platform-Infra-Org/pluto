@@ -14,12 +14,51 @@ import {
   CardBody,
   Button,
   Input,
+  useTabActivity,
+  EmptyState,
+  HOURGLASS,
 } from '@internal/plugin-platform-ui';
-import { Request, isTerminal } from '@internal/plugin-platform-common';
+import {
+  Request,
+  isTerminal,
+  approvalProgress,
+} from '@internal/plugin-platform-common';
 import { requestsApiRef } from '../api';
 import { requestRouteRef } from '../routes';
 import { WorkflowGraph } from './WorkflowGraph';
+import { SuspendPanel } from './SuspendPanel';
 import { stateBadge, formatTs } from './RequestsPage';
+
+/**
+ * Approvals as a segmented bar with the count beside it.
+ *
+ * The count is the point. An RPG never shows a bare HP bar — it shows 23/40 —
+ * and that convention is also the accessible one: the number is readable by a
+ * screen reader and by anyone who cannot separate a filled cell from an empty
+ * one by colour.
+ */
+function ApprovalProgress({ request }: { request: Request }) {
+  const { granted, required } = approvalProgress(request);
+  return (
+    <div className="sc-approvals">
+      <div
+        className="sc-approvals-bar"
+        role="img"
+        aria-label={`${granted} of ${required} approvals`}
+      >
+        {Array.from({ length: required }, (_, i) => (
+          <span
+            key={i}
+            className={`sc-approvals-cell${i < granted ? ' filled' : ''}`}
+          />
+        ))}
+      </div>
+      <span className="sc-approvals-count">
+        {granted}/{required} APPROVALS
+      </span>
+    </div>
+  );
+}
 
 export function RequestPage() {
   const api = useApi(requestsApiRef);
@@ -34,6 +73,10 @@ export function RequestPage() {
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+
+  // While this request's workflow runs, the tab says so — the page is worth
+  // leaving open and coming back to.
+  useTabActivity(request?.state === 'IN_PROGRESS');
 
   const load = useCallback(() => {
     api.get(Number(id)).then(setRequest).catch(e => setError(String(e)));
@@ -142,8 +185,17 @@ export function RequestPage() {
         <Card>
           <CardHeader title="Approvals" />
           <CardBody>
+            <ApprovalProgress request={request} />
             {request.approvals.length === 0 && (
-              <div className="sc-muted">No decisions yet.</div>
+              <EmptyState
+                sprite={HOURGLASS}
+                title="No decisions"
+                hint={
+                  pending
+                    ? 'Waiting on the owning service team or an admin.'
+                    : 'This request was never decided.'
+                }
+              />
             )}
             {request.approvals.map((a, i) => (
               <div key={i} style={{ marginBottom: 6 }}>
@@ -192,6 +244,18 @@ export function RequestPage() {
             )}
           </CardBody>
         </Card>
+
+        {request.state === 'AWAITING_INPUT' &&
+          (request.suspendedNodes?.length ?? 0) > 0 && (
+            <div style={{ gridColumn: '1 / -1' }}>
+              <SuspendPanel
+                requestId={request.id}
+                nodes={request.suspendedNodes ?? []}
+                canResume={canApprove}
+                onResumed={load}
+              />
+            </div>
+          )}
 
         {request.workflowName && (
           <div style={{ gridColumn: '1 / -1' }}>

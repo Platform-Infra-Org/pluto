@@ -1,4 +1,16 @@
-import { spriteRects, STATE_SPRITES, TEMPLE, SPRITE_SIZE } from './sprites';
+import {
+  spriteRects,
+  STATE_SPRITES,
+  TEMPLE,
+  SPRITE_SIZE,
+  AMPHORA,
+  KEY,
+  LAUREL,
+  HELM,
+  TORCH,
+  SCROLL,
+  POTION,
+} from './sprites';
 
 const grid = (...rows: string[]) => rows;
 
@@ -28,7 +40,12 @@ describe('spriteRects', () => {
 
 describe('sprite data', () => {
   it('every sprite is a square grid of the declared size', () => {
-    for (const [name, sprite] of Object.entries({ TEMPLE, ...STATE_SPRITES })) {
+    const items = { AMPHORA, KEY, LAUREL, HELM, TORCH, SCROLL, POTION };
+    for (const [name, sprite] of Object.entries({
+      TEMPLE,
+      ...items,
+      ...STATE_SPRITES,
+    })) {
       expect(`${name}:${sprite.length}`).toBe(`${name}:${SPRITE_SIZE}`);
       for (const row of sprite) {
         expect(`${name}:${row.length}`).toBe(`${name}:${SPRITE_SIZE}`);
@@ -36,9 +53,30 @@ describe('sprite data', () => {
     }
   });
 
+  it('uses only the two authored characters', () => {
+    for (const [name, sprite] of Object.entries({
+      AMPHORA, KEY, LAUREL, HELM, TORCH, ...STATE_SPRITES,
+    })) {
+      const stray = sprite.join('').replace(/[#.]/g, '');
+      expect(`${name}:${stray}`).toBe(`${name}:`);
+    }
+  });
+
+  it('draws something in every item sprite', () => {
+    for (const [name, sprite] of Object.entries({ AMPHORA, KEY, LAUREL, HELM, TORCH })) {
+      expect(`${name}:${spriteRects(sprite).length > 0}`).toBe(`${name}:true`);
+    }
+  });
+
+  it('grants approval with the laurel, freeing the scroll for docs', () => {
+    expect(STATE_SPRITES.APPROVED).toBe(LAUREL);
+    expect(STATE_SPRITES.APPROVED).not.toBe(SCROLL);
+  });
+
   it('covers every request state', () => {
     expect(Object.keys(STATE_SPRITES).sort()).toEqual([
       'APPROVED',
+      'AWAITING_INPUT',
       'EXPIRED',
       'FAILED',
       'IN_PROGRESS',
@@ -46,5 +84,21 @@ describe('sprite data', () => {
       'REJECTED',
       'SUCCEEDED',
     ]);
+  });
+
+  it('draws the potion in two layers that do not overlap', () => {
+    const glass = spriteRects(POTION, '#');
+    const liquid = spriteRects(POTION, '~');
+    expect(glass.length).toBeGreaterThan(0);
+    expect(liquid.length).toBeGreaterThan(0);
+    // Every cell belongs to one layer or the other, never both.
+    const cells = (rs: ReturnType<typeof spriteRects>) =>
+      new Set(rs.flatMap(r => Array.from({ length: r.w }, (_, i) => `${r.x + i},${r.y}`)));
+    const g = cells(glass);
+    for (const c of cells(liquid)) expect(g.has(c)).toBe(false);
+  });
+
+  it('reads the default layer when none is named', () => {
+    expect(spriteRects(POTION)).toEqual(spriteRects(POTION, '#'));
   });
 });

@@ -8,6 +8,7 @@ import { AuthorizeResult } from '@backstage/plugin-permission-common';
 import {
   Request as PlatformRequest,
   RequestState,
+  SuspendedNode,
 } from '@internal/plugin-platform-common';
 import express from 'express';
 import Router from 'express-promise-router';
@@ -16,6 +17,7 @@ import { requestApprovePermission, requestCreatePermission } from './permissions
 import { applyDecision } from './stateMachine';
 import { RequestsStore } from './store';
 import { Cipher } from './crypto';
+import { filterSuppliedOutputs } from './suspend';
 
 /**
  * Resolves the acting user's admin flag + raw group memberships (from their
@@ -56,6 +58,22 @@ export interface RouterOptions {
   workflowNodesFor?: (name: string, namespace?: string) => Promise<
     { id: string; name: string; type?: string; phase?: string; children: string[] }[]
   >;
+  /** Read the suspend steps currently waiting, straight from Argo. */
+  suspendedNodesFor?: (
+    name: string,
+    namespace?: string,
+  ) => Promise<SuspendedNode[]>;
+  /** Stop a running workflow (the approver refused the gate). */
+  stopWorkflow?: (
+    name: string,
+    opts: { namespace?: string; message?: string },
+  ) => Promise<void>;
+  /** Release one suspended node, optionally supplying its declared outputs. */
+  resumeNode?: (
+    name: string,
+    nodeId: string,
+    opts: { namespace?: string; outputParameters?: Record<string, string> },
+  ) => Promise<void>;
 }
 
 const policySchema = z.union([
@@ -92,6 +110,13 @@ const newRequestSchema = z.object({
 });
 
 const decisionSchema = z.object({ note: z.string().optional() });
+
+const resumeSchema = z.object({
+  nodeId: z.string().min(1),
+  note: z.string().optional(),
+  /** Values for outputs the step declared as `supplied`; anything else is dropped. */
+  parameters: z.record(z.string()).optional(),
+});
 
 /** `user:default/admin` -> `admin`. */
 function actorId(userEntityRef: string): string {
@@ -284,7 +309,12 @@ export async function createRouter(
             found.workflowNamespace,
           )
         : [];
-    res.json({ phase: found.workflowPhase, name: found.workflowName, nodes });
+    res.json({
+      phase: found.workflowPhase,
+      name: found.workflowName,
+      nodes,
+      suspendedNodes: found.suspendedNodes ?? [],
+    });
   });
 
   const decide =
@@ -328,6 +358,177 @@ export async function createRouter(
       if (options.onDecided) await options.onDecided(resolved);
       res.json(resolved);
     };
+
+  /**
+   * Release a suspend step the workflow is waiting on.
+   *
+   * Same gate as approving the request itself: whoever may approve may resume.
+   * The request is re-read from Argo first — the stored list is a cache, and two
+   * approvers on the same page is the normal case, not the edge one.
+   */
+  router.post('/requests/:id/resume', async (req, res) => {
+    const parsed = resumeSchema.safeParse(req.body ?? {});
+    if (!parsed.success) throw new InputError(parsed.error.toString());
+    const { credentials, actor } = await actorOf(req);
+
+    const [authz] = await permissions.authorize(
+      [{ permission: requestApprovePermission }],
+      { credentials },
+    );
+    if (authz.result !== AuthorizeResult.ALLOW) {
+      throw new NotAllowedError('Not allowed to resume workflows');
+    }
+
+    const request = await store.get(Number(req.params.id));
+    if (!request) throw new NotFoundError(`No request ${req.params.id}`);
+    if (!request.workflowName) {
+      throw new InputError(`Request ${request.id} has no workflow`);
+    }
+
+    // The owning-team gate, the same one applyDecision enforces for approvals.
+    const { isAdmin, groups } = await principalResolver(credentials);
+    const allowed =
+      isAdmin || (!!request.ownerGroup && groups.includes(request.ownerGroup));
+    if (!allowed) {
+      throw new NotAllowedError(
+        'Only the owning service team or an admin can resume this workflow',
+      );
+    }
+
+    if (!options.resumeNode || !options.suspendedNodesFor) {
+      throw new InputError('Argo resume is not configured');
+    }
+
+    // Live read: the node may have been released since the page rendered.
+    const live = await options.suspendedNodesFor(
+      request.workflowName,
+      request.workflowNamespace,
+    );
+    const node = live.find(n => n.id === parsed.data.nodeId);
+    if (!node) {
+      // Somebody else got there first, which is the outcome the caller wanted.
+      await store.setWorkflow(request.id, { suspendedNodes: live });
+      if (live.length === 0 && request.state === 'AWAITING_INPUT') {
+        await store.setState(request.id, 'IN_PROGRESS');
+      }
+      res.json({
+        resumed: false,
+        reason: 'That step is no longer suspended.',
+        request: await store.get(request.id),
+      });
+      return;
+    }
+
+    const { accepted, rejected, missing, invalid } = filterSuppliedOutputs(
+      node,
+      parsed.data.parameters,
+    );
+    // Refuse the whole resume rather than release the step with half an answer:
+    // the step cannot be suspended again once it is running.
+    if (invalid.length > 0) {
+      throw new InputError(
+        invalid
+          .map(i => `${i.name} must be one of: ${i.allowed.join(', ')}`)
+          .join('; '),
+      );
+    }
+    if (missing.length > 0) {
+      throw new InputError(
+        `This step requires an answer for: ${missing.join(', ')}`,
+      );
+    }
+    await options.resumeNode(request.workflowName, node.id, {
+      namespace: request.workflowNamespace,
+      outputParameters: accepted,
+    });
+
+    // The decision is auditable in the same trail as the first approval: it is
+    // the same kind of act, on the same request, by the same people.
+    await store.addApproval(request.id, {
+      approver: actor,
+      decision: 'approve',
+      note: [
+        `resumed step "${node.name}"`,
+        parsed.data.note,
+        Object.keys(accepted).length
+          ? `supplied: ${Object.keys(accepted).join(', ')}`
+          : undefined,
+      ]
+        .filter(Boolean)
+        .join(' — '),
+      at: new Date().toISOString(),
+    });
+
+    const remaining = live.filter(n => n.id !== node.id);
+    await store.setWorkflow(request.id, { suspendedNodes: remaining });
+    if (remaining.length === 0) await store.setState(request.id, 'IN_PROGRESS');
+
+    res.json({
+      resumed: true,
+      rejectedParameters: rejected,
+      request: await store.get(request.id),
+    });
+  });
+
+  /**
+   * Refuse the gate: stop the workflow instead of releasing it.
+   *
+   * `/stop` and not `/terminate`, so the workflow's own onExit handlers run and
+   * clean up whatever it already created. The request is left to the poller,
+   * which sees the workflow fail and moves it to FAILED — one place decides
+   * what a stopped workflow means.
+   */
+  router.post('/requests/:id/stop', async (req, res) => {
+    const parsed = decisionSchema.safeParse(req.body ?? {});
+    if (!parsed.success) throw new InputError(parsed.error.toString());
+    const { credentials, actor } = await actorOf(req);
+
+    const [authz] = await permissions.authorize(
+      [{ permission: requestApprovePermission }],
+      { credentials },
+    );
+    if (authz.result !== AuthorizeResult.ALLOW) {
+      throw new NotAllowedError('Not allowed to stop workflows');
+    }
+
+    const request = await store.get(Number(req.params.id));
+    if (!request) throw new NotFoundError(`No request ${req.params.id}`);
+    if (!request.workflowName) {
+      throw new InputError(`Request ${request.id} has no workflow`);
+    }
+
+    const { isAdmin, groups } = await principalResolver(credentials);
+    const allowed =
+      isAdmin || (!!request.ownerGroup && groups.includes(request.ownerGroup));
+    if (!allowed) {
+      throw new NotAllowedError(
+        'Only the owning service team or an admin can stop this workflow',
+      );
+    }
+    if (!options.stopWorkflow) throw new InputError('Argo stop is not configured');
+
+    const reason = parsed.data.note
+      ? `stopped by ${actor}: ${parsed.data.note}`
+      : `stopped by ${actor}`;
+    await options.stopWorkflow(request.workflowName, {
+      namespace: request.workflowNamespace,
+      message: reason,
+    });
+
+    // Recorded as a rejection, because that is what refusing a gate is.
+    await store.addApproval(request.id, {
+      approver: actor,
+      decision: 'reject',
+      note: [`stopped the workflow`, parsed.data.note].filter(Boolean).join(' — '),
+      at: new Date().toISOString(),
+    });
+    await store.setWorkflow(request.id, {
+      suspendedNodes: [],
+      error: reason,
+    });
+
+    res.json({ stopped: true, request: await store.get(request.id) });
+  });
 
   router.post('/requests/:id/approve', decide('approve'));
   router.post('/requests/:id/reject', decide('reject'));

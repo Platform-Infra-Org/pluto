@@ -3,7 +3,10 @@ import {
   DiscoveryService,
   LoggerService,
 } from '@backstage/backend-plugin-api';
-import { ArgoSubmitSpec } from '@internal/plugin-platform-common';
+import {
+  ArgoSubmitSpec,
+  SuspendedNode,
+} from '@internal/plugin-platform-common';
 
 /** Values available to `<< token >>` templating in an ArgoSubmitSpec. */
 export interface ResolveCtx {
@@ -121,6 +124,72 @@ export interface WorkflowStatus {
   message?: string;
   /** The workflow's global output parameters (name -> value), if any. */
   outputs?: Record<string, string>;
+  /** Suspend steps currently waiting. Empty when none are. */
+  suspendedNodes: SuspendedNode[];
+}
+
+/** The subset of an Argo status node this plugin reads. */
+export interface ArgoStatusNode {
+  id: string;
+  name?: string;
+  displayName?: string;
+  type?: string;
+  phase?: string;
+  message?: string;
+  templateName?: string;
+  children?: string[];
+  inputs?: { parameters?: Array<{ name?: string; value?: string }> };
+  outputs?: {
+    parameters?: Array<{
+      name?: string;
+      value?: string;
+      default?: string;
+      description?: string;
+      enum?: string[];
+      valueFrom?: { supplied?: unknown };
+    }>;
+  };
+}
+
+/**
+ * The suspend steps that are currently waiting.
+ *
+ * Argo has no "Suspended" phase: a waiting suspend node reports
+ * `type: 'Suspend'` with `phase: 'Running'`, the same phase a busy container
+ * step reports. Detection is the pair or nothing.
+ *
+ * A supplied output with a `default` can be resumed without an answer; one
+ * without a default cannot. That is Argo's own semantics, so `required` is read
+ * off the workflow rather than configured anywhere in this platform.
+ */
+export function suspendedNodesOf(
+  nodes: Record<string, ArgoStatusNode> | undefined,
+): SuspendedNode[] {
+  return Object.values(nodes ?? {})
+    .filter(n => n.type === 'Suspend' && n.phase === 'Running')
+    .map(n => ({
+      id: n.id,
+      name: n.displayName || n.name || n.id,
+      templateName: n.templateName,
+      message: n.message,
+      inputs: (n.inputs?.parameters ?? [])
+        .filter(pp => pp.name !== undefined)
+        .map(pp => ({ name: pp.name as string, value: pp.value })),
+      // Only outputs the step declared as `valueFrom: supplied: {}` may be set
+      // on resume. Argo rejects anything else, and offering a field the API
+      // refuses is worse than offering none.
+      suppliedOutputs: (n.outputs?.parameters ?? [])
+        .filter(pp => pp.name !== undefined && pp.valueFrom?.supplied !== undefined)
+        .map(pp => ({
+          name: pp.name as string,
+          description: pp.description,
+          // Argo parameters carry enum/description/default of their own, so the
+          // form is described by the workflow rather than configured here.
+          enum: pp.enum?.length ? pp.enum : undefined,
+          default: pp.default,
+          required: pp.default === undefined,
+        })),
+    }));
 }
 
 /** A node in the workflow DAG, for the status view. */
@@ -273,6 +342,7 @@ export class ArgoClient {
           phase?: string;
           message?: string;
           outputs?: { parameters?: Array<{ name?: string; value?: string }> };
+          nodes?: Record<string, ArgoStatusNode>;
         };
       }>;
     };
@@ -286,6 +356,9 @@ export class ArgoClient {
       phase: wf?.status?.phase,
       message: wf?.status?.message,
       outputs,
+      // The list response already carries status.nodes, so noticing a suspend
+      // step costs no extra request — it was being parsed away.
+      suspendedNodes: suspendedNodesOf(wf?.status?.nodes),
     };
   }
 
@@ -364,5 +437,122 @@ export class ArgoClient {
       phase: n.phase,
       children: n.children ?? [],
     }));
+  }
+
+  /** Suspend steps waiting in a named workflow, read fresh. */
+  async suspendedNodesFor(
+    workflowName: string,
+    namespace: string = this.cfg.namespace,
+  ): Promise<SuspendedNode[]> {
+    const { base, headers } = await this.endpoint();
+    const res = await fetch(
+      `${base}/api/v1/workflows/${namespace}/${workflowName}`,
+      { headers },
+    );
+    if (!res.ok) return [];
+    const wf = (await res.json()) as {
+      status?: { nodes?: Record<string, ArgoStatusNode> };
+    };
+    return suspendedNodesOf(wf.status?.nodes);
+  }
+
+  /**
+   * Stop the workflow: the approver refused the gate.
+   *
+   * `/stop` rather than `/terminate` — it lets `onExit` handlers run, which is
+   * how a workflow cleans up what it already created. Terminate would leave
+   * half-provisioned resources behind with nothing to tidy them.
+   */
+  async stopWorkflow(
+    workflowName: string,
+    opts: { namespace?: string; message?: string } = {},
+  ): Promise<void> {
+    const namespace = opts.namespace ?? this.cfg.namespace;
+    const { base, headers } = await this.endpoint();
+    const res = await fetch(
+      `${base}/api/v1/workflows/${namespace}/${workflowName}/stop`,
+      {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          namespace,
+          name: workflowName,
+          message: opts.message,
+        }),
+      },
+    );
+    if (!res.ok) {
+      throw new Error(`argo stop failed: ${res.status} ${await res.text()}`);
+    }
+    this.logger.info(`stopped ${workflowName}: ${opts.message ?? 'no reason given'}`);
+  }
+
+  /**
+   * Release one suspended node, optionally answering the questions it asked.
+   *
+   * Two calls, in this order and not the other one. `/set` supplies the values
+   * the step declared as `valueFrom: supplied: {}`; `/resume` releases it. If
+   * `/set` fails we stop, leaving the node suspended and retryable. Resuming
+   * first and failing to set would let the workflow continue without the
+   * answer, which nothing downstream can undo.
+   *
+   * The selector is `id=` and never `displayName=`: a suspend step inside a
+   * loop produces several nodes sharing a display name, and releasing the wrong
+   * iteration fails silently.
+   */
+  async resumeNode(
+    workflowName: string,
+    nodeId: string,
+    opts: {
+      namespace?: string;
+      outputParameters?: Record<string, string>;
+    } = {},
+  ): Promise<void> {
+    const namespace = opts.namespace ?? this.cfg.namespace;
+    const { base, headers } = await this.endpoint();
+    const json = { ...headers, 'Content-Type': 'application/json' };
+    const nodeFieldSelector = `id=${nodeId}`;
+
+    const supplied = Object.entries(opts.outputParameters ?? {});
+    if (supplied.length > 0) {
+      const res = await fetch(
+        `${base}/api/v1/workflows/${namespace}/${workflowName}/set`,
+        {
+          method: 'PUT',
+          headers: json,
+          body: JSON.stringify({
+            namespace,
+            name: workflowName,
+            nodeFieldSelector,
+            // A JSON object encoded as a string, not the CLI's k=v form:
+            // argo-server JSON-parses this field, and `decision=x` fails with
+            // "invalid character 'd' looking for beginning of value".
+            outputParameters: JSON.stringify(Object.fromEntries(supplied)),
+          }),
+        },
+      );
+      if (!res.ok) {
+        throw new Error(
+          `argo set outputs failed: ${res.status} ${await res.text()}`,
+        );
+      }
+    }
+
+    const res = await fetch(
+      `${base}/api/v1/workflows/${namespace}/${workflowName}/resume`,
+      {
+        method: 'PUT',
+        headers: json,
+        body: JSON.stringify({ namespace, name: workflowName, nodeFieldSelector }),
+      },
+    );
+    if (!res.ok) {
+      throw new Error(`argo resume failed: ${res.status} ${await res.text()}`);
+    }
+    this.logger.info(
+      `resumed ${workflowName} node ${nodeId}${
+        supplied.length ? ` with ${supplied.length} supplied output(s)` : ''
+      }`,
+    );
   }
 }

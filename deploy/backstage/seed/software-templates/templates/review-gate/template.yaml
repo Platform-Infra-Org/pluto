@@ -1,0 +1,61 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: review-gate
+  title: Provision With Review
+  description: >
+    Request a resource whose workflow pauses halfway for a second approval.
+    The workflow plans the change, suspends, and waits: the request turns
+    yellow, the approver reads the plan and the cost the workflow computed,
+    types a decision, and resumes it. The decision reaches the step that
+    applies the change, so the answer is load-bearing rather than decorative.
+  tags:
+    - platform
+    - demo
+    - approval
+  annotations:
+    platform.io/resource-type: review-gate
+spec:
+  # The same owning team that approves the request also resumes the suspended
+  # step — resuming is the same act of approval, later in the run.
+  owner: group:default/platform-admins
+  type: resource
+  parameters:
+    - title: What to provision
+      required:
+        - resourceName
+        - region
+      properties:
+        resourceName:
+          type: string
+          title: Name
+          description: Name of the resource to provision
+        region:
+          type: string
+          title: Region
+          default: eu-west-1
+          enum: [eu-west-1, us-east-1, ap-south-1]
+  steps:
+    - id: submit
+      name: Submit request
+      action: platform:request:submit
+      input:
+        resourceType: review-gate
+        resourceName: ${{ parameters.resourceName }}
+        kind: CREATE
+        params:
+          region: ${{ parameters.region }}
+        # The workflow with the mid-run suspend step
+        # (deploy/backstage/argo/review-gate.yaml).
+        argoSubmit:
+          namespace: argo
+          workflowTemplate: review-gate
+          parameters:
+            request: "<< paramsJson >>"
+          labels:
+            platform.io/requested-by: "<< requester >>"
+        resultOutput: result
+  output:
+    links:
+      - title: Open request
+        url: /requests/${{ steps.submit.output.requestId }}

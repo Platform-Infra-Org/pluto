@@ -55,6 +55,19 @@ export interface Config {
          */
         position?: string;
       };
+
+      /**
+       * Optional naming flavour for the sidebar.
+       *
+       * `fantasy` renames **screens only** — Requests → Quests, Create →
+       * Summon, Catalog → Atlas. Request states are records and are never
+       * renamed: a screen someone cannot find is one click away, but
+       * `QUEST FAILED` in an audit trail is a support ticket.
+       *
+       * Omit for the literal names.
+       * @visibility frontend
+       */
+      flavour?: 'fantasy';
     };
   };
 }

@@ -190,6 +190,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Colour template header text from the image behind it
 - Merge request retention and the header/dialog fixes
 - Ship the hellenic template header images
+- Loading indicators march in cells instead of easing
+- Menu cursor on table rows
+- Square pixel scrollbars
+- Dither tints instead of alpha washes, and fix badge contrast
+- Double-framed command windows for dialogs and the picker
+- Dither-wipe dialogs in like a scene change
+- Amphora, key, laurel, helm and torch sprites
+- Approval progress as a counted segmented bar
+- Three cycling scenes in the built-in header art
+- Press start on the sign-in gate
+- Optional fantasy screen names behind a branding flag
+- Tab ticker while a request is in flight
+- Arcade-panel empty states
+- Konami code easter egg
+- Turn on the fantasy screen names
+- Approve and resume a suspended workflow step
+- Provision With Review — a clickable suspend-gate example
+- Stop action, and suspend fields described by the workflow
+- The colour picker is a shelf of potions
+- Turn the fantasy screen names back off
 
 ### Changed
 
@@ -242,6 +262,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Plan a second pass of 8-bit flare
 - Commit the flare plan to a fantasy genre
 - Regenerate after the retention merge
+- Regenerate after shipping the header images
+- Task list for the 8-bit flare pass
+- Record what the flare pass dropped and why
+- Regenerate for the 8-bit flare pass
+- Regenerate after enabling the fantasy names
+- Plan mid-workflow suspend approval
+- Regenerate for the suspend approval gate
+- Regenerate for the review-gate template
+- Regenerate for the stop action and declared fields
+- Regenerate for the potion picker
+- Regenerate after reverting the fantasy names
 
 ### Fixed
 
@@ -293,6 +324,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refuse a retention window shorter than a day
 - Single-bordered native buttons, and readable header titles
 - Round the dialog surface so popups match the cards
+- One colour picker per screen
 
 ### Removed
 
