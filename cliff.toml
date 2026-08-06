@@ -42,10 +42,23 @@ trim = true
 conventional_commits = true
 # Exclude commits that do not match the conventional commits specification.
 filter_unconventional = false
+# NOTE: git-cliff's skip_merge_commits key is ignored by the version pinned in
+# CI, so merge commits are skipped by a parser below instead.
 # An array of regex based parsers for extracting data from the commit message.
 # Assigns commits to groups.
 # Optionally sets the commit's scope and can decide to exclude commits from further processing.
 commit_parsers = [
+    # Housekeeping about the changelog itself is not a change to the product.
+    # Left in, a release reads as thirty "regenerate the changelog" lines.
+    # A merge commit's subject repeats what the commits under it already say.
+    # Left in, every feature is listed twice — once as itself and once inside
+    # "merge the X pass". Ours are conventionally prefixed, hence the shape.
+    { message = "(?i)^[a-z]+(\\(.+\\))?!?: merge ", skip = true },
+    # Housekeeping about the changelog itself is not a change to the product.
+    # Left in, a release reads as thirty "regenerate the changelog" lines.
+    { message = "^chore\\(changelog\\)", skip = true },
+    { message = "^chore\\(release\\)", skip = true },
+    { message = "^chore: bump", skip = true },
     { message = "^[a|A]dd", group = "Added" },
     { message = "^[s|S]upport", group = "Added" },
     { message = "^[r|R]emove", group = "Removed" },

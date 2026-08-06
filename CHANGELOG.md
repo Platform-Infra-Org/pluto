@@ -160,7 +160,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Register a Secret scaffolder field + wire the postgres example live
 - Add secrets.schema to the provision-postgres example
 - Eye-icon show/hide toggle on the Secret field
-- Add git-cliff config and generate CHANGELOG
 - Read the catalog from Bitbucket Data Center in production
 - Rotate the envelope key without re-encrypting
 - Configurable platform mark and tab icon
@@ -188,7 +187,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Store operations to expire and delete stale requests
 - Scheduled retention task with dry-run
 - Colour template header text from the image behind it
-- Merge request retention and the header/dialog fixes
 - Ship the hellenic template header images
 - Loading indicators march in cells instead of easing
 - Menu cursor on table rows
@@ -210,7 +208,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stop action, and suspend fields described by the workflow
 - The colour picker is a shelf of potions
 - Turn the fantasy screen names back off
-- Merge the 8-bit flare pass and the suspend approval gate
 - Record recently visited pages per user
 - Recently visited card on home
 - Favourite templates card on home
@@ -222,7 +219,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tour button opposite the title, and a home grid of equals
 - The experience bar reads status, not the picked accent
 - Open the catalog on Resource instead of Component
-- Merge the home, quickstart and experience-bar pass
 
 ### Changed
 
@@ -274,29 +270,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Request retention and the EXPIRED state
 - Plan a second pass of 8-bit flare
 - Commit the flare plan to a fantasy genre
-- Regenerate after the retention merge
-- Regenerate after shipping the header images
 - Task list for the 8-bit flare pass
 - Record what the flare pass dropped and why
-- Regenerate for the 8-bit flare pass
-- Regenerate after enabling the fantasy names
 - Plan mid-workflow suspend approval
-- Regenerate for the suspend approval gate
-- Regenerate for the review-gate template
-- Regenerate for the stop action and declared fields
-- Regenerate for the potion picker
-- Regenerate after reverting the fantasy names
-- Regenerate for the single-picker fix
-- Regenerate after the flare merge
 - Plan home cards, quickstart and the experience bar
 - Stop tracking specs/
-- Regenerate after untracking specs
 - Commit the specs/ ignore rule
-- Regenerate for home, quickstart and the experience bar
-- Regenerate for the home layout pass
-- Regenerate for the tour button and home layout fixes
-- Regenerate for the experience bar tones
-- Regenerate for the catalog default kind
 
 ### Fixed
 
@@ -351,6 +330,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - One colour picker per screen
 - Step the workflow graph edges and respect reduced motion
 - Real stars on the tour button, sidebar-style hover, wider standing requests
+- Replace the tone ternary with a lookup
 
 ### Removed
 
