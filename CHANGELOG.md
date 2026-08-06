@@ -189,6 +189,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scheduled retention task with dry-run
 - Colour template header text from the image behind it
 - Merge request retention and the header/dialog fixes
+- Ship the hellenic template header images
 
 ### Changed
 
@@ -240,6 +241,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Request retention and the EXPIRED state
 - Plan a second pass of 8-bit flare
 - Commit the flare plan to a fantasy genre
+- Regenerate after the retention merge
 
 ### Fixed
 
