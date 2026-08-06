@@ -15,7 +15,8 @@ import {
   RUPEE,
   CREEP_A,
   CREEP_B,
-  CREEP_SIZE,
+  SMALL_SPRITE_SIZE,
+  STAR,
 } from './sprites';
 
 /**
@@ -82,6 +83,24 @@ export function PixelPotion({
   );
 }
 
+/** A sparkle, for decoration that has to actually look like a star. */
+export function PixelStar({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox={`0 0 ${SMALL_SPRITE_SIZE} ${SMALL_SPRITE_SIZE}`}
+      shapeRendering="crispEdges"
+      fill="currentColor"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {spriteRects(STAR).map(r => (
+        <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
+      ))}
+    </svg>
+  );
+}
+
 /** The rupee beside the experience bar: accent fill, ink facets. */
 export function PixelRupee({ className }: { className?: string }) {
   return (
@@ -116,7 +135,7 @@ export function PixelCreep({ className }: { className?: string }) {
   const frame = (sprite: Sprite, cls: string) => (
     <svg
       className={cls}
-      viewBox={`0 0 ${CREEP_SIZE} ${CREEP_SIZE}`}
+      viewBox={`0 0 ${SMALL_SPRITE_SIZE} ${SMALL_SPRITE_SIZE}`}
       shapeRendering="crispEdges"
       fill="currentColor"
       aria-hidden="true"

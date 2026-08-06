@@ -13,7 +13,8 @@ import {
   RUPEE,
   CREEP_A,
   CREEP_B,
-  CREEP_SIZE,
+  SMALL_SPRITE_SIZE,
+  STAR,
 } from './sprites';
 
 const grid = (...rows: string[]) => rows;
@@ -117,13 +118,13 @@ describe('sprite data', () => {
     for (const c of cells(fill)) expect(e.has(c)).toBe(false);
   });
 
-  it('keeps the creatures square at their own documented size', () => {
+  it('keeps the small sprites square at their own documented size', () => {
     // The only sprites here that are not SPRITE_SIZE: several must fit on a
     // 12px bar, so they are 8x8 and say so.
-    for (const [name, sprite] of Object.entries({ CREEP_A, CREEP_B })) {
-      expect(`${name}:${sprite.length}`).toBe(`${name}:${CREEP_SIZE}`);
+    for (const [name, sprite] of Object.entries({ CREEP_A, CREEP_B, STAR })) {
+      expect(`${name}:${sprite.length}`).toBe(`${name}:${SMALL_SPRITE_SIZE}`);
       for (const row of sprite) {
-        expect(`${name}:${row.length}`).toBe(`${name}:${CREEP_SIZE}`);
+        expect(`${name}:${row.length}`).toBe(`${name}:${SMALL_SPRITE_SIZE}`);
       }
     }
   });

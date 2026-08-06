@@ -451,6 +451,9 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   grid-auto-rows: 1fr;
   align-items: stretch; }
 .sc-grid-2 > .sc-card { height: 100%; display: flex; flex-direction: column; }
+/* A card asked to take two places does so, and its row still lines up because
+   the row height is uniform. */
+.sc-grid-2 > .sc-card.sc-span-2 { grid-column: span 2; }
 /* The body takes the slack, so headers line up across the row. */
 .sc-grid-2 > .sc-card > .sc-card-b { flex: 1 1 auto; }
 .sc-action { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: var(--sc-radius);
@@ -650,37 +653,30 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   background-image: none; }
 .sc-xp-gameover .sc-xp-banner { color: hsl(var(--sc-destructive)); }
 
-/* [flare] The tour button twinkles: eight pixel stars in the picked accent,
-   drawn as box-shadows on two pseudo-elements so there is no extra markup and
-   nothing to lay out. Hidden until hover, and only ever decoration — the
-   button reads the same without them. */
-.sc-tour { position: relative; }
-.sc-tour::before, .sc-tour::after {
-  content: ''; position: absolute; width: 2px; height: 2px;
-  /* Filled, not transparent: the element's own box is the first star, and an
-     unfilled one renders as a ring beside seven solid ones. */
-  background: hsl(var(--sc-primary));
-  opacity: 0; pointer-events: none;
+/* [flare] The tour button.
+   Hover is the sidebar's own selected treatment — a muted wash of the picked
+   accent — so selection looks the same wherever it happens. */
+.sc-tour { position: relative; overflow: visible; }
+.sc-tour:hover:not(:disabled), .sc-tour:focus-visible {
+  background: hsl(var(--sc-primary) / .10);
+  border-color: hsl(var(--sc-primary) / .45);
+  color: hsl(var(--sc-primary));
 }
-.sc-tour::before {
-  top: -3px; left: 6px;
-  box-shadow:
-    0 0 0 1px hsl(var(--sc-primary)),
-    14px 3px 0 1px hsl(var(--sc-primary)),
-    34px -2px 0 1px hsl(var(--sc-primary)),
-    58px 4px 0 1px hsl(var(--sc-primary));
-}
-.sc-tour::after {
-  bottom: -3px; right: 6px;
-  box-shadow:
-    0 0 0 1px hsl(var(--sc-primary)),
-    -16px -2px 0 1px hsl(var(--sc-primary)),
-    -38px 3px 0 1px hsl(var(--sc-primary)),
-    -60px -3px 0 1px hsl(var(--sc-primary));
-}
+/* Six sparkles around the button, hidden until it is hovered. Absolutely
+   positioned so they never affect the button's own size. */
+.sc-tour-stars { position: absolute; inset: -8px; pointer-events: none; }
+/* The rects need the colour too, not just the svg: fill="currentColor"
+   resolves per element and the global .sc * rule hands each rect its own. */
+.sc-tour-star, .sc-tour-star * { color: hsl(var(--sc-primary)); }
+.sc-tour-star { position: absolute; width: 8px; height: 8px; opacity: 0; }
+.sc-tour-star-0 { top: 0; left: 6px; }
+.sc-tour-star-1 { top: -2px; left: 46%; }
+.sc-tour-star-2 { top: 4px; right: 8px; }
+.sc-tour-star-3 { bottom: 0; left: 18px; }
+.sc-tour-star-4 { bottom: -2px; left: 58%; }
+.sc-tour-star-5 { bottom: 5px; right: 4px; }
 /* Without motion they simply appear: still stars, not a smudge. */
-.sc-tour:hover::before, .sc-tour:hover::after,
-.sc-tour:focus-visible::before, .sc-tour:focus-visible::after { opacity: 1; }
+.sc-tour:hover .sc-tour-star, .sc-tour:focus-visible .sc-tour-star { opacity: 1; }
 
 /* success notice (e.g. created-resource link) */
 .sc-notice { padding: 10px 14px; border-radius: var(--sc-radius); font-weight: 500;
@@ -964,18 +960,21 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   .sc-press-start { animation: sc-caret 1s steps(1) infinite; }
   .sc-qs-box::after { animation: sc-caret 1s steps(1) infinite; }
 
-  /* Two sets, alternating, so the stars blink out of step with each other. */
+  /* They twinkle out of step with each other: same keyframes, staggered, so
+     the group never blinks as one block. */
   @keyframes sc-twinkle {
     0%, 45% { opacity: 1; }
     50%, 95% { opacity: 0; }
     100% { opacity: 1; }
   }
-  .sc-tour:hover::before, .sc-tour:focus-visible::before {
+  .sc-tour:hover .sc-tour-star, .sc-tour:focus-visible .sc-tour-star {
     animation: sc-twinkle .6s steps(1) infinite;
   }
-  .sc-tour:hover::after, .sc-tour:focus-visible::after {
-    animation: sc-twinkle .6s steps(1) infinite reverse;
-  }
+  .sc-tour-star-1 { animation-delay: -.1s; }
+  .sc-tour-star-2 { animation-delay: -.25s; }
+  .sc-tour-star-3 { animation-delay: -.35s; }
+  .sc-tour-star-4 { animation-delay: -.45s; }
+  .sc-tour-star-5 { animation-delay: -.55s; }
 
   /* [xp] The run cycle: two frames, and a walk bounded by the fill. */
   @keyframes sc-creep-run { to { left: calc(100% - 8px); } }

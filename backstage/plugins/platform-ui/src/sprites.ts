@@ -347,11 +347,12 @@ export const RUPEE: Sprite = [
 /**
  * The creatures that run along the bar while a workflow is executing.
  *
- * 8x8 rather than the usual 16, so several fit on a 12px bar — the only
- * sprites in this file that are not SPRITE_SIZE square. Two frames, legs
- * apart and legs together, which is the whole of an 8-bit run cycle.
+ * 8x8 rather than the usual 16, so several fit on a 12px bar. Sprites on this
+ * smaller grid are the only ones here that are not SPRITE_SIZE square. Two
+ * frames, legs apart and legs together, which is the whole of an 8-bit run
+ * cycle.
  */
-export const CREEP_SIZE = 8;
+export const SMALL_SPRITE_SIZE = 8;
 
 export const CREEP_A: Sprite = [
   '..####..',
@@ -373,6 +374,23 @@ export const CREEP_B: Sprite = [
   '.######.',
   '..#..#..',
   '.#....#.',
+];
+
+/**
+ * A four-point sparkle, on the small 8px grid.
+ *
+ * Thin arms and a solid middle: a square with rounded expectations reads as a
+ * dot, and a dot is not a star.
+ */
+export const STAR: Sprite = [
+  '...##...',
+  '...##...',
+  '..####..',
+  '########',
+  '########',
+  '..####..',
+  '...##...',
+  '...##...',
 ];
 
 export const STATE_SPRITES: Record<RequestState, Sprite> = {

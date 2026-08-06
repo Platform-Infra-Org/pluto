@@ -7,7 +7,12 @@ import {
 import { Link } from '@backstage/core-components';
 import { catalogApiRef } from '@backstage/plugin-catalog-react';
 import { Request, isTerminal } from '@internal/plugin-platform-common';
-import { Page, PageHeader, Card } from '@internal/plugin-platform-ui';
+import {
+  Page,
+  PageHeader,
+  Card,
+  PixelStar,
+} from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
 import { stateBadge } from './RequestsPage';
 import { RecentlyVisited } from './HomeVisits';
@@ -51,6 +56,13 @@ function TourButton() {
       onClick={() => window.dispatchEvent(new Event('platform:quickstart'))}
     >
       Take the tour
+      {/* Real sprites rather than square dots: a 2px box is a dot, and a dot
+          is not a star. Decorative, so they carry no text of their own. */}
+      <span className="sc-tour-stars" aria-hidden="true">
+        {[0, 1, 2, 3, 4, 5].map(i => (
+          <PixelStar key={i} className={`sc-tour-star sc-tour-star-${i}`} />
+        ))}
+      </span>
     </button>
   );
 }
@@ -140,7 +152,7 @@ function StandingRequests({ max }: { max: number }) {
   }, [requests]);
 
   return (
-    <Card>
+    <Card className="sc-span-2">
       <div className="sc-card-h">
         <div className="sc-card-title">Standing requests</div>
       </div>

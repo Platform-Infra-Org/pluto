@@ -18,6 +18,7 @@ export {
   EmptyState,
   PixelRupee,
   PixelCreep,
+  PixelStar,
 } from './components';
 export {
   STATE_SPRITES,
