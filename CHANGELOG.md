@@ -190,6 +190,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Colour template header text from the image behind it
 - Merge request retention and the header/dialog fixes
 - Ship the hellenic template header images
+- Loading indicators march in cells instead of easing
+- Menu cursor on table rows
+- Square pixel scrollbars
+- Dither tints instead of alpha washes, and fix badge contrast
+- Double-framed command windows for dialogs and the picker
+- Dither-wipe dialogs in like a scene change
+- Amphora, key, laurel, helm and torch sprites
+- Approval progress as a counted segmented bar
+- Three cycling scenes in the built-in header art
+- Press start on the sign-in gate
+- Optional fantasy screen names behind a branding flag
+- Tab ticker while a request is in flight
+- Arcade-panel empty states
+- Konami code easter egg
 
 ### Changed
 
@@ -242,6 +256,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Plan a second pass of 8-bit flare
 - Commit the flare plan to a fantasy genre
 - Regenerate after the retention merge
+- Regenerate after shipping the header images
+- Task list for the 8-bit flare pass
+- Record what the flare pass dropped and why
 
 ### Fixed
 
