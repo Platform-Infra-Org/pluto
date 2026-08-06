@@ -106,6 +106,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replace the tone ternary with a lookup
 - Keep the backend bearer token and session secret out of git
 - Stub the bundler-only branding glob under Jest
+- Lowercase the image name before tagging
 
 ### Removed
 
