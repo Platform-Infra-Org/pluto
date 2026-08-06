@@ -272,6 +272,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Regenerate for the review-gate template
 - Regenerate for the stop action and declared fields
 - Regenerate for the potion picker
+- Regenerate after reverting the fantasy names
 
 ### Fixed
 
@@ -323,6 +324,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refuse a retention window shorter than a day
 - Single-bordered native buttons, and readable header titles
 - Round the dialog surface so popups match the cards
+- One colour picker per screen
 
 ### Removed
 
