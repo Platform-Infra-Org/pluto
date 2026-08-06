@@ -370,6 +370,46 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   border-bottom: var(--sc-border-w) solid hsl(var(--sc-fg) / .18) !important;
   image-rendering: pixelated;
 }
+/* [flare] Three scenes, not one. The built-in art only shows when no images are
+   dropped into the branding folder, so it is the first impression on a fresh
+   install — and it repeated identically down the whole grid.
+   The sky, the dither and the meander frieze are shared, so the three read as
+   one world; only the structure standing on the frieze changes. That structure
+   is the same four rectangles in every scene, re-sized and re-placed, which is
+   why this costs two rules rather than two more background stacks.
+   Cards cycle 3n+1 / 3n+2 / 3n+3, the same way the supplied images cycle. */
+[class*="BackstageItemCardGrid-root"] > .MuiCard-root:nth-child(3n + 2)
+  [class*="ItemCardHeader"] {
+  /* The oracle flame: a taper, widest at its base. */
+  background-size:
+    4px 4px, 8px 4px, 12px 4px, 16px 4px,
+    100% 2px, 100% 2px, 100% 8px, 100% 8px,
+    16px 16px,
+    100% 100% !important;
+  background-position:
+    86% calc(100% - 30px), 86% calc(100% - 26px),
+    86% calc(100% - 22px), 86% calc(100% - 18px),
+    0 calc(100% - 14px), 0 calc(100% - 4px),
+    0 calc(100% - 12px), 0 calc(100% - 12px),
+    0 0,
+    0 0 !important;
+}
+[class*="BackstageItemCardGrid-root"] > .MuiCard-root:nth-child(3n + 3)
+  [class*="ItemCardHeader"] {
+  /* The underworld gate: two posts under a lintel, with a step above it. */
+  background-size:
+    5px 16px, 5px 16px, 28px 4px, 18px 3px,
+    100% 2px, 100% 2px, 100% 8px, 100% 8px,
+    16px 16px,
+    100% 100% !important;
+  background-position:
+    80% calc(100% - 14px), 94% calc(100% - 14px),
+    87% calc(100% - 30px), 87% calc(100% - 33px),
+    0 calc(100% - 14px), 0 calc(100% - 4px),
+    0 calc(100% - 12px), 0 calc(100% - 12px),
+    0 0,
+    0 0 !important;
+}
 /* The title sits on art, so it needs its own contrast: a 1px outline in the
    opposite tone (dark behind light text, light behind dark) plus weight. The
    shade token flips with the scheme, alongside --sc-primary-fg. */
