@@ -684,6 +684,32 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   }
   .sc-nav-item.active:hover .sc-nav-cursor::before { content: none; }
 
+  /* [flare] A dialog arrives the way an 8-bit scene changes: through a dither,
+     not a fade. The mask cells shrink in four steps, so the surface resolves
+     cell by cell. 160ms — longer and it stops reading as a scene change and
+     starts reading as a wait. */
+  /* The mask lives ONLY inside the keyframes, and the last frame drops it
+     entirely. Leaving it on the static rule and animating mask-size down to 1px
+     ends with a sub-pixel checkerboard, which is not "finished" — it is a
+     dialog permanently at half opacity. mask-image animates discretely, so the
+     final frame flips it off cleanly. */
+  @keyframes sc-dither-in {
+    0% {
+      -webkit-mask-image: repeating-conic-gradient(#000 0% 25%, transparent 0% 50%);
+      mask-image: repeating-conic-gradient(#000 0% 25%, transparent 0% 50%);
+      -webkit-mask-size: 12px 12px; mask-size: 12px 12px;
+    }
+    99% {
+      -webkit-mask-image: repeating-conic-gradient(#000 0% 25%, transparent 0% 50%);
+      mask-image: repeating-conic-gradient(#000 0% 25%, transparent 0% 50%);
+      -webkit-mask-size: 3px 3px; mask-size: 3px 3px;
+    }
+    100% { -webkit-mask-image: none; mask-image: none; }
+  }
+  [class*="bui-DialogInner"], .MuiDialog-paper {
+    animation: sc-dither-in .16s steps(4) both;
+  }
+
   /* Ambient: presence, not information. */
   @keyframes sc-bob {
     0%, 100% { transform: translateY(0); }
