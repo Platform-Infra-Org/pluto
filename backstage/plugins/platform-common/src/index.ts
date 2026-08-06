@@ -146,3 +146,20 @@ export const PLATFORM_PERMISSIONS = {
 export function isTerminal(state: RequestState): boolean {
   return state === 'SUCCEEDED' || state === 'FAILED' || state === 'REJECTED';
 }
+
+/**
+ * How many approvals a request has, out of how many it needs.
+ *
+ * Rejections are decisions, not approvals: they live in the same array and must
+ * not count toward the total. A single rejection settles the request anyway,
+ * but the count is what gets rendered, so it has to be right on its own.
+ */
+export function approvalProgress(request: {
+  policy: ApprovalPolicy;
+  approvals: Approval[];
+}): { granted: number; required: number } {
+  return {
+    granted: request.approvals.filter(a => a.decision === 'approve').length,
+    required: request.policy.mode === 'SINGLE' ? 1 : request.policy.n,
+  };
+}

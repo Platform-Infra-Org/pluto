@@ -497,6 +497,18 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-dark .sc-json-number { color: hsl(217 70% 70%); }
 .sc-dark .sc-json-boolean { color: hsl(280 60% 72%); }
 
+/* [flare] Approval progress: cells plus the literal count. A bar alone says
+   "some of it is done"; the number says which. */
+.sc-approvals { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.sc-approvals-bar { display: flex; gap: 3px; }
+.sc-approvals-cell { width: 18px; height: 14px;
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  background: hsl(var(--sc-muted)); }
+.sc-approvals-cell.filled { background: hsl(var(--sc-primary));
+  border-color: hsl(var(--sc-primary)); }
+.sc-approvals-count { font-family: var(--sc-font-pixel); font-size: 12px;
+  color: hsl(var(--sc-muted-fg)); }
+
 /* success notice (e.g. created-resource link) */
 .sc-notice { padding: 10px 14px; border-radius: var(--sc-radius); font-weight: 500;
   --sc-cell: hsl(var(--sc-success) / .26);
