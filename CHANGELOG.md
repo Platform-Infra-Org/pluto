@@ -167,6 +167,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ship a Poseidon trident mark and wire it up
 - Drop unused dependencies and dead config
 - Drop the unused MinIO service
+- Add the pixel sprite set and its rect renderer
+- Draw the mark and favicon from the pixel sprite grid
+- Self-host Silkscreen and square the design tokens
+- Saturate the palette with a verified per-scheme foreground
+- Pixel treatment for buttons, cards, inputs and dialogs
+- Pixel sidebar with an active-row marker
+- State sprites beside the status badges
+- Step-based animation for running and settled states
+- Ambient CRT texture, bobbing empty states and a blinking caret
+- Dress the native Backstage pages and make the sidebar draggable
+- Soften the geometry and mark native titles with the caret
+- One pixel face everywhere, not just on chrome
+- Ancient Greek pixel art on the template headers
+- Glob a drop-in branding folder at build time
+- Generate cycling template-header CSS from an image list
+- Use supplied images as template headers, cycling across cards
+- Add the EXPIRED terminal state
+- Pure retention planner with per-state windows
+- Store operations to expire and delete stale requests
+- Scheduled retention task with dry-run
+- Colour template header text from the image behind it
+- Merge request retention and the header/dialog fixes
 
 ### Changed
 
@@ -207,6 +229,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adopt the checks + release-pr + release-manual pipeline
 - Publish the Diataxis site to GitHub Pages and fold in the repo docs
 - Move the site to the repo root
+- 8-bit pixel-game motif for the platform UI
+- Retire the [FRAGILE] overrides instead of restyling them
+- Task-by-task implementation plan for the 8-bit UI
+- Style Backstage components through the theme, not hashed classes
+- Describe the pixel UI and the retired hashed-class overrides
+- Supply template header images from a drop-in folder
+- How to supply template header images
+- Request retention with per-state windows
+- Request retention and the EXPIRED state
+- Plan a second pass of 8-bit flare
+- Commit the flare plan to a fantasy genre
 
 ### Fixed
 
@@ -254,6 +287,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Generate the tab icon from the built-in glyph too
 - Make yarn lint:all pass so CI can run it
 - Unbreak the image build after the cleanup
+- Caret placement, heading scale, and pixel-art template headers
+- Refuse a retention window shorter than a day
+- Single-bordered native buttons, and readable header titles
+- Round the dialog surface so popups match the cards
 
 ### Removed
 
