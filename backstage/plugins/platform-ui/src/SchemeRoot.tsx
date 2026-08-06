@@ -3,6 +3,7 @@ import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api
 import { SHADCN_CSS } from './styles';
 import { SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
 import { templateHeaderCss } from './templateHeaders';
+import { listenForKonami } from './konami';
 import { sampleImageTone, Tone } from './imageTone';
 
 /** The two foreground tones a scheme can use, and each other's shade. */
@@ -262,6 +263,14 @@ export function SchemeRoot() {
       ),
     });
   }, [config]);
+
+  useEffect(
+    () =>
+      listenForKonami(() =>
+        document.documentElement.classList.toggle('sc-konami'),
+      ),
+    [],
+  );
 
   useEffect(() => {
     const sub = appTheme.activeThemeId$().subscribe(id => {

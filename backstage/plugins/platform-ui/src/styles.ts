@@ -710,6 +710,24 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 ::-webkit-scrollbar-thumb:hover { background: hsl(var(--sc-primary) / .82); }
 ::-webkit-scrollbar-corner { background: hsl(var(--sc-muted)); }
 
+/* [flare] The konami code. Flips to a fixed NES-hardware accent and sends a
+   block walking along the footer. Stored nowhere and announced nowhere: it
+   resets on reload, which is the point of an easter egg. */
+:root.sc-konami {
+  --sc-primary: 212 100% 45%;
+  --sc-ring: 212 100% 45%;
+  --sc-primary-fg: 0 0% 100%;
+  --sc-primary-shade: 240 10% 8%;
+}
+:root.sc-konami::after {
+  content: '';
+  position: fixed; bottom: 0; left: 0; z-index: 2000;
+  width: 16px; height: 16px;
+  background: hsl(var(--sc-primary));
+  border: var(--sc-border-w) solid hsl(var(--sc-fg) / .8);
+  pointer-events: none;
+}
+
 /* ===== Motion =====
    Everything timed lives behind prefers-reduced-motion and uses steps(), never
    ease: smooth interpolation is what makes a pixel interface look like a modern
@@ -789,6 +807,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   @keyframes sc-caret { 50% { opacity: 0; } }
   .sc-empty .sc-state-ic { animation: sc-bob 1.2s steps(2) infinite; }
   .sc-press-start { animation: sc-caret 1s steps(1) infinite; }
+  @keyframes sc-walk { to { left: calc(100vw - 16px); } }
+  :root.sc-konami::after { animation: sc-walk 6s steps(24) infinite; }
   .sc-h1::after,
   :is(h1, h2, h3)[class*="bui-HeaderTitle"]::after,
   [class*="BackstageHeader-title"]::after {
