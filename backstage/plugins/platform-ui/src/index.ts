@@ -27,6 +27,8 @@ export {
 export type { Sprite } from './sprites';
 export { useTabActivity } from './tabActivity';
 export { useVisits, useRecordVisit } from './useVisits';
+export { Quickstart } from './quickstart/Quickstart';
+export { QUICKSTART_VERSION } from './quickstart/steps';
 export type { Visit } from './useVisits';
 export { JsonTree } from './JsonTree';
 export { DynamicSelect, toChoiceOptions } from './DynamicSelect';

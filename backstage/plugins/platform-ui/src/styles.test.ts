@@ -28,4 +28,20 @@ describe('SHADCN_CSS', () => {
     const close = (SHADCN_CSS.match(/}/g) ?? []).length;
     expect(`${open}/${close}`).toBe(`${close}/${close}`);
   });
+
+  it('has no control characters, which is what a bad escape leaves behind', () => {
+    // Inside a template literal a single backslash before digits is a legacy
+    // octal escape: the doubled form is the caret, the single form is
+    // character 0x02 followed by "5BC". The app build rejects the source
+    // outright and tsc says nothing, so the evaluated string is checked for
+    // the residue instead. Compared by code point rather than by regex,
+    // because a control-character regex is itself a lint error.
+    const control = [...SHADCN_CSS].filter(ch => {
+      const code = ch.codePointAt(0) ?? 32;
+      return code < 32 && ch !== '\n' && ch !== '\t' && ch !== '\r';
+    });
+    expect(control).toEqual([]);
+  });
+
+
 });

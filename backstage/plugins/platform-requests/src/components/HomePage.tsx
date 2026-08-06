@@ -48,6 +48,20 @@ function QuickActions() {
             <span className="sc-action-h sc-muted">{a.hint}</span>
           </Link>
         ))}
+        {/* An action, not an unread notification: no dot, no badge, always
+            present. The tour is hosted at the app root, hence the event. */}
+        <button
+          type="button"
+          className="sc-action"
+          onClick={() =>
+            window.dispatchEvent(new Event('platform:quickstart'))
+          }
+        >
+          <span className="sc-action-l">Take the tour</span>
+          <span className="sc-action-h sc-muted">
+            A quick guide to the platform
+          </span>
+        </button>
       </div>
     </Card>
   );

@@ -574,6 +574,34 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-req { color: hsl(var(--sc-warning)); }
 .sc-help { margin: 4px 0 10px; font-size: 12px; color: hsl(var(--sc-muted-fg)); }
 
+/* [quickstart] A dialogue box in the corner, not a modal per step: the point
+   is to show people the app, and a modal hides the app. The ring is drawn as a
+   fixed overlay so it can sit over anything without the page needing to know. */
+.sc-qs { position: fixed; inset: 0; z-index: 2500; pointer-events: none; }
+.sc-qs-ring { position: fixed; border: 3px solid hsl(var(--sc-primary));
+  border-radius: var(--sc-radius); pointer-events: none;
+  /* The dim is the ring's own shadow, so there is one element and no gap
+     between the cut-out and the overlay to line up. */
+  box-shadow: 0 0 0 9999px hsl(var(--sc-fg) / .45); }
+.sc-qs-box { position: fixed; right: 18px; bottom: 78px; width: 320px;
+  pointer-events: auto; padding: 14px 16px 12px;
+  background: hsl(var(--sc-card)); border-radius: var(--sc-radius);
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  box-shadow:
+    0 0 0 2px hsl(var(--sc-card)),
+    0 0 0 4px hsl(var(--sc-fg) / .85),
+    var(--sc-shadow); }
+.sc-qs-count { font-family: var(--sc-font-pixel); font-size: 11px;
+  color: hsl(var(--sc-muted-fg)); }
+.sc-qs-title { font-family: var(--sc-font-pixel); text-transform: uppercase;
+  font-size: 14px; margin: 4px 0 8px; color: hsl(var(--sc-fg)); }
+.sc-qs-body { font-size: 13px; line-height: 1.5; margin: 0 0 12px;
+  color: hsl(var(--sc-muted-fg)); }
+.sc-qs-actions { justify-content: flex-end; gap: 6px; }
+/* The continue marker every dialogue box in this app carries. */
+.sc-qs-box::after { content: '\\25BC' / ''; position: absolute;
+  right: 8px; bottom: 2px; font-size: 9px; color: hsl(var(--sc-primary)); }
+
 /* success notice (e.g. created-resource link) */
 .sc-notice { padding: 10px 14px; border-radius: var(--sc-radius); font-weight: 500;
   --sc-cell: hsl(var(--sc-success) / .26);
@@ -846,6 +874,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   @keyframes sc-caret { 50% { opacity: 0; } }
   .sc-empty .sc-state-ic { animation: sc-bob 1.2s steps(2) infinite; }
   .sc-press-start { animation: sc-caret 1s steps(1) infinite; }
+  .sc-qs-box::after { animation: sc-caret 1s steps(1) infinite; }
   @keyframes sc-walk { to { left: calc(100vw - 16px); } }
   :root.sc-konami::after { animation: sc-walk 6s steps(24) infinite; }
   .sc-h1::after,
