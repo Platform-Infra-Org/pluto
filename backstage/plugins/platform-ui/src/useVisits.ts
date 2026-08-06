@@ -65,11 +65,28 @@ export function visitTitle(path: string, heading?: string | null): string {
   return last.charAt(0).toUpperCase() + last.slice(1).replace(/-/g, ' ');
 }
 
+/**
+ * Selectors in preference order — ours first, the framework's last.
+ *
+ * They cannot be one comma-separated selector: querySelector returns the first
+ * match in *document order*, not in list order, and the framework's outer
+ * header sits above our page title. That is how /requests/15 came out titled
+ * "platform-requests".
+ */
+const HEADING_SELECTORS = [
+  '.sc-h1',
+  '[class*="bui-HeaderTitle"]',
+  '[class*="BackstageContentHeader-title"]',
+  '[class*="BackstageHeader-title"]',
+  'h1',
+];
+
 function currentHeading(): string | null {
-  const el = document.querySelector(
-    '.sc-h1, [class*="bui-HeaderTitle"], [class*="BackstageHeader-title"], h1',
-  );
-  return el?.textContent ?? null;
+  for (const sel of HEADING_SELECTORS) {
+    const text = document.querySelector(sel)?.textContent?.trim();
+    if (text) return text;
+  }
+  return null;
 }
 
 /**

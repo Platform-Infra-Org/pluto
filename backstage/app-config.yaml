@@ -238,6 +238,7 @@ platform:
       - standingRequests
       - pendingApprovals
       - recentlyVisited
+      - favouriteTemplates
     maxItems: 8
   # Request retention. Off by default: deleting rows cannot be undone.
   # Expiry moves an undecided request to EXPIRED; the windows below then delete

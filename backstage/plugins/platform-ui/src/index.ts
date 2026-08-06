@@ -17,7 +17,13 @@ export {
   Dialog,
   EmptyState,
 } from './components';
-export { STATE_SPRITES, TEMPLE, SCROLL, HOURGLASS } from './sprites';
+export {
+  STATE_SPRITES,
+  TEMPLE,
+  SCROLL,
+  HOURGLASS,
+  LAUREL,
+} from './sprites';
 export type { Sprite } from './sprites';
 export { useTabActivity } from './tabActivity';
 export { useVisits, useRecordVisit } from './useVisits';

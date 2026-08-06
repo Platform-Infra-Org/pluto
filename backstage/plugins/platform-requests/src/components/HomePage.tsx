@@ -11,13 +11,15 @@ import { Page, PageHeader, Card } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
 import { stateBadge } from './RequestsPage';
 import { RecentlyVisited } from './HomeVisits';
+import { FavouriteTemplates } from './HomeFavourites';
 
 type Section =
   | 'quickActions'
   | 'ownedResources'
   | 'standingRequests'
   | 'pendingApprovals'
-  | 'recentlyVisited';
+  | 'recentlyVisited'
+  | 'favouriteTemplates';
 
 interface OwnedResource {
   name: string;
@@ -221,6 +223,7 @@ export function HomePage() {
     'standingRequests',
     'pendingApprovals',
     'recentlyVisited',
+    'favouriteTemplates',
   ];
   const maxItems = home?.getOptionalNumber('maxItems') ?? 8;
 
@@ -241,6 +244,9 @@ export function HomePage() {
             case 'recentlyVisited':
               // 5, not maxItems: a longer list stops being "recent".
               return <RecentlyVisited key={s} max={5} />;
+            case 'favouriteTemplates':
+              // 6: beyond that it stops being a favourites list.
+              return <FavouriteTemplates key={s} max={6} />;
             default:
               return null;
           }
