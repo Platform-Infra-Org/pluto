@@ -1,5 +1,11 @@
 import { mockServices } from '@backstage/backend-test-utils';
-import { ArgoClient, resolveTemplate, resolveMap, ResolveCtx } from './argo';
+import {
+  ArgoClient,
+  resolveTemplate,
+  resolveMap,
+  ResolveCtx,
+  suspendedNodesOf,
+} from './argo';
 
 const ctx: ResolveCtx = {
   requestId: 42,
@@ -214,5 +220,66 @@ describe('ArgoClient.submitSpec', () => {
     const s = await client().statusFor(42, 'argo');
     expect(s.phase).toBe('Succeeded');
     expect(s.outputs).toEqual({ 'resource-ref': 'my-bucket', other: '42' });
+  });
+});
+
+describe('suspendedNodesOf', () => {
+  // Shaped like a real status.nodes map, including the trap: a suspended node
+  // reports phase Running, exactly like a busy container step.
+  const nodes = {
+    a: { id: 'a', displayName: 'provision', type: 'Pod', phase: 'Running' },
+    b: {
+      id: 'b',
+      displayName: 'approve-plan',
+      type: 'Suspend',
+      phase: 'Running',
+      templateName: 'approve',
+      message: 'Review the plan',
+      inputs: {
+        parameters: [
+          { name: 'plan', value: '3 to add, 0 to destroy' },
+          { name: 'cost', value: '$41/mo' },
+        ],
+      },
+      outputs: {
+        parameters: [
+          { name: 'decision', valueFrom: { supplied: {} } },
+          { name: 'computed', value: 'not-supplied' },
+        ],
+      },
+    },
+    c: { id: 'c', displayName: 'earlier-gate', type: 'Suspend', phase: 'Succeeded' },
+  };
+
+  it('finds a suspend node that is waiting', () => {
+    const found = suspendedNodesOf(nodes);
+    expect(found.map(n => n.id)).toEqual(['b']);
+    expect(found[0].name).toBe('approve-plan');
+    expect(found[0].message).toBe('Review the plan');
+  });
+
+  it('ignores a suspend node that has already been resumed', () => {
+    // Succeeded, not Running — it was released earlier in the run.
+    expect(suspendedNodesOf(nodes).some(n => n.id === 'c')).toBe(false);
+  });
+
+  it('ignores a running step that is not a suspend', () => {
+    expect(suspendedNodesOf(nodes).some(n => n.id === 'a')).toBe(false);
+  });
+
+  it('carries the inputs the approver has to read', () => {
+    expect(suspendedNodesOf(nodes)[0].inputs).toEqual([
+      { name: 'plan', value: '3 to add, 0 to destroy' },
+      { name: 'cost', value: '$41/mo' },
+    ]);
+  });
+
+  it('offers only the outputs the step asked to be supplied', () => {
+    // `computed` has a value and no `supplied`, so Argo would reject setting it.
+    expect(suspendedNodesOf(nodes)[0].suppliedOutputs).toEqual(['decision']);
+  });
+
+  it('is empty for a workflow with no nodes at all', () => {
+    expect(suspendedNodesOf(undefined)).toEqual([]);
   });
 });

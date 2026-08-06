@@ -3,7 +3,11 @@ import {
   DiscoveryApi,
   FetchApi,
 } from '@backstage/core-plugin-api';
-import { NewRequest, Request } from '@internal/plugin-platform-common';
+import {
+  NewRequest,
+  Request,
+  SuspendedNode,
+} from '@internal/plugin-platform-common';
 
 export interface WorkflowNode {
   id: string;
@@ -17,6 +21,16 @@ export interface WorkflowInfo {
   phase?: string;
   name?: string;
   nodes: WorkflowNode[];
+  /** Suspend steps waiting on an approver, with secret values already masked. */
+  suspendedNodes?: SuspendedNode[];
+}
+
+/** What a resume attempt did. `resumed: false` means someone else got there. */
+export interface ResumeResult {
+  resumed: boolean;
+  reason?: string;
+  rejectedParameters?: string[];
+  request: Request;
 }
 
 /** Client for the platform-requests backend. */
@@ -31,6 +45,12 @@ export interface RequestsApi {
   approve(id: number, note?: string): Promise<Request>;
   reject(id: number, note?: string): Promise<Request>;
   getWorkflow(id: number): Promise<WorkflowInfo>;
+  /** Release a suspended step, optionally answering what it asked. */
+  resume(
+    id: number,
+    nodeId: string,
+    opts?: { note?: string; parameters?: Record<string, string> },
+  ): Promise<ResumeResult>;
   /** The resource's resolved data (ref'd file or spec.resourceData). */
   getResourceData(resourceName: string): Promise<Record<string, unknown>>;
 }
@@ -123,5 +143,22 @@ export class RequestsClient implements RequestsApi {
   }
   reject(id: number, note?: string) {
     return this.decide(id, 'reject', note);
+  }
+
+  async resume(
+    id: number,
+    nodeId: string,
+    opts: { note?: string; parameters?: Record<string, string> } = {},
+  ): Promise<ResumeResult> {
+    return this.json(
+      await this.opts.fetchApi.fetch(
+        `${await this.base()}/requests/${id}/resume`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nodeId, ...opts }),
+        },
+      ),
+    );
   }
 }

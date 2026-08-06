@@ -45,6 +45,9 @@ describe('planRetention', () => {
     expect(states).not.toContain('APPROVED');
     expect(states).not.toContain('IN_PROGRESS');
     expect(states).not.toContain('PENDING_APPROVAL');
+    // A suspended workflow waits on a human and can sit for weeks; it is the
+    // state most likely to look stale to something that only reads timestamps.
+    expect(states).not.toContain('AWAITING_INPUT');
   });
 
   it('treats 0 days as "keep this state forever"', () => {

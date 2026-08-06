@@ -564,6 +564,14 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   font-size: 13px; color: hsl(var(--sc-fg)); }
 .sc-empty-hint { font-size: 12px; max-width: 32ch; }
 
+/* [suspend] The mid-workflow approval gate. Yellow edge, matching the node in
+   the graph and the request badge: one signal, three places. */
+.sc-suspend { border-left: 3px solid hsl(var(--sc-warning));
+  padding-left: 12px; margin-bottom: 14px; }
+.sc-suspend-step { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.sc-suspend-msg { margin: 0 0 10px; color: hsl(var(--sc-muted-fg)); font-size: 13px; }
+.sc-suspend-inputs { margin-bottom: 12px; }
+
 /* success notice (e.g. created-resource link) */
 .sc-notice { padding: 10px 14px; border-radius: var(--sc-radius); font-weight: 500;
   --sc-cell: hsl(var(--sc-success) / .26);

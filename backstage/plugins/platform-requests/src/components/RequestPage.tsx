@@ -26,6 +26,7 @@ import {
 import { requestsApiRef } from '../api';
 import { requestRouteRef } from '../routes';
 import { WorkflowGraph } from './WorkflowGraph';
+import { SuspendPanel } from './SuspendPanel';
 import { stateBadge, formatTs } from './RequestsPage';
 
 /**
@@ -243,6 +244,18 @@ export function RequestPage() {
             )}
           </CardBody>
         </Card>
+
+        {request.state === 'AWAITING_INPUT' &&
+          (request.suspendedNodes?.length ?? 0) > 0 && (
+            <div style={{ gridColumn: '1 / -1' }}>
+              <SuspendPanel
+                requestId={request.id}
+                nodes={request.suspendedNodes ?? []}
+                canResume={canApprove}
+                onResumed={load}
+              />
+            </div>
+          )}
 
         {request.workflowName && (
           <div style={{ gridColumn: '1 / -1' }}>

@@ -294,6 +294,9 @@ export const STATE_SPRITES: Record<RequestState, Sprite> = {
      should always have meant: documentation. */
   APPROVED: LAUREL,
   IN_PROGRESS: GEAR,
+  /* Lit and waiting to be carried on: the workflow is alive but stopped at a
+     suspend step until someone releases it. */
+  AWAITING_INPUT: TORCH,
   SUCCEEDED: CHEST,
   FAILED: SKULL,
   REJECTED: CROSS,

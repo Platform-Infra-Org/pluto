@@ -12,6 +12,13 @@ export type RequestState =
   | 'SUCCEEDED'
   | 'FAILED'
   | 'REJECTED'
+  /**
+   * The workflow is running but has stopped at an Argo `suspend` step and is
+   * waiting for an approver to release it. Non-terminal, and reversible: the
+   * poller moves the request back to IN_PROGRESS once no suspended node
+   * remains, including when someone resumes from the Argo UI directly.
+   */
+  | 'AWAITING_INPUT'
   /** Nobody decided it in time. Terminal; set by the retention task. */
   | 'EXPIRED';
 
@@ -74,6 +81,44 @@ export interface SecretFieldSpec {
   length?: number;
 }
 
+/**
+ * An Argo `suspend` step that is currently waiting.
+ *
+ * Argo has no "Suspended" phase — a waiting suspend node reports
+ * `type: 'Suspend'` with `phase: 'Running'`, which is why this is detected on
+ * the pair rather than on phase alone.
+ */
+export interface SuspendedNode {
+  /** Argo node id. The only safe resume selector: display names repeat across
+   *  loop iterations, and resuming the wrong one is silent. */
+  id: string;
+  /** displayName, as shown in the graph. */
+  name: string;
+  templateName?: string;
+  /** The suspend template's message, if it set one. */
+  message?: string;
+  /**
+   * The step's input parameters — what the workflow computed and what the
+   * approver is being asked to review. Values sourced from the request's
+   * secrets are masked before they leave the backend.
+   */
+  inputs: SuspendInput[];
+  /**
+   * Names of outputs the step declared as `valueFrom: supplied: {}` — the
+   * questions it is asking. Only these may be set on resume; Argo rejects
+   * anything else.
+   */
+  suppliedOutputs: string[];
+}
+
+/** One input parameter of a suspend step, masked if it carries a secret. */
+export interface SuspendInput {
+  name: string;
+  /** Absent when masked — the key is still shown, the value never is. */
+  value?: string;
+  masked?: boolean;
+}
+
 /** A resource request tracked through approval + workflow execution. */
 export interface Request {
   id: number;
@@ -108,6 +153,13 @@ export interface Request {
   workflowNamespace?: string;
   /** Argo workflow phase mirrored onto the request (P2). */
   workflowPhase?: string;
+  /**
+   * Suspend steps currently waiting in the workflow, refreshed on every poll.
+   *
+   * A cache of Argo's answer, never the source of truth: the resume endpoint
+   * re-reads the live workflow before acting on any of it.
+   */
+  suspendedNodes?: SuspendedNode[];
   /** Error message when the request FAILED. */
   error?: string;
   /**
