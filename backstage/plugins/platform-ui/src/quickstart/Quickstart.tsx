@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { QUICKSTART_STEPS, QuickstartStep } from './steps';
+import { QUICKSTART_STEPS } from './steps';
 
 interface Box {
   top: number;

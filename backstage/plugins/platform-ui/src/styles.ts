@@ -308,6 +308,12 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .react-flow__controls button { background: #17171f !important; border-color: #32303e !important; }
 .react-flow__controls button svg, .react-flow__controls-button svg { fill: #e7e7ef !important; }
 .react-flow__attribution { display: none !important; }
+/* [flare] React Flow marches its animated edges with a linear dashdraw. It is
+   third-party motion, but it is visible motion, and smooth interpolation is
+   the one thing this design does not do. Stepped here, and removed entirely
+   under reduced motion by the block below. */
+.react-flow__edge.animated path,
+.react-flow__edge-path { animation-timing-function: steps(8) !important; }
 
 
 /* flatten the gradient card headers (template / entity cards).
@@ -824,6 +830,14 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   background: hsl(var(--sc-primary));
   border: var(--sc-border-w) solid hsl(var(--sc-fg) / .8);
   pointer-events: none;
+}
+
+/* Third-party motion that ignores the motion query: React Flow animates its
+   edges regardless, so it is switched off here rather than left running for
+   someone who asked for stillness. */
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__edge.animated path,
+  .react-flow__edge-path { animation: none !important; }
 }
 
 /* ===== Motion =====
