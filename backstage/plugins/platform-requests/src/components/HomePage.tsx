@@ -10,12 +10,14 @@ import { Request, isTerminal } from '@internal/plugin-platform-common';
 import { Page, PageHeader, Card } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
 import { stateBadge } from './RequestsPage';
+import { RecentlyVisited } from './HomeVisits';
 
 type Section =
   | 'quickActions'
   | 'ownedResources'
   | 'standingRequests'
-  | 'pendingApprovals';
+  | 'pendingApprovals'
+  | 'recentlyVisited';
 
 interface OwnedResource {
   name: string;
@@ -218,6 +220,7 @@ export function HomePage() {
     'ownedResources',
     'standingRequests',
     'pendingApprovals',
+    'recentlyVisited',
   ];
   const maxItems = home?.getOptionalNumber('maxItems') ?? 8;
 
@@ -235,6 +238,9 @@ export function HomePage() {
               return <StandingRequests key={s} max={maxItems} />;
             case 'pendingApprovals':
               return <PendingApprovals key={s} max={maxItems} />;
+            case 'recentlyVisited':
+              // 5, not maxItems: a longer list stops being "recent".
+              return <RecentlyVisited key={s} max={5} />;
             default:
               return null;
           }

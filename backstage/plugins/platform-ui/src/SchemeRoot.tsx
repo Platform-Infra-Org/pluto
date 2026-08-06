@@ -5,6 +5,8 @@ import { SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
 import { PixelPotion } from './components';
 import { templateHeaderCss } from './templateHeaders';
 import { listenForKonami } from './konami';
+import { useCurrentPath } from './CustomNav';
+import { useRecordVisit } from './useVisits';
 import { sampleImageTone, Tone } from './imageTone';
 
 /** The two foreground tones a scheme can use, and each other's shade. */
@@ -287,6 +289,10 @@ export function SchemeRoot() {
       ),
     [],
   );
+
+  // One navigation source for the whole app: the nav already derives the path
+  // without react-router, and a second source would drift from the first.
+  useRecordVisit(useCurrentPath());
 
   useEffect(() => {
     const sub = appTheme.activeThemeId$().subscribe(id => {

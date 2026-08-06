@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { storageApiRef, useApi } from '@backstage/core-plugin-api';
 
 /**
@@ -46,8 +46,31 @@ export function isRecordable(path: string): boolean {
   return true;
 }
 
-/** The page title, once the page has had a chance to set its own. */
-const SETTLE_MS = 900;
+/** Long enough for the page to render its own heading. */
+const SETTLE_MS = 1200;
+
+/**
+ * What to call this page.
+ *
+ * `document.title` is the obvious source and the wrong one: Backstage sets it
+ * once, to the app name, so every visit would be recorded as "Platform".
+ * The page's own heading is what a person would call the page, and the
+ * prettified path is the fallback when a page has no heading yet.
+ */
+export function visitTitle(path: string, heading?: string | null): string {
+  const trimmed = heading?.trim();
+  if (trimmed) return trimmed.replace(/█/g, '').trim();
+  const last = path.split('?')[0].split('/').filter(Boolean).pop() ?? '';
+  if (!last) return path;
+  return last.charAt(0).toUpperCase() + last.slice(1).replace(/-/g, ' ');
+}
+
+function currentHeading(): string | null {
+  const el = document.querySelector(
+    '.sc-h1, [class*="bui-HeaderTitle"], [class*="BackstageHeader-title"], h1',
+  );
+  return el?.textContent ?? null;
+}
 
 /**
  * The visit log for the signed-in user.
@@ -80,20 +103,40 @@ export function useVisits(): Visit[] {
  */
 export function useRecordVisit(path: string) {
   const storage = useApi(storageApiRef);
+  // The list as the server last reported it. snapshot() alone is not enough:
+  // straight after a page load it is still empty, so writing on top of it
+  // replaces the stored history with a single entry every time.
+  const known = useRef<Visit[]>([]);
+  const loaded = useRef(false);
+
+  useEffect(() => {
+    const bucket = storage.forBucket(VISITS_BUCKET);
+    const sub = bucket.observe$<Visit[]>(VISITS_KEY).subscribe(next => {
+      known.current = next.value ?? [];
+      loaded.current = true;
+    });
+    const snap = bucket.snapshot<Visit[]>(VISITS_KEY);
+    if (snap.presence !== 'unknown') {
+      known.current = snap.value ?? [];
+      loaded.current = true;
+    }
+    return () => sub.unsubscribe();
+  }, [storage]);
 
   useEffect(() => {
     if (!isRecordable(path)) return undefined;
     const timer = setTimeout(async () => {
+      // Never write before the stored list has arrived, or the write is a
+      // truncation dressed up as an append.
+      if (!loaded.current) return;
       const bucket = storage.forBucket(VISITS_BUCKET);
-      const current = bucket.snapshot<Visit[]>(VISITS_KEY).value ?? [];
-      await bucket.set(
-        VISITS_KEY,
-        recordVisit(current, {
-          path,
-          title: document.title,
-          at: new Date().toISOString(),
-        }),
-      );
+      const next = recordVisit(known.current, {
+        path,
+        title: visitTitle(path, currentHeading()),
+        at: new Date().toISOString(),
+      });
+      known.current = next;
+      await bucket.set(VISITS_KEY, next);
     }, SETTLE_MS);
     return () => clearTimeout(timer);
   }, [storage, path]);

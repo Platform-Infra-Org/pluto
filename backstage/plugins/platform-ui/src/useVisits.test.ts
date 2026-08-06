@@ -1,4 +1,9 @@
-import { recordVisit, isRecordable, Visit } from './useVisits';
+import {
+  recordVisit,
+  isRecordable,
+  visitTitle,
+  Visit,
+} from './useVisits';
 
 const visit = (path: string, at = '2026-08-06T10:00:00.000Z'): Visit => ({
   path,
@@ -52,5 +57,23 @@ describe('isRecordable', () => {
 
   it('skips an empty path', () => {
     expect(isRecordable('')).toBe(false);
+  });
+});
+
+describe('visitTitle', () => {
+  it('uses the page heading when there is one', () => {
+    expect(visitTitle('/catalog', 'Catalog')).toBe('Catalog');
+  });
+
+  it('drops the block caret the headings carry', () => {
+    // The 8-bit headings append a caret; it is decoration, not a title.
+    expect(visitTitle('/requests', 'Requests█')).toBe('Requests');
+  });
+
+  it('falls back to the last path segment, prettified', () => {
+    // document.title is not a source: Backstage sets it once, to the app name,
+    // so every page would be recorded as "Platform".
+    expect(visitTitle('/catalog-graph', null)).toBe('Catalog graph');
+    expect(visitTitle('/requests/12', '')).toBe('12');
   });
 });
