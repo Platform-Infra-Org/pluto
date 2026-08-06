@@ -275,6 +275,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Regenerate for the potion picker
 - Regenerate after reverting the fantasy names
 - Regenerate for the single-picker fix
+- Regenerate after the flare merge
+- Plan home cards, quickstart and the experience bar
+- Stop tracking specs/
 
 ### Fixed
 
