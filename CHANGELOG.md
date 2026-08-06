@@ -205,6 +205,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Arcade-panel empty states
 - Konami code easter egg
 - Turn on the fantasy screen names
+- Approve and resume a suspended workflow step
 
 ### Changed
 
@@ -261,6 +262,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Task list for the 8-bit flare pass
 - Record what the flare pass dropped and why
 - Regenerate for the 8-bit flare pass
+- Regenerate after enabling the fantasy names
+- Plan mid-workflow suspend approval
 
 ### Fixed
 
