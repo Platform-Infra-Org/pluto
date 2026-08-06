@@ -9,6 +9,110 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Add the pixel sprite set and its rect renderer
+- Draw the mark and favicon from the pixel sprite grid
+- Self-host Silkscreen and square the design tokens
+- Saturate the palette with a verified per-scheme foreground
+- Pixel treatment for buttons, cards, inputs and dialogs
+- Pixel sidebar with an active-row marker
+- State sprites beside the status badges
+- Step-based animation for running and settled states
+- Ambient CRT texture, bobbing empty states and a blinking caret
+- Dress the native Backstage pages and make the sidebar draggable
+- Soften the geometry and mark native titles with the caret
+- One pixel face everywhere, not just on chrome
+- Ancient Greek pixel art on the template headers
+- Glob a drop-in branding folder at build time
+- Generate cycling template-header CSS from an image list
+- Use supplied images as template headers, cycling across cards
+- Add the EXPIRED terminal state
+- Pure retention planner with per-state windows
+- Store operations to expire and delete stale requests
+- Scheduled retention task with dry-run
+- Colour template header text from the image behind it
+- Ship the hellenic template header images
+- Loading indicators march in cells instead of easing
+- Menu cursor on table rows
+- Square pixel scrollbars
+- Dither tints instead of alpha washes, and fix badge contrast
+- Double-framed command windows for dialogs and the picker
+- Dither-wipe dialogs in like a scene change
+- Amphora, key, laurel, helm and torch sprites
+- Approval progress as a counted segmented bar
+- Three cycling scenes in the built-in header art
+- Press start on the sign-in gate
+- Optional fantasy screen names behind a branding flag
+- Tab ticker while a request is in flight
+- Arcade-panel empty states
+- Konami code easter egg
+- Turn on the fantasy screen names
+- Approve and resume a suspended workflow step
+- Provision With Review — a clickable suspend-gate example
+- Stop action, and suspend fields described by the workflow
+- The colour picker is a shelf of potions
+- Turn the fantasy screen names back off
+- Record recently visited pages per user
+- Recently visited card on home
+- Favourite templates card on home
+- Quickstart step definitions
+- Quickstart tour, once per user and replayable
+- Rupee and creature sprites
+- Workflow progress from leaf nodes only
+- Experience bar with level-up and game-over
+- Tour button opposite the title, and a home grid of equals
+- The experience bar reads status, not the picked accent
+- Open the catalog on Resource instead of Component
+
+### Changed
+
+- Build the product instead of the deleted stack
+- Commit with plain git instead of the Gitea contents API
+- Lift provisioning out of the plugin wiring
+- Adopt the checks + release-pr + release-manual pipeline
+- Publish the Diataxis site to GitHub Pages and fold in the repo docs
+- Move the site to the repo root
+- 8-bit pixel-game motif for the platform UI
+- Retire the [FRAGILE] overrides instead of restyling them
+- Task-by-task implementation plan for the 8-bit UI
+- Style Backstage components through the theme, not hashed classes
+- Describe the pixel UI and the retired hashed-class overrides
+- Supply template header images from a drop-in folder
+- How to supply template header images
+- Request retention with per-state windows
+- Request retention and the EXPIRED state
+- Plan a second pass of 8-bit flare
+- Commit the flare plan to a fantasy genre
+- Task list for the 8-bit flare pass
+- Record what the flare pass dropped and why
+- Plan mid-workflow suspend approval
+- Plan home cards, quickstart and the experience bar
+- Stop tracking specs/
+- Commit the specs/ ignore rule
+
+### Fixed
+
+- Make yarn lint:all pass so CI can run it
+- Unbreak the image build after the cleanup
+- Caret placement, heading scale, and pixel-art template headers
+- Refuse a retention window shorter than a day
+- Single-bordered native buttons, and readable header titles
+- Round the dialog surface so popups match the cards
+- One colour picker per screen
+- Step the workflow graph edges and respect reduced motion
+- Real stars on the tour button, sidebar-style hover, wider standing requests
+- Replace the tone ternary with a lookup
+
+### Removed
+
+- Drop unused dependencies and dead config
+- Drop the DisabledSecretStore null object
+- Drop the unused MinIO service
+- Delete the pre-Backstage planning archive
+
+## [0.0.0] - 2026-08-03
+
+### Added
+
 - Fastapi skeleton + healthz
 - Db session + alembic baseline
 - Vite+headless skeleton, router, api client
@@ -164,61 +268,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rotate the envelope key without re-encrypting
 - Configurable platform mark and tab icon
 - Ship a Poseidon trident mark and wire it up
-- Drop unused dependencies and dead config
-- Drop the unused MinIO service
-- Add the pixel sprite set and its rect renderer
-- Draw the mark and favicon from the pixel sprite grid
-- Self-host Silkscreen and square the design tokens
-- Saturate the palette with a verified per-scheme foreground
-- Pixel treatment for buttons, cards, inputs and dialogs
-- Pixel sidebar with an active-row marker
-- State sprites beside the status badges
-- Step-based animation for running and settled states
-- Ambient CRT texture, bobbing empty states and a blinking caret
-- Dress the native Backstage pages and make the sidebar draggable
-- Soften the geometry and mark native titles with the caret
-- One pixel face everywhere, not just on chrome
-- Ancient Greek pixel art on the template headers
-- Glob a drop-in branding folder at build time
-- Generate cycling template-header CSS from an image list
-- Use supplied images as template headers, cycling across cards
-- Add the EXPIRED terminal state
-- Pure retention planner with per-state windows
-- Store operations to expire and delete stale requests
-- Scheduled retention task with dry-run
-- Colour template header text from the image behind it
-- Ship the hellenic template header images
-- Loading indicators march in cells instead of easing
-- Menu cursor on table rows
-- Square pixel scrollbars
-- Dither tints instead of alpha washes, and fix badge contrast
-- Double-framed command windows for dialogs and the picker
-- Dither-wipe dialogs in like a scene change
-- Amphora, key, laurel, helm and torch sprites
-- Approval progress as a counted segmented bar
-- Three cycling scenes in the built-in header art
-- Press start on the sign-in gate
-- Optional fantasy screen names behind a branding flag
-- Tab ticker while a request is in flight
-- Arcade-panel empty states
-- Konami code easter egg
-- Turn on the fantasy screen names
-- Approve and resume a suspended workflow step
-- Provision With Review — a clickable suspend-gate example
-- Stop action, and suspend fields described by the workflow
-- The colour picker is a shelf of potions
-- Turn the fantasy screen names back off
-- Record recently visited pages per user
-- Recently visited card on home
-- Favourite templates card on home
-- Quickstart step definitions
-- Quickstart tour, once per user and replayable
-- Rupee and creature sprites
-- Workflow progress from leaf nodes only
-- Experience bar with level-up and game-over
-- Tour button opposite the title, and a home grid of equals
-- The experience bar reads status, not the picked accent
-- Open the catalog on Resource instead of Component
 
 ### Changed
 
@@ -240,7 +289,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - P1 requests-approvals implementation plan
 - Use << token >> delimiter for submit templating
 - Graph builder Backstage integration design (composable builder, current standards)
-- Drop roles + RBAC policy mode; make admin/auditor groups configurable
 - Production-readiness audit + Backstage upgrade playbook; untrack .spa.log
 - Make the reskin upgrade-resilient (stable hooks + companions)
 - Diátaxis MkDocs site served via TechDocs; tidy structure
@@ -252,30 +300,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Explain the secret lifecycle and key rotation
 - Document where the logo, favicon and title are changed
 - How to configure the logo and tab icon
-- Build the product instead of the deleted stack
-- Drop the DisabledSecretStore null object
-- Commit with plain git instead of the Gitea contents API
-- Lift provisioning out of the plugin wiring
-- Adopt the checks + release-pr + release-manual pipeline
-- Publish the Diataxis site to GitHub Pages and fold in the repo docs
-- Move the site to the repo root
-- 8-bit pixel-game motif for the platform UI
-- Retire the [FRAGILE] overrides instead of restyling them
-- Task-by-task implementation plan for the 8-bit UI
-- Style Backstage components through the theme, not hashed classes
-- Describe the pixel UI and the retired hashed-class overrides
-- Supply template header images from a drop-in folder
-- How to supply template header images
-- Request retention with per-state windows
-- Request retention and the EXPIRED state
-- Plan a second pass of 8-bit flare
-- Commit the flare plan to a fantasy genre
-- Task list for the 8-bit flare pass
-- Record what the flare pass dropped and why
-- Plan mid-workflow suspend approval
-- Plan home cards, quickstart and the experience bar
-- Stop tracking specs/
-- Commit the specs/ ignore rule
 
 ### Fixed
 
@@ -321,24 +345,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Use inline SVG for the eye toggle so it can't render invisibly
 - Rename custom secret field to PlatformSecret to beat the built-in
 - Generate the tab icon from the built-in glyph too
-- Make yarn lint:all pass so CI can run it
-- Unbreak the image build after the cleanup
-- Caret placement, heading scale, and pixel-art template headers
-- Refuse a retention window shorter than a day
-- Single-bordered native buttons, and readable header titles
-- Round the dialog surface so popups match the cards
-- One colour picker per screen
-- Step the workflow graph edges and respect reduced motion
-- Real stars on the tour button, sidebar-style hover, wider standing requests
-- Replace the tone ternary with a lookup
 
 ### Removed
 
+- Drop roles + RBAC policy mode; make admin/auditor groups configurable
 - Remove catalogWriter; workflows own Git; resource-data is a file ref
 - Remove the service builder plugins
 - Remove the RHDH migration plans and the builder references
 - Remove the RHDH configuration how-to
 - Delete the legacy pre-Backstage stack
-- Delete the pre-Backstage planning archive
 
 <!-- generated by git-cliff -->

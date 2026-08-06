@@ -62,6 +62,10 @@ commit_parsers = [
     { message = "^[a|A]dd", group = "Added" },
     { message = "^[s|S]upport", group = "Added" },
     { message = "^[r|R]emove", group = "Removed" },
+    # "drop" is how half this repo says "remove"; without these, a feat that
+    # deletes something is filed under Added.
+    { message = "^[d|D]rop", group = "Removed" },
+    { message = "^.*: drop", group = "Removed" },
     { message = "^.*: add", group = "Added" },
     { message = "^.*: support", group = "Added" },
     { message = "^.*: remove", group = "Removed" },

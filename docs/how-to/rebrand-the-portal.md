@@ -116,6 +116,31 @@ A new image needs a rebuild — automatic while `yarn start` is running, and par
 of the normal image build in production. Config changes need the dev server
 restarted.
 
+With **no images in the folder**, the built-in pixel art is used instead and
+cycles three scenes across the cards, so a fresh install is not one header
+repeated down the grid.
+
+Header text colour is chosen per image from the brightness of the area the
+title sits over — light text on a dark image, dark text on a bright one —
+rather than from the accent, which knows nothing about your artwork.
+
+## Rename the screens
+
+```yaml
+app:
+  branding:
+    flavour: fantasy   # omit for the literal names
+```
+
+Renames sidebar **screens only**: Requests → Quests, Create → Summon, Catalog →
+Atlas. Off unless set.
+
+Request **states are never renamed**. A screen name is decoration — someone who
+cannot find "Requests" finds it one click later — while a state is a record,
+and `QUEST FAILED` in an audit trail is a support ticket. See
+**[the pixel design system](../explanation/design-system.md)** for where that
+line is drawn.
+
 ## Supported file types
 
 | Use | Works | Notes |
