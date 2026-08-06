@@ -219,6 +219,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rupee and creature sprites
 - Workflow progress from leaf nodes only
 - Experience bar with level-up and game-over
+- Tour button opposite the title, and a home grid of equals
 
 ### Changed
 
@@ -288,6 +289,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stop tracking specs/
 - Regenerate after untracking specs
 - Commit the specs/ ignore rule
+- Regenerate for home, quickstart and the experience bar
 
 ### Fixed
 
