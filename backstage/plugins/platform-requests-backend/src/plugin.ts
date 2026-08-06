@@ -205,6 +205,7 @@ export const platformRequestsPlugin = createBackendPlugin({
               argo.suspendedNodesFor(name, namespace),
             resumeNode: (name, nodeId, opts) =>
               argo.resumeNode(name, nodeId, opts),
+            stopWorkflow: (name, opts) => argo.stopWorkflow(name, opts),
             principalResolver,
             ownerResolver,
             verbConfigResolver,

@@ -571,6 +571,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-suspend-step { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .sc-suspend-msg { margin: 0 0 10px; color: hsl(var(--sc-muted-fg)); font-size: 13px; }
 .sc-suspend-inputs { margin-bottom: 12px; }
+.sc-req { color: hsl(var(--sc-warning)); }
+.sc-help { margin: 4px 0 10px; font-size: 12px; color: hsl(var(--sc-muted-fg)); }
 
 /* success notice (e.g. created-resource link) */
 .sc-notice { padding: 10px 14px; border-radius: var(--sc-radius); font-weight: 500;

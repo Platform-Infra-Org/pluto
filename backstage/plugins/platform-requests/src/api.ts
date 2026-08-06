@@ -51,6 +51,8 @@ export interface RequestsApi {
     nodeId: string,
     opts?: { note?: string; parameters?: Record<string, string> },
   ): Promise<ResumeResult>;
+  /** Refuse the gate: stop the workflow instead of releasing it. */
+  stop(id: number, note?: string): Promise<{ stopped: boolean; request: Request }>;
   /** The resource's resolved data (ref'd file or spec.resourceData). */
   getResourceData(resourceName: string): Promise<Record<string, unknown>>;
 }
@@ -157,6 +159,19 @@ export class RequestsClient implements RequestsApi {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ nodeId, ...opts }),
+        },
+      ),
+    );
+  }
+
+  async stop(id: number, note?: string) {
+    return this.json<{ stopped: boolean; request: Request }>(
+      await this.opts.fetchApi.fetch(
+        `${await this.base()}/requests/${id}/stop`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ note }),
         },
       ),
     );

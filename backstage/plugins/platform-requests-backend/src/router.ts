@@ -17,7 +17,7 @@ import { requestApprovePermission, requestCreatePermission } from './permissions
 import { applyDecision } from './stateMachine';
 import { RequestsStore } from './store';
 import { Cipher } from './crypto';
-import { maskSuspendInputs, filterSuppliedOutputs } from './suspend';
+import { filterSuppliedOutputs } from './suspend';
 
 /**
  * Resolves the acting user's admin flag + raw group memberships (from their
@@ -63,6 +63,11 @@ export interface RouterOptions {
     name: string,
     namespace?: string,
   ) => Promise<SuspendedNode[]>;
+  /** Stop a running workflow (the approver refused the gate). */
+  stopWorkflow?: (
+    name: string,
+    opts: { namespace?: string; message?: string },
+  ) => Promise<void>;
   /** Release one suspended node, optionally supplying its declared outputs. */
   resumeNode?: (
     name: string,
@@ -112,23 +117,6 @@ const resumeSchema = z.object({
   /** Values for outputs the step declared as `supplied`; anything else is dropped. */
   parameters: z.record(z.string()).optional(),
 });
-
-/**
- * Every request that leaves the backend goes through here.
- *
- * Suspend-step inputs are workflow-authored and can carry a credential, and the
- * approval panel is the one screen a human is certainly reading. Masking at the
- * point of use was the first attempt and it leaked immediately: the panel reads
- * the request DTO while only the /workflow endpoint had been masked. There is
- * one trust boundary, so there is one redaction.
- */
-function toClient(request: PlatformRequest): PlatformRequest {
-  if (!request.suspendedNodes?.length) return request;
-  return {
-    ...request,
-    suspendedNodes: maskSuspendInputs(request.suspendedNodes, request.secretSpec),
-  };
-}
 
 /** `user:default/admin` -> `admin`. */
 function actorId(userEntityRef: string): string {
@@ -273,7 +261,7 @@ export async function createRouter(
 
     // Service callers (internal) see everything.
     if (credentials.principal.type !== 'user') {
-      res.json((await store.list({ state })).map(toClient));
+      res.json(await store.list({ state }));
       return;
     }
 
@@ -284,24 +272,20 @@ export async function createRouter(
 
     if (mine) {
       // The caller's own requests.
-      res.json((await store.list({ state, requester: actor })).map(toClient));
+      res.json(await store.list({ state, requester: actor }));
     } else if (scope === 'approval') {
       // Requests the caller may approve: admin → all; else their teams' only.
       res.json(
-        (
-          await store.list(isAdmin ? { state } : { state, ownerGroups: groups })
-        ).map(toClient),
+        await store.list(isAdmin ? { state } : { state, ownerGroups: groups }),
       );
     } else {
       // Default: admin → all; else own + their teams' requests.
       res.json(
-        (
-          await store.list(
-            isAdmin
-              ? { state }
-              : { state, visibleTo: { requester: actor, ownerGroups: groups } },
-          )
-        ).map(toClient),
+        await store.list(
+          isAdmin
+            ? { state }
+            : { state, visibleTo: { requester: actor, ownerGroups: groups } },
+        ),
       );
     }
   });
@@ -310,7 +294,7 @@ export async function createRouter(
     await httpAuth.credentials(req, { allow: ['user', 'service'] });
     const found = await store.get(Number(req.params.id));
     if (!found) throw new NotFoundError(`No request ${req.params.id}`);
-    res.json(toClient(found));
+    res.json(found);
   });
 
   // The request's workflow DAG (for the status view).
@@ -329,12 +313,7 @@ export async function createRouter(
       phase: found.workflowPhase,
       name: found.workflowName,
       nodes,
-      // Masked here, not in the client: the browser must never receive a value
-      // it is not allowed to show.
-      suspendedNodes: maskSuspendInputs(
-        found.suspendedNodes ?? [],
-        found.secretSpec,
-      ),
+      suspendedNodes: found.suspendedNodes ?? [],
     });
   });
 
@@ -377,7 +356,7 @@ export async function createRouter(
 
       const resolved = (await store.get(request.id))!;
       if (options.onDecided) await options.onDecided(resolved);
-      res.json(toClient(resolved));
+      res.json(resolved);
     };
 
   /**
@@ -435,15 +414,29 @@ export async function createRouter(
       res.json({
         resumed: false,
         reason: 'That step is no longer suspended.',
-        request: toClient((await store.get(request.id))!),
+        request: await store.get(request.id),
       });
       return;
     }
 
-    const { accepted, rejected } = filterSuppliedOutputs(
+    const { accepted, rejected, missing, invalid } = filterSuppliedOutputs(
       node,
       parsed.data.parameters,
     );
+    // Refuse the whole resume rather than release the step with half an answer:
+    // the step cannot be suspended again once it is running.
+    if (invalid.length > 0) {
+      throw new InputError(
+        invalid
+          .map(i => `${i.name} must be one of: ${i.allowed.join(', ')}`)
+          .join('; '),
+      );
+    }
+    if (missing.length > 0) {
+      throw new InputError(
+        `This step requires an answer for: ${missing.join(', ')}`,
+      );
+    }
     await options.resumeNode(request.workflowName, node.id, {
       namespace: request.workflowNamespace,
       outputParameters: accepted,
@@ -473,8 +466,68 @@ export async function createRouter(
     res.json({
       resumed: true,
       rejectedParameters: rejected,
-      request: toClient((await store.get(request.id))!),
+      request: await store.get(request.id),
     });
+  });
+
+  /**
+   * Refuse the gate: stop the workflow instead of releasing it.
+   *
+   * `/stop` and not `/terminate`, so the workflow's own onExit handlers run and
+   * clean up whatever it already created. The request is left to the poller,
+   * which sees the workflow fail and moves it to FAILED — one place decides
+   * what a stopped workflow means.
+   */
+  router.post('/requests/:id/stop', async (req, res) => {
+    const parsed = decisionSchema.safeParse(req.body ?? {});
+    if (!parsed.success) throw new InputError(parsed.error.toString());
+    const { credentials, actor } = await actorOf(req);
+
+    const [authz] = await permissions.authorize(
+      [{ permission: requestApprovePermission }],
+      { credentials },
+    );
+    if (authz.result !== AuthorizeResult.ALLOW) {
+      throw new NotAllowedError('Not allowed to stop workflows');
+    }
+
+    const request = await store.get(Number(req.params.id));
+    if (!request) throw new NotFoundError(`No request ${req.params.id}`);
+    if (!request.workflowName) {
+      throw new InputError(`Request ${request.id} has no workflow`);
+    }
+
+    const { isAdmin, groups } = await principalResolver(credentials);
+    const allowed =
+      isAdmin || (!!request.ownerGroup && groups.includes(request.ownerGroup));
+    if (!allowed) {
+      throw new NotAllowedError(
+        'Only the owning service team or an admin can stop this workflow',
+      );
+    }
+    if (!options.stopWorkflow) throw new InputError('Argo stop is not configured');
+
+    const reason = parsed.data.note
+      ? `stopped by ${actor}: ${parsed.data.note}`
+      : `stopped by ${actor}`;
+    await options.stopWorkflow(request.workflowName, {
+      namespace: request.workflowNamespace,
+      message: reason,
+    });
+
+    // Recorded as a rejection, because that is what refusing a gate is.
+    await store.addApproval(request.id, {
+      approver: actor,
+      decision: 'reject',
+      note: [`stopped the workflow`, parsed.data.note].filter(Boolean).join(' — '),
+      at: new Date().toISOString(),
+    });
+    await store.setWorkflow(request.id, {
+      suspendedNodes: [],
+      error: reason,
+    });
+
+    res.json({ stopped: true, request: await store.get(request.id) });
   });
 
   router.post('/requests/:id/approve', decide('approve'));

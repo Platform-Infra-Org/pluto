@@ -143,6 +143,9 @@ export interface ArgoStatusNode {
     parameters?: Array<{
       name?: string;
       value?: string;
+      default?: string;
+      description?: string;
+      enum?: string[];
       valueFrom?: { supplied?: unknown };
     }>;
   };
@@ -155,8 +158,9 @@ export interface ArgoStatusNode {
  * `type: 'Suspend'` with `phase: 'Running'`, the same phase a busy container
  * step reports. Detection is the pair or nothing.
  *
- * Values are returned raw; masking against the request's secrets happens in the
- * router, which is the layer that knows what the secrets are.
+ * A supplied output with a `default` can be resumed without an answer; one
+ * without a default cannot. That is Argo's own semantics, so `required` is read
+ * off the workflow rather than configured anywhere in this platform.
  */
 export function suspendedNodesOf(
   nodes: Record<string, ArgoStatusNode> | undefined,
@@ -176,7 +180,15 @@ export function suspendedNodesOf(
       // refuses is worse than offering none.
       suppliedOutputs: (n.outputs?.parameters ?? [])
         .filter(pp => pp.name !== undefined && pp.valueFrom?.supplied !== undefined)
-        .map(pp => pp.name as string),
+        .map(pp => ({
+          name: pp.name as string,
+          description: pp.description,
+          // Argo parameters carry enum/description/default of their own, so the
+          // form is described by the workflow rather than configured here.
+          enum: pp.enum?.length ? pp.enum : undefined,
+          default: pp.default,
+          required: pp.default === undefined,
+        })),
     }));
 }
 
@@ -442,6 +454,37 @@ export class ArgoClient {
       status?: { nodes?: Record<string, ArgoStatusNode> };
     };
     return suspendedNodesOf(wf.status?.nodes);
+  }
+
+  /**
+   * Stop the workflow: the approver refused the gate.
+   *
+   * `/stop` rather than `/terminate` — it lets `onExit` handlers run, which is
+   * how a workflow cleans up what it already created. Terminate would leave
+   * half-provisioned resources behind with nothing to tidy them.
+   */
+  async stopWorkflow(
+    workflowName: string,
+    opts: { namespace?: string; message?: string } = {},
+  ): Promise<void> {
+    const namespace = opts.namespace ?? this.cfg.namespace;
+    const { base, headers } = await this.endpoint();
+    const res = await fetch(
+      `${base}/api/v1/workflows/${namespace}/${workflowName}/stop`,
+      {
+        method: 'PUT',
+        headers: { ...headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          namespace,
+          name: workflowName,
+          message: opts.message,
+        }),
+      },
+    );
+    if (!res.ok) {
+      throw new Error(`argo stop failed: ${res.status} ${await res.text()}`);
+    }
+    this.logger.info(`stopped ${workflowName}: ${opts.message ?? 'no reason given'}`);
   }
 
   /**

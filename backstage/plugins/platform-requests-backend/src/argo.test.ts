@@ -243,7 +243,13 @@ describe('suspendedNodesOf', () => {
       },
       outputs: {
         parameters: [
-          { name: 'decision', valueFrom: { supplied: {} } },
+          {
+            name: 'decision',
+            description: 'Go or no-go',
+            enum: ['approve', 'reject'],
+            valueFrom: { supplied: {} },
+          },
+          { name: 'ticket', default: 'none', valueFrom: { supplied: {} } },
           { name: 'computed', value: 'not-supplied' },
         ],
       },
@@ -276,7 +282,24 @@ describe('suspendedNodesOf', () => {
 
   it('offers only the outputs the step asked to be supplied', () => {
     // `computed` has a value and no `supplied`, so Argo would reject setting it.
-    expect(suspendedNodesOf(nodes)[0].suppliedOutputs).toEqual(['decision']);
+    expect(suspendedNodesOf(nodes)[0].suppliedOutputs.map(o => o.name)).toEqual([
+      'decision',
+      'ticket',
+    ]);
+  });
+
+  it('reads the field description and choices off the step itself', () => {
+    const [decision] = suspendedNodesOf(nodes)[0].suppliedOutputs;
+    expect(decision.description).toBe('Go or no-go');
+    expect(decision.enum).toEqual(['approve', 'reject']);
+  });
+
+  it('treats a declared default as "answer optional"', () => {
+    // Argo resumes without a value when the parameter has a default, so the
+    // absence of one is the workflow author saying the answer is required.
+    const [decision, ticket] = suspendedNodesOf(nodes)[0].suppliedOutputs;
+    expect(decision.required).toBe(true);
+    expect(ticket).toEqual({ name: 'ticket', default: 'none', required: false });
   });
 
   it('is empty for a workflow with no nodes at all', () => {

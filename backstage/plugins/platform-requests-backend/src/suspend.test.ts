@@ -1,95 +1,125 @@
-import { SuspendedNode } from '@internal/plugin-platform-common';
-import { maskSuspendInputs, filterSuppliedOutputs } from './suspend';
+import { SuspendedNode, SuppliedOutput } from '@internal/plugin-platform-common';
+import { filterSuppliedOutputs } from './suspend';
 
-const node = (inputs: SuspendedNode['inputs']): SuspendedNode => ({
+const node = (suppliedOutputs: SuppliedOutput[]): SuspendedNode => ({
   id: 'n1',
   name: 'approve-plan',
-  inputs,
-  suppliedOutputs: ['decision'],
+  inputs: [],
+  suppliedOutputs,
 });
 
-describe('maskSuspendInputs', () => {
-  it('leaves ordinary review values alone — they are the point', () => {
-    const [n] = maskSuspendInputs(
-      [node([{ name: 'plan', value: '3 to add' }])],
-      undefined,
-    );
-    expect(n.inputs).toEqual([{ name: 'plan', value: '3 to add' }]);
-  });
-
-  it('masks a parameter named after one of the request secrets', () => {
-    const [n] = maskSuspendInputs(
-      [node([{ name: 'dbPassword', value: 'hunter2' }])],
-      [{ name: 'dbPassword', source: 'generate' }],
-    );
-    expect(n.inputs).toEqual([{ name: 'dbPassword', masked: true }]);
-  });
-
-  it('keeps the key visible so the approver knows a value exists', () => {
-    const [n] = maskSuspendInputs(
-      [node([{ name: 'apiToken', value: 'abc' }])],
-      undefined,
-    );
-    expect(n.inputs[0].name).toBe('apiToken');
-    expect(n.inputs[0].value).toBeUndefined();
-  });
-
-  it('masks credential-shaped names the request never declared', () => {
-    // The workflow can interpolate anything; secretSpec cannot be the only rule.
-    const [n] = maskSuspendInputs(
-      [
-        node([
-          { name: 'ADMIN_PASSWORD', value: 'x' },
-          { name: 'private_key', value: 'y' },
-          { name: 'apiKey', value: 'z' },
-        ]),
-      ],
-      undefined,
-    );
-    expect(n.inputs.every(i => i.masked)).toBe(true);
-    expect(n.inputs.every(i => i.value === undefined)).toBe(true);
-  });
-
-  it('matches secret names case-insensitively', () => {
-    const [n] = maskSuspendInputs(
-      [node([{ name: 'DBPassword', value: 'x' }])],
-      [{ name: 'dbpassword', source: 'provided' }],
-    );
-    expect(n.inputs[0].masked).toBe(true);
-  });
+const required = (name: string): SuppliedOutput => ({ name, required: true });
+const choice = (name: string, values: string[]): SuppliedOutput => ({
+  name,
+  enum: values,
+  required: true,
+});
+const optional = (name: string, dflt: string): SuppliedOutput => ({
+  name,
+  default: dflt,
+  required: false,
 });
 
 describe('filterSuppliedOutputs', () => {
-  it('accepts what the step asked for', () => {
+  it('accepts an answer the step asked for', () => {
     expect(
-      filterSuppliedOutputs(node([]), { decision: 'approved' }),
-    ).toEqual({ accepted: { decision: 'approved' }, rejected: [] });
+      filterSuppliedOutputs(node([required('decision')]), {
+        decision: 'approved',
+      }),
+    ).toEqual({ accepted: { decision: 'approved' }, rejected: [], missing: [], invalid: [] });
   });
 
-  it('drops what the step did not declare, rather than letting argo refuse it', () => {
+  it('drops a parameter the step never declared', () => {
+    // Argo would refuse it; dropping it here keeps the failure legible.
     expect(filterSuppliedOutputs(node([]), { sneaky: 'x' })).toEqual({
       accepted: {},
       rejected: ['sneaky'],
+      missing: [],
+      invalid: [],
     });
   });
 
-  it('handles a resume with no parameters at all', () => {
+  it('reports a required answer that was not given', () => {
+    expect(filterSuppliedOutputs(node([required('decision')]), {})).toEqual({
+      accepted: {},
+      rejected: [],
+      missing: ['decision'],
+      invalid: [],
+    });
+  });
+
+  it('treats a blank string as no answer at all', () => {
+    // An empty text field is someone not answering, not answering "".
+    expect(
+      filterSuppliedOutputs(node([required('decision')]), { decision: '' }),
+    ).toEqual({ accepted: {}, rejected: [], missing: ['decision'], invalid: [] });
+  });
+
+  it('fills in the step declared default when a field is left blank', () => {
+    expect(
+      filterSuppliedOutputs(node([optional('ticket', 'none')]), { ticket: '' }),
+    ).toEqual({ accepted: { ticket: 'none' }, rejected: [], missing: [], invalid: [] });
+  });
+
+  it('lets an answer beat the default', () => {
+    expect(
+      filterSuppliedOutputs(node([optional('ticket', 'none')]), {
+        ticket: 'OPS-12',
+      }),
+    ).toEqual({ accepted: { ticket: 'OPS-12' }, rejected: [], missing: [], invalid: [] });
+  });
+
+  it('never calls an output with a default missing', () => {
+    // A default is the workflow author saying "resume without this if you like".
+    expect(filterSuppliedOutputs(node([optional('ticket', 'none')]), {})).toEqual(
+      { accepted: { ticket: 'none' }, rejected: [], missing: [], invalid: [] },
+    );
+  });
+
+  it('handles a step that asks nothing', () => {
     expect(filterSuppliedOutputs(node([]), undefined)).toEqual({
       accepted: {},
       rejected: [],
+      missing: [],
+      invalid: [],
     });
   });
-});
 
-describe('the trust boundary', () => {
-  // The first implementation masked only the /workflow endpoint, while the
-  // approval panel reads the request DTO — the value shipped in the clear.
-  // Masking is a property of leaving the backend, not of one route.
-  it('masks the same way whichever response carries the node', () => {
-    const nodes = [node([{ name: 'adminPassword', value: 'not-a-real-secret' }])];
-    const viaWorkflow = maskSuspendInputs(nodes, undefined);
-    const viaRequestDto = maskSuspendInputs(nodes, undefined);
-    expect(viaWorkflow).toEqual(viaRequestDto);
-    expect(viaWorkflow[0].inputs[0]).toEqual({ name: 'adminPassword', masked: true });
+  it('collects every missing answer, not just the first', () => {
+    expect(
+      filterSuppliedOutputs(node([required('a'), required('b')]), {}).missing,
+    ).toEqual(['a', 'b']);
+  });
+
+  it('accepts a value the enum lists', () => {
+    expect(
+      filterSuppliedOutputs(node([choice('decision', ['approve', 'reject'])]), {
+        decision: 'approve',
+      }).accepted,
+    ).toEqual({ decision: 'approve' });
+  });
+
+  it('refuses a value outside the enum, and says what is allowed', () => {
+    // The form only offers the listed values, but a form is a convenience and
+    // not a boundary — the API is the boundary.
+    const r = filterSuppliedOutputs(
+      node([choice('decision', ['approve', 'reject'])]),
+      { decision: 'maybe' },
+    );
+    expect(r.invalid).toEqual([
+      { name: 'decision', allowed: ['approve', 'reject'] },
+    ]);
+    expect(r.accepted).toEqual({});
+  });
+
+  it('does not also call an enum violation "missing"', () => {
+    // Answering with a forbidden value and leaving the field blank are
+    // different mistakes; reporting both tells someone they failed to fill in
+    // the field they just filled in.
+    const r = filterSuppliedOutputs(node([choice('decision', ['approve'])]), {
+      decision: 'nope',
+    });
+    expect(r.invalid).toHaveLength(1);
+    expect(r.missing).toEqual([]);
   });
 });

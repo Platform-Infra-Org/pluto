@@ -99,24 +99,45 @@ export interface SuspendedNode {
   message?: string;
   /**
    * The step's input parameters — what the workflow computed and what the
-   * approver is being asked to review. Values sourced from the request's
-   * secrets are masked before they leave the backend.
+   * approver is being asked to review.
+   *
+   * These are workflow-authored review values (a plan, a cost, a diff). Secrets
+   * do not travel this way: they reach a workflow through a Kubernetes Secret
+   * and `secretKeyRef`, never through a parameter.
    */
   inputs: SuspendInput[];
   /**
-   * Names of outputs the step declared as `valueFrom: supplied: {}` — the
-   * questions it is asking. Only these may be set on resume; Argo rejects
+   * The questions the step is asking: outputs it declared as
+   * `valueFrom: supplied: {}`. Only these may be set on resume — Argo rejects
    * anything else.
    */
-  suppliedOutputs: string[];
+  suppliedOutputs: SuppliedOutput[];
 }
 
-/** One input parameter of a suspend step, masked if it carries a secret. */
+/** One input parameter of a suspend step. */
 export interface SuspendInput {
   name: string;
-  /** Absent when masked — the key is still shown, the value never is. */
   value?: string;
-  masked?: boolean;
+}
+
+/**
+ * An answer the suspend step is waiting for.
+ *
+ * `required` is derived from the step's own declaration rather than from
+ * anything the platform decides: an Argo output parameter with a `default` can
+ * be resumed without a value, and one without a default cannot. The workflow
+ * author already expressed the intent; this reads it rather than guessing.
+ */
+export interface SuppliedOutput {
+  name: string;
+  /** The step's own `description`, shown as help text under the field. */
+  description?: string;
+  /** The step's `enum`; when present the field is a choice, not free text. */
+  enum?: string[];
+  /** The step's declared default, used as the field's initial value. */
+  default?: string;
+  /** True when the step declared no default — resuming needs an answer. */
+  required: boolean;
 }
 
 /** A resource request tracked through approval + workflow execution. */
