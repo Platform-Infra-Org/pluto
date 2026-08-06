@@ -62,6 +62,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tour button opposite the title, and a home grid of equals
 - The experience bar reads status, not the picked accent
 - Open the catalog on Resource instead of Component
+- Helm chart for production, and close a guest-auth hole
 
 ### Changed
 
@@ -88,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Plan home cards, quickstart and the experience bar
 - Stop tracking specs/
 - Commit the specs/ ignore rule
+- Cover the new config and features, and fix the changelog grouping
 
 ### Fixed
 
