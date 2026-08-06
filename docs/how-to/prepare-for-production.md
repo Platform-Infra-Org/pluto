@@ -27,8 +27,21 @@ secret manager.
 
 ## 2. Auth
 
-- **Remove the `guest` provider.** It is an auth bypass, and it is present in
-  both config files.
+- **Remove the `guest` provider — with `null`, not by omission.**
+
+  ```yaml
+  auth:
+    providers:
+      guest: null
+  ```
+
+  Backstage **merges** config objects across files: a production file that
+  simply leaves `guest` out inherits it from `app-config.yaml`, and the guest
+  provider is an auth bypass. Only `null` removes a key.
+
+  Verified against `@backstage/config`: with the key omitted,
+  `auth.providers` reports `["oidc","guest"]` and guest is readable; with
+  `guest: null` it reports `["oidc"]`.
 - Set `auth.environment: production` and add a `production:` block under the
   `oidc` provider — the demo only defines `development:`.
 - Leave `backend.auth.dangerouslyDisableDefaultAuthPolicy` **unset**.

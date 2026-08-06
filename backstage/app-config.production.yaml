@@ -34,8 +34,13 @@ backend:
       - host: ${BITBUCKET_HOST}
 
 auth:
+  environment: production
   providers:
-    guest: {}
+    # `null`, not omission: Backstage merges config objects across files, so a
+    # production file that simply leaves `guest` out still inherits it from
+    # app-config.yaml — and the guest provider is an auth bypass. Setting it to
+    # null is what actually removes the key.
+    guest: null
 
 # Git hosting: Bitbucket Data Center in production, Gitea in dev.
 # app-config.yaml's `gitea` entry is dev-only seed infrastructure on

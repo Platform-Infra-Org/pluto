@@ -21,6 +21,7 @@ nav:
       - Customise the home page: how-to/customise-the-home-page.md
       - Change the logo, favicon and title: how-to/rebrand-the-portal.md
       - Upgrade Backstage: how-to/upgrade-backstage.md
+      - Deploy to Kubernetes with Helm: how-to/deploy-with-helm.md
       - Prepare for production: how-to/prepare-for-production.md
   - Reference:
       - Plugins: reference/plugins.md
