@@ -27,6 +27,7 @@ import { requestsApiRef } from '../api';
 import { requestRouteRef } from '../routes';
 import { WorkflowGraph } from './WorkflowGraph';
 import { SuspendPanel } from './SuspendPanel';
+import { ExperienceBar } from './ExperienceBar';
 import { stateBadge, formatTs } from './RequestsPage';
 
 /**
@@ -82,6 +83,17 @@ export function RequestPage() {
     api.get(Number(id)).then(setRequest).catch(e => setError(String(e)));
   }, [api, id]);
   useEffect(load, [load]);
+
+  // Poll while the request is still moving. Without this the page is a
+  // snapshot from whenever it was opened: a workflow could suspend, be
+  // resumed and finish while the badge still said IN_PROGRESS, and anything
+  // watching for a state change — the experience bar's level-up — would never
+  // see one. Stops as soon as the request settles.
+  useEffect(() => {
+    if (!request || isTerminal(request.state)) return undefined;
+    const timer = setInterval(load, 4000);
+    return () => clearInterval(timer);
+  }, [load, request]);
 
   useEffect(() => {
     identity
@@ -142,6 +154,13 @@ export function RequestPage() {
             {request.resultRef}
           </Link>
         </div>
+      )}
+      {request.workflowName && (
+        <ExperienceBar
+          requestId={request.id}
+          state={request.state}
+          live={!isTerminal(request.state)}
+        />
       )}
       <div className="sc-grid" style={{ gridTemplateColumns: '1.4fr 1fr' }}>
         <Card>

@@ -18,7 +18,7 @@ import { screenName, Flavour } from './flavour';
 
 // The nav renders outside react-router's context, so derive the active path
 // from the browser location + history events rather than useLocation().
-function useCurrentPath(): string {
+export function useCurrentPath(): string {
   const [path, setPath] = useState(() => window.location.pathname);
   useEffect(() => {
     const update = () => setPath(window.location.pathname);

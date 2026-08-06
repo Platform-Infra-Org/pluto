@@ -5,6 +5,10 @@ import { SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
 import { PixelPotion } from './components';
 import { templateHeaderCss } from './templateHeaders';
 import { listenForKonami } from './konami';
+import { useCurrentPath } from './CustomNav';
+import { useRecordVisit } from './useVisits';
+import { Quickstart } from './quickstart/Quickstart';
+import { useQuickstart } from './quickstart/useQuickstart';
 import { sampleImageTone, Tone } from './imageTone';
 
 /** The two foreground tones a scheme can use, and each other's shade. */
@@ -288,6 +292,10 @@ export function SchemeRoot() {
     [],
   );
 
+  // One navigation source for the whole app: the nav already derives the path
+  // without react-router, and a second source would drift from the first.
+  useRecordVisit(useCurrentPath());
+
   useEffect(() => {
     const sub = appTheme.activeThemeId$().subscribe(id => {
       document.documentElement.classList.toggle(
@@ -298,5 +306,27 @@ export function SchemeRoot() {
     return () => sub.unsubscribe();
   }, [appTheme]);
 
-  return <SchemePicker floating />;
+  return (
+    <>
+      <SchemePicker floating />
+      <QuickstartHost />
+    </>
+  );
+}
+
+/**
+ * Runs the tour once per user, and listens for a request to run it again.
+ *
+ * The replay button lives on Home, which is a different plugin, so it asks
+ * through an event rather than a shared context — the app root and the home
+ * page have no other connection.
+ */
+function QuickstartHost() {
+  const { open, start, close } = useQuickstart();
+  useEffect(() => {
+    const onReplay = () => start();
+    window.addEventListener('platform:quickstart', onReplay);
+    return () => window.removeEventListener('platform:quickstart', onReplay);
+  }, [start]);
+  return open ? <Quickstart onClose={close} /> : null;
 }

@@ -211,6 +211,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The colour picker is a shelf of potions
 - Turn the fantasy screen names back off
 - Merge the 8-bit flare pass and the suspend approval gate
+- Record recently visited pages per user
+- Recently visited card on home
+- Favourite templates card on home
+- Quickstart step definitions
+- Quickstart tour, once per user and replayable
+- Rupee and creature sprites
+- Workflow progress from leaf nodes only
+- Experience bar with level-up and game-over
+- Tour button opposite the title, and a home grid of equals
+- The experience bar reads status, not the picked accent
+- Open the catalog on Resource instead of Component
 
 ### Changed
 
@@ -278,6 +289,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Regenerate after the flare merge
 - Plan home cards, quickstart and the experience bar
 - Stop tracking specs/
+- Regenerate after untracking specs
+- Commit the specs/ ignore rule
+- Regenerate for home, quickstart and the experience bar
+- Regenerate for the home layout pass
+- Regenerate for the tour button and home layout fixes
+- Regenerate for the experience bar tones
 
 ### Fixed
 
@@ -330,6 +347,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Single-bordered native buttons, and readable header titles
 - Round the dialog surface so popups match the cards
 - One colour picker per screen
+- Step the workflow graph edges and respect reduced motion
+- Real stars on the tour button, sidebar-style hover, wider standing requests
 
 ### Removed
 

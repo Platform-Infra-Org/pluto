@@ -10,6 +10,11 @@ import {
   TORCH,
   SCROLL,
   POTION,
+  RUPEE,
+  CREEP_A,
+  CREEP_B,
+  SMALL_SPRITE_SIZE,
+  STAR,
 } from './sprites';
 
 const grid = (...rows: string[]) => rows;
@@ -40,7 +45,7 @@ describe('spriteRects', () => {
 
 describe('sprite data', () => {
   it('every sprite is a square grid of the declared size', () => {
-    const items = { AMPHORA, KEY, LAUREL, HELM, TORCH, SCROLL, POTION };
+    const items = { AMPHORA, KEY, LAUREL, HELM, TORCH, SCROLL, POTION, RUPEE };
     for (const [name, sprite] of Object.entries({
       TEMPLE,
       ...items,
@@ -100,5 +105,32 @@ describe('sprite data', () => {
 
   it('reads the default layer when none is named', () => {
     expect(spriteRects(POTION)).toEqual(spriteRects(POTION, '#'));
+  });
+
+  it('draws the rupee in two layers that do not overlap', () => {
+    const edge = spriteRects(RUPEE, '#');
+    const fill = spriteRects(RUPEE, '~');
+    expect(edge.length).toBeGreaterThan(0);
+    expect(fill.length).toBeGreaterThan(0);
+    const cells = (rs: ReturnType<typeof spriteRects>) =>
+      new Set(rs.flatMap(r => Array.from({ length: r.w }, (_, i) => `${r.x + i},${r.y}`)));
+    const e = cells(edge);
+    for (const c of cells(fill)) expect(e.has(c)).toBe(false);
+  });
+
+  it('keeps the small sprites square at their own documented size', () => {
+    // The only sprites here that are not SPRITE_SIZE: several must fit on a
+    // 12px bar, so they are 8x8 and say so.
+    for (const [name, sprite] of Object.entries({ CREEP_A, CREEP_B, STAR })) {
+      expect(`${name}:${sprite.length}`).toBe(`${name}:${SMALL_SPRITE_SIZE}`);
+      for (const row of sprite) {
+        expect(`${name}:${row.length}`).toBe(`${name}:${SMALL_SPRITE_SIZE}`);
+      }
+    }
+  });
+
+  it('gives the run cycle two distinct frames', () => {
+    // Identical frames animate into a static smudge.
+    expect(CREEP_A.join('')).not.toBe(CREEP_B.join(''));
   });
 });

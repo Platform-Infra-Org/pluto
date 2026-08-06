@@ -29,6 +29,11 @@ app:
     - page:catalog:
         config:
           path: /catalog
+    # This platform's catalog is mostly Resources — the things requests create —
+    # so the kind filter opens on Resource rather than Backstage's Component.
+    - catalog-filter:catalog/kind:
+        config:
+          initialFilter: resource
     # Disable the stock Backstage themes so the platform theme is the default.
     - theme:app/light: false
     - theme:app/dark: false
@@ -237,6 +242,8 @@ platform:
       - ownedResources
       - standingRequests
       - pendingApprovals
+      - recentlyVisited
+      - favouriteTemplates
     maxItems: 8
   # Request retention. Off by default: deleting rows cannot be undone.
   # Expiry moves an undecided request to EXPIRED; the windows below then delete

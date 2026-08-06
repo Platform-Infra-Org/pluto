@@ -308,6 +308,12 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .react-flow__controls button { background: #17171f !important; border-color: #32303e !important; }
 .react-flow__controls button svg, .react-flow__controls-button svg { fill: #e7e7ef !important; }
 .react-flow__attribution { display: none !important; }
+/* [flare] React Flow marches its animated edges with a linear dashdraw. It is
+   third-party motion, but it is visible motion, and smooth interpolation is
+   the one thing this design does not do. Stepped here, and removed entirely
+   under reduced motion by the block below. */
+.react-flow__edge.animated path,
+.react-flow__edge-path { animation-timing-function: steps(8) !important; }
 
 
 /* flatten the gradient card headers (template / entity cards).
@@ -435,7 +441,21 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-sub { color: hsl(var(--sc-muted-fg)); margin-top: 4px; font-size: 14px; }
 .sc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
 .sc-grid { display: grid; gap: 16px; }
-.sc-grid-2 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items: start; }
+/* Home's cards are a grid of equals: stretch rather than start, so every box
+   in a row is the same height, and the cards fill the cell they are given. A
+   row of cards each shrunk to its own contents reads as a pile, not a grid. */
+.sc-grid-2 { display: grid; gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  /* Every row as tall as the tallest, so the whole grid is one size rather
+     than each row finding its own. */
+  grid-auto-rows: 1fr;
+  align-items: stretch; }
+.sc-grid-2 > .sc-card { height: 100%; display: flex; flex-direction: column; }
+/* A card asked to take two places does so, and its row still lines up because
+   the row height is uniform. */
+.sc-grid-2 > .sc-card.sc-span-2 { grid-column: span 2; }
+/* The body takes the slack, so headers line up across the row. */
+.sc-grid-2 > .sc-card > .sc-card-b { flex: 1 1 auto; }
 .sc-action { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: var(--sc-radius);
   border: var(--sc-border-w) solid hsl(var(--sc-border)); text-decoration: none; transition: background .12s, border-color .12s; }
 .sc-action:hover { background: hsl(var(--sc-primary) / .06); border-color: hsl(var(--sc-primary) / .4); }
@@ -573,6 +593,104 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-suspend-inputs { margin-bottom: 12px; }
 .sc-req { color: hsl(var(--sc-warning)); }
 .sc-help { margin: 4px 0 10px; font-size: 12px; color: hsl(var(--sc-muted-fg)); }
+
+/* [quickstart] A dialogue box in the corner, not a modal per step: the point
+   is to show people the app, and a modal hides the app. The ring is drawn as a
+   fixed overlay so it can sit over anything without the page needing to know. */
+.sc-qs { position: fixed; inset: 0; z-index: 2500; pointer-events: none; }
+.sc-qs-ring { position: fixed; border: 3px solid hsl(var(--sc-primary));
+  border-radius: var(--sc-radius); pointer-events: none;
+  /* The dim is the ring's own shadow, so there is one element and no gap
+     between the cut-out and the overlay to line up. */
+  box-shadow: 0 0 0 9999px hsl(var(--sc-fg) / .45); }
+.sc-qs-box { position: fixed; right: 18px; bottom: 78px; width: 320px;
+  pointer-events: auto; padding: 14px 16px 12px;
+  background: hsl(var(--sc-card)); border-radius: var(--sc-radius);
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  box-shadow:
+    0 0 0 2px hsl(var(--sc-card)),
+    0 0 0 4px hsl(var(--sc-fg) / .85),
+    var(--sc-shadow); }
+.sc-qs-count { font-family: var(--sc-font-pixel); font-size: 11px;
+  color: hsl(var(--sc-muted-fg)); }
+.sc-qs-title { font-family: var(--sc-font-pixel); text-transform: uppercase;
+  font-size: 14px; margin: 4px 0 8px; color: hsl(var(--sc-fg)); }
+.sc-qs-body { font-size: 13px; line-height: 1.5; margin: 0 0 12px;
+  color: hsl(var(--sc-muted-fg)); }
+.sc-qs-actions { justify-content: flex-end; gap: 6px; }
+/* The continue marker every dialogue box in this app carries. */
+.sc-qs-box::after { content: '\\25BC' / ''; position: absolute;
+  right: 8px; bottom: 2px; font-size: 9px; color: hsl(var(--sc-primary)); }
+
+/* [xp] Workflow progress as an experience bar: a rupee, a track, and the count
+   beside it. The count is the same done/total the fill is drawn from, so the
+   decoration can never claim progress the workflow has not made. */
+.sc-xp { display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  position: relative; }
+.sc-xp-rupee { width: 18px; height: 18px; flex: 0 0 auto;
+  color: hsl(var(--sc-fg) / .8); }
+.sc-xp-track { flex: 1 1 auto; height: 14px; overflow: hidden;
+  background: hsl(var(--sc-muted));
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-radius: var(--sc-radius-sm); }
+/* The fill takes its colour from the run, not from the picked accent: yellow
+   while it works, green when it lands, red when it does not. Those three read
+   the same in every scheme, which is the whole point — a bar that is violet on
+   Tuesday and amber on Wednesday tells you nothing at a glance.
+   --sc-xp-tone is set per state below; the cell pattern is written once. */
+.sc-xp-fill { position: relative; height: 100%;
+  background: hsl(var(--sc-xp-tone));
+  background-image: repeating-linear-gradient(90deg,
+    hsl(var(--sc-xp-tone)) 0 6px, hsl(var(--sc-xp-tone) / .72) 6px 12px); }
+.sc-xp-running { --sc-xp-tone: var(--sc-warning); }
+.sc-xp-done { --sc-xp-tone: var(--sc-success); }
+.sc-xp-failed { --sc-xp-tone: var(--sc-destructive); }
+/* Ink on yellow: the creatures are white on the accent bar, which vanishes
+   against warning. */
+.sc-xp-running .sc-xp-creep { color: hsl(var(--sc-fg) / .75); }
+.sc-xp-running .sc-xp-count { color: hsl(38 95% 24%); }
+.sc-xp-failed .sc-xp-count { color: hsl(0 70% 34%); }
+.sc-xp-done .sc-xp-count { color: hsl(152 60% 22%); }
+.sc-xp-count { font-family: var(--sc-font-pixel); font-size: 12px;
+  color: hsl(var(--sc-muted-fg)); flex: 0 0 auto; }
+/* The creatures live inside the fill, so their run is bounded by real
+   progress rather than by the width of the card. */
+.sc-xp-creep { position: absolute; bottom: 1px; width: 8px; height: 8px;
+  color: hsl(var(--sc-primary-fg) / .9); }
+.sc-xp-creep svg { width: 8px; height: 8px; display: block; }
+/* One frame at a time; both are rendered so the swap costs nothing. */
+.sc-creep-b { display: none; }
+.sc-xp-dots { display: inline-block; width: 1.6em; text-align: left; }
+.sc-xp-banner { position: absolute; right: 0; top: -18px;
+  font-family: var(--sc-font-pixel); font-size: 12px;
+  color: hsl(var(--sc-primary)); }
+.sc-xp-gameover .sc-xp-banner { color: hsl(var(--sc-destructive)); }
+.sc-xp-levelup .sc-xp-banner { color: hsl(var(--sc-success)); }
+
+/* [flare] The tour button.
+   Hover is the sidebar's own selected treatment — a muted wash of the picked
+   accent — so selection looks the same wherever it happens. */
+.sc-tour { position: relative; overflow: visible; }
+.sc-tour:hover:not(:disabled), .sc-tour:focus-visible {
+  background: hsl(var(--sc-primary) / .10);
+  border-color: hsl(var(--sc-primary) / .45);
+  color: hsl(var(--sc-primary));
+}
+/* Six sparkles around the button, hidden until it is hovered. Absolutely
+   positioned so they never affect the button's own size. */
+.sc-tour-stars { position: absolute; inset: -8px; pointer-events: none; }
+/* The rects need the colour too, not just the svg: fill="currentColor"
+   resolves per element and the global .sc * rule hands each rect its own. */
+.sc-tour-star, .sc-tour-star * { color: hsl(var(--sc-primary)); }
+.sc-tour-star { position: absolute; width: 8px; height: 8px; opacity: 0; }
+.sc-tour-star-0 { top: 0; left: 6px; }
+.sc-tour-star-1 { top: -2px; left: 46%; }
+.sc-tour-star-2 { top: 4px; right: 8px; }
+.sc-tour-star-3 { bottom: 0; left: 18px; }
+.sc-tour-star-4 { bottom: -2px; left: 58%; }
+.sc-tour-star-5 { bottom: 5px; right: 4px; }
+/* Without motion they simply appear: still stars, not a smudge. */
+.sc-tour:hover .sc-tour-star, .sc-tour:focus-visible .sc-tour-star { opacity: 1; }
 
 /* success notice (e.g. created-resource link) */
 .sc-notice { padding: 10px 14px; border-radius: var(--sc-radius); font-weight: 500;
@@ -767,6 +885,14 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   pointer-events: none;
 }
 
+/* Third-party motion that ignores the motion query: React Flow animates its
+   edges regardless, so it is switched off here rather than left running for
+   someone who asked for stillness. */
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__edge.animated path,
+  .react-flow__edge-path { animation: none !important; }
+}
+
 /* ===== Motion =====
    Everything timed lives behind prefers-reduced-motion and uses steps(), never
    ease: smooth interpolation is what makes a pixel interface look like a modern
@@ -846,6 +972,58 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   @keyframes sc-caret { 50% { opacity: 0; } }
   .sc-empty .sc-state-ic { animation: sc-bob 1.2s steps(2) infinite; }
   .sc-press-start { animation: sc-caret 1s steps(1) infinite; }
+  .sc-qs-box::after { animation: sc-caret 1s steps(1) infinite; }
+
+  /* They twinkle out of step with each other: same keyframes, staggered, so
+     the group never blinks as one block. */
+  @keyframes sc-twinkle {
+    0%, 45% { opacity: 1; }
+    50%, 95% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .sc-tour:hover .sc-tour-star, .sc-tour:focus-visible .sc-tour-star {
+    animation: sc-twinkle .6s steps(1) infinite;
+  }
+  .sc-tour-star-1 { animation-delay: -.1s; }
+  .sc-tour-star-2 { animation-delay: -.25s; }
+  .sc-tour-star-3 { animation-delay: -.35s; }
+  .sc-tour-star-4 { animation-delay: -.45s; }
+  .sc-tour-star-5 { animation-delay: -.55s; }
+
+  /* [xp] The run cycle: two frames, and a walk bounded by the fill. */
+  @keyframes sc-creep-run { to { left: calc(100% - 8px); } }
+  @keyframes sc-creep-frame {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+  .sc-xp-creep { animation: sc-creep-run 3.2s steps(16) infinite; }
+  /* LOADING... counts itself out, one dot at a time. */
+  @keyframes sc-xp-dots {
+    0% { clip-path: inset(0 100% 0 0); }
+    33% { clip-path: inset(0 66% 0 0); }
+    66% { clip-path: inset(0 33% 0 0); }
+    100% { clip-path: inset(0 0 0 0); }
+  }
+  .sc-xp-dots { animation: sc-xp-dots 1.2s steps(1) infinite; }
+  /* Offset so they do not march in lockstep. */
+  .sc-xp-creep-1 { animation-delay: -1.1s; }
+  .sc-xp-creep-2 { animation-delay: -2.2s; }
+  .sc-creep-a { animation: sc-creep-frame .4s steps(1) infinite; }
+  .sc-creep-b { display: block; position: absolute; inset: 0;
+    animation: sc-creep-frame .4s steps(1) infinite reverse; }
+
+  /* [xp] Level up: the bar flashes and the banner rises once. */
+  @keyframes sc-xp-flash {
+    0%, 100% { background-color: hsl(var(--sc-xp-tone)); }
+    50% { background-color: hsl(0 0% 100%); }
+  }
+  @keyframes sc-xp-rise {
+    from { transform: translateY(8px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .sc-xp-levelup .sc-xp-fill { animation: sc-xp-flash .3s steps(2) 2; }
+  .sc-xp-banner { animation: sc-xp-rise .3s steps(3) both; }
+  .sc-xp-gameover .sc-xp-track { animation: sc-shake .2s steps(2) 2; }
   @keyframes sc-walk { to { left: calc(100vw - 16px); } }
   :root.sc-konami::after { animation: sc-walk 6s steps(24) infinite; }
   .sc-h1::after,
