@@ -495,6 +495,20 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   display: flex; justify-content: center; }
 .sc-table tr:last-child td { border-bottom: none; }
 .sc-table tbody tr:hover { background: hsl(var(--sc-muted) / .5); }
+/* [flare] Rows select the way a menu does: a cursor in the margin rather than a
+   wash alone. The gutter is reserved on every row whether or not the cursor is
+   in it — a 12px reflow under the pointer is worse than no cursor at all. */
+.sc-table tbody td:first-child,
+.MuiTableBody-root .MuiTableCell-root:first-child { padding-left: 24px; position: relative; }
+.sc-table tbody tr:hover td:first-child::before,
+.sc-table tbody tr:focus-within td:first-child::before,
+.MuiTableBody-root .MuiTableRow-root:hover .MuiTableCell-root:first-child::before,
+.MuiTableBody-root .MuiTableRow-root:focus-within .MuiTableCell-root:first-child::before {
+  content: '\\25B6' / '';
+  position: absolute; left: 7px; top: 50%; transform: translateY(-50%);
+  font-family: var(--sc-font-pixel); font-size: 10px;
+  color: hsl(var(--sc-primary));
+}
 
 /* input */
 .sc-input, .sc-select { height: 36px; width: 100%; padding: 0 10px; font-size: 14px;
