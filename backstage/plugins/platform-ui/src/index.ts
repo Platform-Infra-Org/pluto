@@ -16,6 +16,8 @@ export {
   Field,
   Dialog,
   EmptyState,
+  PixelRupee,
+  PixelCreep,
 } from './components';
 export {
   STATE_SPRITES,

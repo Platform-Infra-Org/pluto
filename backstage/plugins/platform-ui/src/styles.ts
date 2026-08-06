@@ -602,6 +602,37 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-qs-box::after { content: '\\25BC' / ''; position: absolute;
   right: 8px; bottom: 2px; font-size: 9px; color: hsl(var(--sc-primary)); }
 
+/* [xp] Workflow progress as an experience bar: a rupee, a track, and the count
+   beside it. The count is the same done/total the fill is drawn from, so the
+   decoration can never claim progress the workflow has not made. */
+.sc-xp { display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  position: relative; }
+.sc-xp-rupee { width: 18px; height: 18px; flex: 0 0 auto;
+  color: hsl(var(--sc-fg) / .8); }
+.sc-xp-track { flex: 1 1 auto; height: 14px; overflow: hidden;
+  background: hsl(var(--sc-muted));
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-radius: var(--sc-radius-sm); }
+.sc-xp-fill { position: relative; height: 100%;
+  background: hsl(var(--sc-primary));
+  background-image: repeating-linear-gradient(90deg,
+    hsl(var(--sc-primary)) 0 6px, hsl(var(--sc-primary) / .78) 6px 12px); }
+.sc-xp-count { font-family: var(--sc-font-pixel); font-size: 12px;
+  color: hsl(var(--sc-muted-fg)); flex: 0 0 auto; }
+/* The creatures live inside the fill, so their run is bounded by real
+   progress rather than by the width of the card. */
+.sc-xp-creep { position: absolute; bottom: 1px; width: 8px; height: 8px;
+  color: hsl(var(--sc-primary-fg) / .9); }
+.sc-xp-creep svg { width: 8px; height: 8px; display: block; }
+/* One frame at a time; both are rendered so the swap costs nothing. */
+.sc-creep-b { display: none; }
+.sc-xp-banner { position: absolute; right: 0; top: -18px;
+  font-family: var(--sc-font-pixel); font-size: 12px;
+  color: hsl(var(--sc-primary)); }
+.sc-xp-gameover .sc-xp-fill { background: hsl(var(--sc-destructive));
+  background-image: none; }
+.sc-xp-gameover .sc-xp-banner { color: hsl(var(--sc-destructive)); }
+
 /* success notice (e.g. created-resource link) */
 .sc-notice { padding: 10px 14px; border-radius: var(--sc-radius); font-weight: 500;
   --sc-cell: hsl(var(--sc-success) / .26);
@@ -875,6 +906,33 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   .sc-empty .sc-state-ic { animation: sc-bob 1.2s steps(2) infinite; }
   .sc-press-start { animation: sc-caret 1s steps(1) infinite; }
   .sc-qs-box::after { animation: sc-caret 1s steps(1) infinite; }
+
+  /* [xp] The run cycle: two frames, and a walk bounded by the fill. */
+  @keyframes sc-creep-run { to { left: calc(100% - 8px); } }
+  @keyframes sc-creep-frame {
+    0%, 49% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+  }
+  .sc-xp-creep { animation: sc-creep-run 3.2s steps(16) infinite; }
+  /* Offset so they do not march in lockstep. */
+  .sc-xp-creep-1 { animation-delay: -1.1s; }
+  .sc-xp-creep-2 { animation-delay: -2.2s; }
+  .sc-creep-a { animation: sc-creep-frame .4s steps(1) infinite; }
+  .sc-creep-b { display: block; position: absolute; inset: 0;
+    animation: sc-creep-frame .4s steps(1) infinite reverse; }
+
+  /* [xp] Level up: the bar flashes and the banner rises once. */
+  @keyframes sc-xp-flash {
+    0%, 100% { background-color: hsl(var(--sc-primary)); }
+    50% { background-color: hsl(var(--sc-primary-fg)); }
+  }
+  @keyframes sc-xp-rise {
+    from { transform: translateY(8px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .sc-xp-levelup .sc-xp-fill { animation: sc-xp-flash .3s steps(2) 2; }
+  .sc-xp-banner { animation: sc-xp-rise .3s steps(3) both; }
+  .sc-xp-gameover .sc-xp-track { animation: sc-shake .2s steps(2) 2; }
   @keyframes sc-walk { to { left: calc(100vw - 16px); } }
   :root.sc-konami::after { animation: sc-walk 6s steps(24) infinite; }
   .sc-h1::after,

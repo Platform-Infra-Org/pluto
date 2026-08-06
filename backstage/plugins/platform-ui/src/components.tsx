@@ -6,7 +6,17 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { configApiRef, useApi } from '@backstage/core-plugin-api';
-import { Sprite, SPRITE_SIZE, spriteRects, TEMPLE, POTION } from './sprites';
+import {
+  Sprite,
+  SPRITE_SIZE,
+  spriteRects,
+  TEMPLE,
+  POTION,
+  RUPEE,
+  CREEP_A,
+  CREEP_B,
+  CREEP_SIZE,
+} from './sprites';
 
 /**
  * Renders a pixel grid as SVG rects. `shape-rendering: crispEdges` is what keeps
@@ -69,6 +79,59 @@ export function PixelPotion({
         ))}
       </g>
     </svg>
+  );
+}
+
+/** The rupee beside the experience bar: accent fill, ink facets. */
+export function PixelRupee({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox={`0 0 ${SPRITE_SIZE} ${SPRITE_SIZE}`}
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <g fill="hsl(var(--sc-primary))">
+        {spriteRects(RUPEE, '~').map(r => (
+          <rect key={`f-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
+        ))}
+      </g>
+      <g fill="currentColor">
+        {spriteRects(RUPEE, '#').map(r => (
+          <rect key={`e-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * One creature, both run frames stacked.
+ *
+ * Both frames are always rendered and CSS shows one at a time: swapping them
+ * in React would re-render three sprites every 200ms for pure decoration.
+ */
+export function PixelCreep({ className }: { className?: string }) {
+  const frame = (sprite: Sprite, cls: string) => (
+    <svg
+      className={cls}
+      viewBox={`0 0 ${CREEP_SIZE} ${CREEP_SIZE}`}
+      shapeRendering="crispEdges"
+      fill="currentColor"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {spriteRects(sprite).map(r => (
+        <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
+      ))}
+    </svg>
+  );
+  return (
+    <span className={className} aria-hidden="true">
+      {frame(CREEP_A, 'sc-creep-a')}
+      {frame(CREEP_B, 'sc-creep-b')}
+    </span>
   );
 }
 

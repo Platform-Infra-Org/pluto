@@ -33,14 +33,26 @@ describe('workflowProgress', () => {
     expect(total).toBe(3);
   });
 
-  it('treats every finished phase as done, not just success', () => {
+  it('does not count a failed step as ground covered', () => {
+    // Counting failures fills the bar to 100% the moment a run dies, which
+    // reads as "all the work completed" — the opposite of what happened.
     const nodes = [
       node('a', 'Pod', 'Succeeded'),
       node('b', 'Pod', 'Failed'),
       node('c', 'Pod', 'Skipped'),
       node('d', 'Pod', 'Running'),
     ];
-    expect(workflowProgress(nodes)).toEqual({ done: 3, total: 4 });
+    expect(workflowProgress(nodes)).toEqual({ done: 2, total: 4 });
+  });
+
+  it('freezes a stopped run where it got to', () => {
+    // The review-gate shape after an approver refuses the gate: one step done,
+    // the suspend stopped. Half a bar, not a full one.
+    const nodes = [
+      node('plan', 'Pod', 'Succeeded'),
+      node('approve', 'Suspend', 'Failed'),
+    ];
+    expect(workflowProgress(nodes)).toEqual({ done: 1, total: 2 });
   });
 
   it('never goes backwards when the DAG expands', () => {

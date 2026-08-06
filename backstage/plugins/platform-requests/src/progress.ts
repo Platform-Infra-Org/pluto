@@ -10,8 +10,15 @@ import { WorkflowNode } from './api';
  */
 const LEAF_TYPES = new Set(['Pod', 'Suspend']);
 
-/** Phases that mean a step is done with, one way or another. */
-const FINISHED = new Set(['Succeeded', 'Failed', 'Error', 'Skipped', 'Omitted']);
+/**
+ * Phases that count as ground covered.
+ *
+ * Failed and Error are deliberately absent. Counting them fills the bar to
+ * 100% at the moment a run dies, which reads as "all the work completed" —
+ * the opposite of what happened. Leaving them out freezes the bar at the last
+ * step that actually succeeded, which is where the run got to.
+ */
+const COMPLETED = new Set(['Succeeded', 'Skipped', 'Omitted']);
 
 export interface Progress {
   done: number;
@@ -31,7 +38,7 @@ export function workflowProgress(
   previousDone: number = 0,
 ): Progress {
   const leaves = nodes.filter(n => LEAF_TYPES.has(n.type ?? ''));
-  const done = leaves.filter(n => FINISHED.has(n.phase ?? '')).length;
+  const done = leaves.filter(n => COMPLETED.has(n.phase ?? '')).length;
   return {
     done: Math.max(done, previousDone),
     total: leaves.length,
