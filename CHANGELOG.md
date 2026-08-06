@@ -209,6 +209,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Provision With Review — a clickable suspend-gate example
 - Stop action, and suspend fields described by the workflow
 - The colour picker is a shelf of potions
+- Turn the fantasy screen names back off
 
 ### Changed
 
@@ -270,6 +271,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Regenerate for the suspend approval gate
 - Regenerate for the review-gate template
 - Regenerate for the stop action and declared fields
+- Regenerate for the potion picker
 
 ### Fixed
 
