@@ -29,6 +29,11 @@ app:
     - page:catalog:
         config:
           path: /catalog
+    # This platform's catalog is mostly Resources — the things requests create —
+    # so the kind filter opens on Resource rather than Backstage's Component.
+    - catalog-filter:catalog/kind:
+        config:
+          initialFilter: resource
     # Disable the stock Backstage themes so the platform theme is the default.
     - theme:app/light: false
     - theme:app/dark: false
