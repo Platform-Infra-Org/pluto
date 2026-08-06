@@ -321,6 +321,60 @@ export const POTION: Sprite = [
   '................',
 ];
 
+/**
+ * The rupee beside the experience bar. Two layers like the potion: '#' is the
+ * facet edge, '~' the fill that takes the accent.
+ */
+export const RUPEE: Sprite = [
+  '.......##.......',
+  '......#~~#......',
+  '.....#~~~~#.....',
+  '....#~~~~~~#....',
+  '...#~~~~~~~~#...',
+  '..#~~~~~~~~~~#..',
+  '.#~~~~~~~~~~~~#.',
+  '#~~~~~~~~~~~~~~#',
+  '#~~~~~~~~~~~~~~#',
+  '.#~~~~~~~~~~~~#.',
+  '..#~~~~~~~~~~#..',
+  '...#~~~~~~~~#...',
+  '....#~~~~~~#....',
+  '.....#~~~~#.....',
+  '......#~~#......',
+  '.......##.......',
+];
+
+/**
+ * The creatures that run along the bar while a workflow is executing.
+ *
+ * 8x8 rather than the usual 16, so several fit on a 12px bar — the only
+ * sprites in this file that are not SPRITE_SIZE square. Two frames, legs
+ * apart and legs together, which is the whole of an 8-bit run cycle.
+ */
+export const CREEP_SIZE = 8;
+
+export const CREEP_A: Sprite = [
+  '..####..',
+  '.######.',
+  '##.##.##',
+  '########',
+  '########',
+  '.######.',
+  '.#....#.',
+  '#......#',
+];
+
+export const CREEP_B: Sprite = [
+  '..####..',
+  '.######.',
+  '##.##.##',
+  '########',
+  '########',
+  '.######.',
+  '..#..#..',
+  '.#....#.',
+];
+
 export const STATE_SPRITES: Record<RequestState, Sprite> = {
   PENDING_APPROVAL: HOURGLASS,
   /* Was SCROLL, which meant nothing in particular and is now free for what it
