@@ -72,5 +72,10 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "jest": {
+    "moduleNameMapper": {
+      "^\\./branding$": "<rootDir>/branding/index.testStub.ts"
+    }
+  }
 }
