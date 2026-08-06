@@ -151,9 +151,19 @@ git commit -m "feat(ui): march the loading bar in discrete cells"
 
 ---
 
-## Task 2: Tooltips become dialogue boxes
+## Task 2: Tooltips become dialogue boxes — NOT APPLICABLE, verified
 
 Two primitives are in play: canon (`[class*="bui-Tooltip"]`) and MUI v4 (`.MuiTooltip-tooltip`). Both render a soft grey rounded pill today.
+
+> **Outcome: dropped.** This app renders **no styleable tooltip anywhere**.
+> Probed 34 buttons across `/catalog`, an entity page, `/create`, `/requests`,
+> `/settings`, `/catalog-graph`, `/visualizer` and `/docs`: no
+> `.MuiTooltip-tooltip` or `bui-Tooltip` surface ever appears. Every hover hint
+> is a native `title` attribute — 38 of them on `/catalog` alone — which the OS
+> draws and CSS cannot reach. The `aria-describedby` elements on the catalog
+> table are react-beautiful-dnd drag hints, not tooltips.
+> The CSS was written, verified to match nothing, and reverted rather than
+> shipped as dead style. Revisit if a plugin ever renders a real tooltip.
 
 **Files:** Modify `plugins/platform-ui/src/styles.ts`
 
@@ -577,7 +587,7 @@ Cycle the `document.title` prefix through `▖▘▝▗` on a 1s `steps` interva
 
 Gate on `document.hidden` and listen for `visibilitychange`. A title animating in a background tab is a battery drain, and browsers throttle the timer unpredictably anyway.
 
-- [ ] **Step 3: A favicon pip**
+- [x] **Step 3: A favicon pip — DROPPED.** The favicon is drawn from module scope before React exists, so activity state would have to be threaded through the same branding relay that caused the Task 12 wiring bug. The title ticker already carries the signal.
 
 The favicon is already canvas-generated per accent in `SchemeRoot.tsx` — draw a small accent pip in the corner while work is in flight, and redraw without it when it settles.
 
