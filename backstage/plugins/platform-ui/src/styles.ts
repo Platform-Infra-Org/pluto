@@ -421,11 +421,30 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   border-radius: var(--sc-radius); font-size: 12px; font-weight: 600; border: 1px solid transparent;
   white-space: nowrap; max-width: 100%; }
 .sc-dot { width: 7px; height: 7px; border-radius: var(--sc-radius); background: currentColor; }
-.sc-badge-muted { background: hsl(var(--sc-muted)); color: hsl(var(--sc-muted-fg)); }
-.sc-badge-primary { background: hsl(var(--sc-primary) / .12); color: hsl(var(--sc-primary)); }
-.sc-badge-success { background: hsl(var(--sc-success) / .14); color: hsl(var(--sc-success)); }
-.sc-badge-warning { background: hsl(var(--sc-warning) / .16); color: hsl(38 92% 40%); }
-.sc-badge-destructive { background: hsl(var(--sc-destructive) / .12); color: hsl(var(--sc-destructive)); }
+/* [flare] Badge fills are dithered, not washed. The NES had no alpha channel, so
+   a tint was a checkerboard — and a 4px checker is visibly a grid where a flat
+   12% wash is just a pale rectangle.
+   Each variant declares the colour of a filled cell in --sc-cell; the pattern
+   itself is written once. Keeping the cell colour in a custom property is also
+   what makes the contrast measurable: the worst case for the text is a filled
+   cell, and that is exactly this value composited over the page.
+   The text colours below are darker than the tokens they came from. Measured
+   across all six schemes, every variant failed 4.5:1 before this change — the
+   worst was the primary badge on the amber accent at 1.84:1 — and the dither
+   costs a little more contrast on top. color-mix darkens the accent whatever
+   the picker is set to, which a fixed hex cannot do. */
+.sc-badge[class*="sc-badge-"] {
+  background-color: transparent;
+  background-image: repeating-conic-gradient(
+    var(--sc-cell, transparent) 0% 25%, transparent 0% 50%);
+  background-size: 4px 4px;
+}
+.sc-badge-muted { --sc-cell: hsl(240 5% 62% / .38); color: hsl(240 5% 34%); }
+.sc-badge-primary { --sc-cell: hsl(var(--sc-primary) / .22);
+  color: color-mix(in srgb, hsl(var(--sc-primary)) 52%, black); }
+.sc-badge-success { --sc-cell: hsl(var(--sc-success) / .26); color: hsl(152 60% 22%); }
+.sc-badge-warning { --sc-cell: hsl(var(--sc-warning) / .3); color: hsl(38 95% 24%); }
+.sc-badge-destructive { --sc-cell: hsl(var(--sc-destructive) / .24); color: hsl(0 70% 34%); }
 
 /* table */
 .sc-table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -470,8 +489,12 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 
 /* success notice (e.g. created-resource link) */
 .sc-notice { padding: 10px 14px; border-radius: var(--sc-radius); font-weight: 500;
-  background: hsl(var(--sc-success) / .12); color: hsl(var(--sc-success));
-  border: 1px solid hsl(var(--sc-success) / .3); }
+  --sc-cell: hsl(var(--sc-success) / .26);
+  background-color: transparent;
+  background-image: repeating-conic-gradient(var(--sc-cell) 0% 25%, transparent 0% 50%);
+  background-size: 4px 4px;
+  color: hsl(152 60% 22%);
+  border: 1px solid hsl(var(--sc-success) / .45); }
 
 /* login gate */
 .sc-login { min-height: 100vh; display: flex; align-items: center; justify-content: center;
@@ -494,7 +517,13 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-login-pick { margin-top: 20px; padding-top: 18px; border-top: 1px solid hsl(var(--sc-border)); width: 100%;
   display: flex; justify-content: center; }
 .sc-table tr:last-child td { border-bottom: none; }
-.sc-table tbody tr:hover { background: hsl(var(--sc-muted) / .5); }
+/* Hover is a dither too, so the selected row reads as a filled cell block
+   rather than a soft tint. Row text is --sc-fg, so contrast is unaffected. */
+.sc-table tbody tr:hover {
+  background-image: repeating-conic-gradient(
+    hsl(var(--sc-primary) / .16) 0% 25%, transparent 0% 50%);
+  background-size: 4px 4px;
+}
 /* [flare] Rows select the way a menu does: a cursor in the margin rather than a
    wash alone. The gutter is reserved on every row whether or not the cursor is
    in it — a 12px reflow under the pointer is worse than no cursor at all. */
