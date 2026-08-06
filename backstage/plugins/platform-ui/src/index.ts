@@ -20,6 +20,8 @@ export {
 export { STATE_SPRITES, TEMPLE, SCROLL, HOURGLASS } from './sprites';
 export type { Sprite } from './sprites';
 export { useTabActivity } from './tabActivity';
+export { useVisits, useRecordVisit } from './useVisits';
+export type { Visit } from './useVisits';
 export { JsonTree } from './JsonTree';
 export { DynamicSelect, toChoiceOptions } from './DynamicSelect';
 export type { DynamicSelectProps, ChoiceOption, Fetcher } from './DynamicSelect';
