@@ -581,6 +581,20 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   background: hsl(var(--sc-card)); border: var(--sc-border-w) solid hsl(var(--sc-border)); box-shadow: var(--sc-shadow); }
 .sc-swatch { width: 18px; height: 18px; border-radius: var(--sc-radius); border: 2px solid transparent; cursor: pointer; padding: 0; }
 .sc-swatch[aria-pressed="true"] { border-color: hsl(var(--sc-fg)); }
+/* [flare] Scrollbars are furniture, and the OS default is the most modern
+   object left on the page. Square thumb, hard edge, accent fill. The Firefox
+   pair cannot express the border, so it degrades to a plain accent bar. */
+* { scrollbar-color: hsl(var(--sc-primary)) hsl(var(--sc-muted)); scrollbar-width: thin; }
+::-webkit-scrollbar { width: 14px; height: 14px; }
+::-webkit-scrollbar-track { background: hsl(var(--sc-muted)); }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--sc-primary));
+  border: var(--sc-border-w) solid hsl(var(--sc-bg));
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--sc-primary) / .82); }
+::-webkit-scrollbar-corner { background: hsl(var(--sc-muted)); }
+
 /* ===== Motion =====
    Everything timed lives behind prefers-reduced-motion and uses steps(), never
    ease: smooth interpolation is what makes a pixel interface look like a modern
