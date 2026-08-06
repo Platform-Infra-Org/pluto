@@ -101,6 +101,18 @@ body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); } /* body = s
   box-shadow: var(--sc-shadow) !important;
   border-radius: var(--sc-radius) !important; }
 .MuiInputBase-root, .MuiOutlinedInput-root { border-radius: var(--sc-radius) !important; }
+/* Popups we do not render ourselves — Backstage's Login Required prompt, the
+   unregister confirmation — come out of the canon dialog primitive with square
+   corners and no edge, which reads as a foreign box dropped on the page. Same
+   surface treatment as every other card. MuiDialog-paper covers the plugins
+   still on MUI dialogs. */
+[class*="bui-DialogInner"], .MuiDialog-paper {
+  background-color: hsl(var(--sc-card)) !important;
+  border: var(--sc-border-w) solid hsl(var(--sc-border)) !important;
+  border-radius: var(--sc-radius) !important;
+  box-shadow: var(--sc-shadow) !important;
+  overflow: hidden; /* so the header and footer edges follow the corners */
+}
 .MuiOutlinedInput-notchedOutline { border-color: hsl(var(--sc-input)) !important; }
 /* Every native surface takes the pixel face too — headings, body, table cells,
    inputs, menus, tooltips. The universal selector is deliberate: the goal is
