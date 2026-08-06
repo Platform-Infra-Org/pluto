@@ -633,10 +633,24 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   background: hsl(var(--sc-muted));
   border: var(--sc-border-w) solid hsl(var(--sc-border));
   border-radius: var(--sc-radius-sm); }
+/* The fill takes its colour from the run, not from the picked accent: yellow
+   while it works, green when it lands, red when it does not. Those three read
+   the same in every scheme, which is the whole point — a bar that is violet on
+   Tuesday and amber on Wednesday tells you nothing at a glance.
+   --sc-xp-tone is set per state below; the cell pattern is written once. */
 .sc-xp-fill { position: relative; height: 100%;
-  background: hsl(var(--sc-primary));
+  background: hsl(var(--sc-xp-tone));
   background-image: repeating-linear-gradient(90deg,
-    hsl(var(--sc-primary)) 0 6px, hsl(var(--sc-primary) / .78) 6px 12px); }
+    hsl(var(--sc-xp-tone)) 0 6px, hsl(var(--sc-xp-tone) / .72) 6px 12px); }
+.sc-xp-running { --sc-xp-tone: var(--sc-warning); }
+.sc-xp-done { --sc-xp-tone: var(--sc-success); }
+.sc-xp-failed { --sc-xp-tone: var(--sc-destructive); }
+/* Ink on yellow: the creatures are white on the accent bar, which vanishes
+   against warning. */
+.sc-xp-running .sc-xp-creep { color: hsl(var(--sc-fg) / .75); }
+.sc-xp-running .sc-xp-count { color: hsl(38 95% 24%); }
+.sc-xp-failed .sc-xp-count { color: hsl(0 70% 34%); }
+.sc-xp-done .sc-xp-count { color: hsl(152 60% 22%); }
 .sc-xp-count { font-family: var(--sc-font-pixel); font-size: 12px;
   color: hsl(var(--sc-muted-fg)); flex: 0 0 auto; }
 /* The creatures live inside the fill, so their run is bounded by real
@@ -646,12 +660,12 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-xp-creep svg { width: 8px; height: 8px; display: block; }
 /* One frame at a time; both are rendered so the swap costs nothing. */
 .sc-creep-b { display: none; }
+.sc-xp-dots { display: inline-block; width: 1.6em; text-align: left; }
 .sc-xp-banner { position: absolute; right: 0; top: -18px;
   font-family: var(--sc-font-pixel); font-size: 12px;
   color: hsl(var(--sc-primary)); }
-.sc-xp-gameover .sc-xp-fill { background: hsl(var(--sc-destructive));
-  background-image: none; }
 .sc-xp-gameover .sc-xp-banner { color: hsl(var(--sc-destructive)); }
+.sc-xp-levelup .sc-xp-banner { color: hsl(var(--sc-success)); }
 
 /* [flare] The tour button.
    Hover is the sidebar's own selected treatment — a muted wash of the picked
@@ -983,6 +997,14 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     50%, 100% { opacity: 0; }
   }
   .sc-xp-creep { animation: sc-creep-run 3.2s steps(16) infinite; }
+  /* LOADING... counts itself out, one dot at a time. */
+  @keyframes sc-xp-dots {
+    0% { clip-path: inset(0 100% 0 0); }
+    33% { clip-path: inset(0 66% 0 0); }
+    66% { clip-path: inset(0 33% 0 0); }
+    100% { clip-path: inset(0 0 0 0); }
+  }
+  .sc-xp-dots { animation: sc-xp-dots 1.2s steps(1) infinite; }
   /* Offset so they do not march in lockstep. */
   .sc-xp-creep-1 { animation-delay: -1.1s; }
   .sc-xp-creep-2 { animation-delay: -2.2s; }
@@ -992,8 +1014,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 
   /* [xp] Level up: the bar flashes and the banner rises once. */
   @keyframes sc-xp-flash {
-    0%, 100% { background-color: hsl(var(--sc-primary)); }
-    50% { background-color: hsl(var(--sc-primary-fg)); }
+    0%, 100% { background-color: hsl(var(--sc-xp-tone)); }
+    50% { background-color: hsl(0 0% 100%); }
   }
   @keyframes sc-xp-rise {
     from { transform: translateY(8px); opacity: 0; }

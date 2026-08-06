@@ -74,8 +74,26 @@ export function ExperienceBar({
   // else would animate a claim the run is not making.
   const running = state === 'IN_PROGRESS' && pct > 0 && pct < 100;
 
+  /**
+   * The bar's colour is the run's status, not the picked accent: yellow while
+   * it works, green when it lands, red when it does not. Those three readings
+   * mean the same thing in every scheme, which is the point — a bar that is
+   * violet on Tuesday and amber on Wednesday says nothing at a glance.
+   *
+   * This is the persistent state. The level-up and game-over classes below it
+   * are the one-shot on top, and they expire.
+   */
+  const tone =
+    state === 'SUCCEEDED'
+      ? 'done'
+      : state === 'FAILED'
+      ? 'failed'
+      : 'running';
+
   return (
-    <div className={`sc-xp${finale ? ` sc-xp-${finale}` : ''}`}>
+    <div
+      className={`sc-xp sc-xp-${tone}${finale ? ` sc-xp-${finale}` : ''}`}
+    >
       <PixelRupee className="sc-xp-rupee" />
       <div
         className="sc-xp-track"
@@ -95,6 +113,11 @@ export function ExperienceBar({
       {/* Numbers beside the bar, never a bar alone: it is the NES convention
           and the readable one at the same time. */}
       <span className="sc-xp-count">
+        {running ? (
+          <>
+            LOADING<span className="sc-xp-dots" aria-hidden="true">...</span>{' '}
+          </>
+        ) : null}
         {progress.done}/{progress.total} STEPS
       </span>
       {finale === 'levelup' && <span className="sc-xp-banner">LEVEL UP</span>}
