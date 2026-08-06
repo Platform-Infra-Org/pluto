@@ -1,6 +1,6 @@
 # Self-contained Backstage stack. Distinct ports so it coexists with the legacy
 # stack (docker-compose.yml). All credentials are throwaway dev-only values.
-#   docker compose -p backstage -f deploy/backstage/docker-compose.yml up -d
+#   docker compose -p backstage -f deploy/dev/docker-compose.yml up -d
 name: backstage
 
 services:

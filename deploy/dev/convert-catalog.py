@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Convert the legacy resource catalog (deploy/seed-catalog/resources/<type>/<name>.json)
-into a Backstage catalog repo tree under deploy/backstage/seed/catalog/.
+into a Backstage catalog repo tree under deploy/dev/seed/catalog/.
 
 Each resource -> a Backstage `Resource` entity. The full original definition is
 preserved under `spec.definition` so the platform-catalog plugin can render the

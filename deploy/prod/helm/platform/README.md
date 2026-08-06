@@ -6,7 +6,7 @@ Deploys the portal only. Postgres, the directory (AD), SSO and Bitbucket Data
 Center are yours; the chart references them and never creates them.
 
 ```bash
-helm upgrade --install platform deploy/helm/platform \
+helm upgrade --install platform deploy/prod/helm/platform \
   --namespace platform --create-namespace \
   -f my-values.yaml
 ```

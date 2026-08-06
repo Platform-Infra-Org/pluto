@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Seed the Gitea instance: create an admin user + token, create the `catalog` and
-# `software-templates` repos, and push the seed trees from deploy/backstage/seed/.
+# `software-templates` repos, and push the seed trees from deploy/dev/seed/.
 # Idempotent: re-running force-pushes the current seed content.
 set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-SEED="$REPO_ROOT/deploy/backstage/seed"
+SEED="$REPO_ROOT/deploy/dev/seed"
 GITEA_HTTP="http://localhost:3001"
 GITEA_CONTAINER="backstage-gitea-1"
 USER="platform"

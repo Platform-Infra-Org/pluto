@@ -46,7 +46,7 @@ spec:
         params:
           region: ${{ parameters.region }}
         # The workflow with the mid-run suspend step
-        # (deploy/backstage/argo/review-gate.yaml).
+        # (deploy/dev/argo/review-gate.yaml).
         argoSubmit:
           namespace: argo
           workflowTemplate: review-gate

@@ -44,7 +44,7 @@ Everything about the approver's form comes from this declaration:
 | `default` | the field pre-filled, and the answer optional |
 | no `default` | a required field; Resume stays disabled until answered |
 
-A working example lives in `deploy/backstage/argo/review-gate.yaml`, wired to
+A working example lives in `deploy/dev/argo/review-gate.yaml`, wired to
 the **Provision With Review** template.
 
 ## 2. Feed the answer to the next step

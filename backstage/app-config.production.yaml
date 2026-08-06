@@ -69,7 +69,7 @@ catalog:
 
 # NOT YET PORTED TO BITBUCKET — reads work on Bitbucket with the config above,
 # but writes do not. The git-ops Argo WorkflowTemplate
-# (deploy/backstage/argo/git-ops.yaml) commits resources through the *Gitea*
+# (deploy/dev/argo/git-ops.yaml) commits resources through the *Gitea*
 # contents API (`/api/v1/repos/...`) via its `gitea` + `creds` parameters, which
 # default to localhost:3001. Production needs those curl calls rewritten — either
 # against Bitbucket's REST API, or (simpler, host-agnostic) as a plain

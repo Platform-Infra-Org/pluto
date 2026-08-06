@@ -6,7 +6,7 @@
 set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
-COMPOSE="docker compose -p backstage -f deploy/backstage/docker-compose.yml"
+COMPOSE="docker compose -p backstage -f deploy/dev/docker-compose.yml"
 
 echo "==> [1/3] docker services (postgres:5433, keycloak:8081, gitea:3001, ldap:1389)"
 $COMPOSE up -d
@@ -26,10 +26,10 @@ for i in $(seq 1 60); do
 done
 
 echo "==> [2/3] seed Gitea repos"
-bash deploy/backstage/gitea-seed.sh
+bash deploy/dev/gitea-seed.sh
 
 echo "==> [3/3] kind cluster + Argo Workflows"
-bash deploy/backstage/kind-argo-up.sh
+bash deploy/dev/kind-argo-up.sh
 
 cat <<'EOF'
 

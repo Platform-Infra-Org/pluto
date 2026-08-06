@@ -1,6 +1,6 @@
 # How-to: deploy to Kubernetes with Helm
 
-The chart is `deploy/helm/platform`. It deploys the portal and nothing else —
+The chart is `deploy/prod/helm/platform`. It deploys the portal and nothing else —
 production supplies its own Postgres, directory, SSO and Bitbucket.
 
 ## What the chart does and does not create
@@ -80,7 +80,7 @@ The database user needs **CREATE DATABASE**: each Backstage plugin creates its
 own database on first start.
 
 ```bash
-helm upgrade --install platform deploy/helm/platform \
+helm upgrade --install platform deploy/prod/helm/platform \
   --namespace platform --create-namespace \
   -f my-values.yaml
 ```

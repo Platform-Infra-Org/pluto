@@ -15,3 +15,5 @@ dist/
 dist-dynamic/
 
 specs/
+
+.claude/

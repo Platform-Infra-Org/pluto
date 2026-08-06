@@ -78,7 +78,7 @@ create/update/delete requests for this type. Use a real LDAP group. See
 Commit the template to the software-templates repo, then register/refresh:
 
 ```bash
-bash deploy/backstage/gitea-seed.sh          # push the repo
+bash deploy/dev/gitea-seed.sh          # push the repo
 # then refresh the templates Location:
 curl -X POST .../api/catalog/refresh -d '{"entityRef":"location:default/platform-templates"}'
 ```
