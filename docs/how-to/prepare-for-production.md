@@ -17,8 +17,8 @@ secret manager.
 
 | Config key | Dev value | Production |
 |---|---|---|
-| `backend.auth.externalAccess[].options.token` | `dev-smoke-token-please-change` | remove it, or a strong `${…}` — it is a static bearer token |
-| `auth.session.secret` | `dev-only-backstage-session-secret` | `${AUTH_SESSION_SECRET}` |
+| `backend.auth.externalAccess[].options.token` | generated into `app-config.local.yaml` (gitignored) | absent entirely, or a strong `${…}` — it is a static bearer token |
+| `auth.session.secret` | generated into `app-config.local.yaml` (gitignored) | `${AUTH_SESSION_SECRET}` |
 | `auth.providers.oidc.*.clientSecret` | `backstage-dev-secret` | `${OIDC_CLIENT_SECRET}` |
 | `backend.database.connection.password` | `backstage` | `${POSTGRES_PASSWORD}` (already done in the production file) |
 | `catalog.providers.ldapOrg.default.bind.secret` | `admin` | `${LDAP_BIND_SECRET}` |

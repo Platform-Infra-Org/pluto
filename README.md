@@ -24,8 +24,14 @@ Bitbucket Data Center, your Argo — and the chart only points at them.
 
 That means the dev credentials living in `deploy/dev/` (`admin`/`admin` LDAP
 users, a Keycloak client secret, Gitea's `platform`/`platform`) are throwaway
-fixtures for a laptop. They are not used by the chart and have no production
-equivalent.
+fixtures for containers that only listen on localhost. They are not used by the
+chart and have no production equivalent.
+
+Two credentials are **not** committed even as fixtures — a static backend bearer
+token and the session-signing secret. `scripts/backstage-up.sh` generates them
+into `backstage/app-config.local.yaml`, which is gitignored. Both are the kind
+of value that is dangerous precisely because somebody eventually copies it into
+a real deployment.
 
 | | Development | Production |
 |---|---|---|
