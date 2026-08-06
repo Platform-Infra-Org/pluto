@@ -208,6 +208,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Approve and resume a suspended workflow step
 - Provision With Review — a clickable suspend-gate example
 - Stop action, and suspend fields described by the workflow
+- The colour picker is a shelf of potions
 
 ### Changed
 
@@ -268,6 +269,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Plan mid-workflow suspend approval
 - Regenerate for the suspend approval gate
 - Regenerate for the review-gate template
+- Regenerate for the stop action and declared fields
 
 ### Fixed
 
