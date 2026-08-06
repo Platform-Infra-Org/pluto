@@ -90,6 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stop tracking specs/
 - Commit the specs/ ignore rule
 - Cover the new config and features, and fix the changelog grouping
+- Split deploy into prod and dev, and say so in the README
 
 ### Fixed
 
