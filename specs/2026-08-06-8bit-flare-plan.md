@@ -1,7 +1,9 @@
 # More 8-bit flare — plan
 
-**Goal:** push the pixel-game motif past "themed" into "reads like a game", without
-adding a dependency, a build step, or a single millisecond of blocked input.
+**Goal:** push the pixel-game motif past "themed" into "reads like a game" — and
+commit to a genre while doing it: **NES-era fantasy in the Greek-myth register**,
+which is what the app has been half-drawing already. No new dependency, no build
+step, no millisecond of blocked input.
 
 Follows `2026-08-03-8bit-ui-design.md`, which established the tokens, the sprite
 system, the CRT layer and the motion rules. This plan only adds what that one
@@ -46,6 +48,118 @@ Two references worth stealing from, both consistent with the constraints above:
 The through-line of both: **an 8-bit interface is one that shows its grid.** Soft
 alpha, blurred shadows and smooth interpolation are the three tells, and this
 codebase still has all three in the places nobody has looked yet.
+
+---
+
+## The fantasy layer
+
+8-bit is a *rendering* constraint; it is not a genre. The app has been drifting
+toward one anyway and nobody wrote it down: the mark is `hades.png`, the pending
+sprite is a `TEMPLE`, `APPROVED` is a `SCROLL`, and the built-in template header
+art is a Greek meander under a stepped pediment (`styles.ts:265`). That is a
+genre, and it is a good one.
+
+**The decision: NES-era fantasy, in the Greek-myth register.** Not swords and
+dragons — oracles, temples, laurels and the underworld. It costs nothing extra
+because half of it is already drawn, and it stays coherent with the header images
+already in `packages/app/src/branding/template-headers/`. A generic fantasy pass
+would fight that art; this one finishes it.
+
+The NES-RPG conventions worth taking, and where each lands:
+
+| Convention | Where it goes here |
+|---|---|
+| The **command window** — solid fill, double light frame, sharp inner corner | Dialogs, menus, the colour picker (task F1) |
+| The **menu cursor** `▶` selecting a row, never a hover wash | Tier 1 task 3, already planned — this is its motivation |
+| The **blinking `▼`** meaning "there is more" | Tier 1 task 2, already planned |
+| **Numbers beside every bar**, never a bar alone | Approval progress (task F3) |
+| **Item iconography** carrying meaning at 16px | Request kinds and template categories (task F2) |
+| **Dither wipe** on entering a menu or an encounter | Tier 1 task 6, already planned |
+
+Three of the six were already on the list for other reasons. The fantasy layer
+mostly renames what they are *for*, which is the sign it is the right genre
+rather than a costume over a costume.
+
+### F1. The command window
+
+The Dragon Quest frame: a double line with a gap between, not a single border.
+Free in CSS via stacked shadows — no image, no `border-image`, and it composes
+with the rounding that just shipped:
+
+```
+box-shadow:
+  0 0 0 2px hsl(var(--sc-card)),      /* the gap */
+  0 0 0 4px hsl(var(--sc-fg) / .85),  /* the outer rule */
+  var(--sc-shadow);                    /* the hard offset we already have */
+```
+
+Applied to the two dialog primitives (`[class*="bui-DialogInner"]`,
+`.MuiDialog-paper`) and the scheme picker — the surfaces that are already
+*windows* rather than *pages*. Not applied to cards: every surface double-framed
+is a page of noise, and the distinction between "a panel of content" and "a window
+demanding a decision" is worth keeping.
+
+**Files:** `styles.ts`. **Verify:** computed `box-shadow` has three layers;
+screenshot the unregister dialog and the picker.
+
+### F2. An item vocabulary
+
+Five new 16×16 sprites in the existing `sprites.ts` grid format, chosen so each
+is legible at 16px as a silhouette — the real constraint, and the reason to stay
+with objects rather than creatures:
+
+| Sprite | Meaning | Used by |
+|---|---|---|
+| `AMPHORA` | stored data | database / Postgres templates |
+| `KEY` | a secret | templates declaring `secrets.schema`, the `SecretField` |
+| `LAUREL` | granted | `APPROVED` state, replacing the reused `SCROLL` |
+| `HELM` | an owning team | owner chips in the catalog and on request cards |
+| `TORCH` | something is running | `IN_PROGRESS`, beside the marching bar |
+
+`SCROLL` is freed up for what it should always have meant: documentation.
+`STATE_SPRITES` gains no new keys — `APPROVED` just points somewhere better.
+
+**Files:** `sprites.ts`, `sprites.test.ts` (the run-merge assertions), wherever
+`STATE_SPRITES` is consumed. **Verify:** render each at 16px and eyeball the
+silhouette; the existing sprite tests cover the grid shape.
+
+### F3. Numbers beside the bar
+
+The NES-RPG rule — HP is always `23/40`, never a bare bar — is also the
+accessible one, which makes it the cheapest win in this document. The approval
+progress on a request detail is currently a segmented bar alone. Add the literal
+count (`2/3 APPROVALS`) in pixel type beside it.
+
+Same for the retention countdown where a request is close to expiring: show the
+days, do not encode them in a colour.
+
+**Files:** the request detail component, `styles.ts`.
+
+### F4. More scenes in the built-in header art
+
+The Greek header art is one scene, and the supplied-image machinery
+(`templateHeaders.ts`) already cycles N images across cards. Give the *built-in*
+fallback the same treatment: three CSS-drawn scenes — the existing temple
+frieze, plus an oracle flame and an underworld gate — cycling by
+`:nth-child(3n + i)` exactly as the supplied images do.
+
+This only shows when no images are dropped in, so it is the first impression for
+a fresh install and currently repeats identically down the whole grid.
+
+**Files:** `styles.ts`. **Verify:** with the drop-in folder emptied, assert three
+distinct `background-image` values across the template grid.
+
+### F5. Optional: screen names, not state names
+
+`REQUESTS` → `QUESTS`, `CREATE` → `SUMMON`, the catalog → `ATLAS`. Config-gated
+(`app.branding.flavour: fantasy`), default **off**.
+
+The boundary that makes this safe is the same one the exclusions below draw: a
+label naming a *screen* is decoration, and a user who cannot find "Requests"
+finds it one click later. A label naming a *state* is a record — `QUEST FAILED`
+in an audit trail is a support ticket. Screens may be renamed; states may not.
+
+**Files:** `CustomNav.tsx`, `app-config.yaml`, the branding docs.
 
 ---
 
@@ -202,7 +316,13 @@ walking across the footer. Resets on reload, stored nowhere, announced nowhere.
   approvals into a score changes what people optimise for.
 - **Game copy on state.** `QUEST ACCEPTED` instead of `SUBMITTED` makes an audit
   log unreadable. `PRESS START` on a login screen is a joke; `QUEST FAILED` on a
-  failed provision is a support ticket.
+  failed provision is a support ticket. Screen names are a different case and are
+  handled, off by default, in F5.
+- **Creature sprites.** Dragons, wyverns, slimes. A 16×16 creature that reads as
+  a creature takes several attempts and carries no meaning about a request;
+  objects say what they mean at a glance and are drawn once.
+- **A second, non-Greek fantasy register.** Runes, wizard hats, medieval
+  heraldry. Mixing two mythologies in one 16px grid reads as neither.
 - **WebGL / canvas pixelation of the UI.** Enormous cost, and it fights text
   rendering and screen readers.
 - **Chunky notched borders (9-slice).** Directly contradicts the rounding pass
@@ -216,6 +336,8 @@ walking across the footer. Resets on reload, stored nowhere, announced nowhere.
 | `.MuiLinearProgress-bar` transition fights `steps()` | Explicit `transition: none` |
 | `mask-image` inconsistent across the two dialog primitives | Documented `steps(3)` pop fallback |
 | A stray backtick truncates `styles.ts` | `styles.test.ts` asserts length, markers and balanced braces — it has caught this three times |
+| The double frame (F1) plus the hard shadow reads as heavy | Windows only, never cards; if it still crowds, drop the outer rule to `.6` alpha before dropping the technique |
+| Five new sprites are five chances to draw something illegible at 16px | Silhouette-first, objects only, no creatures; the existing `sprites.test.ts` grid assertions catch structural mistakes but not ugly ones — these get eyeballed at 16px, not 64px |
 | Motion accumulates into noise | Every addition gated on `prefers-reduced-motion`; Tier 1 adds exactly one new ambient loop (the tooltip marker), the rest are hover- or state-triggered |
 
 ## Verification
