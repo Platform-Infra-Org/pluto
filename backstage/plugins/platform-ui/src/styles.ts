@@ -441,7 +441,18 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-sub { color: hsl(var(--sc-muted-fg)); margin-top: 4px; font-size: 14px; }
 .sc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
 .sc-grid { display: grid; gap: 16px; }
-.sc-grid-2 { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items: start; }
+/* Home's cards are a grid of equals: stretch rather than start, so every box
+   in a row is the same height, and the cards fill the cell they are given. A
+   row of cards each shrunk to its own contents reads as a pile, not a grid. */
+.sc-grid-2 { display: grid; gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  /* Every row as tall as the tallest, so the whole grid is one size rather
+     than each row finding its own. */
+  grid-auto-rows: 1fr;
+  align-items: stretch; }
+.sc-grid-2 > .sc-card { height: 100%; display: flex; flex-direction: column; }
+/* The body takes the slack, so headers line up across the row. */
+.sc-grid-2 > .sc-card > .sc-card-b { flex: 1 1 auto; }
 .sc-action { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: var(--sc-radius);
   border: var(--sc-border-w) solid hsl(var(--sc-border)); text-decoration: none; transition: background .12s, border-color .12s; }
 .sc-action:hover { background: hsl(var(--sc-primary) / .06); border-color: hsl(var(--sc-primary) / .4); }
@@ -638,6 +649,38 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-xp-gameover .sc-xp-fill { background: hsl(var(--sc-destructive));
   background-image: none; }
 .sc-xp-gameover .sc-xp-banner { color: hsl(var(--sc-destructive)); }
+
+/* [flare] The tour button twinkles: eight pixel stars in the picked accent,
+   drawn as box-shadows on two pseudo-elements so there is no extra markup and
+   nothing to lay out. Hidden until hover, and only ever decoration — the
+   button reads the same without them. */
+.sc-tour { position: relative; }
+.sc-tour::before, .sc-tour::after {
+  content: ''; position: absolute; width: 2px; height: 2px;
+  /* Filled, not transparent: the element's own box is the first star, and an
+     unfilled one renders as a ring beside seven solid ones. */
+  background: hsl(var(--sc-primary));
+  opacity: 0; pointer-events: none;
+}
+.sc-tour::before {
+  top: -3px; left: 6px;
+  box-shadow:
+    0 0 0 1px hsl(var(--sc-primary)),
+    14px 3px 0 1px hsl(var(--sc-primary)),
+    34px -2px 0 1px hsl(var(--sc-primary)),
+    58px 4px 0 1px hsl(var(--sc-primary));
+}
+.sc-tour::after {
+  bottom: -3px; right: 6px;
+  box-shadow:
+    0 0 0 1px hsl(var(--sc-primary)),
+    -16px -2px 0 1px hsl(var(--sc-primary)),
+    -38px 3px 0 1px hsl(var(--sc-primary)),
+    -60px -3px 0 1px hsl(var(--sc-primary));
+}
+/* Without motion they simply appear: still stars, not a smudge. */
+.sc-tour:hover::before, .sc-tour:hover::after,
+.sc-tour:focus-visible::before, .sc-tour:focus-visible::after { opacity: 1; }
 
 /* success notice (e.g. created-resource link) */
 .sc-notice { padding: 10px 14px; border-radius: var(--sc-radius); font-weight: 500;
@@ -920,6 +963,19 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   .sc-empty .sc-state-ic { animation: sc-bob 1.2s steps(2) infinite; }
   .sc-press-start { animation: sc-caret 1s steps(1) infinite; }
   .sc-qs-box::after { animation: sc-caret 1s steps(1) infinite; }
+
+  /* Two sets, alternating, so the stars blink out of step with each other. */
+  @keyframes sc-twinkle {
+    0%, 45% { opacity: 1; }
+    50%, 95% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .sc-tour:hover::before, .sc-tour:focus-visible::before {
+    animation: sc-twinkle .6s steps(1) infinite;
+  }
+  .sc-tour:hover::after, .sc-tour:focus-visible::after {
+    animation: sc-twinkle .6s steps(1) infinite reverse;
+  }
 
   /* [xp] The run cycle: two frames, and a walk bounded by the fill. */
   @keyframes sc-creep-run { to { left: calc(100% - 8px); } }

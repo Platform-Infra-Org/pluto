@@ -35,6 +35,26 @@ const ACTIONS = [
   { to: '/requests', label: 'All requests', hint: 'Track approvals and workflows' },
 ];
 
+/**
+ * Replays the guided tour.
+ *
+ * Sits opposite the page title rather than among the quick actions: it is
+ * about the app itself, not one of the things you came here to do. The tour
+ * is hosted at the app root, so it is asked for by event — the home page and
+ * the root have no other connection.
+ */
+function TourButton() {
+  return (
+    <button
+      type="button"
+      className="sc-btn sc-btn-outline sc-tour"
+      onClick={() => window.dispatchEvent(new Event('platform:quickstart'))}
+    >
+      Take the tour
+    </button>
+  );
+}
+
 function QuickActions() {
   return (
     <Card>
@@ -48,20 +68,6 @@ function QuickActions() {
             <span className="sc-action-h sc-muted">{a.hint}</span>
           </Link>
         ))}
-        {/* An action, not an unread notification: no dot, no badge, always
-            present. The tour is hosted at the app root, hence the event. */}
-        <button
-          type="button"
-          className="sc-action"
-          onClick={() =>
-            window.dispatchEvent(new Event('platform:quickstart'))
-          }
-        >
-          <span className="sc-action-l">Take the tour</span>
-          <span className="sc-action-h sc-muted">
-            A quick guide to the platform
-          </span>
-        </button>
       </div>
     </Card>
   );
@@ -243,7 +249,7 @@ export function HomePage() {
 
   return (
     <Page>
-      <PageHeader title={title} subtitle={subtitle} />
+      <PageHeader title={title} subtitle={subtitle} actions={<TourButton />} />
       <div className="sc-grid-2">
         {sections.map(s => {
           switch (s) {
