@@ -114,6 +114,50 @@ body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); } /* body = s
   overflow: hidden; /* so the header and footer edges follow the corners */
 }
 .MuiOutlinedInput-notchedOutline { border-color: hsl(var(--sc-input)) !important; }
+/* [flare] Loading is a loading screen. Backstage's Progress is MUI LinearProgress,
+   so this pair reaches every native page: catalog, scaffolder, search, techdocs.
+   The bar is 4px cells, and MUI's own transform transition has to go or it
+   interpolates between the steps and the marching turns back into a slide. */
+.MuiLinearProgress-root {
+  height: 12px !important;
+  background: hsl(var(--sc-muted)) !important;
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-radius: var(--sc-radius);
+  overflow: hidden;
+}
+/* MUI drives the indeterminate bar by animating a transform on a partial-width
+   element, on a cubic-bezier. All of it goes: the bar fills the track and the
+   cells do the moving, which is how a loading bar looked before easing existed. */
+.MuiLinearProgress-bar {
+  /* Transparent, not accent: the gaps have to show the track or the cells are
+     invisible — a half-alpha accent over a solid accent is just the accent. */
+  background-color: transparent !important;
+  transition: none !important;
+  transform: none !important;
+  width: 100% !important;
+  animation: none !important;
+  background-image: repeating-linear-gradient(90deg,
+    hsl(var(--sc-primary)) 0 8px, transparent 8px 16px);
+}
+/* The catalog spins a CircularProgress rather than the linear one, and a
+   smoothly rotating ring is the least 8-bit object in the app. The svg goes and
+   a square block takes its place, turned in eighths by the motion block below.
+   The element itself stays: it carries role="progressbar". */
+.MuiCircularProgress-root {
+  width: 20px !important; height: 20px !important;
+  display: inline-flex !important; align-items: center; justify-content: center;
+  /* MUI rotates the root smoothly and continuously. Left on, it compounds with
+     the stepped turn below and the block wobbles instead of flipping frames. */
+  animation: none !important;
+  transform: none !important;
+}
+.MuiCircularProgress-root svg { display: none; }
+.MuiCircularProgress-root::after {
+  content: '';
+  width: 14px; height: 14px;
+  background: hsl(var(--sc-primary));
+  border: var(--sc-border-w) solid hsl(var(--sc-fg) / .35);
+}
 /* Every native surface takes the pixel face too — headings, body, table cells,
    inputs, menus, tooltips. The universal selector is deliberate: the goal is
    that no regular-font text survives anywhere in the app. */
@@ -550,6 +594,10 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
       hsl(var(--sc-primary)) 0 16px, transparent 16px 32px);
     animation: sc-march .8s steps(8) infinite;
   }
+  /* Native loading bars march in the same cells as ours; the spinner turns in
+     eighths, so it reads as a sprite flipping frames rather than a ring. */
+  .MuiLinearProgress-bar { animation: sc-march .8s steps(8) infinite !important; }
+  .MuiCircularProgress-root::after { animation: sc-gear 1s steps(8) infinite; }
   /* The gear turns in quarter steps, like a four-frame sprite sheet. */
   .sc-state-ic.spinning { animation: sc-gear 1s steps(4) infinite; }
   .sc-flash { animation: sc-flash .4s steps(2) 2; }
