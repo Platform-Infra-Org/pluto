@@ -207,6 +207,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Turn on the fantasy screen names
 - Approve and resume a suspended workflow step
 - Provision With Review — a clickable suspend-gate example
+- Stop action, and suspend fields described by the workflow
 
 ### Changed
 
@@ -266,6 +267,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Regenerate after enabling the fantasy names
 - Plan mid-workflow suspend approval
 - Regenerate for the suspend approval gate
+- Regenerate for the review-gate template
 
 ### Fixed
 
