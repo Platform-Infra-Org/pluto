@@ -83,12 +83,11 @@ export function ExperienceBar({
    * This is the persistent state. The level-up and game-over classes below it
    * are the one-shot on top, and they expire.
    */
-  const tone =
-    state === 'SUCCEEDED'
-      ? 'done'
-      : state === 'FAILED'
-      ? 'failed'
-      : 'running';
+  const TONES: Partial<Record<RequestState, string>> = {
+    SUCCEEDED: 'done',
+    FAILED: 'failed',
+  };
+  const tone = TONES[state] ?? 'running';
 
   return (
     <div
