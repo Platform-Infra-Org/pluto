@@ -576,6 +576,10 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-login-title { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: hsl(var(--sc-fg)); margin: 0; }
 .sc-login-sub { font-size: 14px; color: hsl(var(--sc-muted-fg)); margin: 0 0 16px; }
 .sc-login-card .sc-btn { width: 100%; }
+/* [flare] PRESS START, in pixel type and blinking. The button below it still
+   says what it does. */
+.sc-press-start { font-family: var(--sc-font-pixel); text-transform: uppercase;
+  letter-spacing: .06em; color: hsl(var(--sc-primary)); }
 .sc-login-pick { margin-top: 20px; padding-top: 18px; border-top: 1px solid hsl(var(--sc-border)); width: 100%;
   display: flex; justify-content: center; }
 .sc-table tr:last-child td { border-bottom: none; }
@@ -769,6 +773,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   }
   @keyframes sc-caret { 50% { opacity: 0; } }
   .sc-empty .sc-state-ic { animation: sc-bob 1.2s steps(2) infinite; }
+  .sc-press-start { animation: sc-caret 1s steps(1) infinite; }
   .sc-h1::after,
   :is(h1, h2, h3)[class*="bui-HeaderTitle"]::after,
   [class*="BackstageHeader-title"]::after {
