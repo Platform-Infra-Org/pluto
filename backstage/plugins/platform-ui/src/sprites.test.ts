@@ -1,4 +1,15 @@
-import { spriteRects, STATE_SPRITES, TEMPLE, SPRITE_SIZE } from './sprites';
+import {
+  spriteRects,
+  STATE_SPRITES,
+  TEMPLE,
+  SPRITE_SIZE,
+  AMPHORA,
+  KEY,
+  LAUREL,
+  HELM,
+  TORCH,
+  SCROLL,
+} from './sprites';
 
 const grid = (...rows: string[]) => rows;
 
@@ -28,12 +39,37 @@ describe('spriteRects', () => {
 
 describe('sprite data', () => {
   it('every sprite is a square grid of the declared size', () => {
-    for (const [name, sprite] of Object.entries({ TEMPLE, ...STATE_SPRITES })) {
+    const items = { AMPHORA, KEY, LAUREL, HELM, TORCH, SCROLL };
+    for (const [name, sprite] of Object.entries({
+      TEMPLE,
+      ...items,
+      ...STATE_SPRITES,
+    })) {
       expect(`${name}:${sprite.length}`).toBe(`${name}:${SPRITE_SIZE}`);
       for (const row of sprite) {
         expect(`${name}:${row.length}`).toBe(`${name}:${SPRITE_SIZE}`);
       }
     }
+  });
+
+  it('uses only the two authored characters', () => {
+    for (const [name, sprite] of Object.entries({
+      AMPHORA, KEY, LAUREL, HELM, TORCH, ...STATE_SPRITES,
+    })) {
+      const stray = sprite.join('').replace(/[#.]/g, '');
+      expect(`${name}:${stray}`).toBe(`${name}:`);
+    }
+  });
+
+  it('draws something in every item sprite', () => {
+    for (const [name, sprite] of Object.entries({ AMPHORA, KEY, LAUREL, HELM, TORCH })) {
+      expect(`${name}:${spriteRects(sprite).length > 0}`).toBe(`${name}:true`);
+    }
+  });
+
+  it('grants approval with the laurel, freeing the scroll for docs', () => {
+    expect(STATE_SPRITES.APPROVED).toBe(LAUREL);
+    expect(STATE_SPRITES.APPROVED).not.toBe(SCROLL);
   });
 
   it('covers every request state', () => {

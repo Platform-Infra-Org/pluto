@@ -183,9 +183,116 @@ export const HOURGLASS_SPENT: Sprite = [
   '................',
 ];
 
+/* The item vocabulary. Objects, not creatures: a 16x16 silhouette that reads as
+   a creature takes several attempts and says nothing about a request, while an
+   object says what it means at a glance and is drawn once. */
+
+/** Stored data — the vessel a database request fills. */
+export const AMPHORA: Sprite = [
+  '.....######.....',
+  '.....######.....',
+  '......####......',
+  '..##..####..##..',
+  '.####.####.####.',
+  '.##.########.##.',
+  '.##.########.##.',
+  '..############..',
+  '..############..',
+  '..############..',
+  '..############..',
+  '...##########...',
+  '....########....',
+  '.....######.....',
+  '......####......',
+  '.....######.....',
+];
+
+/** A secret: what a request carries that must not be printed. */
+export const KEY: Sprite = [
+  '....######......',
+  '...########.....',
+  '..####..####....',
+  '..###....###....',
+  '..###....###....',
+  '..####..####....',
+  '...########.....',
+  '....######......',
+  '......##........',
+  '......##........',
+  '......####......',
+  '......##........',
+  '......####......',
+  '......##........',
+  '......##........',
+  '......###.......',
+];
+
+/** Granted. The wreath is the Greek register's word for approved. */
+export const LAUREL: Sprite = [
+  '................',
+  '..##........##..',
+  '.###........###.',
+  '###..........###',
+  '.###........###.',
+  '###..........###',
+  '.###........###.',
+  '###..........###',
+  '.###........###.',
+  '..###......###..',
+  '...###....###...',
+  '....##....##....',
+  '.....##..##.....',
+  '......####......',
+  '.......##.......',
+  '.......##.......',
+];
+
+/** An owning team: the helm stands for whoever answers for the resource. */
+export const HELM: Sprite = [
+  '.......##.......',
+  '......####......',
+  '.....######.....',
+  '...##########...',
+  '..############..',
+  '.##############.',
+  '.##############.',
+  '.###..####..###.',
+  '.###..####..###.',
+  '.##############.',
+  '.####..##..####.',
+  '.####..##..####.',
+  '.####..##..####.',
+  '..###..##..###..',
+  '...##..##..##...',
+  '...##......##...',
+];
+
+/** Something is running. The flame floats clear of the bowl, or the whole
+    thing reads as a fire hydrant. */
+export const TORCH: Sprite = [
+  '.......##.......',
+  '......####......',
+  '.....######.....',
+  '....########....',
+  '....########....',
+  '.....######.....',
+  '......####......',
+  '................',
+  '...##########...',
+  '....########....',
+  '.....######.....',
+  '......####......',
+  '......####......',
+  '......####......',
+  '....########....',
+  '..############..',
+];
+
 export const STATE_SPRITES: Record<RequestState, Sprite> = {
   PENDING_APPROVAL: HOURGLASS,
-  APPROVED: SCROLL,
+  /* Was SCROLL, which meant nothing in particular and is now free for what it
+     should always have meant: documentation. */
+  APPROVED: LAUREL,
   IN_PROGRESS: GEAR,
   SUCCEEDED: CHEST,
   FAILED: SKULL,
