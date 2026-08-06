@@ -204,6 +204,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tab ticker while a request is in flight
 - Arcade-panel empty states
 - Konami code easter egg
+- Turn on the fantasy screen names
 
 ### Changed
 
@@ -259,6 +260,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Regenerate after shipping the header images
 - Task list for the 8-bit flare pass
 - Record what the flare pass dropped and why
+- Regenerate for the 8-bit flare pass
 
 ### Fixed
 
