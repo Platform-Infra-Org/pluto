@@ -1,0 +1,1716 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Docs for the internal developer platform (Backstage plugin suite)">
+      
+      
+      
+      
+        <link rel="prev" href="../tokens/">
+      
+      
+        <link rel="next" href="../request-model/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Configuration keys - Platform Plugin Suite</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#reference-configuration-keys" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Platform Plugin Suite" class="md-header__button md-logo" aria-label="Platform Plugin Suite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Platform Plugin Suite
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Configuration keys
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Platform Plugin Suite" class="md-nav__button md-logo" aria-label="Platform Plugin Suite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Platform Plugin Suite
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/provision-a-resource/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provision your first resource
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/author-a-template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Author a software template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/configure-rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure admins & per-team approval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/set-resource-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Give a resource a data file
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/add-a-dynamic-select-field/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a live (DynamicSelect) field
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/add-a-review-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a mid-workflow review gate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/customise-the-home-page/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customise the home page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/rebrand-the-portal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Change the logo, favicon and title
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/upgrade-backstage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade Backstage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/deploy-with-helm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploy to Kubernetes with Helm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/prepare-for-production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prepare for production
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../annotations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Annotations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tokens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Submit tokens (<< >>)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration keys
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration keys
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#appbranding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        app.branding
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="app.branding">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appbrandingtemplateheaders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        app.branding.templateHeaders
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#appbrandingflavour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        app.branding.flavour
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platformrbac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.rbac
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platformargo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.argo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platformhome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.home
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platformsecrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.secrets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platformrequestsretention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.requests.retention
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appextensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        app.extensions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#catalogprovidersldaporg" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        catalog.providers.ldapOrg
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proxyendpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        proxy.endpoints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auth
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../request-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Request model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/request-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Request lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/secrets-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Secret lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-team RBAC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/workflows-and-git/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows own Git
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/design-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The pixel design system
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/identity-and-ldap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity & LDAP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../explanation/upgrade-surface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What an upgrade can break
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#appbranding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        app.branding
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="app.branding">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#appbrandingtemplateheaders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        app.branding.templateHeaders
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#appbrandingflavour" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        app.branding.flavour
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platformrbac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.rbac
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platformargo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.argo
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platformhome" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.home
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platformsecrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.secrets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platformrequestsretention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.requests.retention
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appextensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        app.extensions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#catalogprovidersldaporg" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        catalog.providers.ldapOrg
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#proxyendpoints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        proxy.endpoints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Auth
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="reference-configuration-keys">Reference: configuration keys<a class="headerlink" href="#reference-configuration-keys" title="Permanent link">&para;</a></h1>
+<p>App-config keys the suite reads (all under <code>app-config.yaml</code> unless noted).</p>
+<h2 id="appbranding"><code>app.branding</code><a class="headerlink" href="#appbranding" title="Permanent link">&para;</a></h2>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">app</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">branding</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">mark</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/branding/trident.svg</span><span class="w">  </span><span class="c1"># logo in the accent tile; also the source for the tab icon</span>
+<span class="w">    </span><span class="nt">favicon</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/branding/tab.png</span><span class="w">   </span><span class="c1"># optional: pins the tab icon instead of generating it</span>
+</code></pre></div></td></tr></table></div>
+<p>Both optional and both frontend-visible. Same-origin only (<code>img-src 'self'
+data:</code>). Unset <code>mark</code> falls back to the built-in glyph. Unset <code>favicon</code>, the tab
+icon is generated from whichever glyph applies — configured or built-in — over
+the picked accent colour, and follows the colour picker. See
+<strong><a href="../../how-to/rebrand-the-portal/">Change the logo, favicon and title</a></strong>.</p>
+<h3 id="appbrandingtemplateheaders"><code>app.branding.templateHeaders</code><a class="headerlink" href="#appbrandingtemplateheaders" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">app</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">branding</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">templateHeaders</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">dir</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">template-headers</span><span class="w">   </span><span class="c1"># subfolder of packages/app/src/branding/</span>
+<span class="w">      </span><span class="nt">height</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90px</span><span class="w">            </span><span class="c1"># any CSS length</span>
+<span class="w">      </span><span class="nt">position</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">center</span><span class="w">        </span><span class="c1"># any CSS background-position</span>
+</code></pre></div></td></tr></table></div>
+<p>Optional, frontend-visible. Drop images into the folder and they become the
+software-template card headers, in filename order, cycling across the cards —
+image <em>i</em> on card <em>i mod N</em>. Images are cropped to fill, never squashed.
+Supported: <code>.png</code> <code>.jpg</code> <code>.jpeg</code> <code>.webp</code> <code>.gif</code> <code>.svg</code>.</p>
+<p>With <strong>no images</strong> the built-in pixel art is used instead, cycling three
+scenes. Header text colour is chosen per image from its own brightness, not
+from the accent. See
+<strong><a href="../../how-to/rebrand-the-portal/">Change the logo, favicon and title</a></strong>.</p>
+<h3 id="appbrandingflavour"><code>app.branding.flavour</code><a class="headerlink" href="#appbrandingflavour" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">app</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">branding</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">flavour</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fantasy</span><span class="w">   </span><span class="c1"># omit for the literal names</span>
+</code></pre></div></td></tr></table></div>
+<p>Optional, frontend-visible. <code>fantasy</code> renames <strong>sidebar screens only</strong> —
+Requests → Quests, Create → Summon, Catalog → Atlas.</p>
+<p>Request <strong>states are never renamed</strong>, whatever this is set to. A label naming a
+screen is decoration and someone who cannot find "Requests" finds it one click
+later; a label naming a state is a record, and <code>QUEST FAILED</code> in an audit trail
+is a support ticket.</p>
+<h2 id="platformrbac"><code>platform.rbac</code><a class="headerlink" href="#platformrbac" title="Permanent link">&para;</a></h2>
+<p><div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">platform</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">rbac</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">adminGroups</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">group</span><span class="p p-Indicator">:</span><span class="nv">default/platform-admins</span><span class="p p-Indicator">]</span><span class="w">     </span><span class="c1"># default</span>
+<span class="w">    </span><span class="nt">auditorGroups</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">group</span><span class="p p-Indicator">:</span><span class="nv">default/platform-auditors</span><span class="p p-Indicator">]</span><span class="w">  </span><span class="c1"># default</span>
+</code></pre></div></td></tr></table></div>
+Frontend-visible (the approve button uses <code>adminGroups</code>). Multiple groups allowed.</p>
+<h2 id="platformargo"><code>platform.argo</code><a class="headerlink" href="#platformargo" title="Permanent link">&para;</a></h2>
+<p><div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">platform</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">argo</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">baseUrl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://localhost:2746</span><span class="w">   </span><span class="c1"># direct argo-server (dev)</span>
+<span class="w">    </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">argo</span>
+<span class="w">    </span><span class="nt">defaultTemplate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">demo-resource</span>
+<span class="w">    </span><span class="nt">proxyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/argo-workflows</span><span class="w">       </span><span class="c1"># optional — route calls through the proxy</span>
+</code></pre></div></td></tr></table></div>
+Set <code>proxyPath</code> to a <code>proxy.endpoints</code> entry to send Argo calls through the
+Backstage proxy (which injects the argo-server auth server-side, with a service
+token). Unset = direct <code>baseUrl</code>.</p>
+<h2 id="platformhome"><code>platform.home</code><a class="headerlink" href="#platformhome" title="Permanent link">&para;</a></h2>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">platform</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">home</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Welcome</span>
+<span class="w">    </span><span class="nt">subtitle</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">…</span>
+<span class="w">    </span><span class="nt">sections</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">quickActions</span><span class="w">        </span><span class="c1"># links, plus the &quot;Take the tour&quot; button</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ownedResources</span><span class="w">      </span><span class="c1"># resources owned by your groups</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standingRequests</span><span class="w">    </span><span class="c1"># your requests still in flight</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pendingApprovals</span><span class="w">    </span><span class="c1"># requests you may decide</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">recentlyVisited</span><span class="w">     </span><span class="c1"># pages you opened, newest first</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">favouriteTemplates</span><span class="w">  </span><span class="c1"># templates you starred on Create</span>
+<span class="w">    </span><span class="nt">maxItems</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
+</code></pre></div></td></tr></table></div>
+<p>Frontend-visible. <code>sections</code> is an explicit list: <strong>a section absent from it is
+not rendered</strong>, so adding a new card means adding its key here, not just
+upgrading. <code>maxItems</code> caps the table sections; recently-visited shows 5 and
+favourites 6 regardless, because a longer list stops being either.</p>
+<p><code>recentlyVisited</code> and <code>favouriteTemplates</code> are stored per <strong>user</strong> in the
+user-settings backend, so they follow the person across browsers and machines.
+Favourites are the same stars the Create page already writes — nothing extra to
+enable. See <strong><a href="../../how-to/customise-the-home-page/">Customise the home page</a></strong>.</p>
+<h2 id="platformsecrets"><code>platform.secrets</code><a class="headerlink" href="#platformsecrets" title="Permanent link">&para;</a></h2>
+<p><code>enabled</code>, <code>namespace</code> (where per-request Secrets and Workflows live — must match
+<code>platform.argo.namespace</code>, since an <code>ownerReference</code> is namespaced),
+<code>encryptionKey</code>, and <code>sweep</code> (<code>enabled</code>, <code>frequency</code>, <code>maxAgeHours</code>).</p>
+<p><code>encryptionKey</code> takes a string <strong>or a list</strong>: the first entry encrypts, every
+entry is tried on decrypt, which is how the key rotates without re-encrypting
+held blobs. See <strong><a href="../../explanation/secrets-lifecycle/">Secret lifecycle</a></strong>.</p>
+<h2 id="platformrequestsretention"><code>platform.requests.retention</code><a class="headerlink" href="#platformrequestsretention" title="Permanent link">&para;</a></h2>
+<p>Off by default — deleting rows cannot be undone.</p>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">platform</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">requests</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">retention</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">dryRun</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">           </span><span class="c1"># log what would go, change nothing</span>
+<span class="w">      </span><span class="nt">frequency</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> hours</span><span class="p">:</span><span class="w"> </span><span class="nv">6</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">batchSize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">500</span><span class="w">          </span><span class="c1"># rows deleted per state per run</span>
+<span class="w">      </span><span class="nt">pendingExpiryDays</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">14</span><span class="w">   </span><span class="c1"># PENDING_APPROVAL -&gt; EXPIRED (0 = never)</span>
+<span class="w">      </span><span class="nt">succeededDays</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90</span>
+<span class="w">      </span><span class="nt">failedDays</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">90</span>
+<span class="w">      </span><span class="nt">rejectedDays</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+<span class="w">      </span><span class="nt">expiredDays</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+</code></pre></div></td></tr></table></div>
+<p>Any window may be <code>0</code> to keep that state forever. <code>APPROVED</code> and <code>IN_PROGRESS</code>
+are never deleted regardless of configuration. See
+<strong><a href="../../explanation/request-lifecycle/">the request lifecycle</a></strong>.</p>
+<h2 id="appextensions"><code>app.extensions</code><a class="headerlink" href="#appextensions" title="Permanent link">&para;</a></h2>
+<p>Backstage's own extensions are configured here, by id. Two this suite sets:</p>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">app</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">extensions</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">page:catalog</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">config</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/catalog</span>
+<span class="w">    </span><span class="c1"># The catalog opens on Resource — this platform&#39;s catalog is mostly the</span>
+<span class="w">    </span><span class="c1"># things requests create, and Component is Backstage&#39;s default.</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">catalog-filter:catalog/kind</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">config</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">initialFilter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">resource</span>
+</code></pre></div></td></tr></table></div>
+<p>Every catalog filter is a separately configurable extension —
+<code>catalog-filter:catalog/kind</code>, <code>/type</code>, <code>/mode</code>, <code>/namespace</code>, <code>/lifecycle</code>,
+<code>/processing-status</code> and the user list — so their defaults can be changed the
+same way without touching code. The catalog <strong>page</strong> extension does not expose
+the default kind; the filter extension does, which is why the setting lives
+here rather than under <code>page:catalog</code>.</p>
+<h2 id="catalogprovidersldaporg"><code>catalog.providers.ldapOrg</code><a class="headerlink" href="#catalogprovidersldaporg" title="Permanent link">&para;</a></h2>
+<p>The LDAP ingestion (users + groups). Target, bind, user/group search + mapping,
+and a <code>schedule</code>. See <strong><a href="../../explanation/identity-and-ldap/">Identity &amp; LDAP</a></strong>.</p>
+<h2 id="proxyendpoints"><code>proxy.endpoints</code><a class="headerlink" href="#proxyendpoints" title="Permanent link">&para;</a></h2>
+<p>Server-side proxy routes (e.g. <code>/demo-options</code> for DynamicSelect, <code>/argo-workflows</code>
+for Argo). Inject upstream auth here so secrets never reach the browser/plugin.</p>
+<h2 id="auth">Auth<a class="headerlink" href="#auth" title="Permanent link">&para;</a></h2>
+<p><code>auth.providers.oidc</code> (Keycloak), <code>auth.session.secret</code>. See
+<strong><a href="../../how-to/prepare-for-production/">Prepare for production</a></strong> for the
+must-externalise list.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../tokens/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Submit tokens (&lt;&lt; &gt;&gt;)">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Submit tokens (<< >>)
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../request-model/" class="md-footer__link md-footer__link--next" aria-label="Next: Request model">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Request model
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.footer", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../search/main.js"></script>
+      
+    
+  </body>
+</html>

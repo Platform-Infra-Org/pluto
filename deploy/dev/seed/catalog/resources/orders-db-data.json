@@ -1,9 +1,0 @@
-{
-  "engine": "postgres",
-  "version": 16,
-  "size": "medium",
-  "region": "eu-west-1",
-  "replicas": 2,
-  "storageGb": 256,
-  "encrypted": true
-}

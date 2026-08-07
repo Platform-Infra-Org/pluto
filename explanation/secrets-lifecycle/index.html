@@ -1,0 +1,1621 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Docs for the internal developer platform (Backstage plugin suite)">
+      
+      
+      
+      
+        <link rel="prev" href="../request-lifecycle/">
+      
+      
+        <link rel="next" href="../rbac/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Secret lifecycle - Platform Plugin Suite</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#explanation-the-secret-lifecycle" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Platform Plugin Suite" class="md-header__button md-logo" aria-label="Platform Plugin Suite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Platform Plugin Suite
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Secret lifecycle
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Platform Plugin Suite" class="md-nav__button md-logo" aria-label="Platform Plugin Suite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Platform Plugin Suite
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/provision-a-resource/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provision your first resource
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/author-a-template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Author a software template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/configure-rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure admins & per-team approval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/set-resource-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Give a resource a data file
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/add-a-dynamic-select-field/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a live (DynamicSelect) field
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/add-a-review-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a mid-workflow review gate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/customise-the-home-page/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customise the home page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/rebrand-the-portal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Change the logo, favicon and title
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/upgrade-backstage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade Backstage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/deploy-with-helm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploy to Kubernetes with Helm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/prepare-for-production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prepare for production
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/annotations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Annotations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/tokens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Submit tokens (<< >>)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration keys
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/request-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Request model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../request-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Request lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Secret lifecycle
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Secret lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#two-sources-one-destination" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two sources, one destination
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-the-held-value-is-encrypted-not-stored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the held value is encrypted, not stored
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-lifecycle-end-to-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The lifecycle, end to end
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-workflow-owns-the-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Workflow owns the Secret
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Workflow owns the Secret">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-create-order-race" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The create-order race
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-sweep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The sweep
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-rotation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key rotation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-not-a-scaffolder-action-on-approve-or-reject" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why not a scaffolder action on approve or reject
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-does-not-protect-against" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this does not protect against
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-team RBAC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../workflows-and-git/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows own Git
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The pixel design system
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../identity-and-ldap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity & LDAP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../upgrade-surface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What an upgrade can break
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#two-sources-one-destination" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two sources, one destination
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-the-held-value-is-encrypted-not-stored" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the held value is encrypted, not stored
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-lifecycle-end-to-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The lifecycle, end to end
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-workflow-owns-the-secret" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The Workflow owns the Secret
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The Workflow owns the Secret">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-create-order-race" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The create-order race
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-sweep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The sweep
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-rotation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key rotation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-not-a-scaffolder-action-on-approve-or-reject" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why not a scaffolder action on approve or reject
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-this-does-not-protect-against" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What this does not protect against
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="explanation-the-secret-lifecycle">Explanation: the secret lifecycle<a class="headerlink" href="#explanation-the-secret-lifecycle" title="Permanent link">&para;</a></h1>
+<p>Some requests need a secret to provision — a database password, an API key. The
+design goal is narrow and absolute: <strong>the value never appears in the request row,
+in Argo's parameters or workflow spec, in the UI, in Git, or in logs.</strong></p>
+<p>Everything below follows from that.</p>
+<h2 id="two-sources-one-destination">Two sources, one destination<a class="headerlink" href="#two-sources-one-destination" title="Permanent link">&para;</a></h2>
+<p>The destination is always a <strong>Kubernetes Secret, one per request</strong>, whose keys
+are the field names. One Secret per request buys object-level RBAC, a clean
+per-object lifetime, and no write contention between concurrent requests.</p>
+<p>Where the value comes from splits the flow in two:</p>
+<ul>
+<li><strong>Generated</strong> (preferred — a fresh DB password nobody needs to choose). Nothing
+  is captured at submit. The backend mints the value <strong>at approval</strong>, straight
+  into the Secret. It never exists before it is needed.</li>
+<li><strong>Provided</strong> (an API key the user already owns). The value only exists during
+  the scaffolder run, at <strong>submit</strong> — but the Secret isn't created until
+  <strong>approval</strong>, which may be hours later. Something has to hold it in between.</li>
+</ul>
+<p>That gap is the only reason encryption exists here.</p>
+<h2 id="why-the-held-value-is-encrypted-not-stored">Why the held value is encrypted, not stored<a class="headerlink" href="#why-the-held-value-is-encrypted-not-stored" title="Permanent link">&para;</a></h2>
+<p>A provided value is encrypted the instant it reaches the backend and kept as an
+opaque blob on the request row (<code>secret_enc</code>). It is decrypted exactly once, in
+memory, when the Kubernetes Secret is written at approval — then the blob is
+cleared. Rejection clears it too, without ever decrypting.</p>
+<p>So a database dump, a <code>SELECT *</code>, or a leaked backup yields ciphertext. The
+router redacts the column from every API response, so the value is never sent
+back to a browser either — not even to the user who typed it.</p>
+<p>The scheme is AES-256-GCM. The stored blob is <code>iv:tag:ciphertext</code>, all base64.
+GCM is authenticated, so tampering with a stored blob fails loudly at decrypt
+rather than silently yielding garbage that gets written into a Secret.</p>
+<h2 id="the-lifecycle-end-to-end">The lifecycle, end to end<a class="headerlink" href="#the-lifecycle-end-to-end" title="Permanent link">&para;</a></h2>
+<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span></pre></div></td><td class="code"><div><pre><span></span><code>SUBMIT     request.secretSpec = { fields: [{name, source: generate|provided}],
+                                  secret_enc?: &lt;encrypted, provided only&gt; }
+           → no Kubernetes Secret, no plaintext anywhere.
+
+APPROVE    1. submit the workflow → Argo returns {name, uid, namespace}
+           2. create Secret platform-req-&lt;rand&gt; in the workflow namespace:
+                ownerReferences: [{ Workflow, uid, blockOwnerDeletion: true }]
+                labels:          { platform.io/request-id: &lt;id&gt; }
+                data:            generated now, or decrypted from secret_enc
+           3. clear request.secret_enc
+           Workflow pods read it via env.valueFrom.secretKeyRef — never logged.
+
+SUCCESS /  Backstage does nothing. The workflow&#39;s ttlStrategy deletes the
+FAILURE    Workflow, and Kubernetes cascade-deletes the Secret with it.
+
+REJECT     No workflow, no Secret ever existed. Backstage clears secret_enc.
+           This is the only cleanup Backstage performs.
+</code></pre></div></td></tr></table></div>
+<h2 id="the-workflow-owns-the-secret">The Workflow owns the Secret<a class="headerlink" href="#the-workflow-owns-the-secret" title="Permanent link">&para;</a></h2>
+<p>The Secret carries an <code>ownerReference</code> pointing at the Argo Workflow that
+consumes it. Argo's <code>ttlStrategy</code> deletes the Workflow when it's done, and
+Kubernetes cascade-deletes the Secret with it. <strong>The workflow decides when the
+secret dies</strong> — no timer in Backstage has to guess.</p>
+<p>This creates an ordering constraint: the Secret's owner must exist before the
+Secret does. So the backend generates the Secret's (unguessable) <em>name</em> first,
+passes it to the workflow as a parameter, submits, and only then creates the
+Secret with the returned workflow UID as its owner. The workflow's first step
+waits for the Secret to appear.</p>
+<p>Three constraints come with <code>ownerReference</code>, and they explain the shape:</p>
+<ul>
+<li>Owner and dependent must be in the <strong>same namespace</strong>, which is why the Secret
+  lives in the workflow's namespace (<code>argo</code>), locked down by RBAC, rather than
+  one of its own.</li>
+<li><code>blockOwnerDeletion: true</code>, so foreground deletion takes the Secret with the
+  Workflow.</li>
+<li>Timing is entirely the workflow's <code>ttlStrategy</code> — there is no Backstage timer
+  on the happy path.</li>
+</ul>
+<h3 id="the-create-order-race">The create-order race<a class="headerlink" href="#the-create-order-race" title="Permanent link">&para;</a></h3>
+<p>The workflow's pods reference the Secret via <code>secretKeyRef</code>, but the Secret is
+created <em>just after</em> the workflow is submitted, because the owner must exist
+first. If a pod starts before the Secret lands, the kubelet returns
+<code>CreateContainerConfigError</code> and <strong>retries until it appears</strong> — self-healing,
+and the window is small.</p>
+<p>If the first step is time-sensitive and you want a zero-race path, submit the
+workflow suspended, create the Secret, then resume.</p>
+<h3 id="the-sweep">The sweep<a class="headerlink" href="#the-sweep" title="Permanent link">&para;</a></h3>
+<p>A scheduled sweep deletes managed Secrets whose request is no longer active or
+that are older than <code>maxAgeHours</code>. It exists for the gaps <code>ownerReference</code> can't
+close: a workflow lingering with no TTL, an owner GC that didn't fire, a stuck
+request. It is a net, not the mechanism — Secrets labelled <code>platform.io/keep</code>
+(resource-owned, meant to outlive the workflow) are left alone.</p>
+<h2 id="key-rotation">Key rotation<a class="headerlink" href="#key-rotation" title="Permanent link">&para;</a></h2>
+<p>The encryption key comes from <code>platform.secrets.encryptionKey</code>, which accepts
+either a single string or a <strong>list</strong>:</p>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">platform</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">secrets</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">encryptionKey</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${PLATFORM_SECRET_KEY}</span><span class="w">          </span><span class="c1"># encrypts everything from now on</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${PLATFORM_SECRET_KEY_PREVIOUS}</span><span class="w"> </span><span class="c1"># only opens blobs written before the swap</span>
+</code></pre></div></td></tr></table></div>
+<p>The first key encrypts. Every key is tried on decrypt. That asymmetry is what
+makes rotation cheap: <strong>prepend</strong> the new key and nothing needs re-encrypting,
+because the old key is still there to open blobs written under it.</p>
+<p>To rotate:</p>
+<ol>
+<li>Prepend the new key, keep the old one, restart.</li>
+<li>Wait until no request that was pending at the swap is still pending. Held
+   blobs are short-lived by design — cleared at approval or rejection — so this
+   is usually minutes, and you can confirm with a <code>PENDING_APPROVAL</code> count.</li>
+<li>Drop the old key.</li>
+</ol>
+<p>Skipping step 2 and simply <em>replacing</em> the key is the failure mode worth naming:
+every blob written under the old key becomes permanently unreadable, and those
+requests can never be approved. The backend detects this case — when every
+configured key fails, the error says the key was most likely rotated without
+keeping the previous one, rather than surfacing a bare auth-tag failure from the
+crypto layer.</p>
+<p>If no key is configured at all, there is no cipher, and any request carrying a
+<strong>provided</strong> secret is rejected at submit. Generated secrets don't touch this
+path and keep working.</p>
+<h2 id="why-not-a-scaffolder-action-on-approve-or-reject">Why not a scaffolder action on approve or reject<a class="headerlink" href="#why-not-a-scaffolder-action-on-approve-or-reject" title="Permanent link">&para;</a></h2>
+<p>It was considered and rejected. The post-decision behaviours are well-defined
+backend operations, already parameterised per resource type by the template's
+<code>platform.io/verb-*</code> annotations. Running a scaffolder action after a decision
+fights the scaffolder's own model — its task finished at submit, so you would
+need a headless runner or a second task, and it would duplicate what the
+workflow already does.</p>
+<p>If a hook is ever genuinely needed, the small version is letting a verb
+annotation name an <code>onReject</code> workflow — not a general post-decision action
+engine. Custom post-approval behaviour belongs in a WorkflowTemplate, which is
+already how provisioning works.</p>
+<h2 id="what-this-does-not-protect-against">What this does not protect against<a class="headerlink" href="#what-this-does-not-protect-against" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>A compromised backend process.</strong> It holds the key and decrypts by design.</li>
+<li><strong>A compromised cluster.</strong> Kubernetes Secrets are base64, not encrypted, unless
+  you've enabled encryption at rest in etcd. That's a cluster concern, not this
+  plugin's.</li>
+<li><strong>A malicious approver.</strong> Approval is the trigger to write the Secret; the
+  policy engine decides who may approve, and that's a separate control.</li>
+</ul>
+<p>The threat this <em>does</em> close is the boring, common one: secrets sitting in
+plaintext in an application database, a log line, or a Git commit.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../request-lifecycle/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Request lifecycle">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Request lifecycle
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../rbac/" class="md-footer__link md-footer__link--next" aria-label="Next: Per-team RBAC">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Per-team RBAC
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.footer", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../search/main.js"></script>
+      
+    
+  </body>
+</html>
