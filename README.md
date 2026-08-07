@@ -180,7 +180,7 @@ and why workflows own Git.
 To preview it locally:
 
 ```bash
-pip install mkdocs-techdocs-core
+pip install -r docs/requirements.txt
 mkdocs serve
 ```
 

@@ -39,5 +39,10 @@ nav:
       - Identity & LDAP: explanation/identity-and-ldap.md
       - What an upgrade can break: explanation/upgrade-surface.md
 
+# docs/ is the site source, so anything dropped in it gets published. The
+# pinned toolchain is build input, not a page.
+exclude_docs: |
+  requirements.txt
+
 plugins:
   - techdocs-core

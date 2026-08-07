@@ -1,0 +1,9 @@
+# The docs toolchain, pinned.
+#
+# mkdocs-techdocs-core is the same package TechDocs uses to render this site
+# inside Backstage, so pinning it keeps the two renderings identical and keeps
+# a new upstream release from changing the published site without a commit.
+#
+# It also gives actions/setup-python a file to key its pip cache on — `cache:
+# pip` fails outright without one.
+mkdocs-techdocs-core==1.6.1
