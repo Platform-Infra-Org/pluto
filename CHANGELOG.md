@@ -107,6 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep the backend bearer token and session secret out of git
 - Stub the bundler-only branding glob under Jest
 - Lowercase the image name before tagging
+- Make the branding glob parseable by Jest and analysable by rspack
 
 ### Removed
 
