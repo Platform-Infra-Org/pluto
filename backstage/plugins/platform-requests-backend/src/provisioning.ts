@@ -16,6 +16,16 @@ export interface ResolvedResource {
   data: Record<string, unknown>;
   resourcePath?: string;
   dataPath?: string;
+  /**
+   * Why this resource could not be resolved, when it could not.
+   *
+   * Absent means resolved — including resolved to genuinely empty data, which
+   * is a legitimate state and must stay distinguishable from failure. A caller
+   * that acts destructively on `data` has to be able to tell the difference:
+   * an empty payload from a *failed* read makes a decommission step silently
+   * do nothing while the files are removed anyway.
+   */
+  error?: string;
 }
 
 /** Repo path from a Gitea raw URL (.../raw/branch/<b>/<path> -> <path>). */
@@ -46,7 +56,12 @@ export function createResourceResolver(deps: {
         `resource:default/${resourceName}`,
         { credentials: await auth.getOwnServiceCredentials() },
       );
-      if (!entity) return { data: {} };
+      if (!entity) {
+        return {
+          data: {},
+          error: `resource '${resourceName}' not found in the catalog`,
+        };
+      }
       const loc = (
         entity.metadata.annotations?.['backstage.io/managed-by-location'] ??
         entity.metadata.annotations?.['backstage.io/managed-by-origin-location']
@@ -74,9 +89,12 @@ export function createResourceResolver(deps: {
               data = parsed as Record<string, unknown>;
             }
           } catch (e) {
-            logger.warn(
-              `resource-data ref '${ref}' for '${resourceName}' failed: ${e}`,
-            );
+            // A declared ref that cannot be read is a failure, not an empty
+            // resource — and deliberately does not fall through to
+            // `spec.resourceData`, which would mask it.
+            const error = `resource-data ref '${ref}' for '${resourceName}' is unreadable: ${e}`;
+            logger.warn(error);
+            return { data: {}, resourcePath, dataPath, error };
           }
         }
       }
@@ -89,8 +107,9 @@ export function createResourceResolver(deps: {
       }
       return { data, resourcePath, dataPath };
     } catch (e) {
-      logger.warn(`resolveResource '${resourceName}' failed: ${e}`);
-      return { data: {} };
+      const error = `resolveResource '${resourceName}' failed: ${e}`;
+      logger.warn(error);
+      return { data: {}, error };
     }
   };
 
