@@ -115,11 +115,17 @@ jobs:
           # verified by the runner.
           repo="$(echo "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
           echo "IMAGE=ghcr.io/${repo}/backstage" >> "$GITHUB_ENV"
-      # Mint a short-lived token for the release App so the CHANGELOG commit +
-      # tag push to main authenticate as the App (which is on the
-      # branch-protection bypass list — the default GITHUB_TOKEN can't be).
+      # A release App is only needed once main is protected: GITHUB_TOKEN cannot
+      # be added to a branch-protection bypass list, and an App can. Until then
+      # this step is skipped and the default token does the job.
+      #
+      # Skipped rather than failed when RELEASE_APP_ID is unset, because
+      # create-github-app-token dies on an absent or malformed key with
+      # "Invalid keyData / asn1 not enough data" — after the PR has already
+      # merged, which is the worst moment to discover a missing secret.
       - uses: actions/create-github-app-token@v1
         id: app-token
+        if: vars.RELEASE_APP_ID != ''
         with:
           app-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_KEY }}
@@ -128,7 +134,8 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-          token: ${{ steps.app-token.outputs.token }}
+          # The App token when there is one, the workflow's own token otherwise.
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-node@v4
         with:

@@ -31,6 +31,14 @@ env:
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      # Declared explicitly: with no block the job inherits the repository
+      # default, which on current settings is read-only — the tag push then
+      # fails after the image has already been built.
+      contents: write # push the tag, create the release
+      packages: write # push the image to GHCR
+      id-token: write # OIDC for keyless provenance signing
+      attestations: write # actions/attest-build-provenance
     steps:
       # GHCR rejects an uppercase repository name, and github.repository keeps
       # the owner's capitals (Platform-Infra-Org). GitHub expressions have no
