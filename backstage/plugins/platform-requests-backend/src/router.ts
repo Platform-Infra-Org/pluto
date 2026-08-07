@@ -84,7 +84,10 @@ const policySchema = z.union([
 const newRequestSchema = z.object({
   kind: z.enum(['CREATE', 'UPDATE', 'DELETE']),
   resourceType: z.string(),
-  resourceName: z.string(),
+  // One of these two is required — a request must say what it acts on. The
+  // refine below is the only place that is enforced.
+  resourceName: z.string().optional(),
+  resourceNames: z.array(z.string().min(1)).min(1).optional(),
   params: z.record(z.unknown()).optional(),
   policy: policySchema.optional(),
   // Loose: the spec is validated/normalized when building the Argo submit body.
@@ -107,6 +110,8 @@ const newRequestSchema = z.object({
   // Only honored for service callers (the Scaffolder action creating on behalf
   // of the initiating user); ignored for user callers (requester = the actor).
   requester: z.string().optional(),
+}).refine(d => Boolean(d.resourceName) || Boolean(d.resourceNames?.length), {
+  message: 'resourceName or resourceNames is required',
 });
 
 const decisionSchema = z.object({ note: z.string().optional() });
@@ -196,6 +201,11 @@ export async function createRouter(
         throw new NotAllowedError('Not allowed to create requests');
       }
     }
+    // A batch stores the joined names as its resourceName: every list, search
+    // and notification renders that one string, so joining keeps them all
+    // working without a branch, and searching a member name still finds it.
+    const resourceName = data.resourceName ?? data.resourceNames!.join(', ');
+
     // The owning service team = the owner of the Template for this resourceType.
     const ownerGroup = options.ownerResolver
       ? await options.ownerResolver(data.resourceType)
@@ -219,6 +229,7 @@ export async function createRouter(
 
     const created = await store.create({
       ...data,
+      resourceName,
       argoSubmit,
       resultOutput,
       requester,

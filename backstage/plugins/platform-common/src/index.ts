@@ -146,6 +146,15 @@ export interface Request {
   kind: RequestKind;
   resourceType: string;
   resourceName: string;
+  /**
+   * Every resource this request acts on, when it acts on more than one.
+   *
+   * Absent for the ordinary single-resource request, where `resourceName` is
+   * the whole story. When present, `resourceName` holds the same names joined
+   * — so lists, notifications and search keep working on one string — and this
+   * is the structured form the workflow and the detail page read.
+   */
+  resourceNames?: string[];
   params: Record<string, unknown>;
   state: RequestState;
   policy: ApprovalPolicy;
@@ -199,7 +208,10 @@ export interface Request {
 export interface NewRequest {
   kind: RequestKind;
   resourceType: string;
-  resourceName: string;
+  /** Required unless `resourceNames` is given. */
+  resourceName?: string;
+  /** Bulk requests: every resource acted on. Server derives `resourceName`. */
+  resourceNames?: string[];
   params?: Record<string, unknown>;
   policy?: ApprovalPolicy;
   argoSubmit?: ArgoSubmitSpec;

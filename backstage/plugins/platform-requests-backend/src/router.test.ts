@@ -229,6 +229,44 @@ describe('createRouter', () => {
     expect(second.body.state).toBe('IN_PROGRESS');
   });
 
+  describe('many resources per request', () => {
+    it('accepts resourceNames and derives resourceName from them', async () => {
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW });
+      const res = await request(app)
+        .post('/requests')
+        .send({
+          kind: 'DELETE',
+          resourceType: 'git-resource',
+          resourceNames: ['bucket-a', 'bucket-b'],
+        });
+      expect(res.status).toBe(201);
+      expect(res.body.resourceNames).toEqual(['bucket-a', 'bucket-b']);
+      expect(res.body.resourceName).toBe('bucket-a, bucket-b');
+    });
+
+    it('rejects a request with neither resourceName nor resourceNames', async () => {
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW });
+      const res = await request(app)
+        .post('/requests')
+        .send({ kind: 'DELETE', resourceType: 'git-resource' });
+      expect(res.status).toBe(400);
+    });
+
+    it('keeps resourceName untouched for a single-resource request', async () => {
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW });
+      const res = await request(app)
+        .post('/requests')
+        .send({
+          kind: 'DELETE',
+          resourceType: 'git-resource',
+          resourceName: 'bucket-a',
+        });
+      expect(res.status).toBe(201);
+      expect(res.body.resourceName).toBe('bucket-a');
+      expect(res.body.resourceNames).toBeUndefined();
+    });
+  });
+
   describe('secret lifecycle', () => {
     const cipher = createCipher(['unit-test-key'])!;
     const withSecret = {

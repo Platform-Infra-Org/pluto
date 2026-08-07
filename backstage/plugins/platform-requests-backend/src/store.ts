@@ -25,6 +25,7 @@ type RequestRow = {
   kind: string;
   resource_type: string;
   resource_name: string;
+  resource_names: string | null;
   params: string;
   state: string;
   policy: string;
@@ -81,7 +82,10 @@ export class RequestsStore {
       .insert({
         kind: input.kind,
         resource_type: input.resourceType,
-        resource_name: input.resourceName,
+        resource_name: input.resourceName!,
+        resource_names: input.resourceNames
+          ? JSON.stringify(input.resourceNames)
+          : null,
         params: JSON.stringify(input.params ?? {}),
         state: 'PENDING_APPROVAL',
         policy: JSON.stringify(input.policy ?? { mode: 'SINGLE' }),
@@ -263,6 +267,9 @@ function assemble(row: RequestRow, approvals: ApprovalRow[]): Request {
     kind: row.kind as RequestKind,
     resourceType: row.resource_type,
     resourceName: row.resource_name,
+    resourceNames: row.resource_names
+      ? (JSON.parse(row.resource_names) as string[])
+      : undefined,
     params: JSON.parse(row.params),
     state: row.state as RequestState,
     policy: JSON.parse(row.policy) as ApprovalPolicy,
