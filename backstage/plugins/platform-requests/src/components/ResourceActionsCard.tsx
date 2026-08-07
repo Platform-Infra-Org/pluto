@@ -3,13 +3,8 @@ import { useApi } from '@backstage/core-plugin-api';
 import { Link } from '@backstage/core-components';
 import { useEntity } from '@backstage/plugin-catalog-react';
 import {
-  Card,
-  CardHeader,
-  CardBody,
-  Button,
-  Dialog,
-  Field,
-  Input,
+  Card, CardHeader, CardBody, Button, Dialog, Field, Input, Textarea,
+  mergeResourceEdits,
 } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
 
@@ -23,32 +18,45 @@ export function ResourceActionsCard() {
   const requests = useApi(requestsApiRef);
   const [edit, setEdit] = useState(false);
   const [del, setDel] = useState(false);
+  const [original, setOriginal] = useState<Record<string, unknown>>({});
   const [fields, setFields] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<number>();
 
   const type = (entity.spec?.type as string) ?? 'resource';
   const name = entity.metadata.name;
 
-  // Load the resource's data (ref'd file or spec.resourceData) and offer its
-  // scalar fields for editing.
+  // Load the resource's full data and offer every key for editing — scalars as
+  // inputs, objects and arrays as JSON. `original` is kept so submit merges over
+  // the whole document rather than replacing it with what the form showed.
   const openEdit = async () => {
     const data = await requests.getResourceData(name).catch(() => ({}));
+    setOriginal(data);
     setFields(
       Object.fromEntries(
-        Object.entries(data)
-          .filter(([, v]) => v !== null && typeof v !== 'object')
-          .map(([k, v]) => [k, String(v)]),
+        Object.entries(data).map(([k, v]) => [
+          k,
+          v !== null && typeof v === 'object'
+            ? JSON.stringify(v, null, 2)
+            : String(v),
+        ]),
       ),
     );
+    setErrors({});
     setEdit(true);
   };
 
   const submitEdit = async () => {
+    const { data, errors: problems } = mergeResourceEdits(original, fields);
+    if (Object.keys(problems).length) {
+      setErrors(problems);
+      return;
+    }
     const req = await requests.create({
       kind: 'UPDATE',
       resourceType: type,
       resourceName: name,
-      params: fields,
+      params: data,
     });
     setEdit(false);
     setNotice(req.id);
@@ -104,17 +112,44 @@ export function ResourceActionsCard() {
           </>
         }
       >
+        {Object.keys(fields).map(k => {
+          const multiline =
+            original[k] !== null && typeof original[k] === 'object';
+          return (
+            <Field key={k} label={k}>
+              {multiline ? (
+                <Textarea
+                  value={fields[k]}
+                  onChange={e =>
+                    setFields(f => ({ ...f, [k]: e.target.value }))
+                  }
+                />
+              ) : (
+                <Input
+                  value={fields[k]}
+                  onChange={e =>
+                    setFields(f => ({ ...f, [k]: e.target.value }))
+                  }
+                />
+              )}
+              {errors[k] && (
+                <div
+                  role="alert"
+                  style={{
+                    color: 'hsl(var(--sc-destructive))',
+                    fontSize: 13,
+                    marginTop: 4,
+                  }}
+                >
+                  {errors[k]}
+                </div>
+              )}
+            </Field>
+          );
+        })}
         {Object.keys(fields).length === 0 && (
-          <div className="sc-muted">No editable spec fields.</div>
+          <div className="sc-muted">This resource has no data to edit.</div>
         )}
-        {Object.keys(fields).map(k => (
-          <Field key={k} label={k}>
-            <Input
-              value={fields[k]}
-              onChange={e => setFields(f => ({ ...f, [k]: e.target.value }))}
-            />
-          </Field>
-        ))}
       </Dialog>
 
       <Dialog

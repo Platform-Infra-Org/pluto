@@ -12,6 +12,7 @@ export {
   Button,
   Badge,
   Input,
+  Textarea,
   Select,
   Field,
   Dialog,

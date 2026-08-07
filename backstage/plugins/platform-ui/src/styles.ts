@@ -754,6 +754,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   border-radius: var(--sc-radius); border: 1px solid hsl(var(--sc-input));
   background: hsl(var(--sc-bg)); color: hsl(var(--sc-fg)); outline: none; font-family: inherit; }
 .sc-input:focus, .sc-select:focus { border-color: hsl(var(--sc-ring)); outline: var(--sc-border-w) solid hsl(var(--sc-ring)); outline-offset: 2px; box-shadow: none; }
+.sc-textarea { height: auto; min-height: 92px; padding: 8px 10px; line-height: 1.45;
+  font-family: var(--sc-font-mono, ui-monospace, monospace); resize: vertical; }
 .sc-label { font-size: 13px; font-weight: 500; color: hsl(var(--sc-fg)); display: block; margin-bottom: 6px; }
 .sc-field { margin-bottom: 14px; }
 .sc-link { color: hsl(var(--sc-primary)); text-decoration: none; font-weight: 500; }

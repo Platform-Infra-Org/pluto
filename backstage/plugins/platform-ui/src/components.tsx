@@ -3,6 +3,7 @@ import {
   InputHTMLAttributes,
   ReactNode,
   SelectHTMLAttributes,
+  TextareaHTMLAttributes,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { configApiRef, useApi } from '@backstage/core-plugin-api';
@@ -298,6 +299,20 @@ export function Badge({
 
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
   return <input className="sc-input" {...props} />;
+}
+
+export function Textarea(
+  props: TextareaHTMLAttributes<HTMLTextAreaElement>,
+) {
+  const { className = '', rows = 5, ...rest } = props;
+  return (
+    <textarea
+      {...rest}
+      rows={rows}
+      className={`sc-input sc-textarea ${className}`.trim()}
+      spellCheck={false}
+    />
+  );
 }
 
 export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
