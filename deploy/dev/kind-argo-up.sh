@@ -4,7 +4,7 @@
 # via a background port-forward (pid in .argo-pf.pid).
 set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-HERE="$REPO_ROOT/deploy/backstage"
+HERE="$REPO_ROOT/deploy/dev"
 KIND_VERSION="v0.23.0"
 ARGO_VERSION="v3.5.11"
 CLUSTER="platform"

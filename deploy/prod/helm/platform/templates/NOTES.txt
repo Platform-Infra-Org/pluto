@@ -1,0 +1,42 @@
+{{ include "platform.fullname" . }} deployed.
+
+  URL      {{ include "platform.baseUrl" . }}
+  Image    {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+  Replicas {{ .Values.replicaCount }}
+
+Before it will start, four things outside this chart have to be true:
+
+1. The Secret "{{ .Values.secrets.existingSecret }}" exists in namespace
+   {{ .Release.Namespace }} with these keys:
+     {{ .Values.secrets.keys.postgresPassword }}, {{ .Values.secrets.keys.oidcClientSecret }},
+     {{ .Values.secrets.keys.authSessionSecret }}, {{ .Values.secrets.keys.ldapBindSecret }},
+     {{ .Values.secrets.keys.bitbucketToken }}, {{ .Values.secrets.keys.argoToken }},
+     {{ .Values.secrets.keys.platformSecretKey }}
+   {{- if .Values.secrets.externalSecrets.enabled }}
+   (External Secrets Operator is templated to create it.)
+   {{- end }}
+
+2. Postgres at {{ .Values.postgres.host }}:{{ .Values.postgres.port }} is reachable, the
+   "{{ .Values.postgres.database }}" database exists, and "{{ .Values.postgres.user }}" may
+   CREATE DATABASE — each plugin makes its own.
+
+3. Your IdP has {{ include "platform.baseUrl" . }}/api/auth/oidc/handler/frame
+   registered as a redirect URI for client "{{ .Values.oidc.clientId }}".
+
+4. Argo Workflows is reachable at {{ .Values.argo.serverUrl }} and the token in
+   {{ .Values.secrets.keys.argoToken }} may submit workflows in "{{ .Values.argo.namespace }}".
+
+Check it came up:
+
+  kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "platform.fullname" . }}
+  kubectl -n {{ .Release.Namespace }} logs -l app.kubernetes.io/instance={{ .Release.Name }} -f
+
+{{- if not .Values.platform.secrets.enabled }}
+
+NOTE: platform.secrets.enabled is false, so no Role was created and requests
+that declare a secrets.schema will be refused.
+{{- end }}
+{{- if eq .Values.image.repository "ghcr.io/owner/repo/backstage" }}
+
+WARNING: image.repository is still the placeholder. Set it to your registry.
+{{- end }}

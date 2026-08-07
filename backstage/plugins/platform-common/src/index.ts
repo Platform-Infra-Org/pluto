@@ -11,7 +11,16 @@ export type RequestState =
   | 'IN_PROGRESS'
   | 'SUCCEEDED'
   | 'FAILED'
-  | 'REJECTED';
+  | 'REJECTED'
+  /**
+   * The workflow is running but has stopped at an Argo `suspend` step and is
+   * waiting for an approver to release it. Non-terminal, and reversible: the
+   * poller moves the request back to IN_PROGRESS once no suspended node
+   * remains, including when someone resumes from the Argo UI directly.
+   */
+  | 'AWAITING_INPUT'
+  /** Nobody decided it in time. Terminal; set by the retention task. */
+  | 'EXPIRED';
 
 /** The verb a request performs against a resource. */
 export type RequestKind = 'CREATE' | 'UPDATE' | 'DELETE';
@@ -72,6 +81,65 @@ export interface SecretFieldSpec {
   length?: number;
 }
 
+/**
+ * An Argo `suspend` step that is currently waiting.
+ *
+ * Argo has no "Suspended" phase — a waiting suspend node reports
+ * `type: 'Suspend'` with `phase: 'Running'`, which is why this is detected on
+ * the pair rather than on phase alone.
+ */
+export interface SuspendedNode {
+  /** Argo node id. The only safe resume selector: display names repeat across
+   *  loop iterations, and resuming the wrong one is silent. */
+  id: string;
+  /** displayName, as shown in the graph. */
+  name: string;
+  templateName?: string;
+  /** The suspend template's message, if it set one. */
+  message?: string;
+  /**
+   * The step's input parameters — what the workflow computed and what the
+   * approver is being asked to review.
+   *
+   * These are workflow-authored review values (a plan, a cost, a diff). Secrets
+   * do not travel this way: they reach a workflow through a Kubernetes Secret
+   * and `secretKeyRef`, never through a parameter.
+   */
+  inputs: SuspendInput[];
+  /**
+   * The questions the step is asking: outputs it declared as
+   * `valueFrom: supplied: {}`. Only these may be set on resume — Argo rejects
+   * anything else.
+   */
+  suppliedOutputs: SuppliedOutput[];
+}
+
+/** One input parameter of a suspend step. */
+export interface SuspendInput {
+  name: string;
+  value?: string;
+}
+
+/**
+ * An answer the suspend step is waiting for.
+ *
+ * `required` is derived from the step's own declaration rather than from
+ * anything the platform decides: an Argo output parameter with a `default` can
+ * be resumed without a value, and one without a default cannot. The workflow
+ * author already expressed the intent; this reads it rather than guessing.
+ */
+export interface SuppliedOutput {
+  name: string;
+  /** The step's own `description`, shown as help text under the field. */
+  description?: string;
+  /** The step's `enum`; when present the field is a choice, not free text. */
+  enum?: string[];
+  /** The step's declared default, used as the field's initial value. */
+  default?: string;
+  /** True when the step declared no default — resuming needs an answer. */
+  required: boolean;
+}
+
 /** A resource request tracked through approval + workflow execution. */
 export interface Request {
   id: number;
@@ -106,6 +174,13 @@ export interface Request {
   workflowNamespace?: string;
   /** Argo workflow phase mirrored onto the request (P2). */
   workflowPhase?: string;
+  /**
+   * Suspend steps currently waiting in the workflow, refreshed on every poll.
+   *
+   * A cache of Argo's answer, never the source of truth: the resume endpoint
+   * re-reads the live workflow before acting on any of it.
+   */
+  suspendedNodes?: SuspendedNode[];
   /** Error message when the request FAILED. */
   error?: string;
   /**
@@ -143,4 +218,21 @@ export const PLATFORM_PERMISSIONS = {
 /** A request in a terminal state is "finished". */
 export function isTerminal(state: RequestState): boolean {
   return state === 'SUCCEEDED' || state === 'FAILED' || state === 'REJECTED';
+}
+
+/**
+ * How many approvals a request has, out of how many it needs.
+ *
+ * Rejections are decisions, not approvals: they live in the same array and must
+ * not count toward the total. A single rejection settles the request anyway,
+ * but the count is what gets rendered, so it has to be right on its own.
+ */
+export function approvalProgress(request: {
+  policy: ApprovalPolicy;
+  approvals: Approval[];
+}): { granted: number; required: number } {
+  return {
+    granted: request.approvals.filter(a => a.decision === 'approve').length,
+    required: request.policy.mode === 'SINGLE' ? 1 : request.policy.n,
+  };
 }

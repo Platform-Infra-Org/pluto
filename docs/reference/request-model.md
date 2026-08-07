@@ -8,9 +8,14 @@
 
 ```
 PENDING_APPROVAL ──approve──▶ APPROVED ──(workflow submitted)──▶ IN_PROGRESS
-       │                                                              │
-       └──reject──▶ REJECTED                        Succeeded ──▶ SUCCEEDED
-                                                    Failed/Error ─▶ FAILED
+       │                                                              │ ▲
+       ├──reject──▶ REJECTED                                          │ │
+       │                                          suspend step ───────┘ │
+       └──(nobody decides)──▶ EXPIRED                     │             │
+                                                   AWAITING_INPUT ──────┘
+                                                          resume
+                                             Succeeded ──▶ SUCCEEDED
+                                             Failed/Error ─▶ FAILED
 ```
 
 | State | Meaning |
@@ -18,11 +23,48 @@ PENDING_APPROVAL ──approve──▶ APPROVED ──(workflow submitted)─�
 | `PENDING_APPROVAL` | awaiting a decision |
 | `APPROVED` | decision met the policy; workflow about to submit |
 | `IN_PROGRESS` | Argo workflow running (polled) |
+| `AWAITING_INPUT` | the workflow stopped at a `suspend` step and needs an approver |
 | `SUCCEEDED` | workflow succeeded (completion-gated) |
-| `FAILED` | workflow failed/errored |
+| `FAILED` | workflow failed/errored, or an approver stopped it |
 | `REJECTED` | rejected |
+| `EXPIRED` | nobody decided in time; set by the retention task |
 
-`SUCCEEDED`, `FAILED`, `REJECTED` are terminal.
+`SUCCEEDED`, `FAILED`, `REJECTED` and `EXPIRED` are terminal.
+
+`AWAITING_INPUT` is **not** terminal and is reversible in both directions: the
+poller moves a request into it when a suspend step appears and back out when
+none remains — including when somebody resumes the step in the Argo UI rather
+than here. It is never deleted or expired by retention, because it is waiting
+on a human and can sit for weeks. See
+**[Approve a workflow mid-run](../how-to/add-a-review-gate.md)**.
+
+## Suspend steps
+
+While a request is `AWAITING_INPUT`, `suspendedNodes` describes what the
+workflow is waiting for. It is refreshed on every poll and is a cache of Argo's
+answer, never the source of truth — the resume endpoint re-reads the live
+workflow before acting on it.
+
+```ts
+interface SuspendedNode {
+  id: string;              // Argo node id — the only safe resume selector
+  name: string;            // displayName, as shown in the graph
+  templateName?: string;
+  message?: string;        // the suspend template's message, if it set one
+  inputs: { name: string; value?: string }[];
+  suppliedOutputs: {
+    name: string;
+    description?: string;  // help text under the field
+    enum?: string[];       // renders a dropdown; enforced server-side too
+    default?: string;      // a default makes the answer optional
+    required: boolean;     // true when the step declared no default
+  }[];
+}
+```
+
+`required` is Argo's own semantics rather than a platform convention: a default
+is precisely what lets Argo resume without a value, so its absence is the
+workflow author saying the answer is load-bearing.
 
 ## Approval policy
 

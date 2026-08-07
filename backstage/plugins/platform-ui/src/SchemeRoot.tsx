@@ -1,16 +1,31 @@
 import { useEffect, useState } from 'react';
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
-import { MARK_SHAPES, MARK_VIEWBOX } from './markShapes';
+import { SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
+import { PixelPotion } from './components';
+import { templateHeaderCss } from './templateHeaders';
+import { listenForKonami } from './konami';
+import { useCurrentPath } from './CustomNav';
+import { useRecordVisit } from './useVisits';
+import { Quickstart } from './quickstart/Quickstart';
+import { useQuickstart } from './quickstart/useQuickstart';
+import { sampleImageTone, Tone } from './imageTone';
 
-// Muted, shadcn-calm accents (lower saturation — not neon).
+/** The two foreground tones a scheme can use, and each other's shade. */
+const WHITE = '0 0% 100%';
+const INK = '240 10% 8%';
+
+// Saturated toward NES-era values. `fg` is the text colour that sits on the
+// accent: white where it clears 4.5:1, near-black where it doesn't. Green and
+// amber are the reason this field exists — darkening them enough for white text
+// would have turned them to mud. Ratios are measured, see SchemeRoot.test.ts.
 export const SCHEMES = [
-  { id: 'violet', label: 'Violet', hsl: '250 52% 55%' },
-  { id: 'blue', label: 'Blue', hsl: '217 60% 52%' },
-  { id: 'green', label: 'Green', hsl: '152 42% 40%' },
-  { id: 'rose', label: 'Rose', hsl: '345 55% 52%' },
-  { id: 'amber', label: 'Amber', hsl: '32 70% 48%' },
-  { id: 'slate', label: 'Slate', hsl: '215 20% 40%' },
+  { id: 'violet', label: 'Violet', hsl: '250 75% 60%', fg: WHITE }, // 5.60
+  { id: 'blue', label: 'Blue', hsl: '217 85% 52%', fg: WHITE }, // 4.74
+  { id: 'green', label: 'Green', hsl: '145 75% 42%', fg: INK }, // 7.41
+  { id: 'rose', label: 'Rose', hsl: '345 80% 49%', fg: WHITE }, // 4.73
+  { id: 'amber', label: 'Amber', hsl: '38 90% 52%', fg: INK }, // 8.85
+  { id: 'slate', label: 'Slate', hsl: '215 30% 45%', fg: WHITE }, // 5.29
 ];
 
 /**
@@ -18,9 +33,47 @@ export const SCHEMES = [
  * `applyScheme` runs at module load — before React, so before configApi exists —
  * hence this module-level relay rather than a prop.
  */
-let branding: { mark?: string; favicon?: string } = {};
+let branding: {
+  mark?: string;
+  favicon?: string;
+  headerDir?: string;
+  headerHeight?: string;
+  headerPosition?: string;
+} = {};
 
-function setBranding(next: { mark?: string; favicon?: string }) {
+/**
+ * Images bundled from packages/app/src/branding, keyed by subfolder. The app
+ * owns them — platform-ui cannot import from the app — so the app hands the
+ * whole map over and config picks which subfolder to use.
+ */
+let brandingImages: Record<string, string[]> = {};
+
+/**
+ * Text tone per header image, filled in asynchronously once each image has been
+ * measured. Unmeasured images fall back to the accent's own foreground.
+ */
+const imageTones: Record<string, Tone> = {};
+const pending = new Set<string>();
+
+/** Measure any image we have not seen yet, then restyle once each lands. */
+function ensureTones(images: string[]) {
+  for (const src of images) {
+    if (src in imageTones || pending.has(src)) continue;
+    pending.add(src);
+    sampleImageTone(src).then(tone => {
+      imageTones[src] = tone;
+      pending.delete(src);
+      applyScheme();
+    });
+  }
+}
+
+export function setBrandingImages(images: Record<string, string[]>) {
+  brandingImages = images;
+  applyScheme();
+}
+
+function setBranding(next: typeof branding) {
   branding = next;
   applyScheme(); // redraw the tab icon now that the mark is known
 }
@@ -50,7 +103,7 @@ function drawTile(g: CanvasRenderingContext2D, accentHsl: string) {
  * image or — by default — the built-in glyph is drawn on top. The static icons
  * in `packages/app/public` remain the pre-JavaScript first paint.
  */
-function updateFavicon(accentHsl: string) {
+function updateFavicon(accentHsl: string, fgHsl: string) {
   const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
   if (!link) return;
   if (branding.favicon) {
@@ -91,24 +144,14 @@ function updateFavicon(accentHsl: string) {
     return;
   }
 
-  // Default: the same glyph the sidebar draws, in the tile's foreground colour.
+  // Default: the same pixel glyph the sidebar draws.
   drawTile(g, accentHsl);
-  const scale = (ICON_SIZE - ICON_INSET * 2) / MARK_VIEWBOX;
+  const scale = (ICON_SIZE - ICON_INSET * 2) / SPRITE_SIZE;
   g.save();
   g.translate(ICON_INSET, ICON_INSET);
   g.scale(scale, scale);
-  g.fillStyle = '#fff'; // --sc-primary-fg
-  for (const s of MARK_SHAPES) {
-    if ('path' in s) {
-      g.fill(new Path2D(s.path));
-    } else if (typeof g.roundRect === 'function') {
-      g.beginPath();
-      g.roundRect(s.x, s.y, s.w, s.h, s.r);
-      g.fill();
-    } else {
-      g.fillRect(s.x, s.y, s.w, s.h);
-    }
-  }
+  g.fillStyle = `hsl(${fgHsl})`; // the scheme's own foreground
+  for (const r of spriteRects(TEMPLE)) g.fillRect(r.x, r.y, r.w, 1);
   g.restore();
   publish();
 }
@@ -137,8 +180,29 @@ export function applyScheme(scheme?: string) {
       : null;
   const id = scheme || stored || 'violet';
   const s = SCHEMES.find(x => x.id === id) ?? SCHEMES[0];
-  ensureStyle('sc-accent', `:root{--sc-primary:${s.hsl};--sc-ring:${s.hsl}}`);
-  updateFavicon(s.hsl);
+  ensureStyle(
+    'sc-accent',
+    // --sc-primary-shade is the opposite of the foreground: it is what text on
+    // the header art is outlined with, so light text gets a dark edge and dark
+    // text a light one.
+    `:root{--sc-primary:${s.hsl};--sc-ring:${s.hsl};--sc-primary-fg:${s.fg};` +
+      `--sc-primary-shade:${s.fg === WHITE ? INK : WHITE}}`,
+  );
+  // Empty when no images are supplied, which leaves the pixel-art headers.
+  const headerImages =
+    brandingImages[branding.headerDir ?? 'template-headers'] ?? [];
+  ensureTones(headerImages);
+  ensureStyle(
+    'sc-template-headers',
+    templateHeaderCss({
+      images: headerImages,
+      // Each header's text is coloured for the image behind it, not the accent.
+      tones: headerImages.map(src => imageTones[src]),
+      height: branding.headerHeight,
+      position: branding.headerPosition,
+    }),
+  );
+  updateFavicon(s.hsl, s.fg);
 }
 
 // Theme the login gate immediately, before React mounts anything.
@@ -148,7 +212,15 @@ applyScheme();
  * The live color-scheme swatches. Self-contained (own state, persisted +
  * applied on click), so it works both inside the app and on the login gate.
  */
-export function SchemePicker() {
+/**
+ * The scheme picker.
+ *
+ * `floating` is the corner shelf that follows you around the app. Without it
+ * the picker sits in the flow, which is how the sign-in card carries its own —
+ * the card is the only place the floating one is suppressed, so there is never
+ * a second shelf stacked on the first.
+ */
+export function SchemePicker({ floating }: { floating?: boolean } = {}) {
   const [scheme, setScheme] = useState(
     () =>
       (typeof localStorage !== 'undefined' &&
@@ -167,17 +239,24 @@ export function SchemePicker() {
   }, [scheme]);
 
   return (
-    <div className="sc sc-picker" role="group" aria-label="Color scheme">
+    <div
+      className={`sc sc-picker${floating ? ' sc-picker-float' : ''}`}
+      role="group"
+      aria-label="Color scheme"
+    >
       {SCHEMES.map(s => (
         <button
           key={s.id}
           type="button"
-          className="sc-swatch"
+          className="sc-potion"
           aria-pressed={s.id === scheme}
+          // The sprite is decorative, so the button carries the name itself.
+          aria-label={s.label}
           title={s.label}
-          style={{ background: `hsl(${s.hsl})` }}
           onClick={() => setScheme(s.id)}
-        />
+        >
+          <PixelPotion liquid={`hsl(${s.hsl})`} />
+        </button>
       ))}
     </div>
   );
@@ -195,8 +274,27 @@ export function SchemeRoot() {
     setBranding({
       mark: config.getOptionalString('app.branding.mark'),
       favicon: config.getOptionalString('app.branding.favicon'),
+      headerDir: config.getOptionalString('app.branding.templateHeaders.dir'),
+      headerHeight: config.getOptionalString(
+        'app.branding.templateHeaders.height',
+      ),
+      headerPosition: config.getOptionalString(
+        'app.branding.templateHeaders.position',
+      ),
     });
   }, [config]);
+
+  useEffect(
+    () =>
+      listenForKonami(() =>
+        document.documentElement.classList.toggle('sc-konami'),
+      ),
+    [],
+  );
+
+  // One navigation source for the whole app: the nav already derives the path
+  // without react-router, and a second source would drift from the first.
+  useRecordVisit(useCurrentPath());
 
   useEffect(() => {
     const sub = appTheme.activeThemeId$().subscribe(id => {
@@ -208,5 +306,27 @@ export function SchemeRoot() {
     return () => sub.unsubscribe();
   }, [appTheme]);
 
-  return <SchemePicker />;
+  return (
+    <>
+      <SchemePicker floating />
+      <QuickstartHost />
+    </>
+  );
+}
+
+/**
+ * Runs the tour once per user, and listens for a request to run it again.
+ *
+ * The replay button lives on Home, which is a different plugin, so it asks
+ * through an event rather than a shared context — the app root and the home
+ * page have no other connection.
+ */
+function QuickstartHost() {
+  const { open, start, close } = useQuickstart();
+  useEffect(() => {
+    const onReplay = () => start();
+    window.addEventListener('platform:quickstart', onReplay);
+    return () => window.removeEventListener('platform:quickstart', onReplay);
+  }, [start]);
+  return open ? <Quickstart onClose={close} /> : null;
 }

@@ -17,6 +17,43 @@ icon is generated from whichever glyph applies — configured or built-in — ov
 the picked accent colour, and follows the colour picker. See
 **[Change the logo, favicon and title](../how-to/rebrand-the-portal.md)**.
 
+### `app.branding.templateHeaders`
+
+```yaml
+app:
+  branding:
+    templateHeaders:
+      dir: template-headers   # subfolder of packages/app/src/branding/
+      height: 90px            # any CSS length
+      position: center        # any CSS background-position
+```
+
+Optional, frontend-visible. Drop images into the folder and they become the
+software-template card headers, in filename order, cycling across the cards —
+image *i* on card *i mod N*. Images are cropped to fill, never squashed.
+Supported: `.png` `.jpg` `.jpeg` `.webp` `.gif` `.svg`.
+
+With **no images** the built-in pixel art is used instead, cycling three
+scenes. Header text colour is chosen per image from its own brightness, not
+from the accent. See
+**[Change the logo, favicon and title](../how-to/rebrand-the-portal.md)**.
+
+### `app.branding.flavour`
+
+```yaml
+app:
+  branding:
+    flavour: fantasy   # omit for the literal names
+```
+
+Optional, frontend-visible. `fantasy` renames **sidebar screens only** —
+Requests → Quests, Create → Summon, Catalog → Atlas.
+
+Request **states are never renamed**, whatever this is set to. A label naming a
+screen is decoration and someone who cannot find "Requests" finds it one click
+later; a label naming a state is a record, and `QUEST FAILED` in an audit trail
+is a support ticket.
+
 ## `platform.rbac`
 
 ```yaml
@@ -48,10 +85,25 @@ platform:
   home:
     title: Welcome
     subtitle: …
-    sections: [quickActions, ownedResources, standingRequests, pendingApprovals]
+    sections:
+      - quickActions        # links, plus the "Take the tour" button
+      - ownedResources      # resources owned by your groups
+      - standingRequests    # your requests still in flight
+      - pendingApprovals    # requests you may decide
+      - recentlyVisited     # pages you opened, newest first
+      - favouriteTemplates  # templates you starred on Create
     maxItems: 8
 ```
-Frontend-visible. Configures the home page cards; omit for all sections.
+
+Frontend-visible. `sections` is an explicit list: **a section absent from it is
+not rendered**, so adding a new card means adding its key here, not just
+upgrading. `maxItems` caps the table sections; recently-visited shows 5 and
+favourites 6 regardless, because a longer list stops being either.
+
+`recentlyVisited` and `favouriteTemplates` are stored per **user** in the
+user-settings backend, so they follow the person across browsers and machines.
+Favourites are the same stars the Create page already writes — nothing extra to
+enable. See **[Customise the home page](../how-to/customise-the-home-page.md)**.
 
 ## `platform.secrets`
 
@@ -62,6 +114,53 @@ Frontend-visible. Configures the home page cards; omit for all sections.
 `encryptionKey` takes a string **or a list**: the first entry encrypts, every
 entry is tried on decrypt, which is how the key rotates without re-encrypting
 held blobs. See **[Secret lifecycle](../explanation/secrets-lifecycle.md)**.
+
+## `platform.requests.retention`
+
+Off by default — deleting rows cannot be undone.
+
+```yaml
+platform:
+  requests:
+    retention:
+      enabled: true
+      dryRun: false           # log what would go, change nothing
+      frequency: { hours: 6 }
+      batchSize: 500          # rows deleted per state per run
+      pendingExpiryDays: 14   # PENDING_APPROVAL -> EXPIRED (0 = never)
+      succeededDays: 90
+      failedDays: 90
+      rejectedDays: 30
+      expiredDays: 30
+```
+
+Any window may be `0` to keep that state forever. `APPROVED` and `IN_PROGRESS`
+are never deleted regardless of configuration. See
+**[the request lifecycle](../explanation/request-lifecycle.md)**.
+
+## `app.extensions`
+
+Backstage's own extensions are configured here, by id. Two this suite sets:
+
+```yaml
+app:
+  extensions:
+    - page:catalog:
+        config:
+          path: /catalog
+    # The catalog opens on Resource — this platform's catalog is mostly the
+    # things requests create, and Component is Backstage's default.
+    - catalog-filter:catalog/kind:
+        config:
+          initialFilter: resource
+```
+
+Every catalog filter is a separately configurable extension —
+`catalog-filter:catalog/kind`, `/type`, `/mode`, `/namespace`, `/lifecycle`,
+`/processing-status` and the user list — so their defaults can be changed the
+same way without touching code. The catalog **page** extension does not expose
+the default kind; the filter extension does, which is why the setting lives
+here rather than under `page:catalog`.
 
 ## `catalog.providers.ldapOrg`
 

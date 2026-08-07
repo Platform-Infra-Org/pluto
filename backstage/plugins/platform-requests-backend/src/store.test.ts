@@ -126,4 +126,118 @@ describe('RequestsStore', () => {
       expect(await store.get(9999)).toBeUndefined();
     },
   );
+
+  it.each(databases.eachSupportedId())(
+    'expires stale pending requests and clears their held secret, %p',
+    async databaseId => {
+      const store = await createStore(databaseId);
+      const old = await store.create({
+        kind: 'CREATE',
+        resourceType: 'postgres',
+        resourceName: 'old',
+        params: {},
+        policy: { mode: 'SINGLE' },
+        requester: 'user:default/sam',
+        secretEnc: 'cipher-text',
+      });
+      const fresh = await store.create({
+        kind: 'CREATE',
+        resourceType: 'postgres',
+        resourceName: 'fresh',
+        params: {},
+        policy: { mode: 'SINGLE' },
+        requester: 'user:default/sam',
+      });
+
+      await store.testOnlySetUpdatedAt(old.id, '2020-01-01T00:00:00.000Z');
+
+      expect(await store.expireStale('2026-01-01T00:00:00.000Z')).toBe(1);
+      expect((await store.get(old.id))!.state).toBe('EXPIRED');
+      expect((await store.get(fresh.id))!.state).toBe('PENDING_APPROVAL');
+      // The held secret must not outlive the decision.
+      expect(await store.getSecretEnc(old.id)).toBeUndefined();
+    },
+  );
+
+  it.each(databases.eachSupportedId())(
+    'deletes terminal requests with their approvals, and nothing else, %p',
+    async databaseId => {
+      const store = await createStore(databaseId);
+      const rejected = await store.create({
+        kind: 'CREATE',
+        resourceType: 'postgres',
+        resourceName: 'gone',
+        params: {},
+        policy: { mode: 'SINGLE' },
+        requester: 'user:default/sam',
+      });
+      await store.addApproval(rejected.id, {
+        approver: 'user:default/admin',
+        decision: 'reject',
+        at: new Date().toISOString(),
+      });
+      await store.setState(rejected.id, 'REJECTED');
+      await store.testOnlySetUpdatedAt(rejected.id, '2020-01-01T00:00:00.000Z');
+
+      const inProgress = await store.create({
+        kind: 'CREATE',
+        resourceType: 'postgres',
+        resourceName: 'live',
+        params: {},
+        policy: { mode: 'SINGLE' },
+        requester: 'user:default/sam',
+      });
+      await store.setState(inProgress.id, 'IN_PROGRESS');
+      await store.testOnlySetUpdatedAt(
+        inProgress.id,
+        '2020-01-01T00:00:00.000Z',
+      );
+
+      expect(
+        await store.deleteTerminalBefore(
+          'REJECTED',
+          '2026-01-01T00:00:00.000Z',
+          500,
+        ),
+      ).toBe(1);
+      expect(await store.get(rejected.id)).toBeUndefined();
+      // Same age, different state: untouched.
+      expect((await store.get(inProgress.id))!.state).toBe('IN_PROGRESS');
+      // The approval went with it.
+      expect(await store.testOnlyCountApprovals(rejected.id)).toBe(0);
+    },
+  );
+
+  it.each(databases.eachSupportedId())(
+    'honours the batch limit, %p',
+    async databaseId => {
+      const store = await createStore(databaseId);
+      for (let i = 0; i < 5; i++) {
+        const r = await store.create({
+          kind: 'CREATE',
+          resourceType: 'postgres',
+          resourceName: `r${i}`,
+          params: {},
+          policy: { mode: 'SINGLE' },
+          requester: 'user:default/sam',
+        });
+        await store.setState(r.id, 'REJECTED');
+        await store.testOnlySetUpdatedAt(r.id, '2020-01-01T00:00:00.000Z');
+      }
+      expect(
+        await store.deleteTerminalBefore(
+          'REJECTED',
+          '2026-01-01T00:00:00.000Z',
+          2,
+        ),
+      ).toBe(2);
+      expect(
+        await store.deleteTerminalBefore(
+          'REJECTED',
+          '2026-01-01T00:00:00.000Z',
+          500,
+        ),
+      ).toBe(3);
+    },
+  );
 });

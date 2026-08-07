@@ -27,6 +27,47 @@ export interface Config {
        * @visibility frontend
        */
       favicon?: string;
+
+      /**
+       * Software-template card headers, supplied as images.
+       *
+       * Drop files into `packages/app/src/branding/<dir>/` and they are used in
+       * filename order, cycling across the cards. With no images, the built-in
+       * pixel art is used instead.
+       */
+      templateHeaders?: {
+        /**
+         * Subfolder of `packages/app/src/branding/` to read.
+         * @default template-headers
+         * @visibility frontend
+         */
+        dir?: string;
+        /**
+         * Header height, any CSS length.
+         * @default 90px
+         * @visibility frontend
+         */
+        height?: string;
+        /**
+         * How the crop is anchored, any CSS background-position.
+         * @default center
+         * @visibility frontend
+         */
+        position?: string;
+      };
+
+      /**
+       * Optional naming flavour for the sidebar.
+       *
+       * `fantasy` renames **screens only** — Requests → Quests, Create →
+       * Summon, Catalog → Atlas. Request states are records and are never
+       * renamed: a screen someone cannot find is one click away, but
+       * `QUEST FAILED` in an audit trail is a support ticket.
+       *
+       * Omit for the literal names.
+       * @visibility frontend
+       */
+      flavour?: 'fantasy';
     };
   };
 }

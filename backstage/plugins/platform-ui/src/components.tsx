@@ -6,7 +6,178 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { configApiRef, useApi } from '@backstage/core-plugin-api';
-import { MARK_SHAPES, MARK_VIEWBOX } from './markShapes';
+import {
+  Sprite,
+  SPRITE_SIZE,
+  spriteRects,
+  TEMPLE,
+  POTION,
+  RUPEE,
+  CREEP_A,
+  CREEP_B,
+  SMALL_SPRITE_SIZE,
+  STAR,
+} from './sprites';
+
+/**
+ * Renders a pixel grid as SVG rects. `shape-rendering: crispEdges` is what keeps
+ * the edges hard at every size — without it the browser antialiases the pixels
+ * back into a smooth shape.
+ */
+export function PixelSprite({
+  sprite,
+  className,
+}: {
+  sprite: Sprite;
+  className?: string;
+}) {
+  return (
+    <svg
+      className={className}
+      viewBox={`0 0 ${SPRITE_SIZE} ${SPRITE_SIZE}`}
+      fill="currentColor"
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {spriteRects(sprite).map(r => (
+        <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
+      ))}
+    </svg>
+  );
+}
+
+/**
+ * A potion whose liquid is a given colour: the glass in the current text
+ * colour, the contents in `liquid`.
+ *
+ * Two passes over one sprite grid rather than two sprites, so the glass and
+ * what is inside it can never drift out of alignment.
+ */
+export function PixelPotion({
+  liquid,
+  className,
+}: {
+  liquid: string;
+  className?: string;
+}) {
+  return (
+    <svg
+      className={className}
+      viewBox={`0 0 ${SPRITE_SIZE} ${SPRITE_SIZE}`}
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <g fill={liquid}>
+        {spriteRects(POTION, '~').map(r => (
+          <rect key={`l-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
+        ))}
+      </g>
+      <g fill="currentColor">
+        {spriteRects(POTION, '#').map(r => (
+          <rect key={`g-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+/** A sparkle, for decoration that has to actually look like a star. */
+export function PixelStar({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox={`0 0 ${SMALL_SPRITE_SIZE} ${SMALL_SPRITE_SIZE}`}
+      shapeRendering="crispEdges"
+      fill="currentColor"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {spriteRects(STAR).map(r => (
+        <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
+      ))}
+    </svg>
+  );
+}
+
+/** The rupee beside the experience bar: accent fill, ink facets. */
+export function PixelRupee({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox={`0 0 ${SPRITE_SIZE} ${SPRITE_SIZE}`}
+      shapeRendering="crispEdges"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <g fill="hsl(var(--sc-primary))">
+        {spriteRects(RUPEE, '~').map(r => (
+          <rect key={`f-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
+        ))}
+      </g>
+      <g fill="currentColor">
+        {spriteRects(RUPEE, '#').map(r => (
+          <rect key={`e-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+/**
+ * One creature, both run frames stacked.
+ *
+ * Both frames are always rendered and CSS shows one at a time: swapping them
+ * in React would re-render three sprites every 200ms for pure decoration.
+ */
+export function PixelCreep({ className }: { className?: string }) {
+  const frame = (sprite: Sprite, cls: string) => (
+    <svg
+      className={cls}
+      viewBox={`0 0 ${SMALL_SPRITE_SIZE} ${SMALL_SPRITE_SIZE}`}
+      shapeRendering="crispEdges"
+      fill="currentColor"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {spriteRects(sprite).map(r => (
+        <rect key={`${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
+      ))}
+    </svg>
+  );
+  return (
+    <span className={className} aria-hidden="true">
+      {frame(CREEP_A, 'sc-creep-a')}
+      {frame(CREEP_B, 'sc-creep-b')}
+    </span>
+  );
+}
+
+/**
+ * An empty list, framed as a panel rather than left as a stray sentence.
+ *
+ * The hint is the part that earns its place: a heading saying NO DATA tells
+ * someone what they can already see, while the hint says what would put
+ * something here. The sprite is decorative and bobs under the motion rules.
+ */
+export function EmptyState({
+  sprite,
+  title = 'No data',
+  hint,
+}: {
+  sprite: Sprite;
+  title?: string;
+  hint: string;
+}) {
+  return (
+    <div className="sc-empty">
+      <PixelSprite sprite={sprite} className="sc-state-ic" />
+      <div className="sc-empty-title">{title}</div>
+      <div className="sc-empty-hint">{hint}</div>
+    </div>
+  );
+}
 
 /**
  * The Platform logo glyph. `app.branding.mark` replaces it with an image drawn
@@ -27,23 +198,7 @@ export function PlatformMark({ className }: { className?: string }) {
     // that already names the product.
     return <img className={className} src={mark} alt="" aria-hidden="true" />;
   }
-  return (
-    <svg
-      className={className}
-      viewBox={`0 0 ${MARK_VIEWBOX} ${MARK_VIEWBOX}`}
-      fill="currentColor"
-      aria-hidden="true"
-      focusable="false"
-    >
-      {MARK_SHAPES.map((s, i) =>
-        'path' in s ? (
-          <path key={i} d={s.path} />
-        ) : (
-          <rect key={i} x={s.x} y={s.y} width={s.w} height={s.h} rx={s.r} />
-        ),
-      )}
-    </svg>
-  );
+  return <PixelSprite sprite={TEMPLE} className={className} />;
 }
 
 export function Page({ children }: { children: ReactNode }) {

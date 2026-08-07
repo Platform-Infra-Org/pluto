@@ -17,8 +17,8 @@ secret manager.
 
 | Config key | Dev value | Production |
 |---|---|---|
-| `backend.auth.externalAccess[].options.token` | `dev-smoke-token-please-change` | remove it, or a strong `${…}` — it is a static bearer token |
-| `auth.session.secret` | `dev-only-backstage-session-secret` | `${AUTH_SESSION_SECRET}` |
+| `backend.auth.externalAccess[].options.token` | generated into `app-config.local.yaml` (gitignored) | absent entirely, or a strong `${…}` — it is a static bearer token |
+| `auth.session.secret` | generated into `app-config.local.yaml` (gitignored) | `${AUTH_SESSION_SECRET}` |
 | `auth.providers.oidc.*.clientSecret` | `backstage-dev-secret` | `${OIDC_CLIENT_SECRET}` |
 | `backend.database.connection.password` | `backstage` | `${POSTGRES_PASSWORD}` (already done in the production file) |
 | `catalog.providers.ldapOrg.default.bind.secret` | `admin` | `${LDAP_BIND_SECRET}` |
@@ -27,8 +27,21 @@ secret manager.
 
 ## 2. Auth
 
-- **Remove the `guest` provider.** It is an auth bypass, and it is present in
-  both config files.
+- **Remove the `guest` provider — with `null`, not by omission.**
+
+  ```yaml
+  auth:
+    providers:
+      guest: null
+  ```
+
+  Backstage **merges** config objects across files: a production file that
+  simply leaves `guest` out inherits it from `app-config.yaml`, and the guest
+  provider is an auth bypass. Only `null` removes a key.
+
+  Verified against `@backstage/config`: with the key omitted,
+  `auth.providers` reports `["oidc","guest"]` and guest is readable; with
+  `guest: null` it reports `["oidc"]`.
 - Set `auth.environment: production` and add a `production:` block under the
   `oidc` provider — the demo only defines `development:`.
 - Leave `backend.auth.dangerouslyDisableDefaultAuthPolicy` **unset**.
@@ -82,5 +95,8 @@ page and `argoSubmit` / `resource-data` conventions.
 - [ ] IdP, LDAPS and Argo (TLS + auth) endpoints real; `platform.argo.proxyPath` set
 - [ ] TLS and real base URLs; `backend.reading.allow` scoped
 - [ ] `platform.secrets.encryptionKey` set from the secret manager
+- [ ] A retention policy decided: either `platform.requests.retention.enabled`
+      with windows that suit your compliance position, or a deliberate choice to
+      keep every request forever
 - [ ] `yarn tsc`, `yarn lint:all` and `yarn test` green
 - [ ] Smoke: LDAP login, request → approve → workflow, edit, delete, Resource Data tab

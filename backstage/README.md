@@ -45,7 +45,7 @@ scripts/backstage-down.sh
 - `packages/app` — frontend (custom theme, OIDC sign-in, module wiring).
 - `packages/backend` — backend (OIDC provider, Postgres, catalog, scaffolder).
 - `plugins/` — the platform plugin suite (added in P1+).
-- Stack + seed assets live in `../deploy/backstage/`; orchestration in
+- Stack + seed assets live in `../deploy/dev/`; orchestration in
   `../scripts/backstage-{up,down}.sh`.
 
 ## Status

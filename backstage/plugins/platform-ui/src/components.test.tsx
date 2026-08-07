@@ -3,7 +3,8 @@ import { ApiProvider } from '@backstage/core-app-api';
 import { TestApiRegistry } from '@backstage/test-utils';
 import { configApiRef } from '@backstage/core-plugin-api';
 import { ConfigReader } from '@backstage/config';
-import { PlatformMark } from './components';
+import { PixelSprite, PlatformMark } from './components';
+import { spriteRects, TEMPLE } from './sprites';
 
 const renderMark = (config: object) =>
   render(
@@ -36,5 +37,23 @@ describe('PlatformMark', () => {
     expect(img!.getAttribute('aria-hidden')).toBe('true');
     expect(img!.getAttribute('alt')).toBe('');
     expect(container.querySelector('svg')).toBeNull();
+  });
+});
+
+describe('PixelSprite', () => {
+  it('draws one rect per horizontal run and hides itself from assistive tech', () => {
+    const { container } = render(<PixelSprite sprite={TEMPLE} />);
+    const svg = container.querySelector('svg')!;
+    expect(svg.getAttribute('viewBox')).toBe('0 0 16 16');
+    expect(svg.getAttribute('aria-hidden')).toBe('true');
+    expect(svg.getAttribute('fill')).toBe('currentColor');
+    expect(svg.querySelectorAll('rect')).toHaveLength(spriteRects(TEMPLE).length);
+  });
+
+  it('renders crisply rather than smoothed', () => {
+    const { container } = render(<PixelSprite sprite={TEMPLE} />);
+    expect(container.querySelector('svg')!.getAttribute('shape-rendering')).toBe(
+      'crispEdges',
+    );
   });
 });

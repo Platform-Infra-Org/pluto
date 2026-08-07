@@ -12,6 +12,6 @@ echo "==> deleting kind cluster 'platform'"
 kind delete cluster --name platform 2>/dev/null || true
 
 echo "==> stopping docker services"
-docker compose -p backstage -f deploy/backstage/docker-compose.yml down -v
+docker compose -p backstage -f deploy/dev/docker-compose.yml down -v
 
 echo "Backstage stack torn down. (The backstage/ app itself is just a process — stop 'yarn start'.)"

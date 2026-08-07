@@ -7,15 +7,24 @@ import {
 import { Link } from '@backstage/core-components';
 import { catalogApiRef } from '@backstage/plugin-catalog-react';
 import { Request, isTerminal } from '@internal/plugin-platform-common';
-import { Page, PageHeader, Card } from '@internal/plugin-platform-ui';
+import {
+  Page,
+  PageHeader,
+  Card,
+  PixelStar,
+} from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
 import { stateBadge } from './RequestsPage';
+import { RecentlyVisited } from './HomeVisits';
+import { FavouriteTemplates } from './HomeFavourites';
 
 type Section =
   | 'quickActions'
   | 'ownedResources'
   | 'standingRequests'
-  | 'pendingApprovals';
+  | 'pendingApprovals'
+  | 'recentlyVisited'
+  | 'favouriteTemplates';
 
 interface OwnedResource {
   name: string;
@@ -30,6 +39,33 @@ const ACTIONS = [
   { to: '/catalog', label: 'Browse resources', hint: 'Edit or delete from an entity page' },
   { to: '/requests', label: 'All requests', hint: 'Track approvals and workflows' },
 ];
+
+/**
+ * Replays the guided tour.
+ *
+ * Sits opposite the page title rather than among the quick actions: it is
+ * about the app itself, not one of the things you came here to do. The tour
+ * is hosted at the app root, so it is asked for by event — the home page and
+ * the root have no other connection.
+ */
+function TourButton() {
+  return (
+    <button
+      type="button"
+      className="sc-btn sc-btn-outline sc-tour"
+      onClick={() => window.dispatchEvent(new Event('platform:quickstart'))}
+    >
+      Take the tour
+      {/* Real sprites rather than square dots: a 2px box is a dot, and a dot
+          is not a star. Decorative, so they carry no text of their own. */}
+      <span className="sc-tour-stars" aria-hidden="true">
+        {[0, 1, 2, 3, 4, 5].map(i => (
+          <PixelStar key={i} className={`sc-tour-star sc-tour-star-${i}`} />
+        ))}
+      </span>
+    </button>
+  );
+}
 
 function QuickActions() {
   return (
@@ -116,7 +152,7 @@ function StandingRequests({ max }: { max: number }) {
   }, [requests]);
 
   return (
-    <Card>
+    <Card className="sc-span-2">
       <div className="sc-card-h">
         <div className="sc-card-title">Standing requests</div>
       </div>
@@ -218,12 +254,14 @@ export function HomePage() {
     'ownedResources',
     'standingRequests',
     'pendingApprovals',
+    'recentlyVisited',
+    'favouriteTemplates',
   ];
   const maxItems = home?.getOptionalNumber('maxItems') ?? 8;
 
   return (
     <Page>
-      <PageHeader title={title} subtitle={subtitle} />
+      <PageHeader title={title} subtitle={subtitle} actions={<TourButton />} />
       <div className="sc-grid-2">
         {sections.map(s => {
           switch (s) {
@@ -235,6 +273,12 @@ export function HomePage() {
               return <StandingRequests key={s} max={maxItems} />;
             case 'pendingApprovals':
               return <PendingApprovals key={s} max={maxItems} />;
+            case 'recentlyVisited':
+              // 5, not maxItems: a longer list stops being "recent".
+              return <RecentlyVisited key={s} max={5} />;
+            case 'favouriteTemplates':
+              // 6: beyond that it stops being a favourites list.
+              return <FavouriteTemplates key={s} max={6} />;
             default:
               return null;
           }

@@ -77,6 +77,70 @@ are still what the browser shows for the split second before JavaScript runs, an
 they're the fallback if icon generation fails. Replace them too if that first
 paint matters to you.
 
+## Template card headers
+
+The software-template cards on `/create` carry a header image. With none
+supplied they show built-in pixel art — a Greek meander keyed to the accent
+colour. To use your own:
+
+1. Copy images into `backstage/packages/app/src/branding/template-headers/`.
+2. There is no step 2. The bundler picks them up in filename order.
+
+They cycle across the cards: with three images and five templates, the cards
+show 1, 2, 3, 1, 2. Filtering the template list reshuffles which card gets which
+image — the rotation follows position, not template identity.
+
+| | |
+|---|---|
+| Recommended size | **752×180** (headers render at 376×90; double for retina) |
+| Formats | `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`, `.svg` |
+| Oversized images | cropped to fill, never squashed |
+
+Three optional keys change the defaults:
+
+```yaml
+app:
+  branding:
+    templateHeaders:
+      dir: template-headers   # subfolder of packages/app/src/branding/
+      height: 90px            # any CSS length
+      position: center        # any CSS background-position, anchors the crop
+```
+
+`dir` selects a **subfolder of `packages/app/src/branding/`** rather than an
+arbitrary path: the folder is read by the bundler at build time, before any
+config exists, so the root has to be fixed. Create a sibling folder and point
+`dir` at it to keep several sets around.
+
+A new image needs a rebuild — automatic while `yarn start` is running, and part
+of the normal image build in production. Config changes need the dev server
+restarted.
+
+With **no images in the folder**, the built-in pixel art is used instead and
+cycles three scenes across the cards, so a fresh install is not one header
+repeated down the grid.
+
+Header text colour is chosen per image from the brightness of the area the
+title sits over — light text on a dark image, dark text on a bright one —
+rather than from the accent, which knows nothing about your artwork.
+
+## Rename the screens
+
+```yaml
+app:
+  branding:
+    flavour: fantasy   # omit for the literal names
+```
+
+Renames sidebar **screens only**: Requests → Quests, Create → Summon, Catalog →
+Atlas. Off unless set.
+
+Request **states are never renamed**. A screen name is decoration — someone who
+cannot find "Requests" finds it one click later — while a state is a record,
+and `QUEST FAILED` in an audit trail is a support ticket. See
+**[the pixel design system](../explanation/design-system.md)** for where that
+line is drawn.
+
 ## Supported file types
 
 | Use | Works | Notes |
@@ -100,8 +164,9 @@ The tile is 26px in the sidebar and 52px on sign-in; the mark inside is 17px and
 rounded corners. Keep that ratio if you change the sizes. The generated tab icon
 uses the same proportions on a 64px canvas.
 
-An SVG mark should be authored on a **24×24 artboard** (`viewBox="0 0 24 24"`),
-which is the coordinate space the built-in glyph uses. Below about 32px fine
+An SVG mark should be authored on a **16×16 artboard** (`viewBox="0 0 16 16"`),
+which is the coordinate space the built-in sprite uses — one grid cell per
+pixel. Below about 32px fine
 detail disappears — the tab icon is rendered at 16–32px, so a busy logo will turn
 to mush there. Simple marks win.
 
@@ -109,7 +174,7 @@ to mush there. Simple marks win.
 
 | | Where |
 |---|---|
-| The built-in glyph (fallback when `branding.mark` is unset) | `backstage/plugins/platform-ui/src/components.tsx` → `PlatformMark` |
+| The built-in glyph (fallback when `branding.mark` is unset) | `backstage/plugins/platform-ui/src/sprites.ts` → `TEMPLE`, a 16×16 character grid rendered by `PixelSprite` |
 | Tile size, radius, and the accent gradient | `platform-ui/src/styles.ts` (`.sc-nav-mark`, `.sc-login-mark`) |
 | The colour palette itself | `platform-ui/src/SchemeRoot.tsx` → `SCHEMES` |
 | Tab icon generation | `platform-ui/src/SchemeRoot.tsx` → `updateFavicon` |

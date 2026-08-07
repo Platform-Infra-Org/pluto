@@ -1,0 +1,152 @@
+{{/*
+The production app-config, rendered from values.
+
+This is layered *on top of* the app-config.yaml baked into the image, so it
+only needs to state what differs — and to override the dev values the base
+config carries on purpose. Two of those overrides are load-bearing and are
+called out below: `integrations.gitea: []` and dropping the guest provider.
+
+Every credential here is a ${ENV} reference resolved by the backend at start-up
+from the Secret in `secrets.existingSecret`. No secret value is templated into
+this ConfigMap, and none should ever be.
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "platform.fullname" . }}-app-config
+  labels:
+    {{- include "platform.labels" . | nindent 4 }}
+data:
+  app-config.production.yaml: |
+    app:
+      baseUrl: {{ include "platform.baseUrl" . }}
+      {{- with .Values.platform.branding }}
+      branding:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+    backend:
+      baseUrl: {{ include "platform.baseUrl" . }}
+      listen:
+        port: {{ .Values.service.port }}
+      cors:
+        origin: {{ include "platform.baseUrl" . }}
+        credentials: true
+      database:
+        client: pg
+        connection:
+          host: ${POSTGRES_HOST}
+          port: ${POSTGRES_PORT}
+          user: ${POSTGRES_USER}
+          database: ${POSTGRES_DATABASE}
+          password: ${POSTGRES_PASSWORD}
+          {{- if .Values.postgres.caCertSecret }}
+          ssl:
+            ca:
+              $file: /etc/platform/postgres-ca/{{ .Values.postgres.caCertKey }}
+          {{- end }}
+      reading:
+        allow:
+          - host: {{ .Values.bitbucket.host }}
+      # No externalAccess block: the dev static bearer token exists for seed
+      # scripts and smoke tests, and has no business in production.
+
+    integrations:
+      # The base config ships a Gitea entry pointing at localhost:3001. An empty
+      # list is what removes it — without this, production still carries a
+      # credentialed integration for a host that does not exist here.
+      gitea: []
+      bitbucketServer:
+        - host: {{ .Values.bitbucket.host }}
+          apiBaseUrl: https://{{ .Values.bitbucket.host }}/rest/api/1.0
+          token: ${BITBUCKET_TOKEN}
+
+    auth:
+      environment: production
+      session:
+        secret: ${AUTH_SESSION_SECRET}
+      providers:
+        # Backstage MERGES config objects across files — a later file that
+        # simply omits a key inherits it from the earlier one. Omitting `guest`
+        # here would therefore leave the base config's guest provider live in
+        # production, which is an auth bypass. `null` is what removes a key.
+        guest: null
+        oidc:
+          production:
+            metadataUrl: {{ .Values.oidc.metadataUrl }}
+            clientId: {{ .Values.oidc.clientId }}
+            clientSecret: ${OIDC_CLIENT_SECRET}
+            prompt: auto
+            {{- with .Values.oidc.additionalScopes }}
+            additionalScopes:
+              {{- toYaml . | nindent 14 }}
+            {{- end }}
+            signIn:
+              resolvers:
+                - resolver: {{ .Values.oidc.signInResolver }}
+
+    catalog:
+      locations:
+        - type: url
+          target: https://{{ .Values.bitbucket.host }}/projects/{{ .Values.bitbucket.project }}/repos/{{ .Values.bitbucket.catalogRepo }}/browse/catalog-info.yaml
+          rules:
+            - allow: [Location, Resource, Group, User]
+        - type: url
+          target: https://{{ .Values.bitbucket.host }}/projects/{{ .Values.bitbucket.project }}/repos/{{ .Values.bitbucket.templatesRepo }}/browse/catalog-info.yaml
+          rules:
+            - allow: [Location, Template]
+      providers:
+        ldapOrg:
+          default:
+            target: {{ .Values.ldap.target }}
+            bind:
+              dn: {{ .Values.ldap.bindDn | quote }}
+              secret: ${LDAP_BIND_SECRET}
+            users:
+              - dn: {{ .Values.ldap.users.dn | quote }}
+                options:
+                  filter: {{ .Values.ldap.users.filter | quote }}
+                map:
+                  {{- toYaml .Values.ldap.users.map | nindent 18 }}
+            groups:
+              - dn: {{ .Values.ldap.groups.dn | quote }}
+                options:
+                  filter: {{ .Values.ldap.groups.filter | quote }}
+                map:
+                  {{- toYaml .Values.ldap.groups.map | nindent 18 }}
+            schedule:
+              {{- toYaml .Values.ldap.schedule | nindent 14 }}
+
+    proxy:
+      endpoints:
+        {{ .Values.argo.proxyPath }}:
+          target: {{ .Values.argo.serverUrl }}
+          changeOrigin: true
+          headers:
+            Authorization: Bearer ${ARGO_TOKEN}
+
+    platform:
+      argo:
+        baseUrl: {{ .Values.argo.serverUrl }}
+        namespace: {{ .Values.argo.namespace }}
+        defaultTemplate: {{ .Values.argo.defaultTemplate }}
+        # Set, so Argo calls route through the proxy above and the token is
+        # injected server-side. Unset would put it in the browser's reach.
+        proxyPath: {{ .Values.argo.proxyPath }}
+      rbac:
+        {{- toYaml .Values.platform.rbac | nindent 8 }}
+      secrets:
+        enabled: {{ .Values.platform.secrets.enabled }}
+        namespace: {{ .Values.platform.secrets.namespace }}
+        encryptionKey: ${PLATFORM_SECRET_KEY}
+        sweep:
+          {{- toYaml .Values.platform.secrets.sweep | nindent 10 }}
+      requests:
+        retention:
+          {{- toYaml .Values.platform.requests.retention | nindent 10 }}
+      home:
+        {{- toYaml .Values.platform.home | nindent 8 }}
+
+    {{- with .Values.extraAppConfig }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}

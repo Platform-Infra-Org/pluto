@@ -8,6 +8,17 @@ app:
   branding:
     mark: /branding/hades.png # drawn in the accent tile; transparency shows the picked color
     # favicon: /branding/tab.png # optional: pins the tab icon instead of generating it from `mark`
+    # Software-template card headers. Drop images into
+    # packages/app/src/branding/<dir>/ and they are used in filename order,
+    # cycling across the cards; with no images the built-in pixel art is used.
+    # templateHeaders:
+    #   dir: template-headers   # subfolder of packages/app/src/branding/
+    #   height: 90px            # any CSS length
+    #   position: center        # any CSS background-position
+    # Optional fantasy naming for the sidebar. Renames screens only —
+    # Requests -> Quests, Create -> Summon, Catalog -> Atlas. Request states
+    # are records and are never renamed. Omit for the literal names.
+    # flavour: fantasy
   baseUrl: http://localhost:3000
 
   # Enable all packages by default, this will discover packages from packages/app/package.json
@@ -18,6 +29,11 @@ app:
     - page:catalog:
         config:
           path: /catalog
+    # This platform's catalog is mostly Resources — the things requests create —
+    # so the kind filter opens on Resource rather than Backstage's Component.
+    - catalog-filter:catalog/kind:
+        config:
+          initialFilter: resource
     # Disable the stock Backstage themes so the platform theme is the default.
     - theme:app/light: false
     - theme:app/dark: false
@@ -28,13 +44,13 @@ organization:
   name: Platform
 
 backend:
-  # Static external-access token for local smoke tests / scripts (dev-only).
-  auth:
-    externalAccess:
-      - type: static
-        options:
-          token: dev-smoke-token-please-change
-          subject: local-smoke
+  # A static external-access token for local smoke tests and the DynamicSelect
+  # demo proxy lives in app-config.local.yaml, which is gitignored and written
+  # with a freshly generated value by scripts/backstage-up.sh.
+  #
+  # It is deliberately not committed: it is a *static bearer token* for the
+  # backend, and a committed one is both a secret-scanner hit and something
+  # somebody eventually copies into a real deployment.
   baseUrl: http://localhost:7007
   listen:
     port: 7007
@@ -89,8 +105,8 @@ proxy:
     '/demo-options':
       target: http://localhost:7007/api/platform-requests/options
       changeOrigin: true
-      headers:
-        Authorization: Bearer dev-smoke-token-please-change
+      # `headers.Authorization` is supplied by app-config.local.yaml alongside
+      # the token it has to match, so the two cannot drift apart.
 
     # Production: route Argo REST calls through the proxy so the token/mTLS is
     # injected here (server-side) and never lives in the plugin. Point
@@ -117,7 +133,9 @@ auth:
   environment: development
   # OIDC (openid-client) needs session support for the nonce/state exchange.
   session:
-    secret: dev-only-backstage-session-secret
+    # `secret:` is supplied by app-config.local.yaml, which
+    # scripts/backstage-up.sh generates and .gitignore excludes. Not committed:
+    # reused in a real deployment it would allow session forgery.
   providers:
     # See https://backstage.io/docs/auth/guest/provider
     guest: {}
@@ -226,7 +244,22 @@ platform:
       - ownedResources
       - standingRequests
       - pendingApprovals
+      - recentlyVisited
+      - favouriteTemplates
     maxItems: 8
+  # Request retention. Off by default: deleting rows cannot be undone.
+  # Expiry moves an undecided request to EXPIRED; the windows below then delete
+  # terminal requests. APPROVED and IN_PROGRESS are never deleted.
+  # requests:
+  #   retention:
+  #     enabled: true
+  #     dryRun: false           # log what would go, change nothing
+  #     frequency: { hours: 6 }
+  #     pendingExpiryDays: 14   # PENDING_APPROVAL -> EXPIRED (0 = never)
+  #     succeededDays: 90
+  #     failedDays: 90
+  #     rejectedDays: 30
+  #     expiredDays: 30
   argo:
     # Dev: direct to the local argo-server (plain HTTP, no auth).
     baseUrl: http://localhost:2746

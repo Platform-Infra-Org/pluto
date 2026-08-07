@@ -12,6 +12,7 @@ import { createNotifier } from './notifications';
 import { createSecretStore } from './secretStore';
 import { createCipher } from './crypto';
 import { createResourceResolver, createSubmitWorkflow } from './provisioning';
+import { planRetention, readRetentionConfig } from './retention';
 
 /**
  * platformRequestsPlugin backend plugin
@@ -200,6 +201,11 @@ export const platformRequestsPlugin = createBackendPlugin({
             onCreated: notify.approvalNeeded,
             onDecided: notify.decided,
             workflowNodesFor: (name, namespace) => argo.nodesFor(name, namespace),
+            suspendedNodesFor: (name, namespace) =>
+              argo.suspendedNodesFor(name, namespace),
+            resumeNode: (name, nodeId, opts) =>
+              argo.resumeNode(name, nodeId, opts),
+            stopWorkflow: (name, opts) => argo.stopWorkflow(name, opts),
             principalResolver,
             ownerResolver,
             verbConfigResolver,
@@ -230,15 +236,40 @@ export const platformRequestsPlugin = createBackendPlugin({
           frequency: { seconds: 5 },
           timeout: { seconds: 30 },
           fn: async () => {
-            const inProgress = await store.list({ state: 'IN_PROGRESS' });
+            // AWAITING_INPUT is polled alongside IN_PROGRESS: its workflow is
+            // still running, and someone may have resumed the node from the
+            // Argo UI, which has to bring the request back by itself.
+            const inProgress = [
+              ...(await store.list({ state: 'IN_PROGRESS' })),
+              ...(await store.list({ state: 'AWAITING_INPUT' })),
+            ];
             for (const r of inProgress) {
               try {
-                const { phase, message } = await argo.statusFor(
+                const { phase, message, suspendedNodes } = await argo.statusFor(
                   r.id,
                   r.workflowNamespace,
                 );
                 if (!phase) continue;
-                await store.setWorkflow(r.id, { phase });
+                await store.setWorkflow(r.id, { phase, suspendedNodes });
+
+                // A suspend step reports phase Running, and so does the
+                // workflow around it — without this the request would sit in
+                // IN_PROGRESS indefinitely, looking healthy.
+                if (suspendedNodes.length > 0 && r.state !== 'AWAITING_INPUT') {
+                  await store.setState(r.id, 'AWAITING_INPUT');
+                  await notify.approvalNeeded(r);
+                  logger.info(
+                    `request ${r.id}: workflow suspended at ${suspendedNodes
+                      .map(n => n.name)
+                      .join(', ')} — awaiting input`,
+                  );
+                  continue;
+                }
+                if (suspendedNodes.length === 0 && r.state === 'AWAITING_INPUT') {
+                  // Resumed here or in the Argo UI; either way it is moving again.
+                  await store.setState(r.id, 'IN_PROGRESS');
+                  logger.info(`request ${r.id}: resumed, back in progress`);
+                }
                 if (phase === 'Succeeded') {
                   // The workflow is the sole Git writer — it created/updated/
                   // deleted the resource in the catalog repo itself.
@@ -304,6 +335,65 @@ export const platformRequestsPlugin = createBackendPlugin({
                 activeRequestIds: new Set(inProgress.map(r => r.id)),
                 maxAgeMs,
               });
+            },
+          });
+        }
+
+        // Retention: expire undecided requests, then delete terminal ones past
+        // their window. Off unless configured — see docs.
+        const retention = readRetentionConfig(config, m => logger.warn(m));
+        if (retention.enabled) {
+          const retFreq = config.getOptionalConfig(
+            'platform.requests.retention.frequency',
+          );
+          await scheduler.scheduleTask({
+            id: 'platform-requests-retention',
+            frequency: retFreq
+              ? {
+                  hours: retFreq.getOptionalNumber('hours'),
+                  minutes: retFreq.getOptionalNumber('minutes'),
+                  seconds: retFreq.getOptionalNumber('seconds'),
+                }
+              : { hours: 6 },
+            timeout: { minutes: 5 },
+            fn: async () => {
+              const plan = planRetention(retention, new Date());
+
+              if (plan.expirePendingBefore) {
+                if (retention.dryRun) {
+                  const stale = await store.list({ state: 'PENDING_APPROVAL' });
+                  const n = stale.filter(
+                    r => r.updatedAt < plan.expirePendingBefore!,
+                  ).length;
+                  logger.info(
+                    `retention (dry run): would expire ${n} pending requests`,
+                  );
+                } else {
+                  const n = await store.expireStale(plan.expirePendingBefore);
+                  if (n > 0) {
+                    logger.info(`retention: expired ${n} pending requests`);
+                  }
+                }
+              }
+
+              for (const { state, before } of plan.deleteBefore) {
+                if (retention.dryRun) {
+                  const rows = await store.list({ state });
+                  const n = rows.filter(r => r.updatedAt < before).length;
+                  logger.info(
+                    `retention (dry run): would delete ${n} ${state} requests`,
+                  );
+                  continue;
+                }
+                const n = await store.deleteTerminalBefore(
+                  state,
+                  before,
+                  retention.batchSize,
+                );
+                if (n > 0) {
+                  logger.info(`retention: deleted ${n} ${state} requests`);
+                }
+              }
             },
           });
         }

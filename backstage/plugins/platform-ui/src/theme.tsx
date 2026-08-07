@@ -22,8 +22,9 @@ import { navContent } from './CustomNav';
 const PRIMARY = '#6366f1';
 const PRIMARY_DARK = '#818cf8';
 const ACCENT = '#8b5cf6';
-const FONT =
-  "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
+// Full arcade: the MUI theme's base face is the pixel one, so native Backstage
+// components inherit it rather than falling back to Inter.
+const FONT = "'Silkscreen', ui-monospace, SFMono-Regular, monospace";
 
 type Tone = {
   primary: string;
@@ -76,6 +77,63 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
       },
     },
     pageTheme: pageThemes,
+    // Backstage's own components are styled here, through their published
+    // override keys and slot names, rather than by matching hashed class
+    // prefixes from injected CSS. The slots are typed by @backstage/core-components
+    // (HeaderClassKey, InfoCardClassKey, …), so a renamed slot fails tsc instead
+    // of silently rendering unstyled.
+    components: {
+      BackstageHeader: {
+        styleOverrides: {
+          header: {
+            backgroundImage: 'none',
+            backgroundColor: 'hsl(var(--sc-card))',
+            boxShadow: 'none',
+            borderBottom: '1px solid hsl(var(--sc-border))',
+            paddingTop: 16,
+            paddingBottom: 14,
+            minHeight: 0,
+          },
+          title: {
+            color: 'hsl(var(--sc-fg))',
+            fontFamily: "'Silkscreen', ui-monospace, monospace",
+            textTransform: 'uppercase',
+            fontWeight: 400,
+            fontSize: '1.3rem',
+            lineHeight: 1.3,
+          },
+          subtitle: { color: 'hsl(var(--sc-muted-fg))' },
+          type: { color: 'hsl(var(--sc-muted-fg))' },
+        },
+      },
+      BackstageHeaderLabel: {
+        styleOverrides: { label: { color: 'hsl(var(--sc-muted-fg))' } },
+      },
+      BackstageInfoCard: {
+        styleOverrides: {
+          header: {
+            backgroundColor: 'hsl(var(--sc-card))',
+            color: 'hsl(var(--sc-fg))',
+            borderBottom: '1px solid hsl(var(--sc-border))',
+          },
+        },
+      },
+      // ItemCardHeader is left to the stylesheet: its pixel-art background is a
+      // layered gradient keyed to --sc-primary, which is simpler to express in
+      // CSS than in a style object.
+      BackstageSidebarPage: {
+        styleOverrides: {
+          root: {
+            // !important is load-bearing here: SidebarPage sets its own
+            // padding-left (224px, its default sidebar width) inside a
+            // breakpoint, which otherwise wins and misaligns the content
+            // against our 240px nav.
+            paddingLeft: 'var(--sc-nav-w) !important',
+            transition: 'padding-left .16s ease',
+          },
+        },
+      },
+    },
     typography: {
       fontFamily: FONT,
       h1: { fontWeight: 700, letterSpacing: '-0.02em' },

@@ -5303,6 +5303,7 @@ __metadata:
     "@backstage/plugin-scaffolder-react": "npm:^2.0.2"
     "@backstage/test-utils": "npm:*"
     "@backstage/theme": "npm:*"
+    "@internal/plugin-platform-common": "workspace:^"
     "@material-ui/icons": "npm:^4.9.1"
     "@testing-library/react": "npm:*"
   peerDependencies:
