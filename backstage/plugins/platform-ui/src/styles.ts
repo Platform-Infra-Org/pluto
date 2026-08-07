@@ -603,7 +603,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   /* The dim is the ring's own shadow, so there is one element and no gap
      between the cut-out and the overlay to line up. */
   box-shadow: 0 0 0 9999px hsl(var(--sc-fg) / .45); }
-.sc-qs-box { position: fixed; right: 18px; bottom: 78px; width: 320px;
+.sc-qs-box { position: fixed; right: 18px; bottom: 18px; width: 320px;
   pointer-events: auto; padding: 14px 16px 12px;
   background: hsl(var(--sc-card)); border-radius: var(--sc-radius);
   border: var(--sc-border-w) solid hsl(var(--sc-border));
@@ -611,6 +611,9 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     0 0 0 2px hsl(var(--sc-card)),
     0 0 0 4px hsl(var(--sc-fg) / .85),
     var(--sc-shadow); }
+/* The 78px is clearance for the picker sitting in the same corner. Once the
+   picker has been moved, the tour box can have the space back. */
+:root:not([data-picker-moved='true']) .sc-qs-box { bottom: 78px; }
 .sc-qs-count { font-family: var(--sc-font-pixel); font-size: 11px;
   color: hsl(var(--sc-muted-fg)); }
 .sc-qs-title { font-family: var(--sc-font-pixel); text-transform: uppercase;

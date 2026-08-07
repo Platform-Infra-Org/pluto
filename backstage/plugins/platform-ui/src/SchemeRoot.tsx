@@ -15,7 +15,12 @@ import { useRecordVisit } from './useVisits';
 import { Quickstart } from './quickstart/Quickstart';
 import { useQuickstart } from './quickstart/useQuickstart';
 import { sampleImageTone, Tone } from './imageTone';
-import { clampToViewport, PickerPos } from './pickerPos';
+import {
+  clampToViewport,
+  PickerPos,
+  PICKER_POS_KEY,
+  readStoredPos,
+} from './pickerPos';
 
 /**
  * Pointer travel before a press becomes a drag.
@@ -243,7 +248,11 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       'violet',
   );
   const ref = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<PickerPos>();
+  const [pos, setPos] = useState<PickerPos | undefined>(() =>
+    typeof localStorage === 'undefined'
+      ? undefined
+      : readStoredPos(localStorage.getItem(PICKER_POS_KEY)),
+  );
   const [dragging, setDragging] = useState(false);
   // Live drag bookkeeping. A ref, not state: it changes on every pointermove and
   // nothing renders from it.
@@ -265,6 +274,40 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       /* ignore */
     }
   }, [scheme]);
+
+  useEffect(() => {
+    if (!floating || !pos) return;
+    // Set here as well as during the drag, so a restored position also drops the
+    // corner anchors on a fresh page load.
+    document.documentElement.dataset.pickerMoved = 'true';
+    try {
+      localStorage.setItem(PICKER_POS_KEY, JSON.stringify(pos));
+    } catch {
+      /* ignore */
+    }
+  }, [floating, pos]);
+
+  useEffect(() => {
+    if (!floating) return undefined;
+    const onResize = () => {
+      const el = ref.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      // Only correct a position that is already set; an untouched picker is held
+      // by its CSS corner and needs nothing.
+      setPos(p =>
+        p
+          ? clampToViewport(
+              p,
+              { w: r.width, h: r.height },
+              { w: window.innerWidth, h: window.innerHeight },
+            )
+          : p,
+      );
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [floating]);
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     // Left button only, and only the floating instance — the sign-in card's
