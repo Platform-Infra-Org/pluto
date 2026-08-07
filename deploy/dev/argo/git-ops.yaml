@@ -163,3 +163,31 @@ spec:
             git diff --cached --quiet || {
               git commit --quiet -m "delete $NAME"; git push --quiet origin HEAD:main; }
             echo "deleted $NAME ($YAML)"
+
+    # One request, many resources. The array comes from the backend's
+    # << resourcesJson >>, which resolved each resource's data and Git paths at
+    # submit time — so each iteration gets exactly what a single delete gets.
+    #
+    # parallelism: 1 is not a throttle, it is correctness: every iteration
+    # clones, commits and pushes the same branch of the same repo, and
+    # concurrent pushes lose a race and fail. Sequential is the only thing that
+    # works, and it keeps the per-resource nodes readable in the graph.
+    - name: bulk-delete
+      parallelism: 1
+      inputs:
+        parameters:
+          - { name: resources }
+          - { name: repoUrl }
+          - { name: creds }
+      steps:
+        - - name: delete-one
+            template: delete
+            withParam: "{{inputs.parameters.resources}}"
+            arguments:
+              parameters:
+                - { name: name, value: "{{item.name}}" }
+                - { name: path, value: "{{item.path}}" }
+                - { name: dataPath, value: "{{item.dataPath}}" }
+                - { name: data, value: "{{item.data}}" }
+                - { name: repoUrl, value: "{{inputs.parameters.repoUrl}}" }
+                - { name: creds, value: "{{inputs.parameters.creds}}" }
