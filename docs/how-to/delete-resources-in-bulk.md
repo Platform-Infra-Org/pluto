@@ -79,6 +79,11 @@ approve — depend on catalog ordering.
 `parallelism: 1` is required, not tuning: each iteration commits and pushes the
 same branch, and concurrent pushes lose the race.
 
+`{{item.data}}` arrives as clean JSON, so a step can pipe it straight to `jq`.
+That depends on `data` being a nested object in the array rather than a JSON
+string: Argo substitutes into a JSON string context, so a string field would
+arrive with its quotes escaped as `{\"region\":\"eu-west-1\"}`.
+
 ## What you see
 
 One node per resource in the workflow graph, so a failure names the resource

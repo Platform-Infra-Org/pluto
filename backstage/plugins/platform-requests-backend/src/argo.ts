@@ -34,15 +34,18 @@ export interface ResolveCtx {
    * Every resource a bulk request acts on (`<< resourcesJson >>`), resolved at
    * submit time. Absent for a single-resource request.
    *
-   * `data` is a JSON **string**, not a nested object, so an Argo `withParam`
-   * loop can substitute `{{item.data}}` unambiguously — the same shape the
-   * single-resource case already passes as the `data` parameter.
+   * `data` is a nested **object**, not a JSON string. This was verified against
+   * a live Argo rather than reasoned about, because the intuition points the
+   * wrong way: substituting `{{item.data}}` happens inside a JSON string
+   * context, so a *string* field has its quotes escaped and arrives as
+   * `{\"region\":\"eu\"}` — which no consumer can pipe to `jq`. An object field
+   * is serialized properly and arrives as clean JSON.
    */
   resources?: Array<{
     name: string;
     path: string;
     dataPath: string;
-    data: string;
+    data: Record<string, unknown>;
   }>;
 }
 

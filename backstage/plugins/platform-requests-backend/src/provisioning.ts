@@ -150,7 +150,12 @@ export function createSubmitWorkflow(deps: {
       error?: string;
     } = { data: {} };
     let resources:
-      | Array<{ name: string; path: string; dataPath: string; data: string }>
+      | Array<{
+          name: string;
+          path: string;
+          dataPath: string;
+          data: Record<string, unknown>;
+        }>
       | undefined;
 
     if (request.kind !== 'CREATE') {
@@ -173,7 +178,7 @@ export function createSubmitWorkflow(deps: {
           name,
           path: resolved[i].resourcePath ?? '',
           dataPath: resolved[i].dataPath ?? '',
-          data: JSON.stringify(resolved[i].data ?? {}),
+          data: resolved[i].data ?? {},
         }));
       } else {
         r = await resolveResource(request.resourceName);

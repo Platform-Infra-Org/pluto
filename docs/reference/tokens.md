@@ -29,9 +29,15 @@ Unknown tokens and missing fields resolve to an empty string (`resourceData` to
 location + its `resource-data` ref, so they're correct for any layout.
 
 `<< resourcesJson >>` resolves to `[]` for an ordinary single-resource request.
-Each element's `data` is itself a **JSON string**, not a nested object, so an
-Argo `withParam` loop can substitute `{{item.data}}` unambiguously — the same
-shape the single-resource case passes as its `data` parameter.
+Each element's `data` is a **nested object**, not a JSON string.
+
+That is worth stating because the intuition points the wrong way. Argo
+substitutes `{{item.data}}` inside a JSON string context, so a *string* field
+has its quotes escaped and reaches the container as
+`{\"region\":\"eu-west-1\"}` — which cannot be piped to `jq`. An object field is
+serialized properly and arrives as clean JSON. Note this differs from
+`<< paramsJson >>` and the single-resource `data` parameter, which really are
+strings; the difference is the `withParam` loop, not the token.
 
 If any resource in a bulk request cannot be resolved, the submit **fails**
 rather than passing an element with empty data. A workflow that decommissions

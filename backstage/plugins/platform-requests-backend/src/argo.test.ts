@@ -78,9 +78,9 @@ describe('resolveTemplate', () => {
           name: 'a',
           path: 'resources/a.yaml',
           dataPath: 'resources/a-data.json',
-          data: '{"region":"eu-west-1"}',
+          data: { region: 'eu-west-1', tags: ['prod'] },
         },
-        { name: 'b', path: '', dataPath: '', data: '{}' },
+        { name: 'b', path: '', dataPath: '', data: {} },
       ],
     };
     const out = JSON.parse(
@@ -88,8 +88,13 @@ describe('resolveTemplate', () => {
     );
     expect(out).toHaveLength(2);
     expect(out[0].name).toBe('a');
-    expect(typeof out[0].data).toBe('string');
-    expect(JSON.parse(out[0].data).region).toBe('eu-west-1');
+    // A nested object, NOT a JSON string. Verified against a live Argo:
+    // `{{item.data}}` substitutes inside a JSON string context, so a string
+    // field arrives escaped (`{\"region\":\"eu\"}`) and cannot be piped to jq,
+    // while an object field arrives as clean JSON.
+    expect(typeof out[0].data).toBe('object');
+    expect(out[0].data.region).toBe('eu-west-1');
+    expect(out[0].data.tags).toEqual(['prod']);
 
     const empty = {
       requestId: 1,
