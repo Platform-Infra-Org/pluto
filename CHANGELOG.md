@@ -108,6 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stub the bundler-only branding glob under Jest
 - Lowercase the image name before tagging
 - Make the branding glob parseable by Jest and analysable by rspack
+- Pin the MkDocs toolchain so setup-python has a cache key
 
 ### Removed
 

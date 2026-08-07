@@ -37,9 +37,13 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+          # setup-python computes the cache key from a dependency file, and
+          # errors if it finds none — which it did while MkDocs was installed
+          # inline.
+          cache-dependency-path: docs/requirements.txt
 
       - name: Install MkDocs
-        run: pip install mkdocs-techdocs-core
+        run: pip install -r docs/requirements.txt
 
       # --strict turns broken internal links and nav references into failures,
       # so a page renamed without updating its links breaks the build here.
