@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.0] - 2026-08-07
 
 ### Added
 
@@ -91,6 +91,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Commit the specs/ ignore rule
 - Cover the new config and features, and fix the changelog grouping
 - Split deploy into prod and dev, and say so in the README
+- Merge pull request #1 from Platform-Infra-Org/feat/8bit-ui
+- Merge remote-tracking branch 'origin/main' into feat/8bit-ui
+- Merge pull request #2 from Platform-Infra-Org/feat/8bit-ui
 
 ### Fixed
 
@@ -109,6 +112,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lowercase the image name before tagging
 - Make the branding glob parseable by Jest and analysable by rspack
 - Pin the MkDocs toolchain so setup-python has a cache key
+- Make the release App optional, and give the manual release permissions
 
 ### Removed
 
