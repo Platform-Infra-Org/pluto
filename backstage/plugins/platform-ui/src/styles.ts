@@ -917,6 +917,13 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     25% { transform: translateX(-2px); }
     75% { transform: translateX(2px); }
   }
+  @keyframes sc-rattle {
+    0%   { transform: translate(0px, 0px); }
+    25%  { transform: translate(-1px, 1px); }
+    50%  { transform: translate(1px, -1px); }
+    75%  { transform: translate(1px, 1px); }
+    100% { transform: translate(0px, 0px); }
+  }
   @keyframes sc-cursor-in {
     from { transform: translateX(-4px); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
@@ -936,6 +943,19 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   .sc-state-ic.spinning { animation: sc-gear 1s steps(4) infinite; }
   .sc-flash { animation: sc-flash .4s steps(2) 2; }
   .sc-shake { animation: sc-shake .2s steps(2) 2; }
+  /* Bottles knock in their slots while the shelf is being carried.
+     On the sprite, never the button: the button's transform is already spoken
+     for by the hover lift and the selected lift, and an animation on the same
+     property would clobber both — the chosen bottle would drop back into the
+     shelf for as long as the drag lasted. The svg's only existing effect is a
+     drop-shadow filter, so its transform is free.
+     1px, because the sprites are 26px on a pixel grid and 2px reads as a bounce.
+     Absent under reduced motion by construction: the box still follows the
+     pointer, which is the feedback that matters, so only decoration is lost. */
+  .sc-picker-float[data-dragging='true'] .sc-potion svg {
+    animation: sc-rattle .16s steps(4) infinite;
+    animation-delay: calc(var(--sc-i, 0) * .04s);
+  }
 
   /* The marker steps in from the left on hover; .active is excluded so a
      second cursor never appears beside the real one. */

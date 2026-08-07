@@ -1,4 +1,5 @@
 import {
+  CSSProperties,
   PointerEvent as ReactPointerEvent,
   useEffect,
   useRef,
@@ -385,11 +386,14 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       role="group"
       aria-label="Color scheme"
     >
-      {SCHEMES.map(s => (
+      {SCHEMES.map((s, i) => (
         <button
           key={s.id}
           type="button"
           className="sc-potion"
+          // Staggers the rattle so the bottles move out of phase. In unison
+          // they read as the shelf vibrating rather than as loose objects.
+          style={{ ['--sc-i' as string]: i } as CSSProperties}
           aria-pressed={s.id === scheme}
           // The sprite is decorative, so the button carries the name itself.
           aria-label={s.label}
