@@ -1,4 +1,9 @@
-import { useEffect, useState } from 'react';
+import {
+  PointerEvent as ReactPointerEvent,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
 import { SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
@@ -10,6 +15,16 @@ import { useRecordVisit } from './useVisits';
 import { Quickstart } from './quickstart/Quickstart';
 import { useQuickstart } from './quickstart/useQuickstart';
 import { sampleImageTone, Tone } from './imageTone';
+import { clampToViewport, PickerPos } from './pickerPos';
+
+/**
+ * Pointer travel before a press becomes a drag.
+ *
+ * Below it the press is still a click on a bottle. Without a threshold every
+ * drag that happens to start on a potion would also change the colour scheme,
+ * which is worse than the occlusion this feature exists to fix.
+ */
+const DRAG_THRESHOLD = 4;
 
 /** The two foreground tones a scheme can use, and each other's shade. */
 const WHITE = '0 0% 100%';
@@ -227,6 +242,19 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
         localStorage.getItem('platform-scheme')) ||
       'violet',
   );
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<PickerPos>();
+  const [dragging, setDragging] = useState(false);
+  // Live drag bookkeeping. A ref, not state: it changes on every pointermove and
+  // nothing renders from it.
+  const drag = useRef<{
+    id: number;
+    ox: number;
+    oy: number;
+    dx: number;
+    dy: number;
+    moved: boolean;
+  } | null>(null);
 
   useEffect(() => {
     // Base CSS + accent var; also re-applied live whenever the picker changes.
@@ -238,9 +266,79 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
     }
   }, [scheme]);
 
+  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    // Left button only, and only the floating instance — the sign-in card's
+    // picker sits in the flow of the card and must not move.
+    if (!floating || e.button !== 0) return;
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    drag.current = {
+      id: e.pointerId,
+      ox: e.clientX,
+      oy: e.clientY,
+      dx: e.clientX - r.left,
+      dy: e.clientY - r.top,
+      moved: false,
+    };
+    // Keeps the drag alive if the pointer outruns the box.
+    el.setPointerCapture(e.pointerId);
+  };
+
+  const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    const el = ref.current;
+    if (!d || !el || d.id !== e.pointerId) return;
+    if (!d.moved) {
+      if (Math.hypot(e.clientX - d.ox, e.clientY - d.oy) < DRAG_THRESHOLD)
+        return;
+      d.moved = true;
+      setDragging(true);
+      document.documentElement.dataset.pickerMoved = 'true';
+    }
+    const r = el.getBoundingClientRect();
+    setPos(
+      clampToViewport(
+        { x: e.clientX - d.dx, y: e.clientY - d.dy },
+        { w: r.width, h: r.height },
+        { w: window.innerWidth, h: window.innerHeight },
+      ),
+    );
+  };
+
+  const endDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    drag.current = null;
+    ref.current?.releasePointerCapture?.(e.pointerId);
+    if (!d.moved) return;
+    setDragging(false);
+    // The pointerup that ends a drag is followed by a click, which would land on
+    // whichever bottle the drag began on. Swallow exactly that one.
+    const swallow = (ev: MouseEvent) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+    };
+    window.addEventListener('click', swallow, true);
+    // Removed on the next tick rather than with `once`, so a drag that ends
+    // without producing a click cannot leave a listener armed to eat an
+    // unrelated one later.
+    window.setTimeout(
+      () => window.removeEventListener('click', swallow, true),
+      0,
+    );
+  };
+
   return (
     <div
+      ref={ref}
       className={`sc sc-picker${floating ? ' sc-picker-float' : ''}`}
+      style={pos ? { left: pos.x, top: pos.y } : undefined}
+      data-dragging={dragging ? 'true' : undefined}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
       role="group"
       aria-label="Color scheme"
     >

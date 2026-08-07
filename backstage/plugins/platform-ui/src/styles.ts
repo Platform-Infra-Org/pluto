@@ -830,7 +830,12 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     var(--sc-shadow); }
 /* Only the floating instance is pinned to the corner; in the flow it is a
    shelf like any other block, which is how the sign-in card carries one. */
-.sc-picker-float { position: fixed; right: 14px; bottom: 14px; z-index: 1500; }
+.sc-picker-float { position: fixed; right: 14px; bottom: 14px; z-index: 1500;
+  cursor: grab; touch-action: none; }
+/* Once dragged, inline left/top drive it — the corner anchors have to go or the
+   box would be pinned by both edges and stretch instead of move. */
+:root[data-picker-moved='true'] .sc-picker-float { right: auto; bottom: auto; }
+.sc-picker-float[data-dragging='true'] { cursor: grabbing; user-select: none; }
 /* The sign-in card has its own shelf under the button, so the corner one would
    be a second identical picker on the same screen. */
 :root.sc-signed-out .sc-picker-float { display: none; }
