@@ -30,6 +30,20 @@ export interface ResolveCtx {
    * WorkflowTemplate can `secretKeyRef` it. Pre-generated before submit.
    */
   secretName?: string;
+  /**
+   * Every resource a bulk request acts on (`<< resourcesJson >>`), resolved at
+   * submit time. Absent for a single-resource request.
+   *
+   * `data` is a JSON **string**, not a nested object, so an Argo `withParam`
+   * loop can substitute `{{item.data}}` unambiguously — the same shape the
+   * single-resource case already passes as the `data` parameter.
+   */
+  resources?: Array<{
+    name: string;
+    path: string;
+    dataPath: string;
+    data: string;
+  }>;
 }
 
 /**
@@ -57,6 +71,8 @@ export function resolveTemplate(str: string, ctx: ResolveCtx): string {
       case 'resourceData':
         // Absent or empty resource data resolves to an empty JSON object.
         return JSON.stringify(ctx.resourceData ?? {});
+      case 'resourcesJson':
+        return JSON.stringify(ctx.resources ?? []);
       case 'resourcePath':
         return ctx.resourcePath ?? '';
       case 'resourceDataPath':

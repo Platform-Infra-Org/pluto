@@ -140,11 +140,48 @@ export function createSubmitWorkflow(deps: {
 
   return async (request: PlatformRequest) => {
     // CREATE has no existing resource yet; update/delete resolve the resource's
-    // data + the git paths of its files (for git-ops).
-    const r =
-      request.kind === 'CREATE'
-        ? { data: {}, resourcePath: undefined, dataPath: undefined }
-        : await resolveResource(request.resourceName);
+    // data + the git paths of its files (for git-ops). A bulk request resolves
+    // every name it holds.
+    const names = request.resourceNames;
+    let r: {
+      data: Record<string, unknown>;
+      resourcePath?: string;
+      dataPath?: string;
+      error?: string;
+    } = { data: {} };
+    let resources:
+      | Array<{ name: string; path: string; dataPath: string; data: string }>
+      | undefined;
+
+    if (request.kind !== 'CREATE') {
+      if (names?.length) {
+        const resolved = await Promise.all(names.map(n => resolveResource(n)));
+        // Refuse the whole batch rather than deleting one of its members with
+        // an empty payload: a workflow that decommissions from `data` would
+        // skip the real teardown and remove the files anyway, and report
+        // success. A batch is all-or-nothing about *knowing what it is doing*,
+        // even though it is not all-or-nothing about doing it.
+        const bad = resolved
+          .map((x, i) => (x.error ? `${names[i]} (${x.error})` : undefined))
+          .filter(Boolean);
+        if (bad.length) {
+          throw new Error(
+            `request ${request.id}: cannot resolve ${bad.length} of ${names.length} resources: ${bad.join('; ')}`,
+          );
+        }
+        resources = names.map((name, i) => ({
+          name,
+          path: resolved[i].resourcePath ?? '',
+          dataPath: resolved[i].dataPath ?? '',
+          data: JSON.stringify(resolved[i].data ?? {}),
+        }));
+      } else {
+        r = await resolveResource(request.resourceName);
+        if (r.error) {
+          throw new Error(`request ${request.id}: ${r.error}`);
+        }
+      }
+    }
 
     // Secret name is generated up-front so the workflow can secretKeyRef it (as
     // << secretName >>); the Secret itself is created just after submit, owned
@@ -167,6 +204,7 @@ export function createSubmitWorkflow(deps: {
       resourceData: r.data,
       resourcePath: r.resourcePath,
       resourceDataPath: r.dataPath,
+      resources,
       secretName,
     });
     await store.setWorkflow(request.id, { name, namespace });
