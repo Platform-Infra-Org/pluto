@@ -115,6 +115,19 @@ running), rejected, and the terminal succeeded/failed (with the created resource
 ref). Approvers are alerted when a new request needs a decision. Notifications are
 best-effort and never block the flow.
 
+## A request may name more than one resource
+
+A bulk request holds `resourceNames` and acts on all of them under one
+approval. Nothing about the lifecycle changes: the same states, the same gate,
+the same mirroring of the workflow phase.
+
+Two consequences worth stating. The approver approves the *set* — so the
+request page lists every name in full rather than a count, because the list is
+the thing being decided on. And the states keep meaning what they meant:
+`FAILED` means the workflow failed, not that nothing happened. A bulk delete
+that fails on its fourth resource has already deleted three, and the workflow
+graph — one node per resource — is where that is legible.
+
 ## Correlation, precisely
 
 The single correlation key is the Argo label `platform.io/request-id=<id>`,
