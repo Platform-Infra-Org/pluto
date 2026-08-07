@@ -4,7 +4,7 @@ import { Link } from '@backstage/core-components';
 import { useEntity } from '@backstage/plugin-catalog-react';
 import {
   Card, CardHeader, CardBody, Button, Dialog, Field, Input, Textarea,
-  mergeResourceEdits,
+  mergeResourceEdits, JsonTree,
 } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
 
@@ -93,7 +93,15 @@ export function ResourceActionsCard() {
           <Button size="sm" variant="outline" onClick={openEdit}>
             Edit
           </Button>
-          <Button size="sm" variant="destructive" onClick={() => setDel(true)}>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={async () => {
+              const data = await requests.getResourceData(name).catch(() => ({}));
+              setOriginal(data);
+              setDel(true);
+            }}
+          >
             Delete
           </Button>
         </div>
@@ -167,6 +175,14 @@ export function ResourceActionsCard() {
           </>
         }
       >
+        {Object.keys(original).length > 0 && (
+          <>
+            <div className="sc-muted" style={{ marginBottom: 8 }}>
+              This resource's data:
+            </div>
+            <JsonTree data={original} />
+          </>
+        )}
         <div className="sc-muted">
           This raises a delete request for approval. On approval the workflow
           runs and the resource is removed from the catalog.
