@@ -16,6 +16,7 @@ import { useRecordVisit } from './useVisits';
 import { Quickstart } from './quickstart/Quickstart';
 import { useQuickstart } from './quickstart/useQuickstart';
 import { sampleImageTone, Tone } from './imageTone';
+import { isDarkTheme } from './darkMode';
 import {
   clampToViewport,
   PickerPos,
@@ -442,13 +443,28 @@ export function SchemeRoot() {
   useRecordVisit(useCurrentPath());
 
   useEffect(() => {
-    const sub = appTheme.activeThemeId$().subscribe(id => {
+    // `activeThemeId$` emits undefined until someone picks a theme, and
+    // Backstage then renders whichever variant matches the system. The id alone
+    // therefore cannot decide which tokens to use — consulting the media query
+    // as well is what keeps our background on the same side as MUI's text.
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    let themeId: string | undefined;
+    const apply = () =>
       document.documentElement.classList.toggle(
         'sc-dark',
-        !!id && id.includes('dark'),
+        isDarkTheme(themeId, mq.matches),
       );
+    const sub = appTheme.activeThemeId$().subscribe(id => {
+      themeId = id;
+      apply();
     });
-    return () => sub.unsubscribe();
+    // Only has an effect while the theme is unset, but subscribing
+    // unconditionally is simpler than tracking when that is true.
+    mq.addEventListener('change', apply);
+    return () => {
+      sub.unsubscribe();
+      mq.removeEventListener('change', apply);
+    };
   }, [appTheme]);
 
   return (
