@@ -198,7 +198,11 @@ export function RequestsPage() {
                 </td>
                 <td>{r.kind}</td>
                 <td>{r.resourceType}</td>
-                <td>{r.resourceName}</td>
+                <td title={r.resourceName}>
+                  {r.resourceNames
+                    ? `${r.resourceNames.length} resources`
+                    : r.resourceName}
+                </td>
                 <td>{r.requester}</td>
                 <td className="sc-muted">{formatTs(r.createdAt)}</td>
                 <td>{stateBadge(r.state)}</td>
