@@ -92,6 +92,22 @@ iteration fails the workflow fails and the request is `FAILED`, with the earlier
 iterations already applied. Deletion is not transactional; the graph is the
 record of how far it got.
 
+## When a batch is refused outright
+
+If any resource in the batch cannot be resolved — its data file is missing or
+unreadable, or the entity is gone from the catalog — the request goes to
+`FAILED` **without submitting a workflow at all**, naming the resource and why.
+Nothing in the batch is deleted, including the healthy members.
+
+That is deliberate. Proceeding would hand the workflow an element with empty
+data, so a step that decommissions from `data` would quietly skip the real
+teardown for that one resource, remove its files anyway, and report success.
+The failure would be invisible precisely because it succeeded.
+
+The reason is stored on the request and shown on its page, not just returned to
+whoever pressed approve — see
+**[Request model → States](../reference/request-model.md)**.
+
 ## Related
 
 - **[Reference → Submit tokens](../reference/tokens.md)** — `<< resourcesJson >>`

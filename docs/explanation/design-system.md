@@ -47,6 +47,44 @@ have to stay aligned by hand.
 everything accent-coloured reads it, which is why the mark, the favicon, the
 header art and the sparkles all recolour together.
 
+**The potion box can be moved.** The picker is furniture, and furniture that
+covers the last row of a table is in the way — so it can be dragged anywhere,
+and where it is put is remembered. Both the chosen colour and the position live
+in `localStorage`, so they follow the browser rather than the account — unlike
+recently-visited and favourites, which are server-backed per user. The picker
+also renders on the sign-in gate, where there is no API to read from, which is
+what forces the choice.
+
+Two details are load-bearing rather than decorative:
+
+- A press only becomes a drag after 4px of travel. Without that threshold, any
+  drag beginning on a bottle would also change the colour scheme — the click
+  that follows a drag is swallowed for the same reason.
+- The dropped position is clamped to the viewport, on release *and* on window
+  resize. A position that fits a wide window is off the edge of a narrow one,
+  and a picker you cannot reach is one you cannot drag back.
+
+While it moves, the bottles rattle in their slots, staggered so they are out of
+phase — in unison it reads as the shelf vibrating rather than as loose objects.
+The rattle animates the sprite, not the button, because the button's transform
+already belongs to the hover and selected lifts.
+
+## Light and dark
+
+`.sc-dark` on the root element chooses which set of tokens is live, and it has
+to agree with the theme Backstage is actually rendering — the two paint
+different halves of the same screen. MUI supplies the text colour, our tokens
+supply `body`'s background, so a disagreement is not a mismatch of taste but an
+unreadable app.
+
+The subtle case is **no choice at all**. Until someone picks a theme, Backstage
+renders whichever variant matches `prefers-color-scheme`, and the active theme
+id is undefined. Treating that as light is wrong for every default account on a
+dark-mode machine: MUI paints white text, our background stays light, and the
+result is white on white. An unset theme therefore follows the system, and
+changing the system preference updates it live. An explicit choice always wins —
+that is what choosing means.
+
 ## Where colour deliberately ignores the picker
 
 The experience bar is yellow while a workflow runs, green when it lands, red

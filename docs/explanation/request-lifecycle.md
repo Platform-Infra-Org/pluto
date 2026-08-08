@@ -128,6 +128,29 @@ the thing being decided on. And the states keep meaning what they meant:
 that fails on its fourth resource has already deleted three, and the workflow
 graph — one node per resource — is where that is legible.
 
+There is one exception, and it is deliberate: a batch naming a resource that
+cannot be resolved is **refused whole**, before any workflow is submitted. The
+alternative is worse than failing — an unreadable resource would be deleted
+with an empty payload, so a workflow that decommissions from `data` would skip
+the real teardown, remove the files anyway, and report success. A batch is
+all-or-nothing about *knowing what it is doing*, even though it is not
+all-or-nothing about doing it.
+
+## Failing before there is a workflow
+
+Almost every failure is a workflow failure, discovered by the poller. One is
+not: the submit itself can fail, and by then the decision is already recorded.
+
+That request goes to `FAILED` with the reason stored on it, rather than staying
+in `APPROVED`. The distinction matters because `APPROVED` claims the request
+was accepted and is on its way, and a request stuck there is unrecoverable by
+design — the poller only advances requests that have a workflow, and this one
+never got far enough to have one.
+
+The reason is kept on the request rather than only returned to whoever clicked
+approve. A failure that exists solely as a toast is a failure nobody can
+investigate an hour later.
+
 ## Correlation, precisely
 
 The single correlation key is the Argo label `platform.io/request-id=<id>`,
