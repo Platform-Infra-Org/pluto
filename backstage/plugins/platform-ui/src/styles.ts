@@ -619,6 +619,11 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 /* The 78px is clearance for the picker sitting in the same corner. Once the
    picker has been moved, the tour box can have the space back. */
 :root:not([data-picker-moved='true']) .sc-qs-box { bottom: 78px; }
+/* …and when even that is not enough — the picker is draggable, so it can be
+   parked exactly here — the box moves to the opposite end rather than sitting
+   on top of the element it is describing. Decided in Quickstart.tsx from the
+   measured rects, because no fixed offset can cover an element that moves. */
+.sc-qs-box-top { top: 18px; bottom: auto; }
 .sc-qs-count { font-family: var(--sc-font-pixel); font-size: 11px;
   color: hsl(var(--sc-muted-fg)); }
 .sc-qs-title { font-family: var(--sc-font-pixel); text-transform: uppercase;

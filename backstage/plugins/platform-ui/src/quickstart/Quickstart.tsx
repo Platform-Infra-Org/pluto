@@ -1,5 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 import { QUICKSTART_STEPS } from './steps';
+import { needsFlip } from './placement';
 
 interface Box {
   top: number;
@@ -38,6 +45,8 @@ export function Quickstart({ onClose }: { onClose: () => void }) {
   const steps = QUICKSTART_STEPS;
   const [index, setIndex] = useState(0);
   const [box, setBox] = useState<Box | null>(null);
+  const [flipped, setFlipped] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
 
   const step = steps[index];
 
@@ -83,6 +92,31 @@ export function Quickstart({ onClose }: { onClose: () => void }) {
     };
   }, [step, steps.length]);
 
+  // Move the dialogue out of the way when the thing it is pointing at is
+  // underneath it. The picker is draggable, so it can be parked exactly where
+  // the dialogue parks — a fixed offset in CSS cannot cover that, and a step
+  // that covers the element it is describing is worse than no step.
+  useLayoutEffect(() => {
+    if (!box) {
+      setFlipped(false);
+      return;
+    }
+    const el = boxRef.current;
+    if (!el) return;
+    // The offset the stylesheet is currently using: 78px of picker clearance
+    // until the picker has been dragged, 18px after.
+    const bottomOffset =
+      document.documentElement.dataset.pickerMoved === 'true' ? 18 : 78;
+    setFlipped(
+      needsFlip(
+        box,
+        { w: window.innerWidth, h: window.innerHeight },
+        el.getBoundingClientRect().height,
+        bottomOffset,
+      ),
+    );
+  }, [box]);
+
   const finish = useCallback(() => onClose(), [onClose]);
 
   useEffect(() => {
@@ -111,7 +145,10 @@ export function Quickstart({ onClose }: { onClose: () => void }) {
           aria-hidden="true"
         />
       )}
-      <div className="sc-qs-box">
+      <div
+        ref={boxRef}
+        className={`sc-qs-box${flipped ? ' sc-qs-box-top' : ''}`}
+      >
         <div className="sc-qs-count">
           {index + 1}/{steps.length}
         </div>
