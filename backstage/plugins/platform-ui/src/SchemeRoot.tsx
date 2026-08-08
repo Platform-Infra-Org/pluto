@@ -326,8 +326,11 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       dy: e.clientY - r.top,
       moved: false,
     };
-    // Keeps the drag alive if the pointer outruns the box.
-    el.setPointerCapture(e.pointerId);
+    // Capture is taken in onPointerMove, once this is actually a drag — NOT
+    // here. While a pointer is captured, the spec retargets the following
+    // `click` to the capturing element, so capturing on every press sent every
+    // potion's click to this container instead of the button, and the colour
+    // could never be changed. A plain click must involve no capture at all.
   };
 
   const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
@@ -340,6 +343,9 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       d.moved = true;
       setDragging(true);
       document.documentElement.dataset.pickerMoved = 'true';
+      // Now that it is a drag, keep it alive if the pointer outruns the box.
+      // Retargeting the click no longer matters — endDrag swallows it anyway.
+      el.setPointerCapture?.(e.pointerId);
     }
     const r = el.getBoundingClientRect();
     setPos(
