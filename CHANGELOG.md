@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-08-08
+
+### Added
+
+- A request can name many resources
+- Platform:request:submit accepts resourceNames
+- Show every resource a bulk request names
+- Resolve every resource of a bulk request into << resourcesJson >>
+- Send resource data to the delete workflow and preview it
+- Give the example resource nested and typed data
+- Bulk-delete workflow and its software template
+- Clamp and parse helpers for the picker position
+- Drag the colour picker anywhere on screen
+- Remember where the picker was dragged to
+- Rattle the potions while the picker is dragged
+
+### Changed
+
+- Bulk delete how-to, resourcesJson token, lifecycle note
+- Movable potion-box picker
+- Cover the movable picker, the theme fallback and submit failures
+- Merge pull request #3 from Platform-Infra-Org/fix/resource-edit-delete
+
+### Fixed
+
+- Distinguish an unresolvable resource from an empty one
+- Edit the whole resource document, not just its scalars
+- Emit resourcesJson data as an object, not a JSON string
+- Guard the batch refusal against regression
+- Follow the system theme when none has been chosen
+- Fail the request when its workflow cannot be submitted
+- Capture the pointer only once a press becomes a drag
+
 ## [0.1.0] - 2026-08-07
 
 ### Added
