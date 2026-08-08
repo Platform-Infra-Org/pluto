@@ -396,6 +396,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../how-to/delete-resources-in-bulk/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delete resources in bulk
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../how-to/add-a-dynamic-select-field/" class="md-nav__link">
         
   
@@ -1324,7 +1352,7 @@
 </tr>
 <tr>
 <td><code>APPROVED</code></td>
-<td>decision met the policy; workflow about to submit</td>
+<td>decision met the policy; workflow about to submit. Momentary — a request does not rest here</td>
 </tr>
 <tr>
 <td><code>IN_PROGRESS</code></td>
@@ -1340,7 +1368,7 @@
 </tr>
 <tr>
 <td><code>FAILED</code></td>
-<td>workflow failed/errored, or an approver stopped it</td>
+<td>workflow failed/errored, an approver stopped it, <strong>or the workflow could not be submitted at all</strong></td>
 </tr>
 <tr>
 <td><code>REJECTED</code></td>
@@ -1353,6 +1381,13 @@
 </tbody>
 </table>
 <p><code>SUCCEEDED</code>, <code>FAILED</code>, <code>REJECTED</code> and <code>EXPIRED</code> are terminal.</p>
+<p><strong>Nothing rests in <code>APPROVED</code>.</strong> Approval and submission happen in one step: the
+decision is recorded, the workflow is submitted, and the request moves straight
+to <code>IN_PROGRESS</code>. If the submit itself fails — the batch-refusal guard is the
+usual reason, see <a href="../tokens/"><code>&lt;&lt; resourcesJson &gt;&gt;</code></a> — the request goes to
+<code>FAILED</code> with the reason in <code>error</code>. A request left showing <code>APPROVED</code> would be
+one no poller could ever advance, because the poller only follows requests that
+have a workflow.</p>
 <p><code>AWAITING_INPUT</code> is <strong>not</strong> terminal and is reversible in both directions: the
 poller moves a request into it when a suspend step appears and back out when
 none remains — including when somebody resumes the step in the Argo UI rather
@@ -1416,6 +1451,14 @@ owning team) — see <strong><a href="../../explanation/rbac/">Per-team RBAC</a>
 <tr>
 <td><code>kind</code>, <code>resourceType</code>, <code>resourceName</code>, <code>params</code></td>
 <td>what's requested</td>
+</tr>
+<tr>
+<td><code>resourceNames</code></td>
+<td>bulk requests only: every resource acted on. Absent for a single-resource request, where <code>resourceName</code> is the whole story. When present, <code>resourceName</code> holds the same names joined, so lists, notifications and search keep working on one string</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>why it failed, when it failed. Set by the poller for a workflow that fails, and by the approve endpoint for one that could never be submitted. Shown on the request page</td>
 </tr>
 <tr>
 <td><code>requester</code></td>

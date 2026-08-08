@@ -396,6 +396,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../how-to/delete-resources-in-bulk/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delete resources in bulk
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../how-to/add-a-dynamic-select-field/" class="md-nav__link">
         
   
@@ -1256,11 +1284,28 @@ by the platform backend — <strong>no escaping needed</strong>.</p>
 <td><code>&lt;&lt; resourceDataPath &gt;&gt;</code></td>
 <td>the resource's data-file path in Git (for <code>git-ops</code> update/delete)</td>
 </tr>
+<tr>
+<td><code>&lt;&lt; resourcesJson &gt;&gt;</code></td>
+<td>bulk requests: a JSON array of every resource, <code>[{name, path, dataPath, data}]</code></td>
+</tr>
 </tbody>
 </table>
 <p>Unknown tokens and missing fields resolve to an empty string (<code>resourceData</code> to
 <code>{}</code>). <code>resourcePath</code> / <code>resourceDataPath</code> are resolved from the resource's
 location + its <code>resource-data</code> ref, so they're correct for any layout.</p>
+<p><code>&lt;&lt; resourcesJson &gt;&gt;</code> resolves to <code>[]</code> for an ordinary single-resource request.
+Each element's <code>data</code> is a <strong>nested object</strong>, not a JSON string.</p>
+<p>That is worth stating because the intuition points the wrong way. Argo
+substitutes <code>{{item.data}}</code> inside a JSON string context, so a <em>string</em> field
+has its quotes escaped and reaches the container as
+<code>{\"region\":\"eu-west-1\"}</code> — which cannot be piped to <code>jq</code>. An object field is
+serialized properly and arrives as clean JSON. Note this differs from
+<code>&lt;&lt; paramsJson &gt;&gt;</code> and the single-resource <code>data</code> parameter, which really are
+strings; the difference is the <code>withParam</code> loop, not the token.</p>
+<p>If any resource in a bulk request cannot be resolved, the submit <strong>fails</strong>
+rather than passing an element with empty data. A workflow that decommissions
+from <code>data</code> would otherwise skip the real teardown for that one resource and
+delete its files anyway, reporting success.</p>
 <h2 id="the-three-templating-layers-dont-confuse-them">The three templating layers (don't confuse them)<a class="headerlink" href="#the-three-templating-layers-dont-confuse-them" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

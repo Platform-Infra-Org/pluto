@@ -396,6 +396,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../how-to/delete-resources-in-bulk/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delete resources in bulk
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../how-to/add-a-dynamic-select-field/" class="md-nav__link">
         
   
@@ -996,6 +1024,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-request-may-name-more-than-one-resource" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A request may name more than one resource
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#failing-before-there-is-a-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failing before there is a workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#correlation-precisely" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1283,6 +1333,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#a-request-may-name-more-than-one-resource" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A request may name more than one resource
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#failing-before-there-is-a-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Failing before there is a workflow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#correlation-precisely" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1426,6 +1498,34 @@ watch/webhook would be the optimization if it grew.</p>
 running), rejected, and the terminal succeeded/failed (with the created resource
 ref). Approvers are alerted when a new request needs a decision. Notifications are
 best-effort and never block the flow.</p>
+<h2 id="a-request-may-name-more-than-one-resource">A request may name more than one resource<a class="headerlink" href="#a-request-may-name-more-than-one-resource" title="Permanent link">&para;</a></h2>
+<p>A bulk request holds <code>resourceNames</code> and acts on all of them under one
+approval. Nothing about the lifecycle changes: the same states, the same gate,
+the same mirroring of the workflow phase.</p>
+<p>Two consequences worth stating. The approver approves the <em>set</em> — so the
+request page lists every name in full rather than a count, because the list is
+the thing being decided on. And the states keep meaning what they meant:
+<code>FAILED</code> means the workflow failed, not that nothing happened. A bulk delete
+that fails on its fourth resource has already deleted three, and the workflow
+graph — one node per resource — is where that is legible.</p>
+<p>There is one exception, and it is deliberate: a batch naming a resource that
+cannot be resolved is <strong>refused whole</strong>, before any workflow is submitted. The
+alternative is worse than failing — an unreadable resource would be deleted
+with an empty payload, so a workflow that decommissions from <code>data</code> would skip
+the real teardown, remove the files anyway, and report success. A batch is
+all-or-nothing about <em>knowing what it is doing</em>, even though it is not
+all-or-nothing about doing it.</p>
+<h2 id="failing-before-there-is-a-workflow">Failing before there is a workflow<a class="headerlink" href="#failing-before-there-is-a-workflow" title="Permanent link">&para;</a></h2>
+<p>Almost every failure is a workflow failure, discovered by the poller. One is
+not: the submit itself can fail, and by then the decision is already recorded.</p>
+<p>That request goes to <code>FAILED</code> with the reason stored on it, rather than staying
+in <code>APPROVED</code>. The distinction matters because <code>APPROVED</code> claims the request
+was accepted and is on its way, and a request stuck there is unrecoverable by
+design — the poller only advances requests that have a workflow, and this one
+never got far enough to have one.</p>
+<p>The reason is kept on the request rather than only returned to whoever clicked
+approve. A failure that exists solely as a toast is a failure nobody can
+investigate an hour later.</p>
 <h2 id="correlation-precisely">Correlation, precisely<a class="headerlink" href="#correlation-precisely" title="Permanent link">&para;</a></h2>
 <p>The single correlation key is the Argo label <code>platform.io/request-id=&lt;id&gt;</code>,
 injected on submit and always winning over any user-set label. Status, the DAG
