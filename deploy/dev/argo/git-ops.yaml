@@ -132,6 +132,10 @@ spec:
           # to the flat layout.
           - { name: path, value: "" }
           - { name: dataPath, value: "" }
+          # The resource's data at approval time. `git rm` does not need it —
+          # a real deletion workflow does, to decommission the thing itself
+          # before its record disappears.
+          - { name: data, value: "{}" }
           - { name: repoUrl }
           - { name: creds }
       container:
@@ -139,11 +143,13 @@ spec:
         env:
           - { name: REPO_URL, value: "{{inputs.parameters.repoUrl}}" }
           - { name: GIT_CREDS, value: "{{inputs.parameters.creds}}" }
+          - { name: RESOURCE_DATA, value: "{{inputs.parameters.data}}" }
         command: [sh, -c]
         args:
           - |
             set -eu
             NAME="{{inputs.parameters.name}}"
+            printf 'resource data: %s\n' "$RESOURCE_DATA"
             YAML="{{inputs.parameters.path}}"; [ -n "$YAML" ] || YAML="resources/$NAME.yaml"
             DATA="{{inputs.parameters.dataPath}}"; [ -n "$DATA" ] || DATA="resources/$NAME-data.json"
             git clone --depth 1 --quiet \
@@ -157,3 +163,31 @@ spec:
             git diff --cached --quiet || {
               git commit --quiet -m "delete $NAME"; git push --quiet origin HEAD:main; }
             echo "deleted $NAME ($YAML)"
+
+    # One request, many resources. The array comes from the backend's
+    # << resourcesJson >>, which resolved each resource's data and Git paths at
+    # submit time — so each iteration gets exactly what a single delete gets.
+    #
+    # parallelism: 1 is not a throttle, it is correctness: every iteration
+    # clones, commits and pushes the same branch of the same repo, and
+    # concurrent pushes lose a race and fail. Sequential is the only thing that
+    # works, and it keeps the per-resource nodes readable in the graph.
+    - name: bulk-delete
+      parallelism: 1
+      inputs:
+        parameters:
+          - { name: resources }
+          - { name: repoUrl }
+          - { name: creds }
+      steps:
+        - - name: delete-one
+            template: delete
+            withParam: "{{inputs.parameters.resources}}"
+            arguments:
+              parameters:
+                - { name: name, value: "{{item.name}}" }
+                - { name: path, value: "{{item.path}}" }
+                - { name: dataPath, value: "{{item.dataPath}}" }
+                - { name: data, value: "{{item.data}}" }
+                - { name: repoUrl, value: "{{inputs.parameters.repoUrl}}" }
+                - { name: creds, value: "{{inputs.parameters.creds}}" }

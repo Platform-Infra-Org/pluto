@@ -66,6 +66,46 @@ describe('resolveTemplate', () => {
     expect(resolveTemplate('<< resourcePath >>', ctx)).toBe('');
   });
 
+  it('resolves resourcesJson (array; [] when absent)', () => {
+    const withResources = {
+      requestId: 1,
+      resourceName: 'a, b',
+      resourceType: 'git-resource',
+      requester: 'sam',
+      params: {},
+      resources: [
+        {
+          name: 'a',
+          path: 'resources/a.yaml',
+          dataPath: 'resources/a-data.json',
+          data: { region: 'eu-west-1', tags: ['prod'] },
+        },
+        { name: 'b', path: '', dataPath: '', data: {} },
+      ],
+    };
+    const out = JSON.parse(
+      resolveTemplate('<< resourcesJson >>', withResources as any),
+    );
+    expect(out).toHaveLength(2);
+    expect(out[0].name).toBe('a');
+    // A nested object, NOT a JSON string. Verified against a live Argo:
+    // `{{item.data}}` substitutes inside a JSON string context, so a string
+    // field arrives escaped (`{\"region\":\"eu\"}`) and cannot be piped to jq,
+    // while an object field arrives as clean JSON.
+    expect(typeof out[0].data).toBe('object');
+    expect(out[0].data.region).toBe('eu-west-1');
+    expect(out[0].data.tags).toEqual(['prod']);
+
+    const empty = {
+      requestId: 1,
+      resourceName: 'a',
+      resourceType: 't',
+      requester: 'sam',
+      params: {},
+    };
+    expect(resolveTemplate('<< resourcesJson >>', empty as any)).toBe('[]');
+  });
+
   it('resolves missing params and unknown tokens to empty string', () => {
     expect(resolveTemplate('<< params.nope >>', ctx)).toBe('');
     expect(resolveTemplate('<< bogus >>', ctx)).toBe('');

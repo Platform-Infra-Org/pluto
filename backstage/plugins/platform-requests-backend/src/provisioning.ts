@@ -16,6 +16,16 @@ export interface ResolvedResource {
   data: Record<string, unknown>;
   resourcePath?: string;
   dataPath?: string;
+  /**
+   * Why this resource could not be resolved, when it could not.
+   *
+   * Absent means resolved — including resolved to genuinely empty data, which
+   * is a legitimate state and must stay distinguishable from failure. A caller
+   * that acts destructively on `data` has to be able to tell the difference:
+   * an empty payload from a *failed* read makes a decommission step silently
+   * do nothing while the files are removed anyway.
+   */
+  error?: string;
 }
 
 /** Repo path from a Gitea raw URL (.../raw/branch/<b>/<path> -> <path>). */
@@ -46,7 +56,12 @@ export function createResourceResolver(deps: {
         `resource:default/${resourceName}`,
         { credentials: await auth.getOwnServiceCredentials() },
       );
-      if (!entity) return { data: {} };
+      if (!entity) {
+        return {
+          data: {},
+          error: `resource '${resourceName}' not found in the catalog`,
+        };
+      }
       const loc = (
         entity.metadata.annotations?.['backstage.io/managed-by-location'] ??
         entity.metadata.annotations?.['backstage.io/managed-by-origin-location']
@@ -74,9 +89,12 @@ export function createResourceResolver(deps: {
               data = parsed as Record<string, unknown>;
             }
           } catch (e) {
-            logger.warn(
-              `resource-data ref '${ref}' for '${resourceName}' failed: ${e}`,
-            );
+            // A declared ref that cannot be read is a failure, not an empty
+            // resource — and deliberately does not fall through to
+            // `spec.resourceData`, which would mask it.
+            const error = `resource-data ref '${ref}' for '${resourceName}' is unreadable: ${e}`;
+            logger.warn(error);
+            return { data: {}, resourcePath, dataPath, error };
           }
         }
       }
@@ -89,8 +107,9 @@ export function createResourceResolver(deps: {
       }
       return { data, resourcePath, dataPath };
     } catch (e) {
-      logger.warn(`resolveResource '${resourceName}' failed: ${e}`);
-      return { data: {} };
+      const error = `resolveResource '${resourceName}' failed: ${e}`;
+      logger.warn(error);
+      return { data: {}, error };
     }
   };
 
@@ -121,11 +140,53 @@ export function createSubmitWorkflow(deps: {
 
   return async (request: PlatformRequest) => {
     // CREATE has no existing resource yet; update/delete resolve the resource's
-    // data + the git paths of its files (for git-ops).
-    const r =
-      request.kind === 'CREATE'
-        ? { data: {}, resourcePath: undefined, dataPath: undefined }
-        : await resolveResource(request.resourceName);
+    // data + the git paths of its files (for git-ops). A bulk request resolves
+    // every name it holds.
+    const names = request.resourceNames;
+    let r: {
+      data: Record<string, unknown>;
+      resourcePath?: string;
+      dataPath?: string;
+      error?: string;
+    } = { data: {} };
+    let resources:
+      | Array<{
+          name: string;
+          path: string;
+          dataPath: string;
+          data: Record<string, unknown>;
+        }>
+      | undefined;
+
+    if (request.kind !== 'CREATE') {
+      if (names?.length) {
+        const resolved = await Promise.all(names.map(n => resolveResource(n)));
+        // Refuse the whole batch rather than deleting one of its members with
+        // an empty payload: a workflow that decommissions from `data` would
+        // skip the real teardown and remove the files anyway, and report
+        // success. A batch is all-or-nothing about *knowing what it is doing*,
+        // even though it is not all-or-nothing about doing it.
+        const bad = resolved
+          .map((x, i) => (x.error ? `${names[i]} (${x.error})` : undefined))
+          .filter(Boolean);
+        if (bad.length) {
+          throw new Error(
+            `request ${request.id}: cannot resolve ${bad.length} of ${names.length} resources: ${bad.join('; ')}`,
+          );
+        }
+        resources = names.map((name, i) => ({
+          name,
+          path: resolved[i].resourcePath ?? '',
+          dataPath: resolved[i].dataPath ?? '',
+          data: resolved[i].data ?? {},
+        }));
+      } else {
+        r = await resolveResource(request.resourceName);
+        if (r.error) {
+          throw new Error(`request ${request.id}: ${r.error}`);
+        }
+      }
+    }
 
     // Secret name is generated up-front so the workflow can secretKeyRef it (as
     // << secretName >>); the Secret itself is created just after submit, owned
@@ -148,6 +209,7 @@ export function createSubmitWorkflow(deps: {
       resourceData: r.data,
       resourcePath: r.resourcePath,
       resourceDataPath: r.dataPath,
+      resources,
       secretName,
     });
     await store.setWorkflow(request.id, { name, namespace });

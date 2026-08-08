@@ -30,6 +30,23 @@ export interface ResolveCtx {
    * WorkflowTemplate can `secretKeyRef` it. Pre-generated before submit.
    */
   secretName?: string;
+  /**
+   * Every resource a bulk request acts on (`<< resourcesJson >>`), resolved at
+   * submit time. Absent for a single-resource request.
+   *
+   * `data` is a nested **object**, not a JSON string. This was verified against
+   * a live Argo rather than reasoned about, because the intuition points the
+   * wrong way: substituting `{{item.data}}` happens inside a JSON string
+   * context, so a *string* field has its quotes escaped and arrives as
+   * `{\"region\":\"eu\"}` — which no consumer can pipe to `jq`. An object field
+   * is serialized properly and arrives as clean JSON.
+   */
+  resources?: Array<{
+    name: string;
+    path: string;
+    dataPath: string;
+    data: Record<string, unknown>;
+  }>;
 }
 
 /**
@@ -57,6 +74,8 @@ export function resolveTemplate(str: string, ctx: ResolveCtx): string {
       case 'resourceData':
         // Absent or empty resource data resolves to an empty JSON object.
         return JSON.stringify(ctx.resourceData ?? {});
+      case 'resourcesJson':
+        return JSON.stringify(ctx.resources ?? []);
       case 'resourcePath':
         return ctx.resourcePath ?? '';
       case 'resourceDataPath':

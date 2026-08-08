@@ -16,6 +16,7 @@ nav:
       - Author a software template: how-to/author-a-template.md
       - Configure admins & per-team approval: how-to/configure-rbac.md
       - Give a resource a data file: how-to/set-resource-data.md
+      - Delete resources in bulk: how-to/delete-resources-in-bulk.md
       - Add a live (DynamicSelect) field: how-to/add-a-dynamic-select-field.md
       - Add a mid-workflow review gate: how-to/add-a-review-gate.md
       - Customise the home page: how-to/customise-the-home-page.md

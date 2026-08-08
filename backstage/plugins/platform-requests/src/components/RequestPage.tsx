@@ -155,6 +155,11 @@ export function RequestPage() {
           </Link>
         </div>
       )}
+      {request.error && (
+        <div className="sc-notice sc-notice-fail" style={{ marginBottom: 12 }}>
+          <strong>Failed:</strong> {request.error}
+        </div>
+      )}
       {request.workflowName && (
         <ExperienceBar
           requestId={request.id}
@@ -173,8 +178,18 @@ export function RequestPage() {
               <dd>{request.kind}</dd>
               <dt>Type</dt>
               <dd>{request.resourceType}</dd>
-              <dt>Resource</dt>
-              <dd>{request.resourceName}</dd>
+              <dt>{request.resourceNames ? 'Resources' : 'Resource'}</dt>
+              <dd>
+                {request.resourceNames ? (
+                  <ul style={{ margin: 0, paddingLeft: 16 }}>
+                    {request.resourceNames.map(n => (
+                      <li key={n}>{n}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  request.resourceName
+                )}
+              </dd>
               <dt>Requester</dt>
               <dd>{request.requester}</dd>
               <dt>Owner team</dt>

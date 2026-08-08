@@ -21,15 +21,23 @@ PENDING_APPROVAL ──approve──▶ APPROVED ──(workflow submitted)─�
 | State | Meaning |
 |---|---|
 | `PENDING_APPROVAL` | awaiting a decision |
-| `APPROVED` | decision met the policy; workflow about to submit |
+| `APPROVED` | decision met the policy; workflow about to submit. Momentary — a request does not rest here |
 | `IN_PROGRESS` | Argo workflow running (polled) |
 | `AWAITING_INPUT` | the workflow stopped at a `suspend` step and needs an approver |
 | `SUCCEEDED` | workflow succeeded (completion-gated) |
-| `FAILED` | workflow failed/errored, or an approver stopped it |
+| `FAILED` | workflow failed/errored, an approver stopped it, **or the workflow could not be submitted at all** |
 | `REJECTED` | rejected |
 | `EXPIRED` | nobody decided in time; set by the retention task |
 
 `SUCCEEDED`, `FAILED`, `REJECTED` and `EXPIRED` are terminal.
+
+**Nothing rests in `APPROVED`.** Approval and submission happen in one step: the
+decision is recorded, the workflow is submitted, and the request moves straight
+to `IN_PROGRESS`. If the submit itself fails — the batch-refusal guard is the
+usual reason, see [`<< resourcesJson >>`](tokens.md) — the request goes to
+`FAILED` with the reason in `error`. A request left showing `APPROVED` would be
+one no poller could ever advance, because the poller only follows requests that
+have a workflow.
 
 `AWAITING_INPUT` is **not** terminal and is reversible in both directions: the
 poller moves a request into it when a suspend step appears and back out when
@@ -81,6 +89,8 @@ owning team) — see **[Per-team RBAC](../explanation/rbac.md)**.
 | Field | Meaning |
 |---|---|
 | `kind`, `resourceType`, `resourceName`, `params` | what's requested |
+| `resourceNames` | bulk requests only: every resource acted on. Absent for a single-resource request, where `resourceName` is the whole story. When present, `resourceName` holds the same names joined, so lists, notifications and search keep working on one string |
+| `error` | why it failed, when it failed. Set by the poller for a workflow that fails, and by the approve endpoint for one that could never be submitted. Shown on the request page |
 | `requester` | who filed it |
 | `ownerGroup` | the owning team (from the template owner); drives the gate |
 | `policy` | SINGLE / N_OF_M |

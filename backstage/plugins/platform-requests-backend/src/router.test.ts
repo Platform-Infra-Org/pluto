@@ -229,6 +229,44 @@ describe('createRouter', () => {
     expect(second.body.state).toBe('IN_PROGRESS');
   });
 
+  describe('many resources per request', () => {
+    it('accepts resourceNames and derives resourceName from them', async () => {
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW });
+      const res = await request(app)
+        .post('/requests')
+        .send({
+          kind: 'DELETE',
+          resourceType: 'git-resource',
+          resourceNames: ['bucket-a', 'bucket-b'],
+        });
+      expect(res.status).toBe(201);
+      expect(res.body.resourceNames).toEqual(['bucket-a', 'bucket-b']);
+      expect(res.body.resourceName).toBe('bucket-a, bucket-b');
+    });
+
+    it('rejects a request with neither resourceName nor resourceNames', async () => {
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW });
+      const res = await request(app)
+        .post('/requests')
+        .send({ kind: 'DELETE', resourceType: 'git-resource' });
+      expect(res.status).toBe(400);
+    });
+
+    it('keeps resourceName untouched for a single-resource request', async () => {
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW });
+      const res = await request(app)
+        .post('/requests')
+        .send({
+          kind: 'DELETE',
+          resourceType: 'git-resource',
+          resourceName: 'bucket-a',
+        });
+      expect(res.status).toBe(201);
+      expect(res.body.resourceName).toBe('bucket-a');
+      expect(res.body.resourceNames).toBeUndefined();
+    });
+  });
+
   describe('secret lifecycle', () => {
     const cipher = createCipher(['unit-test-key'])!;
     const withSecret = {
@@ -300,4 +338,42 @@ describe('createRouter', () => {
       expect(await store.getSecretEnc(created.body.id)).toBeUndefined();
     });
   });
+
+  /**
+   * A submit that throws must not leave the request looking accepted.
+   *
+   * Approving is the point of no return: the decision is already recorded, so
+   * an exception on the way to Argo used to leave the request sitting in
+   * APPROVED forever — a state that claims it was accepted and is running when
+   * nothing was ever submitted. The batch-refusal guard throws exactly here.
+   */
+  it('fails the request, with the reason kept, when the submit throws', async () => {
+    const submitWorkflow = jest.fn(async () => {
+      throw new Error('cannot resolve 1 of 2 resources: broken (not found)');
+    }) as unknown as jest.Mock<Promise<void>, [PlatformRequest]>;
+    const { app, store } = await makeApp({
+      result: AuthorizeResult.ALLOW,
+      principalResolver: async () => ({ isAdmin: true, groups: [] }),
+      submitWorkflow,
+    });
+
+    const created = await request(app)
+      .post('/requests')
+      .send({
+        kind: 'DELETE',
+        resourceType: 'git-resource',
+        resourceNames: ['ok', 'broken'],
+      });
+    const id = created.body.id;
+
+    await request(app)
+      .post(`/requests/${id}/approve`)
+      .set('Authorization', asAdmin)
+      .send({});
+
+    const after = await store.get(id);
+    expect(after!.state).toBe('FAILED');
+    expect(after!.error).toMatch(/cannot resolve 1 of 2 resources/);
+  });
+
 });

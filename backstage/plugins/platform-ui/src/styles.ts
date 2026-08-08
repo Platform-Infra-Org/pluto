@@ -603,7 +603,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   /* The dim is the ring's own shadow, so there is one element and no gap
      between the cut-out and the overlay to line up. */
   box-shadow: 0 0 0 9999px hsl(var(--sc-fg) / .45); }
-.sc-qs-box { position: fixed; right: 18px; bottom: 78px; width: 320px;
+.sc-qs-box { position: fixed; right: 18px; bottom: 18px; width: 320px;
   pointer-events: auto; padding: 14px 16px 12px;
   background: hsl(var(--sc-card)); border-radius: var(--sc-radius);
   border: var(--sc-border-w) solid hsl(var(--sc-border));
@@ -611,6 +611,9 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     0 0 0 2px hsl(var(--sc-card)),
     0 0 0 4px hsl(var(--sc-fg) / .85),
     var(--sc-shadow); }
+/* The 78px is clearance for the picker sitting in the same corner. Once the
+   picker has been moved, the tour box can have the space back. */
+:root:not([data-picker-moved='true']) .sc-qs-box { bottom: 78px; }
 .sc-qs-count { font-family: var(--sc-font-pixel); font-size: 11px;
   color: hsl(var(--sc-muted-fg)); }
 .sc-qs-title { font-family: var(--sc-font-pixel); text-transform: uppercase;
@@ -700,6 +703,13 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   background-size: 4px 4px;
   color: hsl(152 60% 22%);
   border: 1px solid hsl(var(--sc-success) / .45); }
+/* Same shelf, other outcome. The text colour is stated for both schemes rather
+   than inherited: the success notice above fixes one colour, which only reads
+   on a light background. */
+.sc-notice-fail { --sc-cell: hsl(var(--sc-destructive) / .26);
+  color: hsl(0 62% 28%);
+  border-color: hsl(var(--sc-destructive) / .45); }
+:root.sc-dark .sc-notice-fail { color: hsl(0 75% 80%); }
 
 /* login gate */
 .sc-login { min-height: 100vh; display: flex; align-items: center; justify-content: center;
@@ -754,6 +764,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   border-radius: var(--sc-radius); border: 1px solid hsl(var(--sc-input));
   background: hsl(var(--sc-bg)); color: hsl(var(--sc-fg)); outline: none; font-family: inherit; }
 .sc-input:focus, .sc-select:focus { border-color: hsl(var(--sc-ring)); outline: var(--sc-border-w) solid hsl(var(--sc-ring)); outline-offset: 2px; box-shadow: none; }
+.sc-textarea { height: auto; min-height: 92px; padding: 8px 10px; line-height: 1.45;
+  font-family: var(--sc-font-mono, ui-monospace, monospace); resize: vertical; }
 .sc-label { font-size: 13px; font-weight: 500; color: hsl(var(--sc-fg)); display: block; margin-bottom: 6px; }
 .sc-field { margin-bottom: 14px; }
 .sc-link { color: hsl(var(--sc-primary)); text-decoration: none; font-weight: 500; }
@@ -830,7 +842,12 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     var(--sc-shadow); }
 /* Only the floating instance is pinned to the corner; in the flow it is a
    shelf like any other block, which is how the sign-in card carries one. */
-.sc-picker-float { position: fixed; right: 14px; bottom: 14px; z-index: 1500; }
+.sc-picker-float { position: fixed; right: 14px; bottom: 14px; z-index: 1500;
+  cursor: grab; touch-action: none; }
+/* Once dragged, inline left/top drive it — the corner anchors have to go or the
+   box would be pinned by both edges and stretch instead of move. */
+:root[data-picker-moved='true'] .sc-picker-float { right: auto; bottom: auto; }
+.sc-picker-float[data-dragging='true'] { cursor: grabbing; user-select: none; }
 /* The sign-in card has its own shelf under the button, so the corner one would
    be a second identical picker on the same screen. */
 :root.sc-signed-out .sc-picker-float { display: none; }
@@ -909,6 +926,13 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     25% { transform: translateX(-2px); }
     75% { transform: translateX(2px); }
   }
+  @keyframes sc-rattle {
+    0%   { transform: translate(0px, 0px); }
+    25%  { transform: translate(-1px, 1px); }
+    50%  { transform: translate(1px, -1px); }
+    75%  { transform: translate(1px, 1px); }
+    100% { transform: translate(0px, 0px); }
+  }
   @keyframes sc-cursor-in {
     from { transform: translateX(-4px); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
@@ -928,6 +952,19 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   .sc-state-ic.spinning { animation: sc-gear 1s steps(4) infinite; }
   .sc-flash { animation: sc-flash .4s steps(2) 2; }
   .sc-shake { animation: sc-shake .2s steps(2) 2; }
+  /* Bottles knock in their slots while the shelf is being carried.
+     On the sprite, never the button: the button's transform is already spoken
+     for by the hover lift and the selected lift, and an animation on the same
+     property would clobber both — the chosen bottle would drop back into the
+     shelf for as long as the drag lasted. The svg's only existing effect is a
+     drop-shadow filter, so its transform is free.
+     1px, because the sprites are 26px on a pixel grid and 2px reads as a bounce.
+     Absent under reduced motion by construction: the box still follows the
+     pointer, which is the feedback that matters, so only decoration is lost. */
+  .sc-picker-float[data-dragging='true'] .sc-potion svg {
+    animation: sc-rattle .16s steps(4) infinite;
+    animation-delay: calc(var(--sc-i, 0) * .04s);
+  }
 
   /* The marker steps in from the left on hover; .active is excluded so a
      second cursor never appears beside the real one. */

@@ -15,7 +15,7 @@ metadata:
     # Edit → git-ops update (rewrites the resource's data file with the edited
     # data). Delete → git-ops delete (removes the resource + its data file).
     platform.io/verb-update: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"update","parameters":{"name":"<< resourceName >>","dataPath":"<< resourceDataPath >>","data":"<< paramsJson >>"}},"resultOutput":"resource-ref"}'
-    platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"delete","parameters":{"name":"<< resourceName >>","path":"<< resourcePath >>","dataPath":"<< resourceDataPath >>"}}}'
+    platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"delete","parameters":{"name":"<< resourceName >>","path":"<< resourcePath >>","dataPath":"<< resourceDataPath >>","data":"<< resourceData >>"}}}'
 spec:
   owner: group:default/checkout
   type: resource
@@ -36,6 +36,20 @@ spec:
           type: string
           title: Region
           default: us-east-1
+        versioning:
+          type: boolean
+          title: Versioning
+          default: true
+        retentionDays:
+          type: integer
+          title: Retention (days)
+          default: 30
+        tags:
+          type: array
+          title: Tags
+          default: [prod, eu]
+          items:
+            type: string
   steps:
     - id: submit
       name: Submit request
@@ -47,6 +61,15 @@ spec:
         params:
           size: ${{ parameters.size }}
           region: ${{ parameters.region }}
+          versioning: ${{ parameters.versioning }}
+          retentionDays: ${{ parameters.retentionDays }}
+          tags: ${{ parameters.tags }}
+          # A nested object no form field maps to — the shape the edit dialog
+          # used to drop silently, and the one Task 12 checks survives a round
+          # trip byte-identical.
+          lifecycle:
+            expireAfterDays: 90
+            abortMultipartAfterDays: 7
         resultOutput: resource-ref
         argoSubmit:
           namespace: argo

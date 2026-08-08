@@ -22,10 +22,27 @@ by the platform backend — **no escaping needed**.
 | `<< resourceData.<field> >>` | one field of the resource data |
 | `<< resourcePath >>` | the resource's catalog file path in Git (for `git-ops` delete) |
 | `<< resourceDataPath >>` | the resource's data-file path in Git (for `git-ops` update/delete) |
+| `<< resourcesJson >>` | bulk requests: a JSON array of every resource, `[{name, path, dataPath, data}]` |
 
 Unknown tokens and missing fields resolve to an empty string (`resourceData` to
 `{}`). `resourcePath` / `resourceDataPath` are resolved from the resource's
 location + its `resource-data` ref, so they're correct for any layout.
+
+`<< resourcesJson >>` resolves to `[]` for an ordinary single-resource request.
+Each element's `data` is a **nested object**, not a JSON string.
+
+That is worth stating because the intuition points the wrong way. Argo
+substitutes `{{item.data}}` inside a JSON string context, so a *string* field
+has its quotes escaped and reaches the container as
+`{\"region\":\"eu-west-1\"}` — which cannot be piped to `jq`. An object field is
+serialized properly and arrives as clean JSON. Note this differs from
+`<< paramsJson >>` and the single-resource `data` parameter, which really are
+strings; the difference is the `withParam` loop, not the token.
+
+If any resource in a bulk request cannot be resolved, the submit **fails**
+rather than passing an element with empty data. A workflow that decommissions
+from `data` would otherwise skip the real teardown for that one resource and
+delete its files anyway, reporting success.
 
 ## The three templating layers (don't confuse them)
 

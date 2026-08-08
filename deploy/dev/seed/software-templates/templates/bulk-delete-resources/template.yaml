@@ -1,0 +1,58 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: bulk-delete-resources
+  title: Delete Git Resources (bulk)
+  description: >
+    Delete several git-resource resources in one request. Pick them from the
+    catalog, raise one DELETE request, and one Argo workflow removes each in
+    turn — with the same approval as deleting a single resource.
+  tags:
+    - platform
+    - demo
+  # Deliberately NO platform.io/resource-type annotation. That annotation is how
+  # the backend finds the owning Template for a resourceType (ownerResolver and
+  # verbConfigResolver both do `items.find(...)` on it). A second template
+  # claiming `git-resource` would shadow the real one at random and could hand
+  # approval rights to the wrong group. The request's owner is resolved from
+  # `resourceType: git-resource` -> the git-resource template -> its owner,
+  # which is exactly the intended gate.
+spec:
+  owner: group:default/checkout
+  type: resource
+  parameters:
+    - title: Resources to delete
+      required:
+        - resources
+      properties:
+        resources:
+          title: Resources
+          description: >
+            Only git-resource resources are listed — a batch is one kind, so the
+            request has one resourceType and therefore one owning team.
+          type: array
+          ui:field: MultiEntityPicker
+          ui:options:
+            catalogFilter:
+              kind: Resource
+              spec.type: git-resource
+  steps:
+    - id: submit
+      name: Submit delete request
+      action: platform:request:submit
+      input:
+        resourceType: git-resource
+        resourceNames: ${{ parameters.resources }}
+        kind: DELETE
+        argoSubmit:
+          namespace: argo
+          workflowTemplate: git-ops
+          entrypoint: bulk-delete
+          parameters:
+            resources: "<< resourcesJson >>"
+          labels:
+            platform.io/requested-by: "<< requester >>"
+  output:
+    links:
+      - title: Open request
+        url: /requests/${{ steps.submit.output.requestId }}

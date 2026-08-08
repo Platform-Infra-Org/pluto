@@ -16,6 +16,22 @@ function actorName(ref?: string): string {
 }
 
 /**
+ * `['resource:default/bucket-a']` -> `['bucket-a']`.
+ *
+ * `MultiEntityPicker` yields entityRefs; the request model holds bare names,
+ * because that is what `resolveResource` and the git-ops workflow take.
+ */
+export function resourceNamesFrom(refs: string[]): string[] {
+  const out: string[] = [];
+  for (const ref of refs) {
+    const name = ref.includes('/') ? ref.split('/').pop()! : ref;
+    const trimmed = name.trim();
+    if (trimmed && !out.includes(trimmed)) out.push(trimmed);
+  }
+  return out;
+}
+
+/**
  * `platform:request:submit` — the final step of every platform software template.
  * Creates a resource Request (PENDING_APPROVAL) in platform-requests, on behalf
  * of the initiating user. The Scaffolder task finishes immediately; the request
@@ -33,7 +49,20 @@ export function createRequestSubmitAction(services: {
       input: {
         resourceType: z =>
           z.string().describe('Resource type; also the default WorkflowTemplate name.'),
-        resourceName: z => z.string().describe('Name of the resource to act on.'),
+        resourceName: z =>
+          z
+            .string()
+            .optional()
+            .describe('Name of the resource to act on. Required unless resourceNames is given.'),
+        resourceNames: z =>
+          z
+            .array(z.string())
+            .optional()
+            .describe(
+              'Bulk requests: every resource to act on. Accepts entityRefs ' +
+                '(as MultiEntityPicker yields) or bare names. Mutually ' +
+                'exclusive with resourceName.',
+            ),
         kind: z =>
           z
             .enum(['CREATE', 'UPDATE', 'DELETE'])
@@ -130,6 +159,14 @@ export function createRequestSubmitAction(services: {
     },
     async handler(ctx) {
       const requester = actorName(ctx.user?.ref);
+      const names = ctx.input.resourceNames?.length
+        ? resourceNamesFrom(ctx.input.resourceNames)
+        : undefined;
+      if (Boolean(ctx.input.resourceName) === Boolean(names)) {
+        throw new Error(
+          'platform:request:submit: give exactly one of resourceName or resourceNames',
+        );
+      }
       const { token } = await auth.getPluginRequestToken({
         onBehalfOf: await auth.getOwnServiceCredentials(),
         targetPluginId: 'platform-requests',
@@ -163,7 +200,9 @@ export function createRequestSubmitAction(services: {
         body: JSON.stringify({
           kind: ctx.input.kind ?? 'CREATE',
           resourceType: ctx.input.resourceType,
-          resourceName: ctx.input.resourceName,
+          ...(ctx.input.resourceName
+            ? { resourceName: ctx.input.resourceName }
+            : { resourceNames: names }),
           params: ctx.input.params ?? {},
           ...(ctx.input.argoSubmit ? { argoSubmit: ctx.input.argoSubmit } : {}),
           ...(ctx.input.resultOutput
@@ -183,7 +222,9 @@ export function createRequestSubmitAction(services: {
       const created = (await res.json()) as { id: number };
       ctx.output('requestId', created.id);
       ctx.logger.info(
-        `Created request #${created.id} for ${requester} (${ctx.input.resourceType}/${ctx.input.resourceName})`,
+        `Created request #${created.id} for ${requester} (${ctx.input.resourceType}/${
+          ctx.input.resourceName ?? `${names!.length} resources`
+        })`,
       );
     },
   });

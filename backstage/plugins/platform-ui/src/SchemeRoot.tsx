@@ -1,4 +1,10 @@
-import { useEffect, useState } from 'react';
+import {
+  CSSProperties,
+  PointerEvent as ReactPointerEvent,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
 import { SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
@@ -10,6 +16,22 @@ import { useRecordVisit } from './useVisits';
 import { Quickstart } from './quickstart/Quickstart';
 import { useQuickstart } from './quickstart/useQuickstart';
 import { sampleImageTone, Tone } from './imageTone';
+import { isDarkTheme } from './darkMode';
+import {
+  clampToViewport,
+  PickerPos,
+  PICKER_POS_KEY,
+  readStoredPos,
+} from './pickerPos';
+
+/**
+ * Pointer travel before a press becomes a drag.
+ *
+ * Below it the press is still a click on a bottle. Without a threshold every
+ * drag that happens to start on a potion would also change the colour scheme,
+ * which is worse than the occlusion this feature exists to fix.
+ */
+const DRAG_THRESHOLD = 4;
 
 /** The two foreground tones a scheme can use, and each other's shade. */
 const WHITE = '0 0% 100%';
@@ -227,6 +249,23 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
         localStorage.getItem('platform-scheme')) ||
       'violet',
   );
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<PickerPos | undefined>(() =>
+    typeof localStorage === 'undefined'
+      ? undefined
+      : readStoredPos(localStorage.getItem(PICKER_POS_KEY)),
+  );
+  const [dragging, setDragging] = useState(false);
+  // Live drag bookkeeping. A ref, not state: it changes on every pointermove and
+  // nothing renders from it.
+  const drag = useRef<{
+    id: number;
+    ox: number;
+    oy: number;
+    dx: number;
+    dy: number;
+    moved: boolean;
+  } | null>(null);
 
   useEffect(() => {
     // Base CSS + accent var; also re-applied live whenever the picker changes.
@@ -238,17 +277,130 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
     }
   }, [scheme]);
 
+  useEffect(() => {
+    if (!floating || !pos) return;
+    // Set here as well as during the drag, so a restored position also drops the
+    // corner anchors on a fresh page load.
+    document.documentElement.dataset.pickerMoved = 'true';
+    try {
+      localStorage.setItem(PICKER_POS_KEY, JSON.stringify(pos));
+    } catch {
+      /* ignore */
+    }
+  }, [floating, pos]);
+
+  useEffect(() => {
+    if (!floating) return undefined;
+    const onResize = () => {
+      const el = ref.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      // Only correct a position that is already set; an untouched picker is held
+      // by its CSS corner and needs nothing.
+      setPos(p =>
+        p
+          ? clampToViewport(
+              p,
+              { w: r.width, h: r.height },
+              { w: window.innerWidth, h: window.innerHeight },
+            )
+          : p,
+      );
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [floating]);
+
+  const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    // Left button only, and only the floating instance — the sign-in card's
+    // picker sits in the flow of the card and must not move.
+    if (!floating || e.button !== 0) return;
+    const el = ref.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    drag.current = {
+      id: e.pointerId,
+      ox: e.clientX,
+      oy: e.clientY,
+      dx: e.clientX - r.left,
+      dy: e.clientY - r.top,
+      moved: false,
+    };
+    // Capture is taken in onPointerMove, once this is actually a drag — NOT
+    // here. While a pointer is captured, the spec retargets the following
+    // `click` to the capturing element, so capturing on every press sent every
+    // potion's click to this container instead of the button, and the colour
+    // could never be changed. A plain click must involve no capture at all.
+  };
+
+  const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    const el = ref.current;
+    if (!d || !el || d.id !== e.pointerId) return;
+    if (!d.moved) {
+      if (Math.hypot(e.clientX - d.ox, e.clientY - d.oy) < DRAG_THRESHOLD)
+        return;
+      d.moved = true;
+      setDragging(true);
+      document.documentElement.dataset.pickerMoved = 'true';
+      // Now that it is a drag, keep it alive if the pointer outruns the box.
+      // Retargeting the click no longer matters — endDrag swallows it anyway.
+      el.setPointerCapture?.(e.pointerId);
+    }
+    const r = el.getBoundingClientRect();
+    setPos(
+      clampToViewport(
+        { x: e.clientX - d.dx, y: e.clientY - d.dy },
+        { w: r.width, h: r.height },
+        { w: window.innerWidth, h: window.innerHeight },
+      ),
+    );
+  };
+
+  const endDrag = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    drag.current = null;
+    ref.current?.releasePointerCapture?.(e.pointerId);
+    if (!d.moved) return;
+    setDragging(false);
+    // The pointerup that ends a drag is followed by a click, which would land on
+    // whichever bottle the drag began on. Swallow exactly that one.
+    const swallow = (ev: MouseEvent) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+    };
+    window.addEventListener('click', swallow, true);
+    // Removed on the next tick rather than with `once`, so a drag that ends
+    // without producing a click cannot leave a listener armed to eat an
+    // unrelated one later.
+    window.setTimeout(
+      () => window.removeEventListener('click', swallow, true),
+      0,
+    );
+  };
+
   return (
     <div
+      ref={ref}
       className={`sc sc-picker${floating ? ' sc-picker-float' : ''}`}
+      style={pos ? { left: pos.x, top: pos.y } : undefined}
+      data-dragging={dragging ? 'true' : undefined}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
       role="group"
       aria-label="Color scheme"
     >
-      {SCHEMES.map(s => (
+      {SCHEMES.map((s, i) => (
         <button
           key={s.id}
           type="button"
           className="sc-potion"
+          // Staggers the rattle so the bottles move out of phase. In unison
+          // they read as the shelf vibrating rather than as loose objects.
+          style={{ ['--sc-i' as string]: i } as CSSProperties}
           aria-pressed={s.id === scheme}
           // The sprite is decorative, so the button carries the name itself.
           aria-label={s.label}
@@ -297,13 +449,28 @@ export function SchemeRoot() {
   useRecordVisit(useCurrentPath());
 
   useEffect(() => {
-    const sub = appTheme.activeThemeId$().subscribe(id => {
+    // `activeThemeId$` emits undefined until someone picks a theme, and
+    // Backstage then renders whichever variant matches the system. The id alone
+    // therefore cannot decide which tokens to use — consulting the media query
+    // as well is what keeps our background on the same side as MUI's text.
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    let themeId: string | undefined;
+    const apply = () =>
       document.documentElement.classList.toggle(
         'sc-dark',
-        !!id && id.includes('dark'),
+        isDarkTheme(themeId, mq.matches),
       );
+    const sub = appTheme.activeThemeId$().subscribe(id => {
+      themeId = id;
+      apply();
     });
-    return () => sub.unsubscribe();
+    // Only has an effect while the theme is unset, but subscribing
+    // unconditionally is simpler than tracking when that is true.
+    mq.addEventListener('change', apply);
+    return () => {
+      sub.unsubscribe();
+      mq.removeEventListener('change', apply);
+    };
   }, [appTheme]);
 
   return (

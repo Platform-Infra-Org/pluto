@@ -11,4 +11,5 @@ spec:
     - ./templates/provision-postgres/template.yaml
     - ./templates/checkout-service/template.yaml
     - ./templates/git-resource/template.yaml
+    - ./templates/bulk-delete-resources/template.yaml
     - ./templates/review-gate/template.yaml
