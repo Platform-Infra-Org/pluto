@@ -5,10 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-08
+
+### Added
+
+- Ship Pixelify Sans in place of Silkscreen
+- Render the pixel face as Pixelify Sans
+
+### Fixed
+
+- Exclude docs and merge commits, and stop eating features
+- Re-derive the type scale for a narrower pixel face
+- Keep the tour dialogue off the element it is describing
+
 ## [0.2.0] - 2026-08-08
 
 ### Added
 
+- Merge resource edits over the full document
 - A request can name many resources
 - Platform:request:submit accepts resourceNames
 - Show every resource a bulk request names
@@ -20,13 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Drag the colour picker anywhere on screen
 - Remember where the picker was dragged to
 - Rattle the potions while the picker is dragged
-
-### Changed
-
-- Bulk delete how-to, resourcesJson token, lifecycle note
-- Movable potion-box picker
-- Cover the movable picker, the theme fallback and submit failures
-- Merge pull request #3 from Platform-Infra-Org/fix/resource-edit-delete
 
 ### Fixed
 
@@ -63,6 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Store operations to expire and delete stale requests
 - Scheduled retention task with dry-run
 - Colour template header text from the image behind it
+- Merge request retention and the header/dialog fixes
 - Ship the hellenic template header images
 - Loading indicators march in cells instead of easing
 - Menu cursor on table rows
@@ -84,6 +92,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stop action, and suspend fields described by the workflow
 - The colour picker is a shelf of potions
 - Turn the fantasy screen names back off
+- Merge the 8-bit flare pass and the suspend approval gate
 - Record recently visited pages per user
 - Recently visited card on home
 - Favourite templates card on home
@@ -95,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tour button opposite the title, and a home grid of equals
 - The experience bar reads status, not the picked accent
 - Open the catalog on Resource instead of Component
+- Merge the home, quickstart and experience-bar pass
 - Helm chart for production, and close a guest-auth hole
 
 ### Changed
@@ -103,30 +113,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Commit with plain git instead of the Gitea contents API
 - Lift provisioning out of the plugin wiring
 - Adopt the checks + release-pr + release-manual pipeline
-- Publish the Diataxis site to GitHub Pages and fold in the repo docs
-- Move the site to the repo root
-- 8-bit pixel-game motif for the platform UI
-- Retire the [FRAGILE] overrides instead of restyling them
-- Task-by-task implementation plan for the 8-bit UI
 - Style Backstage components through the theme, not hashed classes
-- Describe the pixel UI and the retired hashed-class overrides
-- Supply template header images from a drop-in folder
-- How to supply template header images
-- Request retention with per-state windows
-- Request retention and the EXPIRED state
-- Plan a second pass of 8-bit flare
-- Commit the flare plan to a fantasy genre
-- Task list for the 8-bit flare pass
-- Record what the flare pass dropped and why
-- Plan mid-workflow suspend approval
-- Plan home cards, quickstart and the experience bar
 - Stop tracking specs/
 - Commit the specs/ ignore rule
-- Cover the new config and features, and fix the changelog grouping
 - Split deploy into prod and dev, and say so in the README
-- Merge pull request #1 from Platform-Infra-Org/feat/8bit-ui
-- Merge remote-tracking branch 'origin/main' into feat/8bit-ui
-- Merge pull request #2 from Platform-Infra-Org/feat/8bit-ui
 
 ### Fixed
 
@@ -152,7 +142,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Drop unused dependencies and dead config
 - Drop the DisabledSecretStore null object
 - Drop the unused MinIO service
-- Delete the pre-Backstage planning archive
 
 ## [0.0.0] - 2026-08-03
 
@@ -321,30 +310,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Track empty package __init__
 - Jsonschema type stubs + is_stale nullable sha
 - Dedupe CI, remove dead BFF-session-cookie scaffolding
-- Design for composable graph-based service builder (11)
-- Resolve open questions in service-builder design (per-verb opt-in graphs, editability, secrets, recursion, versioning)
-- Phased implementation plan for composable service builder (CB01-CB05 epics)
 - Unify node inputs under input_bindings in the generator
 - Unify inputs in the graph inspector into one Inputs section
 - Resource detail: form view + raw-JSON toggle + dependency graph
 - Resource form/raw toggle + dependency graph + id-field choice box
 - Dependency graph: include parents (bidirectional traversal + signed layout)
-- Backstage plugin-suite design (spec)
-- P0 backstage-shell implementation plan
-- P1 requests-approvals implementation plan
 - Use << token >> delimiter for submit templating
-- Graph builder Backstage integration design (composable builder, current standards)
-- Production-readiness audit + Backstage upgrade playbook; untrack .spa.log
 - Make the reskin upgrade-resilient (stable hooks + companions)
-- Diátaxis MkDocs site served via TechDocs; tidy structure
-- Plan to convert the plugin suite to RHDH dynamic plugins
-- RHDH 1.9 migration plan (align dev to Backstage 1.45.3) + in-app config guide
-- Secret lifecycle plan (create-on-approve, workflow-owned, per-request)
 - Lint clean the secret-lifecycle files (eqeqeq, no-nested-ternary, useless-ctor)
 - Ignore the Backstage dev-server log
-- Explain the secret lifecycle and key rotation
-- Document where the logo, favicon and title are changed
-- How to configure the logo and tab icon
 
 ### Fixed
 
@@ -396,8 +370,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Drop roles + RBAC policy mode; make admin/auditor groups configurable
 - Remove catalogWriter; workflows own Git; resource-data is a file ref
 - Remove the service builder plugins
-- Remove the RHDH migration plans and the builder references
-- Remove the RHDH configuration how-to
 - Delete the legacy pre-Backstage stack
 
 <!-- generated by git-cliff -->
