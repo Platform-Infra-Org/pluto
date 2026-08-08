@@ -10,8 +10,8 @@ export const SHADCN_CSS = `
   src: url('/fonts/pixelify-sans.woff2') format('woff2');
   /* A variable file: one asset covers the whole range, so the font-weight
      declarations already scattered through this sheet and theme.tsx resolve
-     to real weights. Under Silkscreen they were no-ops or a synthesised
-     smear, because that family ships a single weight. */
+     to real weights now, rather than the no-ops or synthesised smear they
+     produced under the old face, which shipped only a single weight. */
   font-weight: 400 700;
   font-style: normal;
   font-display: swap;
@@ -61,7 +61,10 @@ export const SHADCN_CSS = `
 }
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
-     chrome. 12px is the floor — Silkscreen drops strokes below it. */
+     chrome. 12px is the floor — kept as a legibility choice, not because
+     Pixelify Sans loses strokes at small sizes the way a bitmap face would;
+     it's an outline face and doesn't. Nobody has checked by eye whether the
+     floor still earns its keep at this face's proportions, so it stays. */
   font-family: var(--sc-font-pixel);
   color: hsl(var(--sc-fg));
 }
@@ -208,8 +211,8 @@ body, body *, input, select, textarea, button, optgroup {
 /* The BUI page title is the biggest type on a native page. */
 [class*="bui-HeaderTitle"] { font-size: 28px !important; }
 /* Heading scale for the pixel face.
-   Sized by measurement, not by eye: Pixelify Sans advances 'n' at 0.586em
-   against Silkscreen's 0.875em — a third narrower — so each size below is the
+   Sized by measurement, not by eye: Pixelify Sans advances 'n' at 0.586em,
+   a third narrower than the old face's 0.875em, so each size below is the
    one at which a real page title occupies the same pixel width the old face
    did at the old size. Same layout, larger glyphs. Backstage's own 28-34px
    scale is still slightly too wide here, which is why these overrides remain
@@ -252,14 +255,14 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   border-radius: var(--sc-radius-sm) !important;
   /* The cap and ellipsis stay whatever the face: a long tag should be cut off
      rather than allowed to escape its column. The 11px that used to sit here
-     was Silkscreen-width compensation and is no longer needed — the native
-     13px now renders narrower than 11px Silkscreen did. */
+     was width compensation for the old, wider face and is no longer needed —
+     the native 13px now renders narrower than that 11px override did. */
   max-width: 100%;
 }
 .MuiChip-label { overflow: hidden; text-overflow: ellipsis; }
 .MuiOutlinedInput-notchedOutline { border-width: var(--sc-border-w) !important; }
 .MuiTableCell-head { color: hsl(var(--sc-muted-fg)) !important; }
-/* No table-body override: Silkscreen needed one because dense cells hit
+/* No table-body override: the old face needed one because dense cells hit
    Backstage's word-break and snapped mid-word, but the native 14px in Pixelify
    Sans measures narrower than the 12px this used to force, so the pressure the
    rule relieved is gone. */
@@ -1107,11 +1110,15 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 }
 
 /* ===== 8-bit chrome =====
-   Pixel type is for chrome only — headings, nav, buttons, badges, counters.
-   Body copy, table cells, JSON values and log output keep Inter/mono, because
-   they are read under pressure. Silkscreen is a bitmap face: below 12px whole
-   strokes drop out, hence the floor. Uppercase is the authentic treatment and
-   avoids Silkscreen's uneven lowercase baselines. */
+   This block sets text-transform on headings, nav, buttons, badges and
+   counters — but pixel type itself is not chrome-only: the "full arcade"
+   rule (.sc, .sc * above) puts the pixel face on body copy, table cells,
+   JSON values and log output too. Uppercase here is a deliberate treatment
+   for chrome, not a fix for uneven lowercase — Pixelify Sans has true
+   lowercase, so there's nothing to hide. The 12px floor (.sc, .sc * above)
+   is a legibility choice, not a defence against dropped strokes: Pixelify
+   Sans is an outline face, not the bitmap face the floor was first written
+   for. */
 .sc-h1, .sc-card-title, .sc-btn, .sc-badge, .sc-nav-word, .sc-nav-tx,
 .sc-dialog-h, .sc-login-title, .sc-label {
   font-family: var(--sc-font-pixel);
