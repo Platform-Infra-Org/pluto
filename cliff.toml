@@ -48,12 +48,28 @@ filter_unconventional = false
 # Assigns commits to groups.
 # Optionally sets the commit's scope and can decide to exclude commits from further processing.
 commit_parsers = [
-    # Housekeeping about the changelog itself is not a change to the product.
-    # Left in, a release reads as thirty "regenerate the changelog" lines.
     # A merge commit's subject repeats what the commits under it already say.
     # Left in, every feature is listed twice — once as itself and once inside
-    # "merge the X pass". Ours are conventionally prefixed, hence the shape.
-    { message = "(?i)^[a-z]+(\\(.+\\))?!?: merge ", skip = true },
+    # the merge that brought it.
+    #
+    # Matched on the *type*, never on the word "merge" appearing in a subject.
+    # An earlier rule here was `^<type>: merge ` — meant for merges that had
+    # been given a conventional prefix — and it silently ate
+    # `feat(resources): merge resource edits over the full document`, the
+    # headline fix of v0.2.0, which is missing from that release's changelog as
+    # a result. A subject is prose; "merge" is an ordinary verb in it.
+    #
+    # git-cliff's own skip_merge_commits key is ignored by the pinned version
+    # (2.13.1), which is why this is done with parsers at all. The cost of the
+    # narrower rule is that a merge must not be committed as `feat:`/`fix:` —
+    # use `merge:`, or let GitHub write its default subject.
+    { message = "(?i)^merge(\\(.+\\))?!?:", skip = true },
+    { message = "^Merge ", skip = true },
+    # Documentation is not a product change. The changelog answers "what is
+    # different if I upgrade", and a docs commit changes nothing for anyone
+    # running the software — it landed in "Changed" only because it matched
+    # the catch-all at the bottom of this list.
+    { message = "^docs(\\(.+\\))?!?:", skip = true },
     # Housekeeping about the changelog itself is not a change to the product.
     # Left in, a release reads as thirty "regenerate the changelog" lines.
     { message = "^chore\\(changelog\\)", skip = true },
