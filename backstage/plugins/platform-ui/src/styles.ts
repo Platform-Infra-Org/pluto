@@ -205,22 +205,19 @@ body, body *, input, select, textarea, button, optgroup {
   letter-spacing: 0 !important;
   font-weight: 400 !important;
 }
-/* Silkscreen is a bitmap face — it loses strokes below 12px. */
-.MuiTab-root, .MuiChip-root, .MuiTableCell-head, .MuiTableSortLabel-root,
-.MuiFormLabel-root, .MuiInputLabel-root, [class*="bui-Button"],
-[class*="BackstageAutocomplete-label"] {
-  font-size: 12px !important;
-}
 /* The BUI page title is the biggest type on a native page. */
-[class*="bui-HeaderTitle"] { font-size: 22px !important; }
-.MuiButton-root { font-size: 13px !important; }
-/* Heading scale for the pixel face. Silkscreen sets much wider than Inter at
-   the same size, so Backstage's native scale (28-34px) wraps a single sentence
-   over three lines. These are the equivalent optical sizes. */
-h1, .MuiTypography-h1 { font-size: 22px !important; line-height: 1.35 !important; }
-h2, .MuiTypography-h2 { font-size: 18px !important; line-height: 1.35 !important; }
+[class*="bui-HeaderTitle"] { font-size: 28px !important; }
+/* Heading scale for the pixel face.
+   Sized by measurement, not by eye: Pixelify Sans advances 'n' at 0.586em
+   against Silkscreen's 0.875em — a third narrower — so each size below is the
+   one at which a real page title occupies the same pixel width the old face
+   did at the old size. Same layout, larger glyphs. Backstage's own 28-34px
+   scale is still slightly too wide here, which is why these overrides remain
+   at all; the smaller components no longer need one and have been dropped. */
+h1, .MuiTypography-h1 { font-size: 29px !important; line-height: 1.35 !important; }
+h2, .MuiTypography-h2 { font-size: 22px !important; line-height: 1.35 !important; }
 h3, .MuiTypography-h3, .MuiCardHeader-title,
-[class*="BackstageInfoCard-header"] * { font-size: 16px !important; }
+[class*="BackstageInfoCard-header"] * { font-size: 19px !important; }
 h4, h5, h6, .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 { font-size: 14px !important; }
 [class*="BackstageContentHeader-title"] { font-size: 18px !important; line-height: 1.35 !important; }
 .MuiDialogTitle-root { font-size: 16px !important; }
@@ -253,18 +250,19 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .MuiChip-root {
   border: var(--sc-border-w) solid hsl(var(--sc-border)) !important;
   border-radius: var(--sc-radius-sm) !important;
-  /* Silkscreen is wider than Inter, so a tag that used to fit its column now
-     overflows. Cap the chip and ellipsise rather than letting it escape. */
+  /* The cap and ellipsis stay whatever the face: a long tag should be cut off
+     rather than allowed to escape its column. The 11px that used to sit here
+     was Silkscreen-width compensation and is no longer needed — the native
+     13px now renders narrower than 11px Silkscreen did. */
   max-width: 100%;
-  font-size: 11px !important;
 }
 .MuiChip-label { overflow: hidden; text-overflow: ellipsis; }
 .MuiOutlinedInput-notchedOutline { border-width: var(--sc-border-w) !important; }
 .MuiTableCell-head { color: hsl(var(--sc-muted-fg)) !important; }
-/* Silkscreen is wider than Inter, so dense table text hits Backstage's own
-   word-break sooner and snaps mid-word. 12px is the floor for this face and
-   buys back roughly a fifth of the line. */
-.MuiTableCell-body, .MuiTableCell-body * { font-size: 12px !important; }
+/* No table-body override: Silkscreen needed one because dense cells hit
+   Backstage's word-break and snapped mid-word, but the native 14px in Pixelify
+   Sans measures narrower than the 12px this used to force, so the pressure the
+   rule relieved is gone. */
 /* Focus is a hard offset outline everywhere, never a glow. */
 .MuiButton-root:focus-visible, .MuiTab-root:focus-visible,
 .MuiIconButton-root:focus-visible, [class*="bui-Button"]:focus-visible {
