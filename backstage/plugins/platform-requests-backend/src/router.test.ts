@@ -338,4 +338,42 @@ describe('createRouter', () => {
       expect(await store.getSecretEnc(created.body.id)).toBeUndefined();
     });
   });
+
+  /**
+   * A submit that throws must not leave the request looking accepted.
+   *
+   * Approving is the point of no return: the decision is already recorded, so
+   * an exception on the way to Argo used to leave the request sitting in
+   * APPROVED forever — a state that claims it was accepted and is running when
+   * nothing was ever submitted. The batch-refusal guard throws exactly here.
+   */
+  it('fails the request, with the reason kept, when the submit throws', async () => {
+    const submitWorkflow = jest.fn(async () => {
+      throw new Error('cannot resolve 1 of 2 resources: broken (not found)');
+    }) as unknown as jest.Mock<Promise<void>, [PlatformRequest]>;
+    const { app, store } = await makeApp({
+      result: AuthorizeResult.ALLOW,
+      principalResolver: async () => ({ isAdmin: true, groups: [] }),
+      submitWorkflow,
+    });
+
+    const created = await request(app)
+      .post('/requests')
+      .send({
+        kind: 'DELETE',
+        resourceType: 'git-resource',
+        resourceNames: ['ok', 'broken'],
+      });
+    const id = created.body.id;
+
+    await request(app)
+      .post(`/requests/${id}/approve`)
+      .set('Authorization', asAdmin)
+      .send({});
+
+    const after = await store.get(id);
+    expect(after!.state).toBe('FAILED');
+    expect(after!.error).toMatch(/cannot resolve 1 of 2 resources/);
+  });
+
 });

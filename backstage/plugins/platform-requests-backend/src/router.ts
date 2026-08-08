@@ -358,8 +358,21 @@ export async function createRouter(
       await store.setState(request.id, nextState);
 
       if (nextState === 'APPROVED') {
-        await submitWorkflow((await store.get(request.id))!);
-        await store.setState(request.id, 'IN_PROGRESS');
+        try {
+          await submitWorkflow((await store.get(request.id))!);
+          await store.setState(request.id, 'IN_PROGRESS');
+        } catch (e) {
+          // Submitting is the last thing that can fail before a workflow
+          // exists, and the decision is already recorded by this point. Leaving
+          // the request APPROVED would claim it was accepted and is on its way
+          // when nothing was ever submitted — a state it can never leave,
+          // because the poller only advances requests that have a workflow.
+          // Record why and fail it, the same shape the poller uses for a
+          // workflow that fails later.
+          const message = e instanceof Error ? e.message : String(e);
+          await store.setWorkflow(request.id, { error: message });
+          await store.setState(request.id, 'FAILED');
+        }
       } else if (nextState === 'REJECTED') {
         // No Workflow, no Secret was ever created — just drop the held blob.
         await store.clearSecretEnc(request.id);

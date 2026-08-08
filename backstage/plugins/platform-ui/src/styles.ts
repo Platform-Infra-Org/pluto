@@ -703,6 +703,13 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   background-size: 4px 4px;
   color: hsl(152 60% 22%);
   border: 1px solid hsl(var(--sc-success) / .45); }
+/* Same shelf, other outcome. The text colour is stated for both schemes rather
+   than inherited: the success notice above fixes one colour, which only reads
+   on a light background. */
+.sc-notice-fail { --sc-cell: hsl(var(--sc-destructive) / .26);
+  color: hsl(0 62% 28%);
+  border-color: hsl(var(--sc-destructive) / .45); }
+:root.sc-dark .sc-notice-fail { color: hsl(0 75% 80%); }
 
 /* login gate */
 .sc-login { min-height: 100vh; display: flex; align-items: center; justify-content: center;

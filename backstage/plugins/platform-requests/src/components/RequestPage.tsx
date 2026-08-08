@@ -155,6 +155,11 @@ export function RequestPage() {
           </Link>
         </div>
       )}
+      {request.error && (
+        <div className="sc-notice sc-notice-fail" style={{ marginBottom: 12 }}>
+          <strong>Failed:</strong> {request.error}
+        </div>
+      )}
       {request.workflowName && (
         <ExperienceBar
           requestId={request.id}
