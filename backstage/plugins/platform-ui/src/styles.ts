@@ -4,11 +4,15 @@
 // Backstage's own MUI styles outside our pages.
 export const SHADCN_CSS = `
 /* Self-hosted so the CSP (font-src 'self') is satisfied and the app works
-   offline. Latin subset, 3.4KB. SIL OFL — see public/fonts/LICENSE.txt. */
+   offline. Latin subset, 12KB. SIL OFL — see public/fonts/LICENSE.txt. */
 @font-face {
-  font-family: 'Silkscreen';
-  src: url('/fonts/silkscreen.woff2') format('woff2');
-  font-weight: 400;
+  font-family: 'Pixelify Sans';
+  src: url('/fonts/pixelify-sans.woff2') format('woff2');
+  /* A variable file: one asset covers the whole range, so the font-weight
+     declarations already scattered through this sheet and theme.tsx resolve
+     to real weights. Under Silkscreen they were no-ops or a synthesised
+     smear, because that family ships a single weight. */
+  font-weight: 400 700;
   font-style: normal;
   font-display: swap;
 }
@@ -23,7 +27,7 @@ export const SHADCN_CSS = `
   --sc-radius-sm: 4px;
   --sc-border-w: 2px;
   --sc-shadow: 3px 3px 0 hsl(var(--sc-fg) / .16);
-  --sc-font-pixel: 'Silkscreen', ui-monospace, SFMono-Regular, monospace;
+  --sc-font-pixel: 'Pixelify Sans', ui-monospace, SFMono-Regular, monospace;
   --sc-unit: 4px;
   --sc-nav-w: 240px;
   --sc-bg: 240 10% 98%;
