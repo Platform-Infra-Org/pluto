@@ -114,6 +114,10 @@ Nothing conveys state through motion alone.
   variant already below WCAG AA — the worst at 1.84:1 — and fixed them; the
   check samples the rendered pixel against its text in all six schemes.
 - The pixel font is used at 12px minimum and never for long-form documentation.
+  It renders true lowercase, not the all-caps-shaped-as-lowercase of the
+  earlier pixel face; chrome (titles, buttons, badges, nav, labels, table
+  headers) is still uppercase, but that's a deliberate style choice, not the
+  font compensating for missing lowercase forms.
 - Progress bars carry their numbers (`2/3 STEPS`), which is both the NES
   convention and the readable one.
 

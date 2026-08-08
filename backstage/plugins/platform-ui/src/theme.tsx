@@ -24,7 +24,7 @@ const PRIMARY_DARK = '#818cf8';
 const ACCENT = '#8b5cf6';
 // Full arcade: the MUI theme's base face is the pixel one, so native Backstage
 // components inherit it rather than falling back to Inter.
-const FONT = "'Silkscreen', ui-monospace, SFMono-Regular, monospace";
+const FONT = "'Pixelify Sans', ui-monospace, SFMono-Regular, monospace";
 
 type Tone = {
   primary: string;
@@ -96,7 +96,7 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
           },
           title: {
             color: 'hsl(var(--sc-fg))',
-            fontFamily: "'Silkscreen', ui-monospace, monospace",
+            fontFamily: "'Pixelify Sans', ui-monospace, monospace",
             textTransform: 'uppercase',
             fontWeight: 400,
             fontSize: '1.3rem',

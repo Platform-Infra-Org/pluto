@@ -4,11 +4,15 @@
 // Backstage's own MUI styles outside our pages.
 export const SHADCN_CSS = `
 /* Self-hosted so the CSP (font-src 'self') is satisfied and the app works
-   offline. Latin subset, 3.4KB. SIL OFL — see public/fonts/LICENSE.txt. */
+   offline. Latin subset, 12KB. SIL OFL — see public/fonts/LICENSE.txt. */
 @font-face {
-  font-family: 'Silkscreen';
-  src: url('/fonts/silkscreen.woff2') format('woff2');
-  font-weight: 400;
+  font-family: 'Pixelify Sans';
+  src: url('/fonts/pixelify-sans.woff2') format('woff2');
+  /* A variable file: one asset covers the whole range, so the font-weight
+     declarations already scattered through this sheet and theme.tsx resolve
+     to real weights now, rather than the no-ops or synthesised smear they
+     produced under the old face, which shipped only a single weight. */
+  font-weight: 400 700;
   font-style: normal;
   font-display: swap;
 }
@@ -23,7 +27,7 @@ export const SHADCN_CSS = `
   --sc-radius-sm: 4px;
   --sc-border-w: 2px;
   --sc-shadow: 3px 3px 0 hsl(var(--sc-fg) / .16);
-  --sc-font-pixel: 'Silkscreen', ui-monospace, SFMono-Regular, monospace;
+  --sc-font-pixel: 'Pixelify Sans', ui-monospace, SFMono-Regular, monospace;
   --sc-unit: 4px;
   --sc-nav-w: 240px;
   --sc-bg: 240 10% 98%;
@@ -57,7 +61,10 @@ export const SHADCN_CSS = `
 }
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
-     chrome. 12px is the floor — Silkscreen drops strokes below it. */
+     chrome. 12px is the floor — kept as a legibility choice, not because
+     Pixelify Sans loses strokes at small sizes the way a bitmap face would;
+     it's an outline face and doesn't. Nobody has checked by eye whether the
+     floor still earns its keep at this face's proportions, so it stays. */
   font-family: var(--sc-font-pixel);
   color: hsl(var(--sc-fg));
 }
@@ -201,22 +208,19 @@ body, body *, input, select, textarea, button, optgroup {
   letter-spacing: 0 !important;
   font-weight: 400 !important;
 }
-/* Silkscreen is a bitmap face — it loses strokes below 12px. */
-.MuiTab-root, .MuiChip-root, .MuiTableCell-head, .MuiTableSortLabel-root,
-.MuiFormLabel-root, .MuiInputLabel-root, [class*="bui-Button"],
-[class*="BackstageAutocomplete-label"] {
-  font-size: 12px !important;
-}
 /* The BUI page title is the biggest type on a native page. */
-[class*="bui-HeaderTitle"] { font-size: 22px !important; }
-.MuiButton-root { font-size: 13px !important; }
-/* Heading scale for the pixel face. Silkscreen sets much wider than Inter at
-   the same size, so Backstage's native scale (28-34px) wraps a single sentence
-   over three lines. These are the equivalent optical sizes. */
-h1, .MuiTypography-h1 { font-size: 22px !important; line-height: 1.35 !important; }
-h2, .MuiTypography-h2 { font-size: 18px !important; line-height: 1.35 !important; }
+[class*="bui-HeaderTitle"] { font-size: 28px !important; }
+/* Heading scale for the pixel face.
+   Sized by measurement, not by eye: Pixelify Sans advances 'n' at 0.586em,
+   a third narrower than the old face's 0.875em, so each size below is the
+   one at which a real page title occupies the same pixel width the old face
+   did at the old size. Same layout, larger glyphs. Backstage's own 28-34px
+   scale is still slightly too wide here, which is why these overrides remain
+   at all; the smaller components no longer need one and have been dropped. */
+h1, .MuiTypography-h1 { font-size: 29px !important; line-height: 1.35 !important; }
+h2, .MuiTypography-h2 { font-size: 22px !important; line-height: 1.35 !important; }
 h3, .MuiTypography-h3, .MuiCardHeader-title,
-[class*="BackstageInfoCard-header"] * { font-size: 16px !important; }
+[class*="BackstageInfoCard-header"] * { font-size: 19px !important; }
 h4, h5, h6, .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 { font-size: 14px !important; }
 [class*="BackstageContentHeader-title"] { font-size: 18px !important; line-height: 1.35 !important; }
 .MuiDialogTitle-root { font-size: 16px !important; }
@@ -249,18 +253,19 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .MuiChip-root {
   border: var(--sc-border-w) solid hsl(var(--sc-border)) !important;
   border-radius: var(--sc-radius-sm) !important;
-  /* Silkscreen is wider than Inter, so a tag that used to fit its column now
-     overflows. Cap the chip and ellipsise rather than letting it escape. */
+  /* The cap and ellipsis stay whatever the face: a long tag should be cut off
+     rather than allowed to escape its column. The 11px that used to sit here
+     was width compensation for the old, wider face and is no longer needed —
+     the native 13px now renders narrower than that 11px override did. */
   max-width: 100%;
-  font-size: 11px !important;
 }
 .MuiChip-label { overflow: hidden; text-overflow: ellipsis; }
 .MuiOutlinedInput-notchedOutline { border-width: var(--sc-border-w) !important; }
 .MuiTableCell-head { color: hsl(var(--sc-muted-fg)) !important; }
-/* Silkscreen is wider than Inter, so dense table text hits Backstage's own
-   word-break sooner and snaps mid-word. 12px is the floor for this face and
-   buys back roughly a fifth of the line. */
-.MuiTableCell-body, .MuiTableCell-body * { font-size: 12px !important; }
+/* No table-body override: the old face needed one because dense cells hit
+   Backstage's word-break and snapped mid-word, but the native 14px in Pixelify
+   Sans measures narrower than the 12px this used to force, so the pressure the
+   rule relieved is gone. */
 /* Focus is a hard offset outline everywhere, never a glow. */
 .MuiButton-root:focus-visible, .MuiTab-root:focus-visible,
 .MuiIconButton-root:focus-visible, [class*="bui-Button"]:focus-visible {
@@ -614,6 +619,11 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 /* The 78px is clearance for the picker sitting in the same corner. Once the
    picker has been moved, the tour box can have the space back. */
 :root:not([data-picker-moved='true']) .sc-qs-box { bottom: 78px; }
+/* …and when even that is not enough — the picker is draggable, so it can be
+   parked exactly here — the box moves to the opposite end rather than sitting
+   on top of the element it is describing. Decided in Quickstart.tsx from the
+   measured rects, because no fixed offset can cover an element that moves. */
+.sc-qs-box-top { top: 18px; bottom: auto; }
 .sc-qs-count { font-family: var(--sc-font-pixel); font-size: 11px;
   color: hsl(var(--sc-muted-fg)); }
 .sc-qs-title { font-family: var(--sc-font-pixel); text-transform: uppercase;
@@ -1105,11 +1115,15 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 }
 
 /* ===== 8-bit chrome =====
-   Pixel type is for chrome only — headings, nav, buttons, badges, counters.
-   Body copy, table cells, JSON values and log output keep Inter/mono, because
-   they are read under pressure. Silkscreen is a bitmap face: below 12px whole
-   strokes drop out, hence the floor. Uppercase is the authentic treatment and
-   avoids Silkscreen's uneven lowercase baselines. */
+   This block sets text-transform on headings, nav, buttons, badges and
+   counters — but pixel type itself is not chrome-only: the "full arcade"
+   rule (.sc, .sc * above) puts the pixel face on body copy, table cells,
+   JSON values and log output too. Uppercase here is a deliberate treatment
+   for chrome, not a fix for uneven lowercase — Pixelify Sans has true
+   lowercase, so there's nothing to hide. The 12px floor (.sc, .sc * above)
+   is a legibility choice, not a defence against dropped strokes: Pixelify
+   Sans is an outline face, not the bitmap face the floor was first written
+   for. */
 .sc-h1, .sc-card-title, .sc-btn, .sc-badge, .sc-nav-word, .sc-nav-tx,
 .sc-dialog-h, .sc-login-title, .sc-label {
   font-family: var(--sc-font-pixel);

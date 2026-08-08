@@ -1,2 +1,4 @@
-Silkscreen by Jason Kottke, licensed under the SIL Open Font License 1.1.
-https://fonts.google.com/specimen/Silkscreen
+Pixelify Sans, licensed under the SIL Open Font License 1.1.
+Copyright 2021 The Pixelify Sans Project Authors
+https://github.com/eifetx/Pixelify-Sans
+https://scripts.sil.org/OFL

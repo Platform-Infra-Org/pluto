@@ -51,7 +51,7 @@ export const QUICKSTART_STEPS: QuickstartStep[] = [
   {
     id: 'picker',
     selector: '.sc-picker-float',
-    title: 'Pick your poison',
+    title: 'Pick your potion',
     body: 'Each potion is a colour scheme. Drag the shelf if it ever covers something — your colour and where you put it are remembered in this browser.',
   },
 ];
