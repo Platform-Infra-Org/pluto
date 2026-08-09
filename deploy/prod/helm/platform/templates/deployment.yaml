@@ -26,17 +26,24 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- with .Values.podSecurityContext }}
       securityContext:
-        runAsNonRoot: true
-        # The image runs as `node`.
-        runAsUser: 1000
-        fsGroup: 1000
-        seccompProfile:
-          type: RuntimeDefault
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: backstage
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # `command` must be set, not just `args`. The image declares no
+          # ENTRYPOINT of its own, so args alone REPLACE the whole CMD —
+          # including the `node packages/backend` at the front of it. What is
+          # left starts with `--config`, and the node base image's
+          # docker-entrypoint.sh prepends `node` to any argv beginning with a
+          # dash, producing `node --config …` and the error "node: bad option
+          # --config".
+          command:
+            - "node"
+            - "packages/backend"
           # The image's CMD already loads app-config.yaml and the baked-in
           # app-config.production.yaml. Ours is appended last so it wins, and
           # the baked-in file stays the documented default for anyone running

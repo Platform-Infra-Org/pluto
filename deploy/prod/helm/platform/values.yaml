@@ -207,7 +207,35 @@ podDisruptionBudget:
   enabled: true
   minAvailable: 1
 
-# Applied to the container; the pod-level context is set in the template.
+# Applied to the pod. The defaults suit a stock Kubernetes cluster, where the
+# image's own `node` user (uid 1000) owns everything it writes.
+#
+# On OpenShift these two must go. It assigns each namespace its own uid range
+# and rejects a pod asking for one outside it, so naming a uid here is not a
+# stricter setting — it is a pod that will not start.
+#
+# Helm deep-merges values, so *omitting* them from your override does nothing:
+# the defaults below survive the merge. They have to be nulled by name.
+#
+#   podSecurityContext:
+#     runAsNonRoot: true
+#     seccompProfile:
+#       type: RuntimeDefault
+#     runAsUser: null     # required — omitting is not enough
+#     fsGroup: null       # required — omitting is not enough
+#
+# `--set podSecurityContext=null` drops the block entirely, which is also valid
+# on OpenShift since the SCC supplies the same guarantees.
+podSecurityContext:
+  runAsNonRoot: true
+  # The image runs as `node`.
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Applied to the container. These hold on OpenShift as they are — every one of
+# them is required by the restricted-v2 SCC rather than merely allowed by it.
 securityContext:
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true
