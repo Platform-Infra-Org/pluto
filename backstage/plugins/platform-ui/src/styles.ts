@@ -2,6 +2,8 @@
 // injected globally. Colors are HSL triplets in CSS variables so the color
 // picker can swap the accent live. Scoped under `.sc` so it never fights
 // Backstage's own MUI styles outside our pages.
+import { statusTokenCss } from './statusTokens';
+
 export const SHADCN_CSS = `
 /* Self-hosted so the CSP (font-src 'self') is satisfied and the app works
    offline. Latin subset, 12KB. SIL OFL — see public/fonts/LICENSE.txt. */
@@ -59,6 +61,7 @@ export const SHADCN_CSS = `
   --sc-accent: 240 3.7% 15.9%;
   --sc-accent-fg: 0 0% 98%;
 }
+${statusTokenCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because
@@ -514,12 +517,12 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     var(--sc-cell, transparent) 0% 25%, transparent 0% 50%);
   background-size: 4px 4px;
 }
-.sc-badge-muted { --sc-cell: hsl(240 5% 62% / .38); color: hsl(240 5% 34%); }
+.sc-badge-muted { --sc-cell: hsl(240 5% 62% / .38); color: hsl(var(--sc-on-muted)); }
 .sc-badge-primary { --sc-cell: hsl(var(--sc-primary) / .22);
   color: color-mix(in srgb, hsl(var(--sc-primary)) 52%, black); }
-.sc-badge-success { --sc-cell: hsl(var(--sc-success) / .26); color: hsl(152 60% 22%); }
-.sc-badge-warning { --sc-cell: hsl(var(--sc-warning) / .3); color: hsl(38 95% 24%); }
-.sc-badge-destructive { --sc-cell: hsl(var(--sc-destructive) / .24); color: hsl(0 70% 34%); }
+.sc-badge-success { --sc-cell: hsl(var(--sc-success) / .26); color: hsl(var(--sc-on-success)); }
+.sc-badge-warning { --sc-cell: hsl(var(--sc-warning) / .3); color: hsl(var(--sc-on-warning)); }
+.sc-badge-destructive { --sc-cell: hsl(var(--sc-destructive) / .24); color: hsl(var(--sc-on-destructive)); }
 
 /* table */
 .sc-table { width: 100%; border-collapse: collapse; font-size: 14px; }
@@ -661,9 +664,9 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 /* Ink on yellow: the creatures are white on the accent bar, which vanishes
    against warning. */
 .sc-xp-running .sc-xp-creep { color: hsl(var(--sc-fg) / .75); }
-.sc-xp-running .sc-xp-count { color: hsl(38 95% 24%); }
-.sc-xp-failed .sc-xp-count { color: hsl(0 70% 34%); }
-.sc-xp-done .sc-xp-count { color: hsl(152 60% 22%); }
+.sc-xp-running .sc-xp-count { color: hsl(var(--sc-on-warning)); }
+.sc-xp-failed .sc-xp-count { color: hsl(var(--sc-on-destructive)); }
+.sc-xp-done .sc-xp-count { color: hsl(var(--sc-on-success)); }
 .sc-xp-count { font-family: var(--sc-font-pixel); font-size: 12px;
   color: hsl(var(--sc-muted-fg)); flex: 0 0 auto; }
 /* The creatures live inside the fill, so their run is bounded by real
@@ -711,7 +714,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   background-color: transparent;
   background-image: repeating-conic-gradient(var(--sc-cell) 0% 25%, transparent 0% 50%);
   background-size: 4px 4px;
-  color: hsl(152 60% 22%);
+  color: hsl(var(--sc-on-success));
   border: 1px solid hsl(var(--sc-success) / .45); }
 /* Same shelf, other outcome. The text colour is stated for both schemes rather
    than inherited: the success notice above fixes one colour, which only reads
