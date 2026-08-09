@@ -9,9 +9,16 @@ backend:
   # callers. When its value is "http://localhost:7007", it's strictly private
   # and can't be reached by others.
   baseUrl: http://localhost:7007
-  # The listener can also be expressed as a single <host>:<port> string. In this case we bind to
-  # all interfaces, the most permissive setting. The right value depends on your specific deployment.
-  listen: ':7007'
+  # The object form, not the '<host>:<port>' string the Backstage template ships
+  # with. Config files are MERGED rather than replaced, and app-config.yaml
+  # already sets `listen` as an object — a string here collides with it, and the
+  # backend fails at startup with "invalid type in config for key
+  # 'backend.listen' ... got string, wanted object".
+  #
+  # An empty host binds all interfaces, which is what ':7007' meant.
+  listen:
+    port: 7007
+    host: 0.0.0.0
 
   # config options: https://node-postgres.com/apis/client
   database:
