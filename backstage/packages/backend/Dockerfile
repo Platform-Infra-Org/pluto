@@ -60,4 +60,20 @@ RUN --mount=type=cache,target=/home/node/.cache/yarn,sharing=locked,uid=1000,gid
 COPY --chown=node:node packages/backend/dist/bundle.tar.gz app-config*.yaml ./
 RUN tar xzf bundle.tar.gz && rm bundle.tar.gz
 
+# Make the image runnable under an arbitrary uid.
+#
+# OpenShift ignores the image's USER and runs the container as a uid assigned
+# from the namespace's range, always with gid 0. Everything above is owned by
+# `node` (uid 1000), so that uid lands in "other" — and where a directory is
+# not world-traversable the process cannot even stat its way to the entrypoint.
+# Node reports that as MODULE_NOT_FOUND rather than EACCES, which sends you
+# looking for a missing file that is present the whole time.
+#
+# Group-owning by root and giving the group the owner's rights is the
+# documented convention: it costs nothing on a normal cluster, where the
+# process is uid 1000 and uses the owner bits regardless.
+USER root
+RUN chgrp -R 0 /app && chmod -R g=u /app
+USER node
+
 CMD ["node", "packages/backend", "--config", "app-config.yaml", "--config", "app-config.production.yaml"]
