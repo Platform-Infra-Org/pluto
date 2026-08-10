@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { parseEmbeddedJson } from './embeddedJson';
+import { containsEmbeddedJson, parseEmbeddedJson } from './embeddedJson';
 
 type Json = unknown;
 
@@ -132,6 +132,10 @@ export function JsonTree({ data }: { data: Json }) {
   // struggles with, and the kept quotes mean parsing does not hide that the
   // underlying value is still a string.
   const [parseEmbedded, setParseEmbedded] = useState(true);
+  // Only offer the toggle when there is something for it to act on. Most
+  // requests carry plain params — real nested objects rather than dumped
+  // strings — and a button that does nothing when pressed reads as broken.
+  const canParse = useMemo(() => containsEmbeddedJson(data), [data]);
   const set = (open: boolean) => {
     setForceOpen(open);
     setGen(g => g + 1); // remount so every node re-reads the forced state
@@ -154,17 +158,19 @@ export function JsonTree({ data }: { data: Json }) {
         >
           Collapse all
         </button>
-        <button
-          type="button"
-          className="sc-btn sc-btn-outline sc-btn-sm"
-          aria-pressed={parseEmbedded}
-          onClick={() => {
-            setParseEmbedded(p => !p);
-            setGen(g => g + 1); // remount, so nested defaults re-apply
-          }}
-        >
-          {parseEmbedded ? 'Show raw' : 'Parse JSON'}
-        </button>
+        {canParse && (
+          <button
+            type="button"
+            className="sc-btn sc-btn-outline sc-btn-sm"
+            aria-pressed={parseEmbedded}
+            onClick={() => {
+              setParseEmbedded(p => !p);
+              setGen(g => g + 1); // remount, so nested defaults re-apply
+            }}
+          >
+            {parseEmbedded ? 'Show raw' : 'Parse JSON'}
+          </button>
+        )}
       </div>
       <div className="sc-json-body" key={gen}>
         <JsonNode

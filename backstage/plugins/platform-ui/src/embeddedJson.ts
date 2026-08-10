@@ -20,3 +20,25 @@ export function parseEmbeddedJson(value: string): unknown | undefined {
     return undefined;
   }
 }
+
+/**
+ * Does anything in this document contain a serialised JSON document?
+ *
+ * Drives whether the raw/parsed toggle is offered at all. Most requests carry
+ * plain params — real nested objects, not dumped strings — and a control that
+ * visibly does nothing when pressed is worse than no control.
+ *
+ * Depth-limited because it walks user-supplied data on every render; a document
+ * nested deeper than this is not something the viewer can usefully show anyway.
+ */
+export function containsEmbeddedJson(value: unknown, depth = 0): boolean {
+  if (depth > 8) return false;
+  if (typeof value === 'string') return parseEmbeddedJson(value) !== undefined;
+  if (Array.isArray(value)) {
+    return value.some(v => containsEmbeddedJson(v, depth + 1));
+  }
+  if (value && typeof value === 'object') {
+    return Object.values(value).some(v => containsEmbeddedJson(v, depth + 1));
+  }
+  return false;
+}

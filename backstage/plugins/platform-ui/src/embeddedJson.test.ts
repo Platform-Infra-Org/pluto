@@ -1,4 +1,4 @@
-import { parseEmbeddedJson } from './embeddedJson';
+import { containsEmbeddedJson, parseEmbeddedJson } from './embeddedJson';
 
 describe('parseEmbeddedJson', () => {
   it('parses a serialised object', () => {
@@ -33,5 +33,34 @@ describe('parseEmbeddedJson', () => {
 
   it('does not parse strings that merely contain json', () => {
     expect(parseEmbeddedJson('see {"a":1} for details')).toBeUndefined();
+  });
+});
+
+describe('containsEmbeddedJson', () => {
+  it('finds a dumped payload nested in an object', () => {
+    expect(
+      containsEmbeddedJson({ name: 'db', extra: '{"a":1}' }),
+    ).toBe(true);
+  });
+
+  it('finds one inside an array', () => {
+    expect(containsEmbeddedJson({ items: ['plain', '[1,2]'] })).toBe(true);
+  });
+
+  it('is false for ordinary params, however nested', () => {
+    // Real nested objects are not embedded documents — this is what almost
+    // every request actually looks like, and the toggle is hidden for it.
+    expect(
+      containsEmbeddedJson({
+        size: 'small',
+        versioning: true,
+        tags: ['prod', 'eu'],
+        lifecycle: { expireAfterDays: 90 },
+      }),
+    ).toBe(false);
+  });
+
+  it('is false for scalars that merely parse as JSON', () => {
+    expect(containsEmbeddedJson({ count: '42', ok: 'true' })).toBe(false);
   });
 });

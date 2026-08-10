@@ -55,4 +55,18 @@ describe('JsonTree', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Parse JSON' }));
     expect(container.querySelector('.sc-json-embedded')).toBeTruthy();
   });
+
+  it('hides the toggle when no param is a dumped document', () => {
+    // Real nested objects are not embedded JSON. This is what almost every
+    // request looks like, and a toggle that changed nothing read as broken.
+    const plain = {
+      size: 'small',
+      versioning: true,
+      tags: ['prod', 'eu'],
+      lifecycle: { expireAfterDays: 90 },
+    };
+    render(<JsonTree data={plain} />);
+    expect(screen.queryByRole('button', { name: 'Show raw' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Expand all' })).toBeTruthy();
+  });
 });
