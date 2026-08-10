@@ -44,15 +44,15 @@ spec:
           command:
             - "node"
             - "packages/backend"
-          # The image's CMD already loads app-config.yaml and the baked-in
-          # app-config.production.yaml. Ours is appended last so it wins, and
-          # the baked-in file stays the documented default for anyone running
-          # the image without this chart.
+          # app-config.yaml is the base; the ConfigMap below is the production
+          # overlay. The image's own app-config.production.yaml is deliberately
+          # NOT loaded here: this chart's ConfigMap already sets every key it
+          # contains, so loading it adds nothing and merges a second opinion
+          # into keys the chart owns. It stays in the image as the documented
+          # default for running the image without this chart.
           args:
             - "--config"
             - "app-config.yaml"
-            - "--config"
-            - "app-config.production.yaml"
             - "--config"
             - "/etc/platform/app-config.production.yaml"
           ports:
