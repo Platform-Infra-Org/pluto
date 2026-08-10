@@ -545,13 +545,24 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-toolbar .sc-input { width: auto; flex: 1 1 220px; min-width: 180px; }
 .sc-toolbar .sc-select { width: auto; min-width: 150px; }
 /* collapsible JSON viewer */
-.sc-json { display: flex; flex-direction: column; gap: 10px; }
-.sc-json-bar { display: flex; gap: 8px; }
+.sc-json { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.sc-json-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+/* min-width:0 is what makes overflow-x actually engage. A flex or grid item
+   defaults to min-width:auto, so one long unbreakable line grows the item
+   instead of scrolling inside it, and an ancestor clips it at the window edge —
+   which is how a param carrying a dumped JSON payload disappeared off-screen
+   with no scrollbar to reach it. */
 .sc-json-body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px;
   line-height: 1.7; background: hsl(var(--sc-muted) / .4); border: var(--sc-border-w) solid hsl(var(--sc-border));
-  border-radius: var(--sc-radius); padding: 12px 14px; overflow-x: auto; }
-.sc-json-children { padding-left: 16px; border-left: 1px solid hsl(var(--sc-border)); margin-left: 4px; }
-.sc-json-row { white-space: nowrap; }
+  border-radius: var(--sc-radius); padding: 12px 14px; overflow-x: auto;
+  min-width: 0; max-width: 100%; }
+.sc-json-children { padding-left: 16px; border-left: 1px solid hsl(var(--sc-border)); margin-left: 4px;
+  min-width: 0; }
+/* Structure stays on one line so the tree still reads as a tree; a long scalar
+   wraps, because a serialised payload is one unbroken token that no amount of
+   horizontal scrolling makes readable. */
+.sc-json-row { white-space: nowrap; min-width: 0; }
+.sc-json-string, .sc-json-number { white-space: pre-wrap; overflow-wrap: anywhere; }
 .sc-json-toggle { cursor: pointer; border-radius: var(--sc-radius); }
 .sc-json-toggle:hover { background: hsl(var(--sc-primary) / .08); }
 .sc-json-chevron { display: inline-block; width: 14px; color: hsl(var(--sc-muted-fg)); }
@@ -1177,10 +1188,61 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-nav.dragging .sc-nav-resize {
   background: linear-gradient(90deg, transparent 2px, hsl(var(--sc-primary)) 2px 4px, transparent 4px); }
 
+/* The scaffolder form is Material-UI, and palette.primary is a literal colour
+   fixed when the theme is built (theme.tsx, the PRIMARY constant). It cannot
+   read --sc-primary, because MUI runs darken()/fade() over palette values and
+   would choke on a var(). So the rendered classes are overridden instead —
+   they are Mui-prefixed and therefore survive a production build, unlike the
+   makeStyles names MUI discards there.
+   Both spellings are listed on purpose: v4 emits MuiStepIcon-active, v5 the
+   global Mui-active, and the scaffolder pulls in both majors. NOTE: no
+   backticks in this file, ever — it is one template literal and a backtick in
+   a comment truncates the whole stylesheet. */
+.MuiStepIcon-root.MuiStepIcon-active,
+.MuiStepIcon-root.MuiStepIcon-completed,
+.MuiStepIcon-root.Mui-active,
+.MuiStepIcon-root.Mui-completed { color: hsl(var(--sc-primary)) !important; }
+.MuiStepLabel-label.MuiStepLabel-active,
+.MuiStepLabel-label.Mui-active { color: hsl(var(--sc-fg)) !important; }
+.MuiTypography-colorPrimary { color: hsl(var(--sc-primary)) !important; }
+/* Focus rings and underlines. */
+.MuiFormLabel-root.Mui-focused { color: hsl(var(--sc-primary)) !important; }
+.MuiInput-underline:after,
+.MuiFilledInput-underline:after { border-bottom-color: hsl(var(--sc-primary)) !important; }
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
+.MuiAutocomplete-inputFocused ~ .MuiOutlinedInput-notchedOutline {
+  border-color: hsl(var(--sc-primary)) !important; }
+/* Selection controls. */
+.MuiCheckbox-colorPrimary.Mui-checked,
+.MuiRadio-colorPrimary.Mui-checked,
+.MuiSwitch-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
+.MuiSwitch-colorPrimary.Mui-checked + .MuiSwitch-track {
+  background-color: hsl(var(--sc-primary)) !important; }
+/* Buttons and progress. */
+.MuiButton-containedPrimary { background-color: hsl(var(--sc-primary)) !important;
+  color: hsl(var(--sc-primary-fg)) !important; }
+.MuiButton-textPrimary, .MuiButton-outlinedPrimary { color: hsl(var(--sc-primary)) !important; }
+.MuiLinearProgress-barColorPrimary { background-color: hsl(var(--sc-primary)) !important; }
+.MuiChip-colorPrimary { background-color: hsl(var(--sc-primary)) !important;
+  color: hsl(var(--sc-primary-fg)) !important; }
+
 /* State sprite beside its badge. 16px is one screen pixel per sprite pixel —
    the size at which pixel art is sharpest; avoid non-integer multiples. */
 .sc-state { display: inline-flex; align-items: center; gap: var(--sc-unit); }
 .sc-state-ic { width: 16px; height: 16px; flex: 0 0 auto; color: currentColor; }
+
+/* At a fractional device pixel ratio no fixed size divides evenly — 125% zoom
+   over a 32px box is 2.5 device pixels per sprite pixel — and crispEdges
+   resolves that by rounding neighbouring columns to different widths, which
+   distorts the 2px features (eye sockets, teeth) first. Antialiasing is
+   symmetric; the softness costs less than a lopsided sprite. CSS cannot ask
+   "is this an integer multiple", so Chrome's fractional zoom steps are named. */
+@media (resolution: 1.1dppx), (resolution: 1.25dppx), (resolution: 1.75dppx),
+       (resolution: 2.25dppx), (resolution: 2.5dppx) {
+  .sc-state-ic, .sc-potion svg, .sc-nav-mark svg, .sc-login-mark svg {
+    shape-rendering: geometricPrecision;
+  }
+}
 
 /* Sidebar: the active row is marked by a cursor, the way a menu selection is. */
 .sc-nav-cursor { font-family: var(--sc-font-pixel); font-size: 11px; width: 12px;

@@ -56,4 +56,36 @@ describe('SHADCN_CSS', () => {
     expect(sizes.length).toBeGreaterThan(0);
     expect(sizes.filter(px => px % SPRITE_SIZE !== 0)).toEqual([]);
   });
+
+  it('routes MUI primary colours through the picked accent', () => {
+    // The scaffolder form's palette.primary is frozen at theme construction, so
+    // these overrides are the only thing making it follow the picker. Both MUI
+    // majors' spellings must be present — v4 emits MuiStepIcon-active, v5 the
+    // global Mui-active, and an audit of the live form found the v4 form.
+    for (const sel of [
+      '.MuiStepIcon-root.MuiStepIcon-active',
+      '.MuiStepIcon-root.Mui-active',
+      '.MuiButton-containedPrimary',
+      '.MuiCheckbox-colorPrimary.Mui-checked',
+    ]) {
+      expect(SHADCN_CSS).toContain(sel);
+    }
+    // The theme's literal indigo must never be hard-coded into the stylesheet.
+    expect(SHADCN_CSS.toLowerCase()).not.toContain('#6366f1');
+  });
+
+  it('lets the JSON viewer scroll and wrap instead of clipping', () => {
+    // min-width:0 is the load-bearing part: a flex item defaults to
+    // min-width:auto, so without it overflow-x never engages and a long param
+    // value is clipped at the window edge with no scrollbar to reach it.
+    expect(SHADCN_CSS).toMatch(/\.sc-json-body\s*\{[^}]*min-width:\s*0/);
+    expect(SHADCN_CSS).toMatch(/\.sc-json-string[^{]*\{[^}]*overflow-wrap:\s*anywhere/);
+  });
+
+  it('falls back to antialiasing at fractional device pixel ratios', () => {
+    // No fixed size divides evenly at 125% zoom, so crispEdges has to go there
+    // or neighbouring sprite columns round to different widths.
+    expect(SHADCN_CSS).toContain('(resolution: 1.25dppx)');
+    expect(SHADCN_CSS).toMatch(/shape-rendering:\s*geometricPrecision/);
+  });
 });
