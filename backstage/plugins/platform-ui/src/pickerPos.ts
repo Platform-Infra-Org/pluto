@@ -56,3 +56,47 @@ export function readStoredPos(raw: string | null): PickerPos | undefined {
     return undefined;
   }
 }
+
+/** A position expressed as a gap from the nearest corner. */
+export type AnchoredPos = {
+  ax: 'left' | 'right';
+  ay: 'top' | 'bottom';
+  dx: number;
+  dy: number;
+};
+
+/**
+ * Which corner is the picker nearest, and how far from it?
+ *
+ * Storing absolute top-left coordinates meant a picker parked in the
+ * bottom-right corner drifted into the middle of a narrowed window — it was
+ * still "on screen", so clampToViewport had nothing to correct. A gap from the
+ * nearest corner is what people actually mean by where they put it.
+ */
+export function toAnchored(
+  pos: PickerPos,
+  box: { w: number; h: number },
+  view: { w: number; h: number },
+): AnchoredPos {
+  const fromRight = view.w - (pos.x + box.w);
+  const fromBottom = view.h - (pos.y + box.h);
+  const ax = pos.x <= fromRight ? 'left' : 'right';
+  const ay = pos.y <= fromBottom ? 'top' : 'bottom';
+  return {
+    ax,
+    ay,
+    dx: ax === 'left' ? pos.x : fromRight,
+    dy: ay === 'top' ? pos.y : fromBottom,
+  };
+}
+
+/** The inverse, clamped so a much smaller viewport still yields a reachable box. */
+export function fromAnchored(
+  a: AnchoredPos,
+  box: { w: number; h: number },
+  view: { w: number; h: number },
+): PickerPos {
+  const x = a.ax === 'left' ? a.dx : view.w - box.w - a.dx;
+  const y = a.ay === 'top' ? a.dy : view.h - box.h - a.dy;
+  return clampToViewport({ x, y }, box, view);
+}

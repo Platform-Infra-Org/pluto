@@ -18,13 +18,17 @@ import { useQuickstart } from './quickstart/useQuickstart';
 import { sampleImageTone, Tone } from './imageTone';
 import { isDarkTheme } from './darkMode';
 import {
+  AnchoredPos,
   clampToViewport,
+  fromAnchored,
   PickerPos,
   PICKER_POS_KEY,
   readStoredPos,
+  toAnchored,
 } from './pickerPos';
 import { CARD_LIGHT } from './statusTokens';
 import { ALL_ROUTE_CLASSES, routeClassFor } from './routeClass';
+import { resolveHeaderImages } from './headerImages';
 
 /**
  * Pointer travel before a press becomes a drag.
@@ -60,6 +64,8 @@ export const SCHEMES = [
 let branding: {
   mark?: string;
   favicon?: string;
+  /** Explicit runtime URLs; when present they override headerDir. */
+  headerImages?: string[];
   headerDir?: string;
   headerHeight?: string;
   headerPosition?: string;
@@ -256,8 +262,12 @@ export function applyScheme(scheme?: string) {
       `--sc-primary-shade:${s.fg === WHITE ? INK : WHITE}}`,
   );
   // Empty when no images are supplied, which leaves the pixel-art headers.
-  const headerImages =
-    brandingImages[branding.headerDir ?? 'template-headers'] ?? [];
+  // Config-supplied URLs win over the build-time glob, so header art can be
+  // swapped by mounting files into dist/branding without rebuilding the image.
+  const headerImages = resolveHeaderImages(
+    { images: branding.headerImages, dir: branding.headerDir },
+    brandingImages,
+  );
   ensureTones(headerImages);
   ensureStyle(
     'sc-template-headers',
@@ -295,14 +305,25 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       'violet',
   );
   const ref = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<PickerPos | undefined>(() =>
-    typeof localStorage === 'undefined'
-      ? undefined
-      : readStoredPos(localStorage.getItem(PICKER_POS_KEY)),
-  );
+  const [pos, setPos] = useState<PickerPos | undefined>(() => {
+    if (typeof localStorage === 'undefined') return undefined;
+    const stored = readStoredPos(localStorage.getItem(PICKER_POS_KEY));
+    // Set during the initial render rather than in an effect: an effect runs
+    // after first paint, so the picker would be drawn in its CSS corner and
+    // then visibly jump to the stored position.
+    if (stored && typeof document !== 'undefined') {
+      document.documentElement.dataset.pickerMoved = 'true';
+    }
+    return stored;
+  });
   const [dragging, setDragging] = useState(false);
   // Live drag bookkeeping. A ref, not state: it changes on every pointermove and
   // nothing renders from it.
+  // The corner the last drop anchored to. Recomputed on drop, consumed on
+  // resize: absolute top-left coordinates meant a picker parked bottom-right
+  // drifted into the middle of a narrowed window, because it was still on
+  // screen and clampToViewport had nothing to correct.
+  const anchor = useRef<AnchoredPos | null>(null);
   const drag = useRef<{
     id: number;
     ox: number;
@@ -324,9 +345,19 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
 
   useEffect(() => {
     if (!floating || !pos) return;
-    // Set here as well as during the drag, so a restored position also drops the
-    // corner anchors on a fresh page load.
+    // Set here as well as in the state initialiser, which covers a position
+    // that arrives after mount rather than from storage.
     document.documentElement.dataset.pickerMoved = 'true';
+    // Seed the anchor from a restored position, so the first resize after a
+    // reload behaves the same as one straight after a drag.
+    if (!anchor.current && ref.current) {
+      const r = ref.current.getBoundingClientRect();
+      anchor.current = toAnchored(
+        { x: r.left, y: r.top },
+        { w: r.width, h: r.height },
+        { w: window.innerWidth, h: window.innerHeight },
+      );
+    }
     try {
       localStorage.setItem(PICKER_POS_KEY, JSON.stringify(pos));
     } catch {
@@ -340,16 +371,16 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       const el = ref.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
-      // Only correct a position that is already set; an untouched picker is held
+      // Only reposition a picker that has been moved; an untouched one is held
       // by its CSS corner and needs nothing.
-      setPos(p =>
-        p
-          ? clampToViewport(
-              p,
-              { w: r.width, h: r.height },
-              { w: window.innerWidth, h: window.innerHeight },
-            )
-          : p,
+      const a = anchor.current;
+      if (!a) return;
+      setPos(
+        fromAnchored(
+          a,
+          { w: r.width, h: r.height },
+          { w: window.innerWidth, h: window.innerHeight },
+        ),
       );
     };
     window.addEventListener('resize', onResize);
@@ -371,6 +402,16 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       dy: e.clientY - r.top,
       moved: false,
     };
+    // Switch to inline positioning BEFORE anything moves. The corner anchors
+    // are dropped by a CSS attribute written imperatively, while the inline
+    // left/top arrive in React's next commit — so flipping them mid-drag left
+    // one frame with neither, and the box snapped to static flow and back.
+    // Seeding with the current rect is a visual no-op: it is exactly where the
+    // box already is.
+    if (!pos) {
+      setPos({ x: r.left, y: r.top });
+      document.documentElement.dataset.pickerMoved = 'true';
+    }
     // Capture is taken in onPointerMove, once this is actually a drag — NOT
     // here. While a pointer is captured, the spec retargets the following
     // `click` to the capturing element, so capturing on every press sent every
@@ -387,7 +428,6 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
         return;
       d.moved = true;
       setDragging(true);
-      document.documentElement.dataset.pickerMoved = 'true';
       // Now that it is a drag, keep it alive if the pointer outruns the box.
       // Retargeting the click no longer matters — endDrag swallows it anyway.
       el.setPointerCapture?.(e.pointerId);
@@ -406,8 +446,19 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
     const d = drag.current;
     if (!d || d.id !== e.pointerId) return;
     drag.current = null;
-    ref.current?.releasePointerCapture?.(e.pointerId);
+    const el = ref.current;
+    el?.releasePointerCapture?.(e.pointerId);
     if (!d.moved) return;
+    // Remember which corner it was dropped nearest, so a later resize keeps the
+    // same visual relationship instead of preserving raw top-left coordinates.
+    if (el) {
+      const r = el.getBoundingClientRect();
+      anchor.current = toAnchored(
+        { x: r.left, y: r.top },
+        { w: r.width, h: r.height },
+        { w: window.innerWidth, h: window.innerHeight },
+      );
+    }
     setDragging(false);
     // The pointerup that ends a drag is followed by a click, which would land on
     // whichever bottle the drag began on. Swallow exactly that one.
@@ -471,6 +522,9 @@ export function SchemeRoot() {
     setBranding({
       mark: config.getOptionalString('app.branding.mark'),
       favicon: config.getOptionalString('app.branding.favicon'),
+      headerImages: config.getOptionalStringArray(
+        'app.branding.templateHeaders.images',
+      ),
       headerDir: config.getOptionalString('app.branding.templateHeaders.dir'),
       headerHeight: config.getOptionalString(
         'app.branding.templateHeaders.height',

@@ -74,4 +74,29 @@ describe('SchemePicker', () => {
     expect(capture).not.toHaveBeenCalled();
     expect((shelf as HTMLElement).style.left).toBe('');
   });
+
+  it('is inline-positioned before the first move, so it cannot snap', () => {
+    // The corner anchors are dropped by a CSS attribute written imperatively,
+    // while the inline left/top arrive in React's next commit. Flipping them
+    // when the drag threshold was crossed left one frame with neither, and the
+    // box snapped to static flow and back. Both must land together, on press.
+    delete document.documentElement.dataset.pickerMoved;
+    const { container } = render(<SchemePicker floating />);
+    const shelf = container.querySelector('.sc-picker-float') as HTMLElement;
+    expect(document.documentElement.dataset.pickerMoved).toBeUndefined();
+    expect(shelf.style.left).toBe('');
+
+    fireEvent.pointerDown(shelf, {
+      button: 0,
+      pointerId: 1,
+      clientX: 50,
+      clientY: 50,
+    });
+
+    expect(document.documentElement.dataset.pickerMoved).toBe('true');
+    expect(shelf.style.left).not.toBe('');
+    expect(shelf.style.top).not.toBe('');
+    // A press alone is not a drag, so nothing may be captured yet.
+    expect(capture).not.toHaveBeenCalled();
+  });
 });

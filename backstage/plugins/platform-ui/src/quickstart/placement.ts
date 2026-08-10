@@ -8,10 +8,11 @@ export const QS_BOX_GAP = 18;
 /**
  * Should the tour dialogue move to the top of the screen?
  *
- * It parks in the bottom-right corner, which was safe while the only thing
- * living there was the colour picker in a fixed spot — a hard-coded 78px of
- * clearance was enough. The picker is draggable now, so it can be sitting
- * exactly where the dialogue wants to be, and a step that highlights an element
+ * It parks in the bottom-right corner. That used to collide with the colour
+ * picker, which needed a hard-coded 78px of clearance; the picker now docks at
+ * the bottom-LEFT of the sidebar, so the default case no longer overlaps at
+ * all. But the picker is draggable, so it can still be sitting exactly where
+ * the dialogue wants to be, and a step that highlights an element
  * while covering it is worse than useless.
  *
  * Pure, and takes the dialogue's measured height rather than assuming one,

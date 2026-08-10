@@ -53,4 +53,17 @@ describe('needsFlip', () => {
       ),
     ).toBe(false);
   });
+
+  it('does not flip for a bottom-left target now the picker docks there', () => {
+    // The dialogue is bottom-right and the picker is bottom-left, so the pair
+    // that used to force the 78px offset cannot overlap in the default layout.
+    expect(
+      needsFlip(
+        { top: 900, left: 10, width: 190, height: 46 },
+        { w: 1400, h: 1000 },
+        200,
+        18,
+      ),
+    ).toBe(false);
+  });
 });

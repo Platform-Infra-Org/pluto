@@ -87,6 +87,10 @@ function CustomNav({ navItems }: { navItems: any }) {
       '--sc-nav-w',
       collapsed ? `${NAV_COLLAPSED}px` : `${width}px`,
     );
+    // The docked colour picker hides while the rail is collapsed. An attribute
+    // rather than a CSS sibling selector: the nav and the picker mount from
+    // different trees, so they are never siblings in the DOM.
+    document.documentElement.dataset.navCollapsed = collapsed ? 'true' : 'false';
     try {
       localStorage.setItem('platform-nav-collapsed', collapsed ? '1' : '0');
       localStorage.setItem('platform-nav-w', String(width));
