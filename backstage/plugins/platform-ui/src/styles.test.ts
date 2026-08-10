@@ -1,4 +1,5 @@
 import { SHADCN_CSS } from './styles';
+import { SPRITE_SIZE } from './sprites';
 
 /**
  * The whole stylesheet is one template literal, so a stray backtick in a CSS
@@ -43,5 +44,16 @@ describe('SHADCN_CSS', () => {
     expect(control).toEqual([]);
   });
 
-
+  it('sizes every state sprite at an integer multiple of SPRITE_SIZE', () => {
+    // A fractional multiple only looks right where the device pixel ratio
+    // happens to cancel it: .sc-empty's 24px (1.5x) was even at dpr 2 and
+    // lopsided at dpr 1, so it read as a Windows-only rendering bug. Any
+    // integer multiple is correct on every screen.
+    const sizes = Array.from(
+      SHADCN_CSS.matchAll(/\.sc-state-ic[^{}]*\{[^}]*?width:\s*(\d+(?:\.\d+)?)px/g),
+      m => parseFloat(m[1]),
+    );
+    expect(sizes.length).toBeGreaterThan(0);
+    expect(sizes.filter(px => px % SPRITE_SIZE !== 0)).toEqual([]);
+  });
 });

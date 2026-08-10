@@ -587,7 +587,12 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
    per element, and the global .sc * rule gives each rect its own dark colour. */
 .sc-empty .sc-state-ic, .sc-empty .sc-state-ic * {
   color: hsl(var(--sc-primary)); }
-.sc-empty .sc-state-ic { width: 24px; height: 24px; }
+/* 32px = 2x the 16px sprite. 24px was 1.5x, which only looks right where the
+   device pixel ratio is even: at dpr 2 it lands on 3 device pixels per sprite
+   pixel, but at dpr 1 it is 1.5 and crispEdges rounds alternate columns to 1px
+   and 2px — a visibly lopsided sprite on any non-retina screen. Keep every
+   size an integer multiple of SPRITE_SIZE. */
+.sc-empty .sc-state-ic { width: 32px; height: 32px; }
 .sc-empty-title { font-family: var(--sc-font-pixel); text-transform: uppercase;
   font-size: 13px; color: hsl(var(--sc-fg)); }
 .sc-empty-hint { font-size: 12px; max-width: 32ch; }
