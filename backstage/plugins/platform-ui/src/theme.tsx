@@ -107,8 +107,23 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
           stroke: '#32303e',
           rx: 8,
           ry: 8,
+          // The plugin marks the root/selected node with LITERAL `primary` and
+          // `secondary` classes (not JSS-generated ones) and paints them from
+          // palette.*.light — a fixed colour that ignores the picker. These put
+          // the highlighted node back on the picked accent.
+          '&.primary, &.secondary': {
+            fill: 'hsl(var(--sc-primary) / .22)',
+            stroke: 'hsl(var(--sc-primary))',
+          },
         },
-        text: { fill: '#e7e7ef', fontSize: 11, fontWeight: 500 },
+        text: {
+          fill: '#e7e7ef',
+          fontSize: 11,
+          fontWeight: 500,
+          // Same variants on the label, or the highlighted node's text reverts
+          // to the palette's contrast colour and disappears into the fill.
+          '&.primary, &.secondary': { fill: '#e7e7ef' },
+        },
         clickable: { cursor: 'pointer' },
       },
     },
