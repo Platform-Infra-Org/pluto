@@ -24,6 +24,7 @@ import {
   readStoredPos,
 } from './pickerPos';
 import { CARD_LIGHT } from './statusTokens';
+import { ALL_ROUTE_CLASSES, routeClassFor } from './routeClass';
 
 /**
  * Pointer travel before a press becomes a drag.
@@ -490,7 +491,19 @@ export function SchemeRoot() {
 
   // One navigation source for the whole app: the nav already derives the path
   // without react-router, and a second source would drift from the first.
-  useRecordVisit(useCurrentPath());
+  const path = useCurrentPath();
+  useRecordVisit(path);
+
+  useEffect(() => {
+    // A class per route, so CSS can scope a rule to one page. Material-UI drops
+    // a makeStyles name in production builds, so no selector can name the
+    // scaffolder's card grid — only Mui* classes survive, and those are far too
+    // general to style on their own. Route scoping makes them specific again.
+    const root = document.documentElement;
+    root.classList.remove(...ALL_ROUTE_CLASSES);
+    const cls = routeClassFor(path);
+    if (cls) root.classList.add(cls);
+  }, [path]);
 
   useEffect(() => {
     // `activeThemeId$` emits undefined until someone picks a theme, and

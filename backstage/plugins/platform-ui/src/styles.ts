@@ -329,7 +329,15 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
    bands of the picked accent, dithered at each seam with a checkerboard, so it
    reads as an 8-bit sky. Every colour derives from --sc-primary, so the motif
    changes with the swatch. */
-[class*="ItemCardHeader"] {
+/* Selector note for every card-header rule below: Material-UI keeps a
+   makeStyles name in the generated class only OUTSIDE production, so
+   [class*="ItemCardHeader"] matched nothing in a built image while working
+   perfectly on the dev server. Only Mui-prefixed classes survive, and the
+   header is reliably the card's first element child. .sc-route-create scopes
+   it to the templates page, because .MuiCard-root alone is every card in the
+   app. This positional cycling cannot move into theme styleOverrides — nth-child
+   is not expressible there. */
+.sc-route-create .MuiCard-root > .MuiBox-root:first-child {
   /* Ancient Greek, drawn entirely with hard colour stops.
 
      The dominant motif is a meander — the Greek key — running the full width as
@@ -392,8 +400,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
    is the same four rectangles in every scene, re-sized and re-placed, which is
    why this costs two rules rather than two more background stacks.
    Cards cycle 3n+1 / 3n+2 / 3n+3, the same way the supplied images cycle. */
-[class*="BackstageItemCardGrid-root"] > .MuiCard-root:nth-child(3n + 2)
-  [class*="ItemCardHeader"] {
+.sc-route-create .MuiCard-root:nth-child(3n + 2)
+  > .MuiBox-root:first-child {
   /* The oracle flame: a taper, widest at its base. */
   background-size:
     4px 4px, 8px 4px, 12px 4px, 16px 4px,
@@ -408,8 +416,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     0 0,
     0 0 !important;
 }
-[class*="BackstageItemCardGrid-root"] > .MuiCard-root:nth-child(3n + 3)
-  [class*="ItemCardHeader"] {
+.sc-route-create .MuiCard-root:nth-child(3n + 3)
+  > .MuiBox-root:first-child {
   /* The underworld gate: two posts under a lintel, with a step above it. */
   background-size:
     5px 16px, 5px 16px, 28px 4px, 18px 3px,
@@ -427,7 +435,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 /* The title sits on art, so it needs its own contrast: a 1px outline in the
    opposite tone (dark behind light text, light behind dark) plus weight. The
    shade token flips with the scheme, alongside --sc-primary-fg. */
-[class*="ItemCardHeader"], [class*="ItemCardHeader"] * {
+.sc-route-create .MuiCard-root > .MuiBox-root:first-child,
+.sc-route-create .MuiCard-root > .MuiBox-root:first-child * {
   font-weight: 700 !important;
   text-shadow:
     1px 0 0 hsl(var(--sc-primary-shade)),
@@ -436,7 +445,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     0 -1px 0 hsl(var(--sc-primary-shade)),
     2px 2px 0 hsl(var(--sc-primary-shade) / .55);
 }
-[class*="ItemCardHeader"] * { color: hsl(var(--sc-primary-fg)) !important; }
+.sc-route-create .MuiCard-root > .MuiBox-root:first-child * { color: hsl(var(--sc-primary-fg)) !important; }
 /* tables */
 .MuiTableCell-head, .MuiTableCell-root.MuiTableCell-head {
   text-transform: uppercase !important; font-size: 11px !important; font-weight: 700 !important;
