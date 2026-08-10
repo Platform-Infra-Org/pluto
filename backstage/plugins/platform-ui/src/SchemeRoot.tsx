@@ -23,6 +23,7 @@ import {
   PICKER_POS_KEY,
   readStoredPos,
 } from './pickerPos';
+import { CARD_LIGHT } from './statusTokens';
 
 /**
  * Pointer travel before a press becomes a drag.
@@ -104,17 +105,52 @@ function setBranding(next: typeof branding) {
 // match the in-app tile's proportions (styles.ts): glyph at ~65% of the tile.
 const ICON_SIZE = 64;
 const ICON_INSET = Math.round(ICON_SIZE * 0.175);
+/** `--sc-radius` (6px) over the 26px `.sc-nav-mark` tile. */
+const ICON_RADIUS = 6 / 26;
 
-/** The accent tile every generated icon sits on. */
+/**
+ * The accent tile every generated icon sits on — the same object as
+ * `.sc-nav-mark` and `.sc-login-mark` in styles.ts, painted to match.
+ *
+ * Those use `linear-gradient(135deg, primary, primary / .6)`, and the far stop
+ * is the accent at 60% *alpha*: what tints that corner is the surface behind
+ * the tile, `hsl(var(--sc-card))`. A favicon has no backdrop, so an alpha stop
+ * alone would leave the corner translucent over whatever the browser's tab
+ * strip happens to be. Painting the card colour underneath first and then the
+ * same gradient over it composites to the identical colour — and it tracks
+ * light/dark for free, because --sc-card is read live.
+ */
 function drawTile(g: CanvasRenderingContext2D, accentHsl: string) {
-  g.fillStyle = `hsl(${accentHsl})`;
-  if (typeof g.roundRect === 'function') {
-    g.beginPath();
-    g.roundRect(0, 0, ICON_SIZE, ICON_SIZE, Math.round(ICON_SIZE * 0.27));
-    g.fill();
-  } else {
-    g.fillRect(0, 0, ICON_SIZE, ICON_SIZE); // jsdom, and Safari before 16.4
-  }
+  const fill = () => {
+    if (typeof g.roundRect === 'function') {
+      g.beginPath();
+      g.roundRect(0, 0, ICON_SIZE, ICON_SIZE, Math.round(ICON_SIZE * ICON_RADIUS));
+      g.fill();
+    } else {
+      g.fillRect(0, 0, ICON_SIZE, ICON_SIZE); // jsdom, and Safari before 16.4
+    }
+  };
+  g.fillStyle = `hsl(${cardHsl()})`;
+  fill();
+  const grad = g.createLinearGradient(0, 0, ICON_SIZE, ICON_SIZE); // 135deg
+  grad.addColorStop(0, `hsl(${accentHsl})`);
+  grad.addColorStop(1, `hsl(${accentHsl} / .6)`);
+  g.fillStyle = grad;
+  fill();
+}
+
+/**
+ * The live value of `--sc-card`, so the tile follows a light/dark switch
+ * without this module having to know which scheme is active. Falls back to the
+ * light value that `:root` declares, which is what an unresolved custom
+ * property would have meant anyway.
+ */
+function cardHsl(): string {
+  return (
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--sc-card')
+      .trim() || CARD_LIGHT
+  );
 }
 
 /**
@@ -126,10 +162,18 @@ function drawTile(g: CanvasRenderingContext2D, accentHsl: string) {
  * in `packages/app/public` remain the pre-JavaScript first paint.
  */
 function updateFavicon(accentHsl: string, fgHsl: string) {
-  const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-  if (!link) return;
+  // EVERY icon link, not just the first. The Backstage index.html declares
+  // three (`icon` -> favicon.ico, plus sized 16x16 and 32x32 PNGs) and a
+  // `shortcut icon`. A browser picks by `sizes`, so an explicitly sized
+  // candidate beats an unsized one — updating only the first left the stock
+  // favicon-32x32.png winning the tab while the sidebar mark was correct.
+  // `~=` matches a whitespace-separated list, so it catches `shortcut icon`
+  // while still excluding `apple-touch-icon` and `mask-icon`.
+  const links = document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"]');
+  if (!links.length) return;
+  const setHref = (href: string) => links.forEach(l => (l.href = href));
   if (branding.favicon) {
-    link.href = branding.favicon;
+    setHref(branding.favicon);
     return;
   }
 
@@ -141,7 +185,7 @@ function updateFavicon(accentHsl: string, fgHsl: string) {
 
   const publish = () => {
     try {
-      link.href = canvas.toDataURL('image/png');
+      setHref(canvas.toDataURL('image/png'));
     } catch {
       // Tainted canvas (a cross-origin mark) — keep the static icon.
     }
@@ -455,11 +499,16 @@ export function SchemeRoot() {
     // as well is what keeps our background on the same side as MUI's text.
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     let themeId: string | undefined;
-    const apply = () =>
+    const apply = () => {
       document.documentElement.classList.toggle(
         'sc-dark',
         isDarkTheme(themeId, mq.matches),
       );
+      // The tab icon's tile is composited over --sc-card, which just changed
+      // sides. Without this the icon keeps the previous mode's tile until the
+      // next scheme pick.
+      applyScheme();
+    };
     const sub = appTheme.activeThemeId$().subscribe(id => {
       themeId = id;
       apply();
