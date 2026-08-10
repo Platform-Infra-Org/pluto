@@ -1273,6 +1273,15 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .MuiSwitch-colorPrimary.Mui-checked + .MuiSwitch-track,
 .MuiSwitch-colorSecondary.Mui-checked + .MuiSwitch-track {
   background-color: hsl(var(--sc-primary)) !important; }
+/* Icon buttons that opted into an accent — the array field's add/remove/reorder
+   controls are these. Found by scanning a live form for every element still
+   painted with the theme's frozen palette; the label, svg and ripple inside
+   them inherit the colour, so the button is the only thing to set. */
+.MuiIconButton-colorPrimary,
+.MuiIconButton-colorSecondary,
+.MuiSvgIcon-colorPrimary,
+.MuiSvgIcon-colorSecondary { color: hsl(var(--sc-primary)) !important; }
+
 /* Buttons and progress. */
 .MuiButton-containedPrimary { background-color: hsl(var(--sc-primary)) !important;
   color: hsl(var(--sc-primary-fg)) !important; }

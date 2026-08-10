@@ -70,6 +70,8 @@ describe('SHADCN_CSS', () => {
       // MUI v4 defaults these to the SECONDARY palette; a primary-only
       // override left the form's checkboxes purple.
       '.MuiCheckbox-colorSecondary.Mui-checked',
+      // The array field's add/remove/reorder controls.
+      '.MuiIconButton-colorSecondary',
     ]) {
       expect(SHADCN_CSS).toContain(sel);
     }
