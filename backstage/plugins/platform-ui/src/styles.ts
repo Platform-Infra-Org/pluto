@@ -823,7 +823,10 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-row { display: flex; align-items: center; gap: 8px; }
 .sc-kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 16px; font-size: 14px; }
 .sc-kv dt { color: hsl(var(--sc-muted-fg)); }
-.sc-kv dd { margin: 0; color: hsl(var(--sc-fg)); }
+/* min-width:0 so a long value scrolls inside its own cell. A grid item defaults
+   to min-width:auto, so one unbreakable line widens the whole column and the
+   card clips it at the window edge instead. */
+.sc-kv dd { margin: 0; color: hsl(var(--sc-fg)); min-width: 0; overflow-wrap: anywhere; }
 
 /* dialog */
 .sc-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1600;
@@ -1251,17 +1254,24 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
 .MuiAutocomplete-inputFocused ~ .MuiOutlinedInput-notchedOutline {
   border-color: hsl(var(--sc-primary)) !important; }
-/* Selection controls. */
+/* Selection controls. MUI v4 defaults Checkbox/Radio/Switch to the SECONDARY
+   palette, not the primary one — an audit of a live template form found
+   MuiCheckbox-colorSecondary — and palette.secondary is another literal fixed
+   at theme construction, which is the purple that survived every primary-only
+   override. Both colour variants are listed. */
 .MuiCheckbox-colorPrimary.Mui-checked,
+.MuiCheckbox-colorSecondary.Mui-checked,
 .MuiRadio-colorPrimary.Mui-checked,
-.MuiSwitch-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
-.MuiSwitch-colorPrimary.Mui-checked + .MuiSwitch-track {
+.MuiRadio-colorSecondary.Mui-checked,
+.MuiSwitch-colorPrimary.Mui-checked,
+.MuiSwitch-colorSecondary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
+.MuiSwitch-colorPrimary.Mui-checked + .MuiSwitch-track,
+.MuiSwitch-colorSecondary.Mui-checked + .MuiSwitch-track {
   background-color: hsl(var(--sc-primary)) !important; }
 /* Buttons and progress. */
 .MuiButton-containedPrimary { background-color: hsl(var(--sc-primary)) !important;
   color: hsl(var(--sc-primary-fg)) !important; }
 .MuiButton-textPrimary, .MuiButton-outlinedPrimary { color: hsl(var(--sc-primary)) !important; }
-.MuiLinearProgress-barColorPrimary { background-color: hsl(var(--sc-primary)) !important; }
 .MuiChip-colorPrimary { background-color: hsl(var(--sc-primary)) !important;
   color: hsl(var(--sc-primary-fg)) !important; }
 

@@ -16,6 +16,7 @@ import {
   Input,
   useTabActivity,
   EmptyState,
+  JsonTree,
   HOURGLASS,
 } from '@internal/plugin-platform-ui';
 import {
@@ -210,7 +211,12 @@ export function RequestPage() {
               <dd>{formatTs(request.updatedAt)}</dd>
               <dt>Params</dt>
               <dd>
-                <code>{JSON.stringify(request.params)}</code>
+                {/* The tree rather than a stringified one-liner: a template
+                    that dumps an object into a single param produced an
+                    unreadable escaped string that ran off the card's edge.
+                    JsonTree collapses it, parses an embedded document into a
+                    subtree, and offers raw/parsed. */}
+                <JsonTree data={request.params} />
               </dd>
             </dl>
           </CardBody>

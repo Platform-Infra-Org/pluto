@@ -67,6 +67,9 @@ describe('SHADCN_CSS', () => {
       '.MuiStepIcon-root.Mui-active',
       '.MuiButton-containedPrimary',
       '.MuiCheckbox-colorPrimary.Mui-checked',
+      // MUI v4 defaults these to the SECONDARY palette; a primary-only
+      // override left the form's checkboxes purple.
+      '.MuiCheckbox-colorSecondary.Mui-checked',
     ]) {
       expect(SHADCN_CSS).toContain(sel);
     }
