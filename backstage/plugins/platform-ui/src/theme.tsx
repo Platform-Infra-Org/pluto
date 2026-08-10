@@ -14,6 +14,7 @@ import {
 import LightIcon from '@material-ui/icons/WbSunny';
 import DarkIcon from '@material-ui/icons/Brightness2';
 import { SchemeRoot } from './SchemeRoot';
+import { STARFIELD, STAR_WIDE } from './starfield';
 import { navContent } from './CustomNav';
 
 // MUI theme = the Backstage chrome + native pages. The injected shadcn CSS
@@ -73,6 +74,68 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
   // literals; passed in by reference it's a normal structural assignment,
   // which permits the extra key.
   const componentOverrides = {
+    // ===== Catalog graph =====
+    // These three names are registered by @backstage/plugin-catalog-graph via
+    // makeStyles, and their slots are its exported *ClassKey types. MUI applies
+    // overrides by component NAME at runtime, which a production build never
+    // mangles — unlike the generated class names, which become jss<n> there and
+    // left the CSS selectors these replace dead in every deployed release.
+    PluginCatalogGraphEntityRelationsGraph: {
+      styleOverrides: {
+        // classes.graph is spread onto the root <svg> (which also carries
+        // id="dependency-graph"), so this rule paints the canvas itself — no
+        // ancestor selector needed.
+        graph: {
+          backgroundColor: STARFIELD.bg,
+          backgroundImage: [
+            `radial-gradient(circle, ${STARFIELD.star} ${STARFIELD.size}px, transparent ${STARFIELD.size}px)`,
+            `radial-gradient(circle, ${STARFIELD.starDim} ${STARFIELD.dimSize}px, transparent ${STARFIELD.dimSize}px)`,
+          ].join(', '),
+          backgroundSize: `${STAR_WIDE}px ${STAR_WIDE}px, ${STARFIELD.gap}px ${STARFIELD.gap}px`,
+          backgroundPosition: `0 0, ${Math.round(STARFIELD.gap / 2)}px ${Math.round(STARFIELD.gap / 2)}px`,
+          borderRadius: 'var(--sc-radius)',
+          width: '100%',
+          display: 'block',
+        },
+        container: { minHeight: 0 },
+      },
+    },
+    PluginCatalogGraphCustomNode: {
+      styleOverrides: {
+        node: {
+          fill: '#17171f',
+          stroke: '#32303e',
+          rx: 8,
+          ry: 8,
+        },
+        text: { fill: '#e7e7ef', fontSize: 11, fontWeight: 500 },
+        clickable: { cursor: 'pointer' },
+      },
+    },
+    PluginCatalogGraphCustomLabel: {
+      styleOverrides: {
+        text: { fill: '#e7e7ef', fontSize: 11 },
+        secondary: { fill: 'rgba(231, 231, 239, .6)' },
+      },
+    },
+    // The generic dependency graph underneath: edges, arrowheads, and the
+    // fallback node/label renderers. Slots read from each component's own
+    // makeStyles call — a wrong slot name silently does nothing.
+    BackstageDependencyGraphEdge: {
+      styleOverrides: { path: { stroke: 'rgba(255,255,255,.24)' } },
+    },
+    BackstageDependencyGraphNode: {
+      styleOverrides: { node: { fill: '#17171f', stroke: '#32303e' } },
+    },
+    BackstageDependencyGraphDefaultNode: {
+      styleOverrides: {
+        node: { fill: '#17171f', stroke: '#32303e', rx: 8, ry: 8 },
+        text: { fill: '#e7e7ef' },
+      },
+    },
+    BackstageDependencyGraphDefaultLabel: {
+      styleOverrides: { text: { fill: '#e7e7ef' } },
+    },
     BackstageHeader: {
         styleOverrides: {
           header: {

@@ -1,5 +1,6 @@
 import { SHADCN_CSS } from './styles';
 import { SPRITE_SIZE } from './sprites';
+import { STARFIELD } from './starfield';
 
 /**
  * The whole stylesheet is one template literal, so a stray backtick in a CSS
@@ -94,6 +95,12 @@ describe('SHADCN_CSS', () => {
     expect(SHADCN_CSS).toMatch(/shape-rendering:\s*geometricPrecision/);
   });
 
+  it('paints the React Flow canvas with the shared starfield', () => {
+    // The catalog graph gets the same colour through theme.tsx. If these drift,
+    // the two graph surfaces stop looking like the same product.
+    expect(SHADCN_CSS).toContain(STARFIELD.bg);
+  });
+
   it('uses no class name that a production build discards', () => {
     // Material-UI keeps a makeStyles `name` in the generated class only outside
     // production; in a built image BackstageItemCardHeader-root-130 is jss130.
@@ -109,22 +116,11 @@ describe('SHADCN_CSS', () => {
       n.startsWith('sc-') || // ours
       n.startsWith('material-icons'); // the icon font's literal class
 
-    // Known dead, and deliberately not fixed here: the catalog-graph rules are
-    // cosmetic and migrating them needs the BackstageDependencyGraph* theme
-    // keys, which is its own piece of work. Listed so this guard still fails on
-    // anything NEW rather than being switched off.
-    const KNOWN_DEAD = [
-      'PluginCatalogGraph',
-      'PluginCatalogGraphCustomNode-node',
-      'PluginCatalogGraphCustomLabel-text',
-      'DependencyGraph',
-      'DependencyGraphDefaultNode',
-      'DependencyGraphDefaultNode-node',
-      'DependencyGraphDefaultNode-text',
-      'Edge',
-      'focused',
-      'primary',
-    ];
+    // Nothing is exempt any more. The catalog-graph rules that used to live
+    // here moved into theme.tsx styleOverrides, which MUI applies by component
+    // name and which therefore survive a production build — so the stylesheet
+    // now has no production-dead selector at all, rather than documented debt.
+    const KNOWN_DEAD: string[] = [];
 
     // Comments are stripped first: several of them quote the very selectors
     // this guard exists to ban, and prose is not a rule.

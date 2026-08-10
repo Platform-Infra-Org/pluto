@@ -15,7 +15,13 @@ import {
   useEntity,
 } from '@backstage/plugin-catalog-react';
 import { useRouteRef } from '@backstage/core-plugin-api';
-import { Card, CardHeader, CardBody } from '@internal/plugin-platform-ui';
+import {
+  Card,
+  CardHeader,
+  CardBody,
+  STARFIELD,
+  STAR_WIDE,
+} from '@internal/plugin-platform-ui';
 
 const NODE = 130;
 const ROW = 88;
@@ -121,7 +127,25 @@ export function RelationsGraph() {
               onNodeClick={onNodeClick}
               proOptions={{ hideAttribution: true }}
             >
-              <Background variant={BackgroundVariant.Dots} gap={17} size={1.2} color="#3a3a48" />
+              {/* Two layers at different spacings: one grid of identical dots reads as
+                  graph paper, and at equal spacing the layers moire into a single grid.
+                  Both pan and zoom with the canvas, which a CSS background would not.
+                  Distinct ids are required — without them React Flow reuses one SVG
+                  pattern and only the last layer renders. */}
+              <Background
+                id="stars-dim"
+                variant={BackgroundVariant.Dots}
+                gap={STARFIELD.gap}
+                size={STARFIELD.dimSize}
+                color={STARFIELD.starDim}
+              />
+              <Background
+                id="stars-bright"
+                variant={BackgroundVariant.Dots}
+                gap={STAR_WIDE}
+                size={STARFIELD.size}
+                color={STARFIELD.star}
+              />
               <Controls showInteractive={false} />
             </ReactFlow>
           </div>

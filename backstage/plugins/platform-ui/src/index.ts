@@ -35,6 +35,7 @@ export { Quickstart } from './quickstart/Quickstart';
 export { QUICKSTART_VERSION } from './quickstart/steps';
 export type { Visit } from './useVisits';
 export { JsonTree } from './JsonTree';
+export { STARFIELD, STAR_WIDE, starfieldCss } from './starfield';
 export { mergeResourceEdits } from './mergeResourceEdits';
 export type { MergeResult } from './mergeResourceEdits';
 export { DynamicSelect, toChoiceOptions } from './DynamicSelect';

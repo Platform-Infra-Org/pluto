@@ -3,6 +3,7 @@
 // picker can swap the accent live. Scoped under `.sc` so it never fights
 // Backstage's own MUI styles outside our pages.
 import { statusTokenCss } from './statusTokens';
+import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
 /* Self-hosted so the CSP (font-src 'self') is satisfied and the app works
@@ -82,10 +83,10 @@ ${statusTokenCss()}
    - react-flow classes (.react-flow__*)                            — public API.
    These carry the bulk of the reskin and survive upgrades.
    Backstage's own components (Header, InfoCard, ItemCardHeader, SidebarPage)
-   are styled in theme.tsx through their published override keys and slot names,
-   which are typed — a renamed slot fails tsc rather than silently unstyling a
-   page. What remains marked [FRAGILE] here is the catalog/dependency graph,
-   which a plugin styles privately and which exposes no override key. */
+   and the catalog/dependency graph are styled in theme.tsx through the style
+   hooks their components register. MUI applies those by component NAME, which
+   a production build never mangles — unlike generated class names, which
+   become jss<n> there. Nothing here may name one: styles.test.ts fails on it. */
 
 /* [stable: bui tokens] retarget bui's accent/link/focus to the picker. These
    CSS variables are the primary, upgrade-safe mechanism for bui components. */
@@ -288,30 +289,15 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .MuiSwitch-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiCheckbox-colorPrimary.Mui-checked, .MuiRadio-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiChip-root { border-radius: var(--sc-radius) !important; }
-/* ===== Graphs: React-Flow look — dark canvas + dots, compact dark nodes =====
-   Our own graphs use the stable .react-flow__* API (below). These rules restyle
-   Backstage's built-in catalog/dependency graph SVG.
-   [FRAGILE: PluginCatalogGraph* / DependencyGraph* — no stable hook; re-derive
-   on upgrade, or drop if the built-in graph is no longer surfaced.] */
-/* The graph svg IS the dark dotted canvas and fills its container (no smaller
-   inner box inside a larger canvas). */
-svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultNode"]) {
-  background-color: #0a0a10 !important;
-  background-image: radial-gradient(circle, rgba(255,255,255,.16) 1px, transparent 1px) !important;
-  background-size: 17px 17px !important; border-radius: var(--sc-radius);
-  width: 100% !important; display: block !important; }
-[class*="PluginCatalogGraphCustomNode-node"], [class*="DependencyGraphDefaultNode-node"] {
-  fill: #17171f !important; stroke: #32303e !important; rx: 8 !important; ry: 8 !important; }
-[class*="PluginCatalogGraphCustomLabel-text"], [class*="DependencyGraphDefaultNode-text"] {
-  fill: #e7e7ef !important; font-size: 11px !important; font-weight: 500 !important; }
-[class*="PluginCatalogGraph"] path, [class*="DependencyGraph"] path[marker-end], [class*="Edge"] path {
-  stroke: rgba(255,255,255,.24) !important; }
-[class*="PluginCatalogGraph"] marker path, [class*="DependencyGraph"] marker path { fill: rgba(255,255,255,.24) !important; }
-/* focused / selected node -> accent tint */
-[class*="PluginCatalogGraphCustomNode-node"][class*="primary"], [class*="PluginCatalogGraphCustomNode-node"][class*="focused"], rect[class*="focused"] {
-  fill: hsl(var(--sc-primary) / .22) !important; stroke: hsl(var(--sc-primary)) !important; }
+/* ===== Graphs =====
+   The built-in catalog/dependency graph is themed in theme.tsx through the
+   style hooks its components register (PluginCatalogGraph* and
+   BackstageDependencyGraph*), because MUI applies those by component name and
+   they therefore survive a production build. The selectors that used to live
+   here named generated class names, which production mangles to jss<n> — they
+   were dead in every deployed release while working on the dev server. */
 /* our React Flow workflow DAG — dark + dots (dot color set in the component). */
-.react-flow, .react-flow__renderer, .react-flow__pane { background: #0a0a10 !important; }
+.react-flow, .react-flow__renderer, .react-flow__pane { background: ${STARFIELD.bg} !important; }
 .react-flow__node { border-radius: var(--sc-radius) !important; }
 .react-flow__controls { box-shadow: none !important; }
 .react-flow__controls button { background: #17171f !important; border-color: #32303e !important; }

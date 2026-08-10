@@ -1,0 +1,60 @@
+/**
+ * The space background shared by every graph surface.
+ *
+ * One definition, two consumers that cannot use the same mechanism:
+ *
+ *   React Flow    — takes `color`/`gap`/`size` as component props and renders
+ *                   its own SVG pattern, which pans and zooms with the canvas.
+ *   Catalog graph — a plain SVG with no such component, so it is painted by a
+ *                   theme styleOverride on the element itself.
+ *
+ * Literal colour strings, not CSS custom properties: React Flow puts `color`
+ * into an SVG attribute, and var(--x) does not resolve there.
+ */
+export const STARFIELD = {
+  /** Near-black, faintly blue so it does not read as a dead pixel field. */
+  bg: '#05050c',
+  /** The bright, sparse stars. */
+  star: 'rgba(255, 255, 255, 0.62)',
+  /** The faint majority. */
+  starDim: 'rgba(255, 255, 255, 0.26)',
+  /** Spacing of the dim layer, in px. */
+  gap: 17,
+  /** Radius of a bright star. */
+  size: 1.4,
+  /** Radius of a dim star. */
+  dimSize: 1,
+} as const;
+
+/** Spacing of the bright layer. Deliberately not a multiple of `gap`. */
+export const STAR_WIDE = STARFIELD.gap * 2.5;
+
+/**
+ * The starfield as CSS declarations, for a surface React Flow does not own.
+ *
+ * Two layers at different spacings: a single grid of identical dots reads as
+ * graph paper, and at equal spacing the two layers moire into one. The bright
+ * layer is sparser than the dim one, which is what makes it read as depth.
+ */
+export function starfieldDeclarations(): Record<string, string> {
+  const { bg, star, starDim, gap, size, dimSize } = STARFIELD;
+  const half = Math.round(gap / 2);
+  return {
+    backgroundColor: bg,
+    backgroundImage: [
+      `radial-gradient(circle, ${star} ${size}px, transparent ${size}px)`,
+      `radial-gradient(circle, ${starDim} ${dimSize}px, transparent ${dimSize}px)`,
+    ].join(', '),
+    backgroundSize: `${STAR_WIDE}px ${STAR_WIDE}px, ${gap}px ${gap}px`,
+    backgroundPosition: `0 0, ${half}px ${half}px`,
+  };
+}
+
+/** The same thing as a CSS rule, for the hand-written stylesheet. */
+export function starfieldCss(selector: string): string {
+  const d = starfieldDeclarations();
+  const body = Object.entries(d)
+    .map(([k, v]) => `  ${k.replace(/[A-Z]/g, c => `-${c.toLowerCase()}`)}: ${v} !important;`)
+    .join('\n');
+  return `${selector} {\n${body}\n}`;
+}
