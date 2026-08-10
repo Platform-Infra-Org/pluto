@@ -423,6 +423,16 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
     const d = drag.current;
     const el = ref.current;
     if (!d || !el || d.id !== e.pointerId) return;
+    // No button held: this is a hover, not a drag. pointerup and pointercancel
+    // are bound to the element, so a press that starts here and releases
+    // somewhere else never clears the bookkeeping — and every later hover then
+    // moved the shelf as though the drag had never ended. `buttons` is the one
+    // signal that is correct no matter which events were missed.
+    if (e.buttons === 0) {
+      drag.current = null;
+      setDragging(false);
+      return;
+    }
     if (!d.moved) {
       if (Math.hypot(e.clientX - d.ox, e.clientY - d.oy) < DRAG_THRESHOLD)
         return;

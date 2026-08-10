@@ -915,7 +915,12 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
    and are not siblings in the DOM. */
 :root[data-nav-collapsed='true']:not([data-picker-moved='true']) .sc-picker-float {
   display: none; }
-.sc-picker-float[data-dragging='true'] { cursor: grabbing; user-select: none; }
+/* Never selectable, not just while dragging: the shelf is a row of buttons with
+   no text to select, and applying this only after the 4px threshold meant the
+   first few pixels of every drag started a text selection instead — which then
+   fought the drag for the rest of the gesture. */
+.sc-picker-float { -webkit-user-select: none; user-select: none; }
+.sc-picker-float[data-dragging='true'] { cursor: grabbing; }
 /* The sign-in card has its own shelf under the button, so the corner one would
    be a second identical picker on the same screen. */
 :root.sc-signed-out .sc-picker-float { display: none; }

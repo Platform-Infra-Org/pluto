@@ -47,7 +47,9 @@ describe('SchemePicker', () => {
     const shelf = container.querySelector('.sc-picker-float')!;
 
     fireEvent.pointerDown(shelf, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
-    fireEvent.pointerMove(shelf, { pointerId: 1, clientX: 40, clientY: 40 });
+    // buttons: 1 is what a real drag sends; jsdom defaults it to 0, which the
+    // component now correctly treats as a hover.
+    fireEvent.pointerMove(shelf, { pointerId: 1, clientX: 40, clientY: 40, buttons: 1 });
 
     expect(capture).toHaveBeenCalledWith(1);
   });
@@ -68,7 +70,7 @@ describe('SchemePicker', () => {
     expect(shelf.classList.contains('sc-picker-float')).toBe(false);
 
     fireEvent.pointerDown(shelf, { button: 0, pointerId: 1, clientX: 10, clientY: 10 });
-    fireEvent.pointerMove(shelf, { pointerId: 1, clientX: 90, clientY: 90 });
+    fireEvent.pointerMove(shelf, { pointerId: 1, clientX: 90, clientY: 90, buttons: 1 });
 
     // No capture, no inline position: in the flow of the card, it does not move.
     expect(capture).not.toHaveBeenCalled();
@@ -98,5 +100,28 @@ describe('SchemePicker', () => {
     expect(shelf.style.top).not.toBe('');
     // A press alone is not a drag, so nothing may be captured yet.
     expect(capture).not.toHaveBeenCalled();
+  });
+
+  it('ignores a move with no button held, and forgets the stale press', () => {
+    // pointerup/pointercancel are bound to the element, so a press that starts
+    // on the shelf and releases somewhere else never reaches endDrag. The
+    // bookkeeping used to survive that, and every later hover then moved the
+    // shelf as though the drag had never ended.
+    delete document.documentElement.dataset.pickerMoved;
+    const { container } = render(<SchemePicker floating />);
+    const shelf = container.querySelector('.sc-picker-float') as HTMLElement;
+
+    fireEvent.pointerDown(shelf, { button: 0, pointerId: 1, clientX: 50, clientY: 50 });
+    const seeded = shelf.style.left;
+
+    // A hover: far enough to clear the drag threshold, but no button down.
+    fireEvent.pointerMove(shelf, { pointerId: 1, clientX: 400, clientY: 400, buttons: 0 });
+    expect(shelf.style.left).toBe(seeded);
+    expect(shelf.getAttribute('data-dragging')).toBeNull();
+    expect(capture).not.toHaveBeenCalled();
+
+    // And the press is forgotten, so a second hover cannot move it either.
+    fireEvent.pointerMove(shelf, { pointerId: 1, clientX: 700, clientY: 700, buttons: 0 });
+    expect(shelf.style.left).toBe(seeded);
   });
 });
