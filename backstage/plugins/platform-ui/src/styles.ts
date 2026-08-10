@@ -101,7 +101,7 @@ ${statusTokenCss()}
 [data-variant="primary"][class*="bui-Button"] { background-color: hsl(var(--sc-primary)) !important; color: hsl(var(--sc-primary-fg)) !important; }
 [data-variant="primary"][class*="bui-Button"]:hover { background-color: hsl(var(--sc-primary) / 0.9) !important; }
 [class*="bui-ButtonLink"], [class*="bui-Button"] { border-radius: var(--sc-radius) !important; }
-body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); } /* body = stable companion */
+body { background: hsl(var(--sc-bg)); } /* BackstageContent bg moved to theme.tsx (BackstageContent.styleOverrides.root) */
 /* cards / surfaces */
 /* cards/surfaces via stable MUI classes. The InfoCard header is styled in the
    theme (BackstageInfoCard.styleOverrides.header). */
@@ -197,15 +197,16 @@ body, body *, input, select, textarea, button, optgroup {
    don't own, so they are matched by MUI's global classes — the public, stable
    hook. Pixel type goes on chrome (buttons, tabs, table headers, filter labels,
    chips, headings); table bodies and descriptions stay Inter, exactly as on our
-   own pages. */
+   own pages. BackstageContentHeader-title, BackstageItemCardHeader and
+   BackstageAutocomplete-label carry the same font/text-transform, set in
+   theme.tsx instead since class*= hooks on those three don't survive a
+   production build. */
 .MuiButton-root, .MuiTab-root, .MuiChip-root, .MuiTableCell-head,
 .MuiTableSortLabel-root, .MuiFormLabel-root, .MuiInputLabel-root,
 .MuiTypography-h1, .MuiTypography-h2, .MuiTypography-h3,
 .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6,
 .MuiCardHeader-title, .MuiDialogTitle-root, .MuiAlertTitle-root,
-[class*="BackstageContentHeader-title"], [class*="BackstageItemCardHeader"],
-[class*="bui-Button"], [class*="bui-HeaderTitle"], [class*="bui-HeaderBreadcrumb"],
-[class*="BackstageAutocomplete-label"] {
+[class*="bui-Button"], [class*="bui-HeaderTitle"], [class*="bui-HeaderBreadcrumb"] {
   font-family: var(--sc-font-pixel) !important;
   text-transform: uppercase !important;
   letter-spacing: 0 !important;
@@ -222,10 +223,10 @@ body, body *, input, select, textarea, button, optgroup {
    at all; the smaller components no longer need one and have been dropped. */
 h1, .MuiTypography-h1 { font-size: 29px !important; line-height: 1.35 !important; }
 h2, .MuiTypography-h2 { font-size: 22px !important; line-height: 1.35 !important; }
-h3, .MuiTypography-h3, .MuiCardHeader-title,
-[class*="BackstageInfoCard-header"] * { font-size: 19px !important; }
+h3, .MuiTypography-h3, .MuiCardHeader-title { font-size: 19px !important; }
 h4, h5, h6, .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 { font-size: 14px !important; }
-[class*="BackstageContentHeader-title"] { font-size: 18px !important; line-height: 1.35 !important; }
+/* BackstageInfoCard-header * (19px) and BackstageContentHeader-title (18px/1.35)
+   are set in theme.tsx — see the comment above. */
 .MuiDialogTitle-root { font-size: 16px !important; }
 
 /* Native buttons get the same press as ours: the shadow collapses and the
@@ -584,6 +585,14 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-dark .sc-json-string { color: hsl(152 45% 60%); }
 .sc-dark .sc-json-number { color: hsl(217 70% 70%); }
 .sc-dark .sc-json-boolean { color: hsl(280 60% 72%); }
+/* A string that is itself a JSON document keeps its quotes and takes the string
+   colour on its braces, so the subtree reads as "a string containing this"
+   rather than as a real nested object. The difference decides what the workflow
+   receives: a string param arrives escaped where an object arrives clean. */
+.sc-json-embedded > .sc-json-row > .sc-json-punc,
+.sc-json-embedded > .sc-json-row > .sc-json-collapsed { color: hsl(152 42% 42%); }
+:root.sc-dark .sc-json-embedded > .sc-json-row > .sc-json-punc,
+:root.sc-dark .sc-json-embedded > .sc-json-row > .sc-json-collapsed { color: hsl(152 45% 60%); }
 
 /* [flare] Approval progress: cells plus the literal count. A bar alone says
    "some of it is done"; the number says which. */
@@ -646,7 +655,9 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     var(--sc-shadow); }
 /* The 78px is clearance for the picker sitting in the same corner. Once the
    picker has been moved, the tour box can have the space back. */
-:root:not([data-picker-moved='true']) .sc-qs-box { bottom: 78px; }
+/* The picker docks bottom-LEFT now, so the tour box no longer has to clear it.
+   A dragged picker can still be anywhere, which is what needsFlip handles. */
+:root:not([data-picker-moved='true']) .sc-qs-box { bottom: 18px; }
 /* …and when even that is not enough — the picker is draggable, so it can be
    parked exactly here — the box moves to the opposite end rather than sitting
    on top of the element it is describing. Decided in Quickstart.tsx from the
@@ -860,9 +871,9 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-nav.collapsed .sc-nav-item { justify-content: center; padding: 9px; }
 .sc-nav.collapsed .sc-nav-top { justify-content: center; }
 /* Force the content gutter to match the nav width (hashed SidebarPage class). */
-/* Content offset for the fixed nav lives in the theme
-   (BackstageSidebarPage.styleOverrides.root); the mobile override stays here. */
-@media (max-width: 600px) { .sc-nav { display: none; } [class*="BackstageSidebarPage-root"] { padding-left: 0 !important; } }
+/* Content offset for the fixed nav, and its mobile override, both live in the
+   theme (BackstageSidebarPage.styleOverrides.root). */
+@media (max-width: 600px) { .sc-nav { display: none; } }
 
 /* color scheme picker */
 /* [flare] The colour picker is a potion box: a shelf of bottles, each holding
@@ -880,11 +891,27 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     var(--sc-shadow); }
 /* Only the floating instance is pinned to the corner; in the flow it is a
    shelf like any other block, which is how the sign-in card carries one. */
-.sc-picker-float { position: fixed; right: 14px; bottom: 14px; z-index: 1500;
-  cursor: grab; touch-action: none; }
+/* Docked at the bottom of the sidebar. The shelf is 190px and the nav is
+   resizable from 180px (68px collapsed), so it has to fold rather than
+   overhang: CustomNav writes the live width onto --sc-nav-w, so the shelf
+   re-flows with the same drag that resizes the nav. z-index 1500 against the
+   nav's 1200 puts it above the nav rather than clipped by it. */
+.sc-picker-float { position: fixed; left: 8px; bottom: 14px; z-index: 1500;
+  cursor: grab; touch-action: none;
+  max-width: calc(var(--sc-nav-w) - 16px);
+  flex-wrap: wrap; justify-content: center; }
 /* Once dragged, inline left/top drive it — the corner anchors have to go or the
-   box would be pinned by both edges and stretch instead of move. */
-:root[data-picker-moved='true'] .sc-picker-float { right: auto; bottom: auto; }
+   box would be pinned by both edges and stretch instead of move. It is free of
+   the sidebar then, so the width cap goes with them. */
+:root[data-picker-moved='true'] .sc-picker-float {
+  left: auto; bottom: auto; max-width: none; flex-wrap: nowrap; }
+/* Collapsed is a 68px icons-only rail; a colour shelf folded into six rows
+   there is noise, not a control. A dragged picker is unaffected — it is no
+   longer in the sidebar. The attribute is set by CustomNav rather than a
+   sibling selector, because the nav and the picker mount from different trees
+   and are not siblings in the DOM. */
+:root[data-nav-collapsed='true']:not([data-picker-moved='true']) .sc-picker-float {
+  display: none; }
 .sc-picker-float[data-dragging='true'] { cursor: grabbing; user-select: none; }
 /* The sign-in card has its own shelf under the button, so the corner one would
    be a second identical picker on the same screen. */
@@ -1102,10 +1129,11 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   @keyframes sc-walk { to { left: calc(100vw - 16px); } }
   :root.sc-konami::after { animation: sc-walk 6s steps(24) infinite; }
   .sc-h1::after,
-  :is(h1, h2, h3)[class*="bui-HeaderTitle"]::after,
-  [class*="BackstageHeader-title"]::after {
+  :is(h1, h2, h3)[class*="bui-HeaderTitle"]::after {
     animation: sc-caret 1s steps(1) infinite;
   }
+  /* BackstageHeader-title::after's animation lives in theme.tsx
+     (BackstageHeader.styleOverrides.title), nested under the same media query. */
 }
 
 /* The block caret marks a page title, wherever the page comes from: ours,
@@ -1113,8 +1141,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
    outside the motion query — only its blink is animation, so a reader with
    reduced motion still gets the mark, just a steady one. */
 .sc-h1::after,
-:is(h1, h2, h3)[class*="bui-HeaderTitle"]::after,
-[class*="BackstageHeader-title"]::after {
+:is(h1, h2, h3)[class*="bui-HeaderTitle"]::after {
   /* ContentHeader is deliberately absent: it renders empty on the create page
      (a lone floating block) and, where it does have text, it sits under a
      Header title that already carries the caret.
@@ -1128,6 +1155,9 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   margin-left: 4px;
   color: hsl(var(--sc-primary));
 }
+/* BackstageHeader-title gets the same caret via theme.tsx
+   (BackstageHeader.styleOverrides.title's '&::after'), because a class*= hook
+   on that hashed name doesn't survive a production build. */
 
 /* The scanline layer is texture, not motion, so it sits outside the media query
    and survives reduced-motion. pointer-events: none keeps clicks passing

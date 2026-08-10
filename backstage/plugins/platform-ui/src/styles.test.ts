@@ -88,4 +88,46 @@ describe('SHADCN_CSS', () => {
     expect(SHADCN_CSS).toContain('(resolution: 1.25dppx)');
     expect(SHADCN_CSS).toMatch(/shape-rendering:\s*geometricPrecision/);
   });
+
+  it('uses no class name that a production build discards', () => {
+    // Material-UI keeps a makeStyles `name` in the generated class only outside
+    // production; in a built image BackstageItemCardHeader-root-130 is jss130.
+    // A selector naming one is dead in the deployed app and alive on the dev
+    // server, which is the worst failure mode available — it looks correct
+    // everywhere you would normally test. Measured against a real production
+    // build served from packages/app/dist: 221 Mui* and 28 bui-* class names
+    // survive; Backstage*, PluginCatalogGraph* and DependencyGraph* all come
+    // back as zero.
+    const SURVIVES = (n: string) =>
+      n.startsWith('Mui') || // MUI keeps its own prefix in production
+      n.startsWith('bui-') || // Backstage UI ships plain CSS, not JSS
+      n.startsWith('sc-') || // ours
+      n.startsWith('material-icons'); // the icon font's literal class
+
+    // Known dead, and deliberately not fixed here: the catalog-graph rules are
+    // cosmetic and migrating them needs the BackstageDependencyGraph* theme
+    // keys, which is its own piece of work. Listed so this guard still fails on
+    // anything NEW rather than being switched off.
+    const KNOWN_DEAD = [
+      'PluginCatalogGraph',
+      'PluginCatalogGraphCustomNode-node',
+      'PluginCatalogGraphCustomLabel-text',
+      'DependencyGraph',
+      'DependencyGraphDefaultNode',
+      'DependencyGraphDefaultNode-node',
+      'DependencyGraphDefaultNode-text',
+      'Edge',
+      'focused',
+      'primary',
+    ];
+
+    // Comments are stripped first: several of them quote the very selectors
+    // this guard exists to ban, and prose is not a rule.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    const dead = Array.from(
+      rules.matchAll(/\[class\*="([A-Za-z][A-Za-z0-9_-]*)"\]/g),
+      m => m[1],
+    ).filter(n => !SURVIVES(n) && !KNOWN_DEAD.includes(n));
+    expect([...new Set(dead)]).toEqual([]);
+  });
 });
