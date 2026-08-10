@@ -186,6 +186,25 @@ platform:
   branding: {}
   #  mark: /branding/mark.svg
   #  flavour: fantasy
+  #  templateHeaders:
+  #    # Runtime header art. `dir` is resolved by the bundler at build time, so
+  #    # a volume mount cannot contribute to it — these URLs are read at runtime
+  #    # and are the only way to change the art without rebuilding the image.
+  #    # Same-origin paths only (the CSP is img-src 'self' data:).
+  #    images:
+  #      - /branding/headers/sunset.jpg
+  #
+  # Serve those files by mounting them where app-backend already serves static
+  # content. Mount at .../branding/headers, NOT at .../branding, which would
+  # hide the shipped mark and favicon:
+  #
+  # extraVolumes:
+  #   - name: header-art
+  #     configMap: {name: platform-header-art}
+  # extraVolumeMounts:
+  #   - name: header-art
+  #     mountPath: /app/packages/app/dist/branding/headers
+  #     readOnly: true
 
 # Anything here is merged over the generated config, last-wins. The escape
 # hatch for keys this chart does not model — use it rather than forking.

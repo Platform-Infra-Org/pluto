@@ -11,10 +11,16 @@ app:
     # Software-template card headers. Drop images into
     # packages/app/src/branding/<dir>/ and they are used in filename order,
     # cycling across the cards; with no images the built-in pixel art is used.
-    # templateHeaders:
-    #   dir: template-headers   # subfolder of packages/app/src/branding/
-    #   height: 90px            # any CSS length
-    #   position: center        # any CSS background-position
+    templateHeaders:
+      dir: template-headers # subfolder of packages/app/src/branding/, bundled at build time
+      height: 90px # any CSS length
+      position: center # any CSS background-position
+      # Runtime override. `dir` is resolved by the bundler, so a volume mount
+      # cannot add to it; these URLs are read at runtime instead. Mount images
+      # under packages/app/dist/branding/ and list them here to change the art
+      # without rebuilding the image. Same-origin paths only.
+      # images:
+      #   - /branding/headers/sunset.jpg
     # Optional fantasy naming for the sidebar. Renames screens only —
     # Requests -> Quests, Create -> Summon, Catalog -> Atlas. Request states
     # are records and are never renamed. Omit for the literal names.

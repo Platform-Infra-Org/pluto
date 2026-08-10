@@ -37,6 +37,22 @@ export interface Config {
        */
       templateHeaders?: {
         /**
+         * Explicit header image URLs, overriding `dir`.
+         *
+         * `dir` is resolved by the bundler at build time, so a volume mount can
+         * never contribute to it — the bundler never saw the files and the URLs
+         * are content-hashed into main.js. This key is read at runtime instead:
+         * mount images under `packages/app/dist/branding/…`, which app-backend
+         * already serves, and name them here to change the art without a
+         * rebuild.
+         *
+         * Same-origin paths only (the CSP is `img-src 'self' data:`); anything
+         * cross-origin is ignored rather than rendering as a blank header. An
+         * empty list falls back to `dir`.
+         * @visibility frontend
+         */
+        images?: string[];
+        /**
          * Subfolder of `packages/app/src/branding/` to read.
          * @default template-headers
          * @visibility frontend
