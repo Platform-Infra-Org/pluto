@@ -22,18 +22,25 @@
     "clean": "backstage-cli package clean"
   },
   "dependencies": {
+    "@backstage/catalog-model": "*",
     "@backstage/core-components": "*",
     "@backstage/core-plugin-api": "*",
     "@backstage/frontend-plugin-api": "*",
     "@backstage/plugin-app-react": "*",
+    "@backstage/plugin-catalog-graph": "*",
+    "@backstage/plugin-catalog-react": "*",
     "@backstage/plugin-scaffolder-react": "^2.0.2",
     "@backstage/theme": "*",
+    "@dagrejs/dagre": "^1.1.8",
     "@internal/plugin-platform-common": "workspace:^",
-    "@material-ui/icons": "^4.9.1"
+    "@material-ui/icons": "^4.9.1",
+    "@xyflow/react": "^12",
+    "qs": "^6.15.3"
   },
   "peerDependencies": {
     "react": "^17 || ^18 || ^19",
-    "react-dom": "^17 || ^18 || ^19"
+    "react-dom": "^17 || ^18 || ^19",
+    "react-router-dom": "^6 || ^7"
   },
   "files": [
     "dist",

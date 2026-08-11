@@ -18,11 +18,17 @@ import { useQuickstart } from './quickstart/useQuickstart';
 import { sampleImageTone, Tone } from './imageTone';
 import { isDarkTheme } from './darkMode';
 import {
+  AnchoredPos,
   clampToViewport,
+  fromAnchored,
   PickerPos,
   PICKER_POS_KEY,
   readStoredPos,
+  toAnchored,
 } from './pickerPos';
+import { CARD_LIGHT } from './statusTokens';
+import { ALL_ROUTE_CLASSES, routeClassFor } from './routeClass';
+import { resolveHeaderImages } from './headerImages';
 
 /**
  * Pointer travel before a press becomes a drag.
@@ -58,6 +64,8 @@ export const SCHEMES = [
 let branding: {
   mark?: string;
   favicon?: string;
+  /** Explicit runtime URLs; when present they override headerDir. */
+  headerImages?: string[];
   headerDir?: string;
   headerHeight?: string;
   headerPosition?: string;
@@ -104,17 +112,52 @@ function setBranding(next: typeof branding) {
 // match the in-app tile's proportions (styles.ts): glyph at ~65% of the tile.
 const ICON_SIZE = 64;
 const ICON_INSET = Math.round(ICON_SIZE * 0.175);
+/** `--sc-radius` (6px) over the 26px `.sc-nav-mark` tile. */
+const ICON_RADIUS = 6 / 26;
 
-/** The accent tile every generated icon sits on. */
+/**
+ * The accent tile every generated icon sits on — the same object as
+ * `.sc-nav-mark` and `.sc-login-mark` in styles.ts, painted to match.
+ *
+ * Those use `linear-gradient(135deg, primary, primary / .6)`, and the far stop
+ * is the accent at 60% *alpha*: what tints that corner is the surface behind
+ * the tile, `hsl(var(--sc-card))`. A favicon has no backdrop, so an alpha stop
+ * alone would leave the corner translucent over whatever the browser's tab
+ * strip happens to be. Painting the card colour underneath first and then the
+ * same gradient over it composites to the identical colour — and it tracks
+ * light/dark for free, because --sc-card is read live.
+ */
 function drawTile(g: CanvasRenderingContext2D, accentHsl: string) {
-  g.fillStyle = `hsl(${accentHsl})`;
-  if (typeof g.roundRect === 'function') {
-    g.beginPath();
-    g.roundRect(0, 0, ICON_SIZE, ICON_SIZE, Math.round(ICON_SIZE * 0.27));
-    g.fill();
-  } else {
-    g.fillRect(0, 0, ICON_SIZE, ICON_SIZE); // jsdom, and Safari before 16.4
-  }
+  const fill = () => {
+    if (typeof g.roundRect === 'function') {
+      g.beginPath();
+      g.roundRect(0, 0, ICON_SIZE, ICON_SIZE, Math.round(ICON_SIZE * ICON_RADIUS));
+      g.fill();
+    } else {
+      g.fillRect(0, 0, ICON_SIZE, ICON_SIZE); // jsdom, and Safari before 16.4
+    }
+  };
+  g.fillStyle = `hsl(${cardHsl()})`;
+  fill();
+  const grad = g.createLinearGradient(0, 0, ICON_SIZE, ICON_SIZE); // 135deg
+  grad.addColorStop(0, `hsl(${accentHsl})`);
+  grad.addColorStop(1, `hsl(${accentHsl} / .6)`);
+  g.fillStyle = grad;
+  fill();
+}
+
+/**
+ * The live value of `--sc-card`, so the tile follows a light/dark switch
+ * without this module having to know which scheme is active. Falls back to the
+ * light value that `:root` declares, which is what an unresolved custom
+ * property would have meant anyway.
+ */
+function cardHsl(): string {
+  return (
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--sc-card')
+      .trim() || CARD_LIGHT
+  );
 }
 
 /**
@@ -126,10 +169,18 @@ function drawTile(g: CanvasRenderingContext2D, accentHsl: string) {
  * in `packages/app/public` remain the pre-JavaScript first paint.
  */
 function updateFavicon(accentHsl: string, fgHsl: string) {
-  const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-  if (!link) return;
+  // EVERY icon link, not just the first. The Backstage index.html declares
+  // three (`icon` -> favicon.ico, plus sized 16x16 and 32x32 PNGs) and a
+  // `shortcut icon`. A browser picks by `sizes`, so an explicitly sized
+  // candidate beats an unsized one — updating only the first left the stock
+  // favicon-32x32.png winning the tab while the sidebar mark was correct.
+  // `~=` matches a whitespace-separated list, so it catches `shortcut icon`
+  // while still excluding `apple-touch-icon` and `mask-icon`.
+  const links = document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"]');
+  if (!links.length) return;
+  const setHref = (href: string) => links.forEach(l => (l.href = href));
   if (branding.favicon) {
-    link.href = branding.favicon;
+    setHref(branding.favicon);
     return;
   }
 
@@ -141,7 +192,7 @@ function updateFavicon(accentHsl: string, fgHsl: string) {
 
   const publish = () => {
     try {
-      link.href = canvas.toDataURL('image/png');
+      setHref(canvas.toDataURL('image/png'));
     } catch {
       // Tainted canvas (a cross-origin mark) — keep the static icon.
     }
@@ -211,8 +262,12 @@ export function applyScheme(scheme?: string) {
       `--sc-primary-shade:${s.fg === WHITE ? INK : WHITE}}`,
   );
   // Empty when no images are supplied, which leaves the pixel-art headers.
-  const headerImages =
-    brandingImages[branding.headerDir ?? 'template-headers'] ?? [];
+  // Config-supplied URLs win over the build-time glob, so header art can be
+  // swapped by mounting files into dist/branding without rebuilding the image.
+  const headerImages = resolveHeaderImages(
+    { images: branding.headerImages, dir: branding.headerDir },
+    brandingImages,
+  );
   ensureTones(headerImages);
   ensureStyle(
     'sc-template-headers',
@@ -250,14 +305,25 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       'violet',
   );
   const ref = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState<PickerPos | undefined>(() =>
-    typeof localStorage === 'undefined'
-      ? undefined
-      : readStoredPos(localStorage.getItem(PICKER_POS_KEY)),
-  );
+  const [pos, setPos] = useState<PickerPos | undefined>(() => {
+    if (typeof localStorage === 'undefined') return undefined;
+    const stored = readStoredPos(localStorage.getItem(PICKER_POS_KEY));
+    // Set during the initial render rather than in an effect: an effect runs
+    // after first paint, so the picker would be drawn in its CSS corner and
+    // then visibly jump to the stored position.
+    if (stored && typeof document !== 'undefined') {
+      document.documentElement.dataset.pickerMoved = 'true';
+    }
+    return stored;
+  });
   const [dragging, setDragging] = useState(false);
   // Live drag bookkeeping. A ref, not state: it changes on every pointermove and
   // nothing renders from it.
+  // The corner the last drop anchored to. Recomputed on drop, consumed on
+  // resize: absolute top-left coordinates meant a picker parked bottom-right
+  // drifted into the middle of a narrowed window, because it was still on
+  // screen and clampToViewport had nothing to correct.
+  const anchor = useRef<AnchoredPos | null>(null);
   const drag = useRef<{
     id: number;
     ox: number;
@@ -279,9 +345,19 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
 
   useEffect(() => {
     if (!floating || !pos) return;
-    // Set here as well as during the drag, so a restored position also drops the
-    // corner anchors on a fresh page load.
+    // Set here as well as in the state initialiser, which covers a position
+    // that arrives after mount rather than from storage.
     document.documentElement.dataset.pickerMoved = 'true';
+    // Seed the anchor from a restored position, so the first resize after a
+    // reload behaves the same as one straight after a drag.
+    if (!anchor.current && ref.current) {
+      const r = ref.current.getBoundingClientRect();
+      anchor.current = toAnchored(
+        { x: r.left, y: r.top },
+        { w: r.width, h: r.height },
+        { w: window.innerWidth, h: window.innerHeight },
+      );
+    }
     try {
       localStorage.setItem(PICKER_POS_KEY, JSON.stringify(pos));
     } catch {
@@ -295,16 +371,16 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       const el = ref.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
-      // Only correct a position that is already set; an untouched picker is held
+      // Only reposition a picker that has been moved; an untouched one is held
       // by its CSS corner and needs nothing.
-      setPos(p =>
-        p
-          ? clampToViewport(
-              p,
-              { w: r.width, h: r.height },
-              { w: window.innerWidth, h: window.innerHeight },
-            )
-          : p,
+      const a = anchor.current;
+      if (!a) return;
+      setPos(
+        fromAnchored(
+          a,
+          { w: r.width, h: r.height },
+          { w: window.innerWidth, h: window.innerHeight },
+        ),
       );
     };
     window.addEventListener('resize', onResize);
@@ -326,6 +402,16 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       dy: e.clientY - r.top,
       moved: false,
     };
+    // Switch to inline positioning BEFORE anything moves. The corner anchors
+    // are dropped by a CSS attribute written imperatively, while the inline
+    // left/top arrive in React's next commit — so flipping them mid-drag left
+    // one frame with neither, and the box snapped to static flow and back.
+    // Seeding with the current rect is a visual no-op: it is exactly where the
+    // box already is.
+    if (!pos) {
+      setPos({ x: r.left, y: r.top });
+      document.documentElement.dataset.pickerMoved = 'true';
+    }
     // Capture is taken in onPointerMove, once this is actually a drag — NOT
     // here. While a pointer is captured, the spec retargets the following
     // `click` to the capturing element, so capturing on every press sent every
@@ -337,12 +423,21 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
     const d = drag.current;
     const el = ref.current;
     if (!d || !el || d.id !== e.pointerId) return;
+    // No button held: this is a hover, not a drag. pointerup and pointercancel
+    // are bound to the element, so a press that starts here and releases
+    // somewhere else never clears the bookkeeping — and every later hover then
+    // moved the shelf as though the drag had never ended. `buttons` is the one
+    // signal that is correct no matter which events were missed.
+    if (e.buttons === 0) {
+      drag.current = null;
+      setDragging(false);
+      return;
+    }
     if (!d.moved) {
       if (Math.hypot(e.clientX - d.ox, e.clientY - d.oy) < DRAG_THRESHOLD)
         return;
       d.moved = true;
       setDragging(true);
-      document.documentElement.dataset.pickerMoved = 'true';
       // Now that it is a drag, keep it alive if the pointer outruns the box.
       // Retargeting the click no longer matters — endDrag swallows it anyway.
       el.setPointerCapture?.(e.pointerId);
@@ -361,8 +456,19 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
     const d = drag.current;
     if (!d || d.id !== e.pointerId) return;
     drag.current = null;
-    ref.current?.releasePointerCapture?.(e.pointerId);
+    const el = ref.current;
+    el?.releasePointerCapture?.(e.pointerId);
     if (!d.moved) return;
+    // Remember which corner it was dropped nearest, so a later resize keeps the
+    // same visual relationship instead of preserving raw top-left coordinates.
+    if (el) {
+      const r = el.getBoundingClientRect();
+      anchor.current = toAnchored(
+        { x: r.left, y: r.top },
+        { w: r.width, h: r.height },
+        { w: window.innerWidth, h: window.innerHeight },
+      );
+    }
     setDragging(false);
     // The pointerup that ends a drag is followed by a click, which would land on
     // whichever bottle the drag began on. Swallow exactly that one.
@@ -426,6 +532,9 @@ export function SchemeRoot() {
     setBranding({
       mark: config.getOptionalString('app.branding.mark'),
       favicon: config.getOptionalString('app.branding.favicon'),
+      headerImages: config.getOptionalStringArray(
+        'app.branding.templateHeaders.images',
+      ),
       headerDir: config.getOptionalString('app.branding.templateHeaders.dir'),
       headerHeight: config.getOptionalString(
         'app.branding.templateHeaders.height',
@@ -446,7 +555,19 @@ export function SchemeRoot() {
 
   // One navigation source for the whole app: the nav already derives the path
   // without react-router, and a second source would drift from the first.
-  useRecordVisit(useCurrentPath());
+  const path = useCurrentPath();
+  useRecordVisit(path);
+
+  useEffect(() => {
+    // A class per route, so CSS can scope a rule to one page. Material-UI drops
+    // a makeStyles name in production builds, so no selector can name the
+    // scaffolder's card grid — only Mui* classes survive, and those are far too
+    // general to style on their own. Route scoping makes them specific again.
+    const root = document.documentElement;
+    root.classList.remove(...ALL_ROUTE_CLASSES);
+    const cls = routeClassFor(path);
+    if (cls) root.classList.add(cls);
+  }, [path]);
 
   useEffect(() => {
     // `activeThemeId$` emits undefined until someone picks a theme, and
@@ -455,11 +576,16 @@ export function SchemeRoot() {
     // as well is what keeps our background on the same side as MUI's text.
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     let themeId: string | undefined;
-    const apply = () =>
+    const apply = () => {
       document.documentElement.classList.toggle(
         'sc-dark',
         isDarkTheme(themeId, mq.matches),
       );
+      // The tab icon's tile is composited over --sc-card, which just changed
+      // sides. Without this the icon keeps the previous mode's tile until the
+      // next scheme pick.
+      applyScheme();
+    };
     const sub = appTheme.activeThemeId$().subscribe(id => {
       themeId = id;
       apply();

@@ -1,6 +1,6 @@
 import { templateHeaderCss } from './templateHeaders';
 
-const CARD = '[class*="BackstageItemCardGrid-root"] > .MuiCard-root';
+const CARD = '.sc-route-create .MuiCard-root';
 
 describe('templateHeaderCss', () => {
   it('is empty when no images are supplied, so the pixel art stays', () => {
@@ -62,5 +62,16 @@ describe('templateHeaderCss', () => {
     const css = templateHeaderCss({ images: ['/a.png'], tones: [undefined] });
     expect(css).not.toContain('color:');
     expect(css).not.toContain('text-shadow');
+  });
+
+  it('emits no selector that a production build would kill', () => {
+    // MUI replaces non-Mui makeStyles names with jss<n> in production, so a
+    // selector naming one is dead in the deployed app and alive on the dev
+    // server. That is what made the header images look like a browser bug.
+    const css = templateHeaderCss({ images: ['/a.png', '/b.png'] });
+    expect(css).not.toMatch(/class\*="Backstage/);
+    expect(css).not.toContain('ItemCardHeader');
+    expect(css).toContain('.sc-route-create .MuiCard-root');
+    expect(css).toContain('> .MuiBox-root:first-child');
   });
 });

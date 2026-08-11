@@ -3,6 +3,7 @@
 // picker can swap the accent live. Scoped under `.sc` so it never fights
 // Backstage's own MUI styles outside our pages.
 import { statusTokenCss } from './statusTokens';
+import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
 /* Self-hosted so the CSP (font-src 'self') is satisfied and the app works
@@ -82,10 +83,10 @@ ${statusTokenCss()}
    - react-flow classes (.react-flow__*)                            — public API.
    These carry the bulk of the reskin and survive upgrades.
    Backstage's own components (Header, InfoCard, ItemCardHeader, SidebarPage)
-   are styled in theme.tsx through their published override keys and slot names,
-   which are typed — a renamed slot fails tsc rather than silently unstyling a
-   page. What remains marked [FRAGILE] here is the catalog/dependency graph,
-   which a plugin styles privately and which exposes no override key. */
+   and the catalog/dependency graph are styled in theme.tsx through the style
+   hooks their components register. MUI applies those by component NAME, which
+   a production build never mangles — unlike generated class names, which
+   become jss<n> there. Nothing here may name one: styles.test.ts fails on it. */
 
 /* [stable: bui tokens] retarget bui's accent/link/focus to the picker. These
    CSS variables are the primary, upgrade-safe mechanism for bui components. */
@@ -101,7 +102,7 @@ ${statusTokenCss()}
 [data-variant="primary"][class*="bui-Button"] { background-color: hsl(var(--sc-primary)) !important; color: hsl(var(--sc-primary-fg)) !important; }
 [data-variant="primary"][class*="bui-Button"]:hover { background-color: hsl(var(--sc-primary) / 0.9) !important; }
 [class*="bui-ButtonLink"], [class*="bui-Button"] { border-radius: var(--sc-radius) !important; }
-body, [class*="BackstageContent"] { background: hsl(var(--sc-bg)); } /* body = stable companion */
+body { background: hsl(var(--sc-bg)); } /* BackstageContent bg moved to theme.tsx (BackstageContent.styleOverrides.root) */
 /* cards / surfaces */
 /* cards/surfaces via stable MUI classes. The InfoCard header is styled in the
    theme (BackstageInfoCard.styleOverrides.header). */
@@ -197,15 +198,16 @@ body, body *, input, select, textarea, button, optgroup {
    don't own, so they are matched by MUI's global classes — the public, stable
    hook. Pixel type goes on chrome (buttons, tabs, table headers, filter labels,
    chips, headings); table bodies and descriptions stay Inter, exactly as on our
-   own pages. */
+   own pages. BackstageContentHeader-title, BackstageItemCardHeader and
+   BackstageAutocomplete-label carry the same font/text-transform, set in
+   theme.tsx instead since class*= hooks on those three don't survive a
+   production build. */
 .MuiButton-root, .MuiTab-root, .MuiChip-root, .MuiTableCell-head,
 .MuiTableSortLabel-root, .MuiFormLabel-root, .MuiInputLabel-root,
 .MuiTypography-h1, .MuiTypography-h2, .MuiTypography-h3,
 .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6,
 .MuiCardHeader-title, .MuiDialogTitle-root, .MuiAlertTitle-root,
-[class*="BackstageContentHeader-title"], [class*="BackstageItemCardHeader"],
-[class*="bui-Button"], [class*="bui-HeaderTitle"], [class*="bui-HeaderBreadcrumb"],
-[class*="BackstageAutocomplete-label"] {
+[class*="bui-Button"], [class*="bui-HeaderTitle"], [class*="bui-HeaderBreadcrumb"] {
   font-family: var(--sc-font-pixel) !important;
   text-transform: uppercase !important;
   letter-spacing: 0 !important;
@@ -222,10 +224,10 @@ body, body *, input, select, textarea, button, optgroup {
    at all; the smaller components no longer need one and have been dropped. */
 h1, .MuiTypography-h1 { font-size: 29px !important; line-height: 1.35 !important; }
 h2, .MuiTypography-h2 { font-size: 22px !important; line-height: 1.35 !important; }
-h3, .MuiTypography-h3, .MuiCardHeader-title,
-[class*="BackstageInfoCard-header"] * { font-size: 19px !important; }
+h3, .MuiTypography-h3, .MuiCardHeader-title { font-size: 19px !important; }
 h4, h5, h6, .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 { font-size: 14px !important; }
-[class*="BackstageContentHeader-title"] { font-size: 18px !important; line-height: 1.35 !important; }
+/* BackstageInfoCard-header * (19px) and BackstageContentHeader-title (18px/1.35)
+   are set in theme.tsx — see the comment above. */
 .MuiDialogTitle-root { font-size: 16px !important; }
 
 /* Native buttons get the same press as ours: the shadow collapses and the
@@ -287,30 +289,51 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .MuiSwitch-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiCheckbox-colorPrimary.Mui-checked, .MuiRadio-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiChip-root { border-radius: var(--sc-radius) !important; }
-/* ===== Graphs: React-Flow look — dark canvas + dots, compact dark nodes =====
-   Our own graphs use the stable .react-flow__* API (below). These rules restyle
-   Backstage's built-in catalog/dependency graph SVG.
-   [FRAGILE: PluginCatalogGraph* / DependencyGraph* — no stable hook; re-derive
-   on upgrade, or drop if the built-in graph is no longer surfaced.] */
-/* The graph svg IS the dark dotted canvas and fills its container (no smaller
-   inner box inside a larger canvas). */
-svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultNode"]) {
-  background-color: #0a0a10 !important;
-  background-image: radial-gradient(circle, rgba(255,255,255,.16) 1px, transparent 1px) !important;
-  background-size: 17px 17px !important; border-radius: var(--sc-radius);
-  width: 100% !important; display: block !important; }
-[class*="PluginCatalogGraphCustomNode-node"], [class*="DependencyGraphDefaultNode-node"] {
-  fill: #17171f !important; stroke: #32303e !important; rx: 8 !important; ry: 8 !important; }
-[class*="PluginCatalogGraphCustomLabel-text"], [class*="DependencyGraphDefaultNode-text"] {
-  fill: #e7e7ef !important; font-size: 11px !important; font-weight: 500 !important; }
-[class*="PluginCatalogGraph"] path, [class*="DependencyGraph"] path[marker-end], [class*="Edge"] path {
-  stroke: rgba(255,255,255,.24) !important; }
-[class*="PluginCatalogGraph"] marker path, [class*="DependencyGraph"] marker path { fill: rgba(255,255,255,.24) !important; }
-/* focused / selected node -> accent tint */
-[class*="PluginCatalogGraphCustomNode-node"][class*="primary"], [class*="PluginCatalogGraphCustomNode-node"][class*="focused"], rect[class*="focused"] {
-  fill: hsl(var(--sc-primary) / .22) !important; stroke: hsl(var(--sc-primary)) !important; }
-/* our React Flow workflow DAG — dark + dots (dot color set in the component). */
-.react-flow, .react-flow__renderer, .react-flow__pane { background: #0a0a10 !important; }
+/* ===== Graphs =====
+   All three graphs are ours and drawn with React Flow, whose class names are
+   literal and so survive a production build. Backstage's own SVG graph is no
+   longer rendered: its selectors named generated class names, which production
+   mangles to jss<n>, so they were dead in every deployed release while working
+   perfectly on the dev server. */
+/* The app visualizer draws Backstage's SVG graph, which is a different feature
+   from the catalog graph and still exists. Its id is stable, so the canvas can
+   take the space colour without naming any generated class. */
+#dependency-graph { background-color: #05050c; border-radius: var(--sc-radius); }
+
+/* ===== Catalog graph (our React Flow one) ===== */
+.sc-graph-layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px;
+  align-items: start; min-width: 0; }
+@media (max-width: 900px) { .sc-graph-layout { grid-template-columns: 1fr; } }
+.sc-graph-empty { display: flex; align-items: center; justify-content: center;
+  height: 100%; min-height: 320px; padding: 24px; text-align: center;
+  color: hsl(var(--sc-muted-fg)); font-size: 13px; }
+/* Nodes: the dark surface everywhere, the accent only on the rooted one. A
+   graph where every node looks the same is a graph where re-rooting appears to
+   do nothing, which is exactly how the built-in one failed. */
+.react-flow__node.sc-graph-node { background: #17171f; color: #e7e7ef;
+  border: var(--sc-border-w) solid #32303e; border-radius: var(--sc-radius);
+  font-size: 11px; font-weight: 500; display: flex; align-items: center;
+  justify-content: center; padding: 0 8px; text-align: center; }
+.react-flow__node.sc-graph-node.root { background: hsl(var(--sc-primary) / .22);
+  border-color: hsl(var(--sc-primary)); }
+.react-flow__edge-path { stroke: rgba(255,255,255,.24) !important; }
+.react-flow__edge-text { font-size: 10px; }
+/* React Flow paints a white rect behind every edge label, which is a bright
+   block on a near-black canvas. Match it to the space colour instead. */
+.react-flow__edge-textbg { fill: #05050c !important; }
+/* React Flow's own stylesheet is bundled and can load after ours, so these
+   need !important to win rather than depending on injection order. */
+.react-flow__edge-text { fill: #b9b9c6 !important; }
+
+/* The canvas wrapper carries the space colour. It sits BELOW react-flow's
+   background svg, which is what makes the stars visible — see the note on the
+   .react-flow rule below. */
+.sc-graph-canvas { background: ${STARFIELD.bg}; border-radius: var(--sc-radius); }
+/* Transparent, NOT the space colour. React Flow renders its dot pattern into an
+   svg with z-index:-1, which paints behind its parent's own background — so an
+   opaque colour here hid the stars completely (the old grey ones too). The
+   colour goes on the wrapper element instead, which sits below that svg. */
+.react-flow, .react-flow__renderer, .react-flow__pane { background: transparent !important; }
 .react-flow__node { border-radius: var(--sc-radius) !important; }
 .react-flow__controls { box-shadow: none !important; }
 .react-flow__controls button { background: #17171f !important; border-color: #32303e !important; }
@@ -329,7 +352,15 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
    bands of the picked accent, dithered at each seam with a checkerboard, so it
    reads as an 8-bit sky. Every colour derives from --sc-primary, so the motif
    changes with the swatch. */
-[class*="ItemCardHeader"] {
+/* Selector note for every card-header rule below: Material-UI keeps a
+   makeStyles name in the generated class only OUTSIDE production, so
+   [class*="ItemCardHeader"] matched nothing in a built image while working
+   perfectly on the dev server. Only Mui-prefixed classes survive, and the
+   header is reliably the card's first element child. .sc-route-create scopes
+   it to the templates page, because .MuiCard-root alone is every card in the
+   app. This positional cycling cannot move into theme styleOverrides — nth-child
+   is not expressible there. */
+.sc-route-create .MuiCard-root > .MuiBox-root:first-child {
   /* Ancient Greek, drawn entirely with hard colour stops.
 
      The dominant motif is a meander — the Greek key — running the full width as
@@ -392,8 +423,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
    is the same four rectangles in every scene, re-sized and re-placed, which is
    why this costs two rules rather than two more background stacks.
    Cards cycle 3n+1 / 3n+2 / 3n+3, the same way the supplied images cycle. */
-[class*="BackstageItemCardGrid-root"] > .MuiCard-root:nth-child(3n + 2)
-  [class*="ItemCardHeader"] {
+.sc-route-create .MuiCard-root:nth-child(3n + 2)
+  > .MuiBox-root:first-child {
   /* The oracle flame: a taper, widest at its base. */
   background-size:
     4px 4px, 8px 4px, 12px 4px, 16px 4px,
@@ -408,8 +439,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     0 0,
     0 0 !important;
 }
-[class*="BackstageItemCardGrid-root"] > .MuiCard-root:nth-child(3n + 3)
-  [class*="ItemCardHeader"] {
+.sc-route-create .MuiCard-root:nth-child(3n + 3)
+  > .MuiBox-root:first-child {
   /* The underworld gate: two posts under a lintel, with a step above it. */
   background-size:
     5px 16px, 5px 16px, 28px 4px, 18px 3px,
@@ -427,7 +458,8 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 /* The title sits on art, so it needs its own contrast: a 1px outline in the
    opposite tone (dark behind light text, light behind dark) plus weight. The
    shade token flips with the scheme, alongside --sc-primary-fg. */
-[class*="ItemCardHeader"], [class*="ItemCardHeader"] * {
+.sc-route-create .MuiCard-root > .MuiBox-root:first-child,
+.sc-route-create .MuiCard-root > .MuiBox-root:first-child * {
   font-weight: 700 !important;
   text-shadow:
     1px 0 0 hsl(var(--sc-primary-shade)),
@@ -436,7 +468,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     0 -1px 0 hsl(var(--sc-primary-shade)),
     2px 2px 0 hsl(var(--sc-primary-shade) / .55);
 }
-[class*="ItemCardHeader"] * { color: hsl(var(--sc-primary-fg)) !important; }
+.sc-route-create .MuiCard-root > .MuiBox-root:first-child * { color: hsl(var(--sc-primary-fg)) !important; }
 /* tables */
 .MuiTableCell-head, .MuiTableCell-root.MuiTableCell-head {
   text-transform: uppercase !important; font-size: 11px !important; font-weight: 700 !important;
@@ -474,6 +506,10 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-card { background: hsl(var(--sc-card)); color: hsl(var(--sc-card-fg));
   border: var(--sc-border-w) solid hsl(var(--sc-border)); border-radius: var(--sc-radius); overflow: hidden; }
 .sc-card-h { padding: 18px 20px 0; }
+/* Title and its optional action share a row; the action keeps to the right and
+   never squeezes the title, which wraps first. */
+.sc-card-hrow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.sc-card-action { flex: 0 0 auto; font-size: 13px; }
 .sc-card-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
 .sc-card-desc { color: hsl(var(--sc-muted-fg)); font-size: 13px; margin-top: 2px; }
 .sc-card-b { padding: 18px 20px; }
@@ -544,14 +580,27 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
 .sc-toolbar .sc-input { width: auto; flex: 1 1 220px; min-width: 180px; }
 .sc-toolbar .sc-select { width: auto; min-width: 150px; }
+/* Compact variant, for a select that sits in a card header beside a title. */
+.sc-select-sm { height: 28px; padding: 0 26px 0 8px; font-size: 12px; }
 /* collapsible JSON viewer */
-.sc-json { display: flex; flex-direction: column; gap: 10px; }
-.sc-json-bar { display: flex; gap: 8px; }
+.sc-json { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.sc-json-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+/* min-width:0 is what makes overflow-x actually engage. A flex or grid item
+   defaults to min-width:auto, so one long unbreakable line grows the item
+   instead of scrolling inside it, and an ancestor clips it at the window edge —
+   which is how a param carrying a dumped JSON payload disappeared off-screen
+   with no scrollbar to reach it. */
 .sc-json-body { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px;
   line-height: 1.7; background: hsl(var(--sc-muted) / .4); border: var(--sc-border-w) solid hsl(var(--sc-border));
-  border-radius: var(--sc-radius); padding: 12px 14px; overflow-x: auto; }
-.sc-json-children { padding-left: 16px; border-left: 1px solid hsl(var(--sc-border)); margin-left: 4px; }
-.sc-json-row { white-space: nowrap; }
+  border-radius: var(--sc-radius); padding: 12px 14px; overflow-x: auto;
+  min-width: 0; max-width: 100%; }
+.sc-json-children { padding-left: 16px; border-left: 1px solid hsl(var(--sc-border)); margin-left: 4px;
+  min-width: 0; }
+/* Structure stays on one line so the tree still reads as a tree; a long scalar
+   wraps, because a serialised payload is one unbroken token that no amount of
+   horizontal scrolling makes readable. */
+.sc-json-row { white-space: nowrap; min-width: 0; }
+.sc-json-string, .sc-json-number { white-space: pre-wrap; overflow-wrap: anywhere; }
 .sc-json-toggle { cursor: pointer; border-radius: var(--sc-radius); }
 .sc-json-toggle:hover { background: hsl(var(--sc-primary) / .08); }
 .sc-json-chevron { display: inline-block; width: 14px; color: hsl(var(--sc-muted-fg)); }
@@ -564,6 +613,14 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-dark .sc-json-string { color: hsl(152 45% 60%); }
 .sc-dark .sc-json-number { color: hsl(217 70% 70%); }
 .sc-dark .sc-json-boolean { color: hsl(280 60% 72%); }
+/* A string that is itself a JSON document keeps its quotes and takes the string
+   colour on its braces, so the subtree reads as "a string containing this"
+   rather than as a real nested object. The difference decides what the workflow
+   receives: a string param arrives escaped where an object arrives clean. */
+.sc-json-embedded > .sc-json-row > .sc-json-punc,
+.sc-json-embedded > .sc-json-row > .sc-json-collapsed { color: hsl(152 42% 42%); }
+:root.sc-dark .sc-json-embedded > .sc-json-row > .sc-json-punc,
+:root.sc-dark .sc-json-embedded > .sc-json-row > .sc-json-collapsed { color: hsl(152 45% 60%); }
 
 /* [flare] Approval progress: cells plus the literal count. A bar alone says
    "some of it is done"; the number says which. */
@@ -587,7 +644,12 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
    per element, and the global .sc * rule gives each rect its own dark colour. */
 .sc-empty .sc-state-ic, .sc-empty .sc-state-ic * {
   color: hsl(var(--sc-primary)); }
-.sc-empty .sc-state-ic { width: 24px; height: 24px; }
+/* 32px = 2x the 16px sprite. 24px was 1.5x, which only looks right where the
+   device pixel ratio is even: at dpr 2 it lands on 3 device pixels per sprite
+   pixel, but at dpr 1 it is 1.5 and crispEdges rounds alternate columns to 1px
+   and 2px — a visibly lopsided sprite on any non-retina screen. Keep every
+   size an integer multiple of SPRITE_SIZE. */
+.sc-empty .sc-state-ic { width: 32px; height: 32px; }
 .sc-empty-title { font-family: var(--sc-font-pixel); text-transform: uppercase;
   font-size: 13px; color: hsl(var(--sc-fg)); }
 .sc-empty-hint { font-size: 12px; max-width: 32ch; }
@@ -621,7 +683,9 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     var(--sc-shadow); }
 /* The 78px is clearance for the picker sitting in the same corner. Once the
    picker has been moved, the tour box can have the space back. */
-:root:not([data-picker-moved='true']) .sc-qs-box { bottom: 78px; }
+/* The picker docks bottom-LEFT now, so the tour box no longer has to clear it.
+   A dragged picker can still be anywhere, which is what needsFlip handles. */
+:root:not([data-picker-moved='true']) .sc-qs-box { bottom: 18px; }
 /* …and when even that is not enough — the picker is draggable, so it can be
    parked exactly here — the box moves to the opposite end rather than sitting
    on top of the element it is describing. Decided in Quickstart.tsx from the
@@ -687,7 +751,11 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
    Hover is the sidebar's own selected treatment — a muted wash of the picked
    accent — so selection looks the same wherever it happens. */
 .sc-tour { position: relative; overflow: visible; }
-.sc-tour:hover:not(:disabled), .sc-tour:focus-visible {
+/* Shared with any button that should light up in the picked accent on hover —
+   the same treatment the sidebar uses for selection, so "this is the one you
+   are about to act on" looks identical wherever it happens. */
+.sc-tour:hover:not(:disabled), .sc-tour:focus-visible,
+.sc-btn-accent:hover:not(:disabled), .sc-btn-accent:focus-visible {
   background: hsl(var(--sc-primary) / .10);
   border-color: hsl(var(--sc-primary) / .45);
   color: hsl(var(--sc-primary));
@@ -787,7 +855,10 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-row { display: flex; align-items: center; gap: 8px; }
 .sc-kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 16px; font-size: 14px; }
 .sc-kv dt { color: hsl(var(--sc-muted-fg)); }
-.sc-kv dd { margin: 0; color: hsl(var(--sc-fg)); }
+/* min-width:0 so a long value scrolls inside its own cell. A grid item defaults
+   to min-width:auto, so one unbreakable line widens the whole column and the
+   card clips it at the window edge instead. */
+.sc-kv dd { margin: 0; color: hsl(var(--sc-fg)); min-width: 0; overflow-wrap: anywhere; }
 
 /* dialog */
 .sc-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1600;
@@ -835,9 +906,9 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-nav.collapsed .sc-nav-item { justify-content: center; padding: 9px; }
 .sc-nav.collapsed .sc-nav-top { justify-content: center; }
 /* Force the content gutter to match the nav width (hashed SidebarPage class). */
-/* Content offset for the fixed nav lives in the theme
-   (BackstageSidebarPage.styleOverrides.root); the mobile override stays here. */
-@media (max-width: 600px) { .sc-nav { display: none; } [class*="BackstageSidebarPage-root"] { padding-left: 0 !important; } }
+/* Content offset for the fixed nav, and its mobile override, both live in the
+   theme (BackstageSidebarPage.styleOverrides.root). */
+@media (max-width: 600px) { .sc-nav { display: none; } }
 
 /* color scheme picker */
 /* [flare] The colour picker is a potion box: a shelf of bottles, each holding
@@ -855,12 +926,33 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
     var(--sc-shadow); }
 /* Only the floating instance is pinned to the corner; in the flow it is a
    shelf like any other block, which is how the sign-in card carries one. */
-.sc-picker-float { position: fixed; right: 14px; bottom: 14px; z-index: 1500;
-  cursor: grab; touch-action: none; }
+/* Docked at the bottom of the sidebar. The shelf is 190px and the nav is
+   resizable from 180px (68px collapsed), so it has to fold rather than
+   overhang: CustomNav writes the live width onto --sc-nav-w, so the shelf
+   re-flows with the same drag that resizes the nav. z-index 1500 against the
+   nav's 1200 puts it above the nav rather than clipped by it. */
+.sc-picker-float { position: fixed; left: 8px; bottom: 14px; z-index: 1500;
+  cursor: grab; touch-action: none;
+  max-width: calc(var(--sc-nav-w) - 16px);
+  flex-wrap: wrap; justify-content: center; }
 /* Once dragged, inline left/top drive it — the corner anchors have to go or the
-   box would be pinned by both edges and stretch instead of move. */
-:root[data-picker-moved='true'] .sc-picker-float { right: auto; bottom: auto; }
-.sc-picker-float[data-dragging='true'] { cursor: grabbing; user-select: none; }
+   box would be pinned by both edges and stretch instead of move. It is free of
+   the sidebar then, so the width cap goes with them. */
+:root[data-picker-moved='true'] .sc-picker-float {
+  left: auto; bottom: auto; max-width: none; flex-wrap: nowrap; }
+/* Collapsed is a 68px icons-only rail; a colour shelf folded into six rows
+   there is noise, not a control. A dragged picker is unaffected — it is no
+   longer in the sidebar. The attribute is set by CustomNav rather than a
+   sibling selector, because the nav and the picker mount from different trees
+   and are not siblings in the DOM. */
+:root[data-nav-collapsed='true']:not([data-picker-moved='true']) .sc-picker-float {
+  display: none; }
+/* Never selectable, not just while dragging: the shelf is a row of buttons with
+   no text to select, and applying this only after the 4px threshold meant the
+   first few pixels of every drag started a text selection instead — which then
+   fought the drag for the rest of the gesture. */
+.sc-picker-float { -webkit-user-select: none; user-select: none; }
+.sc-picker-float[data-dragging='true'] { cursor: grabbing; }
 /* The sign-in card has its own shelf under the button, so the corner one would
    be a second identical picker on the same screen. */
 :root.sc-signed-out .sc-picker-float { display: none; }
@@ -1077,10 +1169,11 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   @keyframes sc-walk { to { left: calc(100vw - 16px); } }
   :root.sc-konami::after { animation: sc-walk 6s steps(24) infinite; }
   .sc-h1::after,
-  :is(h1, h2, h3)[class*="bui-HeaderTitle"]::after,
-  [class*="BackstageHeader-title"]::after {
+  :is(h1, h2, h3)[class*="bui-HeaderTitle"]::after {
     animation: sc-caret 1s steps(1) infinite;
   }
+  /* BackstageHeader-title::after's animation lives in theme.tsx
+     (BackstageHeader.styleOverrides.title), nested under the same media query. */
 }
 
 /* The block caret marks a page title, wherever the page comes from: ours,
@@ -1088,8 +1181,7 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
    outside the motion query — only its blink is animation, so a reader with
    reduced motion still gets the mark, just a steady one. */
 .sc-h1::after,
-:is(h1, h2, h3)[class*="bui-HeaderTitle"]::after,
-[class*="BackstageHeader-title"]::after {
+:is(h1, h2, h3)[class*="bui-HeaderTitle"]::after {
   /* ContentHeader is deliberately absent: it renders empty on the create page
      (a lone floating block) and, where it does have text, it sits under a
      Header title that already carries the caret.
@@ -1103,6 +1195,9 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
   margin-left: 4px;
   color: hsl(var(--sc-primary));
 }
+/* BackstageHeader-title gets the same caret via theme.tsx
+   (BackstageHeader.styleOverrides.title's '&::after'), because a class*= hook
+   on that hashed name doesn't survive a production build. */
 
 /* The scanline layer is texture, not motion, so it sits outside the media query
    and survives reduced-motion. pointer-events: none keeps clicks passing
@@ -1172,10 +1267,77 @@ svg:has([class*="PluginCatalogGraph"]), svg:has([class*="DependencyGraphDefaultN
 .sc-nav.dragging .sc-nav-resize {
   background: linear-gradient(90deg, transparent 2px, hsl(var(--sc-primary)) 2px 4px, transparent 4px); }
 
+/* The scaffolder form is Material-UI, and palette.primary is a literal colour
+   fixed when the theme is built (theme.tsx, the PRIMARY constant). It cannot
+   read --sc-primary, because MUI runs darken()/fade() over palette values and
+   would choke on a var(). So the rendered classes are overridden instead —
+   they are Mui-prefixed and therefore survive a production build, unlike the
+   makeStyles names MUI discards there.
+   Both spellings are listed on purpose: v4 emits MuiStepIcon-active, v5 the
+   global Mui-active, and the scaffolder pulls in both majors. NOTE: no
+   backticks in this file, ever — it is one template literal and a backtick in
+   a comment truncates the whole stylesheet. */
+.MuiStepIcon-root.MuiStepIcon-active,
+.MuiStepIcon-root.MuiStepIcon-completed,
+.MuiStepIcon-root.Mui-active,
+.MuiStepIcon-root.Mui-completed { color: hsl(var(--sc-primary)) !important; }
+.MuiStepLabel-label.MuiStepLabel-active,
+.MuiStepLabel-label.Mui-active { color: hsl(var(--sc-fg)) !important; }
+.MuiTypography-colorPrimary { color: hsl(var(--sc-primary)) !important; }
+/* Focus rings and underlines. */
+.MuiFormLabel-root.Mui-focused { color: hsl(var(--sc-primary)) !important; }
+.MuiInput-underline:after,
+.MuiFilledInput-underline:after { border-bottom-color: hsl(var(--sc-primary)) !important; }
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
+.MuiAutocomplete-inputFocused ~ .MuiOutlinedInput-notchedOutline {
+  border-color: hsl(var(--sc-primary)) !important; }
+/* Selection controls. MUI v4 defaults Checkbox/Radio/Switch to the SECONDARY
+   palette, not the primary one — an audit of a live template form found
+   MuiCheckbox-colorSecondary — and palette.secondary is another literal fixed
+   at theme construction, which is the purple that survived every primary-only
+   override. Both colour variants are listed. */
+.MuiCheckbox-colorPrimary.Mui-checked,
+.MuiCheckbox-colorSecondary.Mui-checked,
+.MuiRadio-colorPrimary.Mui-checked,
+.MuiRadio-colorSecondary.Mui-checked,
+.MuiSwitch-colorPrimary.Mui-checked,
+.MuiSwitch-colorSecondary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
+.MuiSwitch-colorPrimary.Mui-checked + .MuiSwitch-track,
+.MuiSwitch-colorSecondary.Mui-checked + .MuiSwitch-track {
+  background-color: hsl(var(--sc-primary)) !important; }
+/* Icon buttons that opted into an accent — the array field's add/remove/reorder
+   controls are these. Found by scanning a live form for every element still
+   painted with the theme's frozen palette; the label, svg and ripple inside
+   them inherit the colour, so the button is the only thing to set. */
+.MuiIconButton-colorPrimary,
+.MuiIconButton-colorSecondary,
+.MuiSvgIcon-colorPrimary,
+.MuiSvgIcon-colorSecondary { color: hsl(var(--sc-primary)) !important; }
+
+/* Buttons and progress. */
+.MuiButton-containedPrimary { background-color: hsl(var(--sc-primary)) !important;
+  color: hsl(var(--sc-primary-fg)) !important; }
+.MuiButton-textPrimary, .MuiButton-outlinedPrimary { color: hsl(var(--sc-primary)) !important; }
+.MuiChip-colorPrimary { background-color: hsl(var(--sc-primary)) !important;
+  color: hsl(var(--sc-primary-fg)) !important; }
+
 /* State sprite beside its badge. 16px is one screen pixel per sprite pixel —
    the size at which pixel art is sharpest; avoid non-integer multiples. */
 .sc-state { display: inline-flex; align-items: center; gap: var(--sc-unit); }
 .sc-state-ic { width: 16px; height: 16px; flex: 0 0 auto; color: currentColor; }
+
+/* At a fractional device pixel ratio no fixed size divides evenly — 125% zoom
+   over a 32px box is 2.5 device pixels per sprite pixel — and crispEdges
+   resolves that by rounding neighbouring columns to different widths, which
+   distorts the 2px features (eye sockets, teeth) first. Antialiasing is
+   symmetric; the softness costs less than a lopsided sprite. CSS cannot ask
+   "is this an integer multiple", so Chrome's fractional zoom steps are named. */
+@media (resolution: 1.1dppx), (resolution: 1.25dppx), (resolution: 1.75dppx),
+       (resolution: 2.25dppx), (resolution: 2.5dppx) {
+  .sc-state-ic, .sc-potion svg, .sc-nav-mark svg, .sc-login-mark svg {
+    shape-rendering: geometricPrecision;
+  }
+}
 
 /* Sidebar: the active row is marked by a cursor, the way a menu selection is. */
 .sc-nav-cursor { font-family: var(--sc-font-pixel); font-size: 11px; width: 12px;

@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { ThemeBlueprint } from '@backstage/plugin-app-react';
 import {
   AppRootElementBlueprint,
+  PageBlueprint,
   createFrontendModule,
 } from '@backstage/frontend-plugin-api';
 import {
@@ -60,6 +61,149 @@ const pageThemes = {
 
 function makeTheme(mode: 'light' | 'dark', t: Tone) {
   const base = mode === 'light' ? palettes.light : palettes.dark;
+  // Backstage's own components are styled here, through their published
+  // override keys and slot names, rather than by matching hashed class
+  // prefixes from injected CSS. The slots are typed by @backstage/core-components
+  // (HeaderClassKey, InfoCardClassKey, …), so a renamed slot fails tsc instead
+  // of silently rendering unstyled.
+  //
+  // Kept as an untyped local rather than inlined, because BackstageAutocomplete
+  // below isn't a known key (it ships from @backstage/plugin-catalog-react, not
+  // core-components) — inlined into the createUnifiedTheme() call it would hit
+  // TS2353 (excess property) since that check only fires on fresh object
+  // literals; passed in by reference it's a normal structural assignment,
+  // which permits the extra key.
+  const componentOverrides = {
+    // The app visualizer still renders Backstage's SVG DependencyGraph — it is
+    // a different feature from the catalog graph, and these four keys are what
+    // keep it on the platform's palette. They were deleted with the catalog
+    // graph's overrides and left the visualizer unstyled: a transparent canvas
+    // with default light-blue nodes on a dark page.
+    BackstageDependencyGraphNode: {
+      styleOverrides: { node: { fill: '#17171f', stroke: '#32303e' } },
+    },
+    BackstageDependencyGraphDefaultNode: {
+      styleOverrides: {
+        node: { fill: '#17171f', stroke: '#32303e', rx: 8, ry: 8 },
+        text: { fill: '#e7e7ef' },
+      },
+    },
+    BackstageDependencyGraphDefaultLabel: {
+      styleOverrides: { text: { fill: '#e7e7ef' } },
+    },
+    BackstageDependencyGraphEdge: {
+      styleOverrides: { path: { stroke: 'rgba(255,255,255,.24)' } },
+    },
+    BackstageHeader: {
+        styleOverrides: {
+          header: {
+            backgroundImage: 'none',
+            backgroundColor: 'hsl(var(--sc-card))',
+            boxShadow: 'none',
+            borderBottom: '1px solid hsl(var(--sc-border))',
+            paddingTop: 16,
+            paddingBottom: 14,
+            minHeight: 0,
+          },
+          title: {
+            color: 'hsl(var(--sc-fg))',
+            fontFamily: "'Pixelify Sans', ui-monospace, monospace",
+            textTransform: 'uppercase',
+            fontWeight: 400,
+            // 18px/1.35 was a separate class*="BackstageContentHeader-title"
+            // rule in styles.ts, folded in here — same slot, same production
+            // build hazard as the caret below.
+            fontSize: '18px !important',
+            lineHeight: '1.35 !important',
+            // The block caret (see .sc-h1::after in styles.ts for the sibling
+            // selectors this can't share, since a hashed class fragment
+            // doesn't survive a production build).
+            '&::after': {
+              content: "'\\2588' / ''",
+              marginLeft: 4,
+              color: 'hsl(var(--sc-primary))',
+            },
+            '@media (prefers-reduced-motion: no-preference)': {
+              '&::after': {
+                animation: 'sc-caret 1s steps(1) infinite',
+              },
+            },
+          },
+          subtitle: { color: 'hsl(var(--sc-muted-fg))' },
+          type: { color: 'hsl(var(--sc-muted-fg))' },
+        },
+      },
+      BackstageHeaderLabel: {
+        styleOverrides: { label: { color: 'hsl(var(--sc-muted-fg))' } },
+      },
+      BackstageContent: {
+        styleOverrides: {
+          root: { background: 'hsl(var(--sc-bg))' },
+        },
+      },
+      BackstageContentHeader: {
+        styleOverrides: {
+          title: {
+            fontFamily: 'var(--sc-font-pixel) !important',
+            textTransform: 'uppercase !important',
+            letterSpacing: '0 !important',
+            fontWeight: '400 !important',
+          },
+        },
+      },
+      BackstageInfoCard: {
+        styleOverrides: {
+          header: {
+            backgroundColor: 'hsl(var(--sc-card))',
+            color: 'hsl(var(--sc-fg))',
+            borderBottom: '1px solid hsl(var(--sc-border))',
+            '& *': { fontSize: '19px !important' },
+          },
+        },
+      },
+      BackstageItemCardHeader: {
+        styleOverrides: {
+          // No title/subtitle slot: the title is a plain Typography child, so
+          // font/text-transform on root reaches it by inheritance. The
+          // pixel-art background gradient stays in styles.ts (CSS is simpler
+          // than a style object for that part), keyed off a stable class.
+          root: {
+            fontFamily: 'var(--sc-font-pixel) !important',
+            textTransform: 'uppercase !important',
+            letterSpacing: '0 !important',
+            fontWeight: '400 !important',
+          },
+        },
+      },
+      // BackstageAutocomplete isn't part of BackstageComponentsNameToClassKey
+      // (it ships from @backstage/plugin-catalog-react, not core-components) —
+      // see the comment on componentOverrides above for how this avoids TS2353.
+      BackstageAutocomplete: {
+        styleOverrides: {
+          label: {
+            fontFamily: 'var(--sc-font-pixel) !important',
+            textTransform: 'uppercase !important',
+            letterSpacing: '0 !important',
+            fontWeight: '400 !important',
+          },
+        },
+      },
+      BackstageSidebarPage: {
+        styleOverrides: {
+          root: {
+            // !important is load-bearing here: SidebarPage sets its own
+            // padding-left (224px, its default sidebar width) inside a
+            // breakpoint, which otherwise wins and misaligns the content
+            // against our 240px nav.
+            paddingLeft: 'var(--sc-nav-w) !important',
+            transition: 'padding-left .16s ease',
+            '@media (max-width: 600px)': {
+              paddingLeft: '0 !important',
+            },
+          },
+        },
+      },
+  };
   return createUnifiedTheme({
     fontFamily: FONT,
     palette: {
@@ -77,63 +221,7 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
       },
     },
     pageTheme: pageThemes,
-    // Backstage's own components are styled here, through their published
-    // override keys and slot names, rather than by matching hashed class
-    // prefixes from injected CSS. The slots are typed by @backstage/core-components
-    // (HeaderClassKey, InfoCardClassKey, …), so a renamed slot fails tsc instead
-    // of silently rendering unstyled.
-    components: {
-      BackstageHeader: {
-        styleOverrides: {
-          header: {
-            backgroundImage: 'none',
-            backgroundColor: 'hsl(var(--sc-card))',
-            boxShadow: 'none',
-            borderBottom: '1px solid hsl(var(--sc-border))',
-            paddingTop: 16,
-            paddingBottom: 14,
-            minHeight: 0,
-          },
-          title: {
-            color: 'hsl(var(--sc-fg))',
-            fontFamily: "'Pixelify Sans', ui-monospace, monospace",
-            textTransform: 'uppercase',
-            fontWeight: 400,
-            fontSize: '1.3rem',
-            lineHeight: 1.3,
-          },
-          subtitle: { color: 'hsl(var(--sc-muted-fg))' },
-          type: { color: 'hsl(var(--sc-muted-fg))' },
-        },
-      },
-      BackstageHeaderLabel: {
-        styleOverrides: { label: { color: 'hsl(var(--sc-muted-fg))' } },
-      },
-      BackstageInfoCard: {
-        styleOverrides: {
-          header: {
-            backgroundColor: 'hsl(var(--sc-card))',
-            color: 'hsl(var(--sc-fg))',
-            borderBottom: '1px solid hsl(var(--sc-border))',
-          },
-        },
-      },
-      // ItemCardHeader is left to the stylesheet: its pixel-art background is a
-      // layered gradient keyed to --sc-primary, which is simpler to express in
-      // CSS than in a style object.
-      BackstageSidebarPage: {
-        styleOverrides: {
-          root: {
-            // !important is load-bearing here: SidebarPage sets its own
-            // padding-left (224px, its default sidebar width) inside a
-            // breakpoint, which otherwise wins and misaligns the content
-            // against our 240px nav.
-            paddingLeft: 'var(--sc-nav-w) !important',
-            transition: 'padding-left .16s ease',
-          },
-        },
-      },
-    },
+    components: componentOverrides,
     typography: {
       fontFamily: FONT,
       h1: { fontWeight: 700, letterSpacing: '-0.02em' },
@@ -182,7 +270,23 @@ const schemeRoot = AppRootElementBlueprint.make({
  * global shadcn CSS + color picker (SchemeRoot), and the custom shadcn nav.
  * Add this one entry to the app's `features`.
  */
+/**
+ * Our catalog graph, replacing the built-in one at the same path.
+ *
+ * The path must stay /catalog-graph: the relations card links there, and
+ * CustomNav hides that exact href from the sidebar — registering anything else
+ * would silently un-hide it.
+ */
+const catalogGraphPage = PageBlueprint.make({
+  name: 'catalog-graph',
+  params: {
+    path: '/catalog-graph',
+    loader: () =>
+      import('./CatalogGraphPage').then(m => <m.CatalogGraphPage />),
+  },
+});
+
 export const platformUiModule = createFrontendModule({
   pluginId: 'app',
-  extensions: [lightTheme, darkTheme, schemeRoot, navContent],
+  extensions: [lightTheme, darkTheme, schemeRoot, navContent, catalogGraphPage],
 });

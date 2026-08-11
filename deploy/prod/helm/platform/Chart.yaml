@@ -8,7 +8,7 @@ description: |
   Brings no database, no identity provider and no Git server — production
   supplies its own Postgres, AD/SSO and Bitbucket Data Center.
 type: application
-version: 0.1.0
+version: 0.2.0
 # Set by CI to the released image tag; overridable with image.tag.
-appVersion: "0.1.0"
+appVersion: "0.5.0"
 keywords: [backstage, platform, argo-workflows, developer-portal]

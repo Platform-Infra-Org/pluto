@@ -15,6 +15,8 @@ import { useApi, configApiRef } from '@backstage/core-plugin-api';
 import { NavContentBlueprint } from '@backstage/plugin-app-react';
 import { PlatformMark } from './components';
 import { screenName, Flavour } from './flavour';
+import { navItemVisible } from './navVisibility';
+import { useIsAdmin } from './useIsAdmin';
 
 // The nav renders outside react-router's context, so derive the active path
 // from the browser location + history events rather than useLocation().
@@ -87,6 +89,10 @@ function CustomNav({ navItems }: { navItems: any }) {
       '--sc-nav-w',
       collapsed ? `${NAV_COLLAPSED}px` : `${width}px`,
     );
+    // The docked colour picker hides while the rail is collapsed. An attribute
+    // rather than a CSS sibling selector: the nav and the picker mount from
+    // different trees, so they are never siblings in the DOM.
+    document.documentElement.dataset.navCollapsed = collapsed ? 'true' : 'false';
     try {
       localStorage.setItem('platform-nav-collapsed', collapsed ? '1' : '0');
       localStorage.setItem('platform-nav-w', String(width));
@@ -130,11 +136,15 @@ function CustomNav({ navItems }: { navItems: any }) {
   // from an effect and mutating it re-injects CSS, which never re-renders this
   // component — the labels would stay literal whatever the config said.
   const config = useApi(configApiRef);
+  const isAdmin = useIsAdmin();
   const flavour: Flavour =
     config.getOptionalString('app.branding.flavour') === 'fantasy'
       ? 'fantasy'
       : undefined;
   const bag = navItems.withComponent((item: any) => {
+    // Some routes are never offered here, and some only to admins — see
+    // navVisibility.ts for which, and why.
+    if (!navItemVisible(item.href, isAdmin)) return null;
     const active = isActive(pathname, item.href);
     const label = screenName(item.title, flavour);
     return (

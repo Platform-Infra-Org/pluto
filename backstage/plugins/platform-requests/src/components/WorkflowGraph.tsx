@@ -9,6 +9,13 @@ import {
   type Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import {
+  handlePositions,
+  layout,
+  STARFIELD,
+  STAR_WIDE,
+  type Direction,
+} from '@internal/plugin-platform-ui';
 import { Typography } from '@material-ui/core';
 import { requestsApiRef, WorkflowInfo, WorkflowNode } from '../api';
 
@@ -35,34 +42,25 @@ export function displayPhase(n: WorkflowNode): string | undefined {
   return n.type === 'Suspend' && n.phase === 'Running' ? 'Suspended' : n.phase;
 }
 
-// Depth of each node from roots (no incoming edge), following children.
-function depths(nodes: WorkflowNode[]): Map<string, number> {
-  const byId = new Map(nodes.map(n => [n.id, n]));
-  const hasParent = new Set<string>();
-  nodes.forEach(n => n.children.forEach(c => hasParent.add(c)));
-  const out = new Map<string, number>();
-  const walk = (id: string, d: number) => {
-    if (!byId.has(id)) return;
-    if ((out.get(id) ?? -1) >= d) return;
-    out.set(id, d);
-    byId.get(id)!.children.forEach(c => walk(c, d + 1));
-  };
-  nodes.filter(n => !hasParent.has(n.id)).forEach(n => walk(n.id, 0));
-  nodes.forEach(n => !out.has(n.id) && out.set(n.id, 0));
-  return out;
-}
-
-function toFlow(wf: WorkflowInfo): { nodes: Node[]; edges: Edge[] } {
-  const d = depths(wf.nodes);
-  const rowByCol = new Map<number, number>();
+function toFlow(
+  wf: WorkflowInfo,
+  direction: Direction,
+): { nodes: Node[]; edges: Edge[] } {
+  const edges: Edge[] = wf.nodes.flatMap(n =>
+    n.children
+      .filter(c => wf.nodes.some(m => m.id === c))
+      .map(c => ({ id: `${n.id}->${c}`, source: n.id, target: c, animated: true })),
+  );
+  const pos = new Map(layout(wf.nodes, edges, direction).map(p => [p.id, p]));
+  // Handles follow the layout direction: with React Flow's defaults every
+  // edge leaves the bottom and enters the top, so a left-to-right graph has
+  // its lines looping around the boxes instead of running between them.
+  const handles = handlePositions(direction);
   const nodes: Node[] = wf.nodes.map(n => {
     const phase = displayPhase(n);
-    const col = d.get(n.id) ?? 0;
-    const row = rowByCol.get(col) ?? 0;
-    rowByCol.set(col, row + 1);
     return {
       id: n.id,
-      position: { x: col * 220, y: row * 80 },
+      position: pos.get(n.id) ?? { x: 0, y: 0 },
       data: { label: `${n.name}\n${phase ?? ''}` },
       style: {
         // A waiting step is the one thing on this canvas someone must act on,
@@ -79,17 +77,22 @@ function toFlow(wf: WorkflowInfo): { nodes: Node[]; edges: Edge[] } {
         whiteSpace: 'pre-line',
         width: 128,
       },
+      ...handles,
     };
   });
-  const edges: Edge[] = wf.nodes.flatMap(n =>
-    n.children
-      .filter(c => wf.nodes.some(m => m.id === c))
-      .map(c => ({ id: `${n.id}->${c}`, source: n.id, target: c, animated: true })),
-  );
   return { nodes, edges };
 }
 
-export function WorkflowGraph({ id, live }: { id: number; live: boolean }) {
+export function WorkflowGraph({
+  id,
+  live,
+  direction,
+}: {
+  id: number;
+  live: boolean;
+  /** Owned by the page, so its control can sit in the card header. */
+  direction: Direction;
+}) {
   const api = useApi(requestsApiRef);
   const [wf, setWf] = useState<WorkflowInfo>();
 
@@ -115,9 +118,9 @@ export function WorkflowGraph({ id, live }: { id: number; live: boolean }) {
       </Typography>
     );
   }
-  const { nodes, edges } = toFlow(wf);
+  const { nodes, edges } = toFlow(wf, direction);
   return (
-    <div style={{ height: 300, background: '#0a0a10', borderRadius: 10 }}>
+    <div className="sc-graph-canvas" style={{ height: 300 }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -127,7 +130,25 @@ export function WorkflowGraph({ id, live }: { id: number; live: boolean }) {
         maxZoom={1.25}
         proOptions={{ hideAttribution: true }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={17} size={1.2} color="#3a3a48" />
+        {/* Two layers at different spacings: one grid of identical dots reads as
+            graph paper, and at equal spacing the layers moire into a single grid.
+            Both pan and zoom with the canvas, which a CSS background would not.
+            Distinct ids are required — without them React Flow reuses one SVG
+            pattern and only the last layer renders. */}
+        <Background
+          id="stars-dim"
+          variant={BackgroundVariant.Dots}
+          gap={STARFIELD.gap}
+          size={STARFIELD.dimSize}
+          color={STARFIELD.starDim}
+        />
+        <Background
+          id="stars-bright"
+          variant={BackgroundVariant.Dots}
+          gap={STAR_WIDE}
+          size={STARFIELD.size}
+          color={STARFIELD.star}
+        />
         <Controls showInteractive={false} />
       </ReactFlow>
     </div>

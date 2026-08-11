@@ -42,6 +42,19 @@ was a 1:1 rename of two groups and bought nothing.
 requests plus requests owned by their teams. The three request tabs (My / For
 approval / All) are views over that scoping.
 
+## The sidebar is decluttering, not access control
+
+Three routes are offered to admins only — **APIs** (`/api-docs`), **Register
+Existing Component** (`/catalog-import`) and **Visualizer** (`/visualizer`).
+They are operator tooling, and a self-service user has no errand that starts
+there. The list lives in `plugins/platform-ui/src/navVisibility.ts`, and the
+admin test is the same group membership the backend policy uses.
+
+This is a *sidebar* rule and nothing more. Each route still resolves if it is
+typed into the address bar, and it is meant to: what may actually be done on a
+page is decided by the permission policy on the backend, which is the only
+check a URL cannot walk around. Hiding a link declutters; it never protects.
+
 ## Where it could go further
 
 Service-owner scope is currently flat per type — any owning-team member can

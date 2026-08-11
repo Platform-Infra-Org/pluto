@@ -2796,7 +2796,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@backstage/plugin-catalog-graph@npm:^0.6.6":
+"@backstage/plugin-catalog-graph@npm:*, @backstage/plugin-catalog-graph@npm:^0.6.6":
   version: 0.6.6
   resolution: "@backstage/plugin-catalog-graph@npm:0.6.6"
   dependencies:
@@ -4378,7 +4378,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@dagrejs/dagre@npm:^1.1.4":
+"@dagrejs/dagre@npm:^1.1.4, @dagrejs/dagre@npm:^1.1.8":
   version: 1.1.8
   resolution: "@dagrejs/dagre@npm:1.1.8"
   dependencies:
@@ -5294,21 +5294,28 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/plugin-platform-ui@workspace:plugins/platform-ui"
   dependencies:
+    "@backstage/catalog-model": "npm:*"
     "@backstage/config": "npm:*"
     "@backstage/core-app-api": "npm:*"
     "@backstage/core-components": "npm:*"
     "@backstage/core-plugin-api": "npm:*"
     "@backstage/frontend-plugin-api": "npm:*"
     "@backstage/plugin-app-react": "npm:*"
+    "@backstage/plugin-catalog-graph": "npm:*"
+    "@backstage/plugin-catalog-react": "npm:*"
     "@backstage/plugin-scaffolder-react": "npm:^2.0.2"
     "@backstage/test-utils": "npm:*"
     "@backstage/theme": "npm:*"
+    "@dagrejs/dagre": "npm:^1.1.8"
     "@internal/plugin-platform-common": "workspace:^"
     "@material-ui/icons": "npm:^4.9.1"
     "@testing-library/react": "npm:*"
+    "@xyflow/react": "npm:^12"
+    qs: "npm:^6.15.3"
   peerDependencies:
     react: ^17 || ^18 || ^19
     react-dom: ^17 || ^18 || ^19
+    react-router-dom: ^6 || ^7
   languageName: unknown
   linkType: soft
 
@@ -25721,7 +25728,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"qs@npm:^6.11.0, qs@npm:^6.12.3, qs@npm:^6.14.0, qs@npm:^6.14.1, qs@npm:^6.15.0, qs@npm:^6.15.2, qs@npm:~6.15.1":
+"qs@npm:^6.11.0, qs@npm:^6.12.3, qs@npm:^6.14.0, qs@npm:^6.14.1, qs@npm:^6.15.0, qs@npm:^6.15.2, qs@npm:^6.15.3, qs@npm:~6.15.1":
   version: 6.15.3
   resolution: "qs@npm:6.15.3"
   dependencies:

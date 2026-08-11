@@ -1,4 +1,9 @@
-import { clampToViewport, readStoredPos } from './pickerPos';
+import {
+  clampToViewport,
+  fromAnchored,
+  readStoredPos,
+  toAnchored,
+} from './pickerPos';
 
 const BOX = { w: 200, h: 50 };
 const VIEW = { w: 1000, h: 800 };
@@ -74,5 +79,41 @@ describe('readStoredPos', () => {
     // anchors at all, i.e. unreachable.
     expect(readStoredPos('{"x":1e999,"y":0}')).toBeUndefined();
     expect(readStoredPos('{"x":null,"y":0}')).toBeUndefined();
+  });
+});
+
+describe('corner anchoring', () => {
+  const CORNER_BOX = { w: 190, h: 46 };
+
+  it('anchors to the nearest corner', () => {
+    // Bottom-left in a 1000x800 view.
+    expect(toAnchored({ x: 14, y: 740 }, CORNER_BOX, { w: 1000, h: 800 })).toEqual({
+      ax: 'left', ay: 'bottom', dx: 14, dy: 14,
+    });
+  });
+
+  it('anchors to the bottom-right when nearer to it', () => {
+    expect(toAnchored({ x: 796, y: 740 }, CORNER_BOX, { w: 1000, h: 800 })).toEqual({
+      ax: 'right', ay: 'bottom', dx: 14, dy: 14,
+    });
+  });
+
+  it('round-trips unchanged when the viewport does not change', () => {
+    const view = { w: 1000, h: 800 };
+    const pos = { x: 796, y: 740 };
+    expect(fromAnchored(toAnchored(pos, CORNER_BOX, view), CORNER_BOX, view)).toEqual(pos);
+  });
+
+  it('keeps a bottom-right picker in the corner when the window shrinks', () => {
+    const a = toAnchored({ x: 796, y: 740 }, CORNER_BOX, { w: 1000, h: 800 });
+    // 300px narrower, 200px shorter: it must stay 14px off both edges.
+    expect(fromAnchored(a, CORNER_BOX, { w: 700, h: 600 })).toEqual({ x: 496, y: 540 });
+  });
+
+  it('clamps when the new viewport cannot hold the offset', () => {
+    const a = toAnchored({ x: 796, y: 740 }, CORNER_BOX, { w: 1000, h: 800 });
+    const out = fromAnchored(a, CORNER_BOX, { w: 150, h: 100 });
+    expect(out.x).toBeGreaterThanOrEqual(8);
+    expect(out.y).toBeGreaterThanOrEqual(8);
   });
 });
