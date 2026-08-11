@@ -14,7 +14,7 @@ import {
 import LightIcon from '@material-ui/icons/WbSunny';
 import DarkIcon from '@material-ui/icons/Brightness2';
 import { SchemeRoot } from './SchemeRoot';
-import { STARFIELD, STAR_WIDE } from './starfield';
+import { starfieldDeclarations } from './starfield';
 import { navContent } from './CustomNav';
 
 // MUI theme = the Backstage chrome + native pages. The injected shadcn CSS
@@ -86,13 +86,9 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
         // id="dependency-graph"), so this rule paints the canvas itself — no
         // ancestor selector needed.
         graph: {
-          backgroundColor: STARFIELD.bg,
-          backgroundImage: [
-            `radial-gradient(circle, ${STARFIELD.star} ${STARFIELD.size}px, transparent ${STARFIELD.size}px)`,
-            `radial-gradient(circle, ${STARFIELD.starDim} ${STARFIELD.dimSize}px, transparent ${STARFIELD.dimSize}px)`,
-          ].join(', '),
-          backgroundSize: `${STAR_WIDE}px ${STAR_WIDE}px, ${STARFIELD.gap}px ${STARFIELD.gap}px`,
-          backgroundPosition: `0 0, ${Math.round(STARFIELD.gap / 2)}px ${Math.round(STARFIELD.gap / 2)}px`,
+          // Derived, never restated: the React Flow canvas and this one must
+          // agree, and two copies of the numbers drift.
+          ...starfieldDeclarations(),
           borderRadius: 'var(--sc-radius)',
           width: '100%',
           display: 'block',

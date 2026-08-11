@@ -46,7 +46,12 @@ export function starfieldDeclarations(): Record<string, string> {
       `radial-gradient(circle, ${starDim} ${dimSize}px, transparent ${dimSize}px)`,
     ].join(', '),
     backgroundSize: `${STAR_WIDE}px ${STAR_WIDE}px, ${gap}px ${gap}px`,
-    backgroundPosition: `0 0, ${half}px ${half}px`,
+    // Centred, not anchored to the top-left. A graph is laid out about the
+    // middle of its canvas, so a field starting in the corner puts the nodes
+    // between the stars at one end and on top of them at the other. From the
+    // centre the two stay in step. The dim layer is offset by half its gap so
+    // it never lands on the bright one.
+    backgroundPosition: `center, calc(50% + ${half}px) calc(50% + ${half}px)`,
   };
 }
 

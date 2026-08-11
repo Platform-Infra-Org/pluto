@@ -95,6 +95,15 @@ describe('SHADCN_CSS', () => {
     expect(SHADCN_CSS).toMatch(/shape-rendering:\s*geometricPrecision/);
   });
 
+  it('shares one accent-hover treatment between the tour and other buttons', () => {
+    // Duplicating the rule is how the two drift apart; the relations card's
+    // Explore graph button opts in with .sc-btn-accent.
+    expect(SHADCN_CSS).toMatch(/\.sc-btn-accent:hover:not\(:disabled\)/);
+    expect(SHADCN_CSS).toMatch(
+      /\.sc-tour:hover:not\(:disabled\)[^{]*\.sc-btn-accent[^{]*\{[^}]*--sc-primary/,
+    );
+  });
+
   it('keeps react-flow transparent so its star pattern is not covered', () => {
     // The pattern svg is z-index:-1, so it paints behind its parent's own
     // background. An opaque colour on .react-flow hid the stars completely;

@@ -721,7 +721,11 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    Hover is the sidebar's own selected treatment — a muted wash of the picked
    accent — so selection looks the same wherever it happens. */
 .sc-tour { position: relative; overflow: visible; }
-.sc-tour:hover:not(:disabled), .sc-tour:focus-visible {
+/* Shared with any button that should light up in the picked accent on hover —
+   the same treatment the sidebar uses for selection, so "this is the one you
+   are about to act on" looks identical wherever it happens. */
+.sc-tour:hover:not(:disabled), .sc-tour:focus-visible,
+.sc-btn-accent:hover:not(:disabled), .sc-btn-accent:focus-visible {
   background: hsl(var(--sc-primary) / .10);
   border-color: hsl(var(--sc-primary) / .45);
   color: hsl(var(--sc-primary));

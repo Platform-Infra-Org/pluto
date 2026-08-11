@@ -30,8 +30,12 @@ describe('starfield', () => {
     expect(d.backgroundSize).toBe(
       `${STAR_WIDE}px ${STAR_WIDE}px, ${STARFIELD.gap}px ${STARFIELD.gap}px`,
     );
-    // Offset the dim layer so the two never sit on the same points.
-    expect(d.backgroundPosition).not.toBe('0 0, 0 0');
+    // Centred rather than corner-anchored: a graph is laid out about the middle
+    // of its canvas, so a field starting at 0,0 drifts out of step with the
+    // nodes across the width. The dim layer is offset by half its gap so the
+    // two layers never land on the same points.
+    expect(d.backgroundPosition).toContain('center');
+    expect(d.backgroundPosition).toContain('50%');
   });
 
   it('emits a CSS rule for the given selector', () => {
