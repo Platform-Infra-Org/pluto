@@ -4378,7 +4378,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@dagrejs/dagre@npm:^1.1.4":
+"@dagrejs/dagre@npm:^1.1.4, @dagrejs/dagre@npm:^1.1.8":
   version: 1.1.8
   resolution: "@dagrejs/dagre@npm:1.1.8"
   dependencies:
@@ -5294,18 +5294,22 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@internal/plugin-platform-ui@workspace:plugins/platform-ui"
   dependencies:
+    "@backstage/catalog-model": "npm:*"
     "@backstage/config": "npm:*"
     "@backstage/core-app-api": "npm:*"
     "@backstage/core-components": "npm:*"
     "@backstage/core-plugin-api": "npm:*"
     "@backstage/frontend-plugin-api": "npm:*"
     "@backstage/plugin-app-react": "npm:*"
+    "@backstage/plugin-catalog-react": "npm:*"
     "@backstage/plugin-scaffolder-react": "npm:^2.0.2"
     "@backstage/test-utils": "npm:*"
     "@backstage/theme": "npm:*"
+    "@dagrejs/dagre": "npm:^1.1.8"
     "@internal/plugin-platform-common": "workspace:^"
     "@material-ui/icons": "npm:^4.9.1"
     "@testing-library/react": "npm:*"
+    "@xyflow/react": "npm:^12"
   peerDependencies:
     react: ^17 || ^18 || ^19
     react-dom: ^17 || ^18 || ^19
