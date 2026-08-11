@@ -10,12 +10,10 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import {
-  GraphDirectionPicker,
   handlePositions,
   layout,
   STARFIELD,
   STAR_WIDE,
-  useGraphDirection,
   type Direction,
 } from '@internal/plugin-platform-ui';
 import { Typography } from '@material-ui/core';
@@ -85,10 +83,18 @@ function toFlow(
   return { nodes, edges };
 }
 
-export function WorkflowGraph({ id, live }: { id: number; live: boolean }) {
+export function WorkflowGraph({
+  id,
+  live,
+  direction,
+}: {
+  id: number;
+  live: boolean;
+  /** Owned by the page, so its control can sit in the card header. */
+  direction: Direction;
+}) {
   const api = useApi(requestsApiRef);
   const [wf, setWf] = useState<WorkflowInfo>();
-  const [direction, setDirection] = useGraphDirection('platform-workflow-dir', 'LR');
 
   useEffect(() => {
     let stop = false;
@@ -114,46 +120,37 @@ export function WorkflowGraph({ id, live }: { id: number; live: boolean }) {
   }
   const { nodes, edges } = toFlow(wf, direction);
   return (
-    <>
-      <div className="sc-row" style={{ justifyContent: 'flex-end', marginBottom: 8 }}>
-        <GraphDirectionPicker
-          value={direction}
-          onChange={setDirection}
-          id="workflow-dir"
+    <div className="sc-graph-canvas" style={{ height: 300 }}>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        fitView
+        fitViewOptions={{ maxZoom: 1, padding: 0.25 }}
+        minZoom={0.4}
+        maxZoom={1.25}
+        proOptions={{ hideAttribution: true }}
+      >
+        {/* Two layers at different spacings: one grid of identical dots reads as
+            graph paper, and at equal spacing the layers moire into a single grid.
+            Both pan and zoom with the canvas, which a CSS background would not.
+            Distinct ids are required — without them React Flow reuses one SVG
+            pattern and only the last layer renders. */}
+        <Background
+          id="stars-dim"
+          variant={BackgroundVariant.Dots}
+          gap={STARFIELD.gap}
+          size={STARFIELD.dimSize}
+          color={STARFIELD.starDim}
         />
-      </div>
-      <div className="sc-graph-canvas" style={{ height: 300 }}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          fitView
-          fitViewOptions={{ maxZoom: 1, padding: 0.25 }}
-          minZoom={0.4}
-          maxZoom={1.25}
-          proOptions={{ hideAttribution: true }}
-        >
-          {/* Two layers at different spacings: one grid of identical dots reads as
-              graph paper, and at equal spacing the layers moire into a single grid.
-              Both pan and zoom with the canvas, which a CSS background would not.
-              Distinct ids are required — without them React Flow reuses one SVG
-              pattern and only the last layer renders. */}
-          <Background
-            id="stars-dim"
-            variant={BackgroundVariant.Dots}
-            gap={STARFIELD.gap}
-            size={STARFIELD.dimSize}
-            color={STARFIELD.starDim}
-          />
-          <Background
-            id="stars-bright"
-            variant={BackgroundVariant.Dots}
-            gap={STAR_WIDE}
-            size={STARFIELD.size}
-            color={STARFIELD.star}
-          />
-          <Controls showInteractive={false} />
-        </ReactFlow>
-      </div>
-    </>
+        <Background
+          id="stars-bright"
+          variant={BackgroundVariant.Dots}
+          gap={STAR_WIDE}
+          size={STARFIELD.size}
+          color={STARFIELD.star}
+        />
+        <Controls showInteractive={false} />
+      </ReactFlow>
+    </div>
   );
 }

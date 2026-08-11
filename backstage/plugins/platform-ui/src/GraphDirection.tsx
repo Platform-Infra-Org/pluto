@@ -12,8 +12,8 @@ export const DIRECTION_OPTIONS: Array<{ value: Direction; label: string }> = [
 /**
  * The layout-direction control shared by every graph.
  *
- * Small enough to sit in a card header beside the title, which is where these
- * graphs live — they are cards, not pages, so the choice is component state
+ * Sits in a card header opposite the title, which is where every graph on this
+ * app lives — they are cards, not pages, so the choice is component state
  * rather than a URL parameter.
  */
 export function GraphDirectionPicker({

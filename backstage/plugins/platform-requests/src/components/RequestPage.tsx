@@ -17,6 +17,8 @@ import {
   useTabActivity,
   EmptyState,
   JsonTree,
+  GraphDirectionPicker,
+  useGraphDirection,
   HOURGLASS,
 } from '@internal/plugin-platform-ui';
 import {
@@ -71,6 +73,12 @@ export function RequestPage() {
   ) ?? ['group:default/platform-admins'];
   const { id } = useRouteRefParams(requestRouteRef);
   const [request, setRequest] = useState<Request>();
+  // Owned here rather than inside the graph, so its control can sit in the card
+  // header opposite the title instead of floating above the canvas.
+  const [workflowDirection, setWorkflowDirection] = useGraphDirection(
+    'platform-workflow-dir',
+    'LR',
+  );
   const [myGroups, setMyGroups] = useState<string[]>([]);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -303,9 +311,17 @@ export function RequestPage() {
               <CardHeader
                 title={`Workflow — ${request.workflowName}`}
                 description={request.workflowPhase ?? undefined}
+                action={
+                  <GraphDirectionPicker
+                    value={workflowDirection}
+                    onChange={setWorkflowDirection}
+                    id="workflow-dir"
+                  />
+                }
               />
               <CardBody>
                 <WorkflowGraph
+                  direction={workflowDirection}
                   id={request.id}
                   live={!isTerminal(request.state)}
                 />
