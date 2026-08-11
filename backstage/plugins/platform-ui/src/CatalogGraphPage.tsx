@@ -149,7 +149,11 @@ export function CatalogGraphPage() {
           </CardBody>
         </Card>
 
-        <div className="sc-graph-canvas" style={{ minHeight: 620 }}>
+        {/* A definite height, not minHeight: React Flow measures its container on
+            mount, and with an indefinite height it initialises at zero — nodes
+            still render (they are absolutely positioned) but nothing is
+            interactive, so clicks and panning silently do nothing. */}
+        <div className="sc-graph-canvas" style={{ height: 620 }}>
           {state.rootEntityRefs.length === 0 ? (
             <Empty text="Pick an entity to root the graph on — open one from the catalog and use Explore graph." />
           ) : error ? (

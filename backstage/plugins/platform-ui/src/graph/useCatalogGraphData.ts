@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useApi } from '@backstage/core-plugin-api';
 import { catalogApiRef } from '@backstage/plugin-catalog-react';
 import type { Entity } from '@backstage/catalog-model';
@@ -39,6 +39,16 @@ const refsOf = (entity: Entity, relations?: string[]): string[] =>
  * the depth control fires a query per keystroke — and without it a slow early
  * response can land after a later one and render a graph nobody asked for.
  */
+/**
+ * A stable dependency key for a query.
+ *
+ * Exported so the Infinity case can be tested: JSON.stringify(Infinity) is
+ * `null`, which would make an unbounded depth indistinguishable from zero.
+ */
+export function queryKey(query: CatalogGraphQuery): string {
+  return JSON.stringify(query, (_k, v) => (v === Infinity ? 'INFINITY' : v));
+}
+
 export function useCatalogGraphData(query: CatalogGraphQuery): CatalogGraphData {
   const catalogApi = useApi(catalogApiRef);
   const [state, setState] = useState<CatalogGraphData>({
@@ -47,12 +57,19 @@ export function useCatalogGraphData(query: CatalogGraphQuery): CatalogGraphData 
     loading: true,
   });
 
-  // The query is an object rebuilt on every render, so depend on its content.
-  const key = JSON.stringify(query);
+  // The query object is rebuilt on every render, so the effect depends on its
+  // CONTENT. Infinity has to be encoded: JSON.stringify turns it into null, and
+  // round-tripping the query through JSON therefore silently rewrote an
+  // unbounded depth to null — `depth >= null` is true immediately, so the walk
+  // stopped after the roots and an infinite-depth graph showed one node.
+  const key = queryKey(query);
+  // The latest query, read inside the effect so nothing is parsed back out.
+  const latest = useRef(query);
+  latest.current = query;
 
   useEffect(() => {
     let cancelled = false;
-    const q: CatalogGraphQuery = JSON.parse(key);
+    const q = latest.current;
 
     if (q.rootEntityRefs.length === 0) {
       setState({ nodes: [], edges: [], loading: false });

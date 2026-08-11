@@ -312,7 +312,10 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .react-flow__node.sc-graph-node.root { background: hsl(var(--sc-primary) / .22);
   border-color: hsl(var(--sc-primary)); }
 .react-flow__edge-path { stroke: rgba(255,255,255,.24) !important; }
-.react-flow__edge-text { fill: hsl(var(--sc-muted-fg)); font-size: 10px; }
+.react-flow__edge-text { fill: #b9b9c6; font-size: 10px; }
+/* React Flow paints a white rect behind every edge label, which is a bright
+   block on a near-black canvas. Match it to the space colour instead. */
+.react-flow__edge-textbg { fill: #05050c; }
 
 /* The canvas wrapper carries the space colour. It sits BELOW react-flow's
    background svg, which is what makes the stars visible — see the note on the

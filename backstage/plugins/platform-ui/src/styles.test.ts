@@ -104,6 +104,10 @@ describe('SHADCN_CSS', () => {
     );
   });
 
+  it('darkens the edge label backing, which react-flow paints white', () => {
+    expect(SHADCN_CSS).toMatch(/\.react-flow__edge-textbg\s*\{[^}]*fill:/);
+  });
+
   it('keeps react-flow transparent so its star pattern is not covered', () => {
     // The pattern svg is z-index:-1, so it paints behind its parent's own
     // background. An opaque colour on .react-flow hid the stars completely;
