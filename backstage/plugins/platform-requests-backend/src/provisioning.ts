@@ -4,7 +4,11 @@ import {
   UrlReaderService,
 } from '@backstage/backend-plugin-api';
 import { CatalogService } from '@backstage/plugin-catalog-node';
-import { Request as PlatformRequest } from '@internal/plugin-platform-common';
+import {
+  DEFAULT_NAMESPACE,
+  Request as PlatformRequest,
+  resourceRef,
+} from '@internal/plugin-platform-common';
 import { parse as parseYaml } from 'yaml';
 import { ArgoClient } from './argo';
 import { RequestsStore } from './store';
@@ -45,15 +49,23 @@ export function createResourceResolver(deps: {
   auth: AuthService;
   urlReader: UrlReaderService;
   logger: LoggerService;
+  /** Catalog namespace resources are ingested into; `default` unless configured. */
+  namespace?: string;
 }) {
-  const { catalog, auth, urlReader, logger } = deps;
+  const {
+    catalog,
+    auth,
+    urlReader,
+    logger,
+    namespace = DEFAULT_NAMESPACE,
+  } = deps;
 
   const resolveResource = async (
     resourceName: string,
   ): Promise<ResolvedResource> => {
     try {
       const entity = await catalog.getEntityByRef(
-        `resource:default/${resourceName}`,
+        resourceRef(namespace, resourceName),
         { credentials: await auth.getOwnServiceCredentials() },
       );
       if (!entity) {

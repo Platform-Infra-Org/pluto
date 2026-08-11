@@ -4,7 +4,10 @@ import {
 } from '@backstage/backend-plugin-api';
 import { catalogServiceRef } from '@backstage/plugin-catalog-node';
 import { notificationService } from '@backstage/plugin-notifications-node';
-import { Request as PlatformRequest } from '@internal/plugin-platform-common';
+import {
+  DEFAULT_NAMESPACE,
+  Request as PlatformRequest,
+} from '@internal/plugin-platform-common';
 import { createRouter } from './router';
 import { RequestsStore } from './store';
 import { ArgoClient } from './argo';
@@ -74,9 +77,28 @@ export const platformRequestsPlugin = createBackendPlugin({
           { discovery, auth },
         );
 
+        // Which groups count as platform admins (configurable). An admin
+        // bypasses the owning-team approval gate and sees all requests — and,
+        // via the notifier below, is told when a request needs approving.
+        const adminGroups = config.getOptionalStringArray(
+          'platform.rbac.adminGroups',
+        ) ?? ['group:default/platform-admins'];
+
+        // Catalog namespace, resolved once here: entityRefs are built from it
+        // all over the backend, and refs.ts deliberately takes it as an
+        // argument rather than reading config itself.
+        const catalogNamespace =
+          config.getOptionalString('platform.catalog.namespace') ??
+          DEFAULT_NAMESPACE;
+
         // Native Backstage notifications (approvers on new requests, requester
         // on decisions + terminal outcomes) — best-effort, see notifications.ts.
-        const notify = createNotifier(notifications, logger);
+        const notify = createNotifier(
+          notifications,
+          logger,
+          adminGroups,
+          catalogNamespace,
+        );
 
         // Per-request Secret provisioning (TechDocs: Explanation -> Secret lifecycle). Disabled
         // unless platform.secrets.enabled; then Kubernetes-backed.
@@ -94,6 +116,7 @@ export const platformRequestsPlugin = createBackendPlugin({
           auth,
           urlReader,
           logger,
+          namespace: catalogNamespace,
         });
 
         // On APPROVED the router calls this, then flips the request to IN_PROGRESS.
@@ -105,13 +128,6 @@ export const platformRequestsPlugin = createBackendPlugin({
           secretStore,
           cipher,
         });
-
-        // Which groups count as platform admins (configurable). An admin
-        // bypasses the owning-team approval gate and sees all requests.
-        const adminGroups =
-          config.getOptionalStringArray('platform.rbac.adminGroups') ?? [
-            'group:default/platform-admins',
-          ];
 
         // The acting user's admin flag + raw group refs (per-team ownership),
         // both from their catalog ownership.

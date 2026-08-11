@@ -27,6 +27,22 @@ describe('resolveResource error reporting', () => {
     expect(r.data).toEqual({});
   });
 
+  it('looks the resource up in the configured namespace', async () => {
+    const getEntityByRef = jest.fn().mockResolvedValue(entity({}));
+    const { resolveResource } = createResourceResolver({
+      catalog: { getEntityByRef } as any,
+      urlReader: { readUrl: jest.fn() } as any,
+      auth,
+      logger,
+      namespace: 'acme',
+    });
+    await resolveResource('bucket-a');
+    expect(getEntityByRef).toHaveBeenCalledWith(
+      'resource:acme/bucket-a',
+      expect.anything(),
+    );
+  });
+
   it('reports an error when the entity is missing', async () => {
     const { resolveResource } = createResourceResolver({
       catalog: { getEntityByRef: async () => undefined } as any,
