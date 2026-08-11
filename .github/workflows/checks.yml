@@ -34,6 +34,12 @@ jobs:
       - name: Type check
         run: yarn tsc
 
+      # Validates app-config.yaml against every package's config.d.ts. --strict
+      # also rejects keys no schema declares, which is the only check that
+      # catches a typo'd key silently falling back to its default.
+      - name: Config check
+        run: yarn backstage-cli config:check --strict
+
       - name: Lint
         run: yarn lint:all
 

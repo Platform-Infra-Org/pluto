@@ -61,7 +61,9 @@ secret manager.
   reaching Gitea on the host. In a real cluster, use the VCS's real URL.
 - **Identity.** Local Keycloak + OpenLDAP → your IdP and directory. The
   federation and `catalog.providers.ldapOrg` config carry over; repoint
-  `target`/`connectionUrl`, use LDAPS, and a real bind secret.
+  `target`/`connectionUrl`, use LDAPS, and a real bind secret. If your catalog
+  ingests into a namespace other than `default`, set `platform.catalog.namespace`
+  to match — resource links and requester notifications are built from it.
 - **Argo.** kind plus a plain-HTTP port-forward on `:2746` → a real Argo
   Workflows cluster. Set `platform.argo.proxyPath` to a `proxy.endpoints` entry
   that targets the real argo-server and injects the token or mTLS **server-side**;

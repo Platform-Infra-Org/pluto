@@ -78,6 +78,23 @@ Set `proxyPath` to a `proxy.endpoints` entry to send Argo calls through the
 Backstage proxy (which injects the argo-server auth server-side, with a service
 token). Unset = direct `baseUrl`.
 
+## `platform.catalog`
+
+```yaml
+platform:
+  catalog:
+    namespace: default   # default
+```
+Frontend-visible. The namespace this deployment's catalog entities live in —
+used for **resource** refs (`resource:<ns>/<name>`), **user** refs
+(`user:<ns>/<id>`, how a requester is notified) and the `/catalog/<ns>/…` links
+the request pages build. One key, not one per kind: users and resources are
+assumed to share a namespace.
+
+`platform.rbac.adminGroups` / `auditorGroups` are **unaffected** — those are
+full entityRefs and already carry their namespace inline
+(`group:default/platform-admins`).
+
 ## `platform.home`
 
 ```yaml
