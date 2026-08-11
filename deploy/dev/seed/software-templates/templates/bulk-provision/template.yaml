@@ -1,0 +1,78 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: bulk-provision
+  title: Provision Git Resources (bulk)
+  description: >
+    Create several resources from one request. The workflow returns a JSON
+    array of what it created, so the request page links to every one of them
+    rather than to a single ref. Each resource is given a `title` that differs
+    from its name, so the same request also exercises title rendering.
+  tags:
+    - platform
+    - demo
+  # Deliberately NO platform.io/resource-type annotation — see the note in
+  # bulk-delete-resources. The backend resolves a request's owning team by
+  # finding the Template that claims its resourceType, and a second template
+  # claiming `git-resource` would shadow the real one at random. Ownership here
+  # therefore resolves through `resourceType: git-resource` to the git-resource
+  # template's owner, which is the intended gate.
+spec:
+  owner: group:default/checkout
+  type: resource
+  parameters:
+    - title: Resources to create
+      required:
+        - name
+        - count
+      properties:
+        name:
+          type: string
+          title: Base name
+          description: Each resource is <base>-1, <base>-2, and so on.
+          default: bulk-demo
+        count:
+          type: integer
+          title: How many
+          default: 3
+          minimum: 1
+          maximum: 5
+        size:
+          type: string
+          title: Size
+          default: small
+          enum: [small, medium, large]
+  steps:
+    - id: submit
+      name: Submit provision request
+      action: platform:request:submit
+      input:
+        resourceType: git-resource
+        # The request names the batch; the individual resources are derived by
+        # the workflow, which is why this is one name rather than a list. The
+        # created set comes back through resultOutput instead.
+        resourceName: ${{ parameters.name }}
+        kind: CREATE
+        # The mapping, written once. Forwarded to the workflow as the named
+        # parameters `name`, `count` and `size` — bulk-provision declares all
+        # three, so nothing needs restating under argoSubmit.
+        params:
+          name: ${{ parameters.name }}
+          count: ${{ parameters.count }}
+          size: ${{ parameters.size }}
+        argoSubmit:
+          namespace: argo
+          workflowTemplate: bulk-provision
+          entrypoint: main
+        # No `parameters` block: name, count and size are forwarded
+        # automatically as named Argo parameters. Add one here only to override
+        # a forwarded value or to pass something the form does not collect.
+        #
+        # The workflow's output parameter the backend stores as the request's
+        # result. `bulk-provision` emits a JSON array here, which the request
+        # page renders as one link per resource.
+        resultOutput: resource-ref
+  output:
+    links:
+      - title: Open request
+        url: /requests/${{ steps.submit.output.requestId }}

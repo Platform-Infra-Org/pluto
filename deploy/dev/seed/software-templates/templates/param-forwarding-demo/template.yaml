@@ -1,0 +1,91 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: param-forwarding-demo
+  title: Param Forwarding (demo)
+  description: >
+    Shows that every form field reaches the Argo workflow as its own named
+    parameter without being restated in argoSubmit — and that anything you do
+    name in argoSubmit.parameters wins. Creates nothing; the workflow only
+    prints what it received.
+  tags:
+    - platform
+    - demo
+  # No platform.io/resource-type: this template must not shadow the real
+  # git-resource owner. See the same note in bulk-delete-resources.
+spec:
+  owner: group:default/checkout
+  type: resource
+  parameters:
+    - title: Anything you type here is forwarded
+      required:
+        - region
+      properties:
+        region:
+          type: string
+          title: Region
+          default: eu-west-1
+          description: Arrives as the Argo parameter `region`.
+        size:
+          type: string
+          title: Size
+          default: small
+          enum: [small, medium, large]
+        replicas:
+          type: integer
+          title: Replicas
+          default: 3
+          description: A number — arrives as the string "3".
+        tags:
+          type: array
+          title: Tags
+          items: { type: string }
+          default: [prod, tier-1]
+          description: An array — arrives as compact JSON.
+        note:
+          type: string
+          title: Note
+          default: typed in the form
+          description: >
+            Deliberately collides with a parameter set in argoSubmit below.
+            The explicit one wins, so the workflow will NOT print this.
+  steps:
+    - id: submit
+      name: Submit request
+      action: platform:request:submit
+      input:
+        resourceType: git-resource
+        resourceName: ${{ parameters.region }}-param-demo
+        kind: CREATE
+        # THE mapping — form field -> request param. Written once, here.
+        # These are what the request records, what the request page shows, and
+        # what `<< params.* >>` resolves against. Task 7's forwarding then sends
+        # each of them to Argo as its own named parameter, so there is no second
+        # copy of this list under argoSubmit.
+        params:
+          region: ${{ parameters.region }}
+          size: ${{ parameters.size }}
+          replicas: ${{ parameters.replicas }}
+          tags: ${{ parameters.tags }}
+          note: ${{ parameters.note }}
+        argoSubmit:
+          namespace: argo
+          workflowTemplate: param-echo
+          entrypoint: echo-params
+          # There is NO entry here for region, size, replicas or tags — they are
+          # forwarded automatically. Only `note` is named, to demonstrate
+          # precedence: explicit parameters are merged last and override a
+          # forwarded value of the same name.
+          parameters:
+            note: "set in argoSubmit — this overrides the form's note"
+          # forwardParams defaults to true. Set it false to send ONLY the
+          # `parameters` above — the workflow then prints its own defaults for
+          # region, size, replicas and tags, which is the clearest way to see
+          # what forwarding was doing:
+          #
+          # forwardParams: false
+        resultOutput: resource-ref
+  output:
+    links:
+      - title: Open request
+        url: /requests/${{ steps.submit.output.requestId }}
