@@ -52,6 +52,47 @@ rather than passing an element with empty data. A workflow that decommissions
 from `data` would otherwise skip the real teardown for that one resource and
 delete its files anyway, reporting success.
 
+## Params reach Argo without any token
+
+Every entry in the request's `params` is sent to Argo as **its own named
+parameter** — `size` arrives as `{{workflow.parameters.size}}`, not as a field
+to dig out of a JSON blob. Nothing has to be listed in `argoSubmit.parameters`
+for that to happen.
+
+| Value | Sent as |
+|---|---|
+| a string | as-is |
+| a number / boolean | `String(v)` — `30`, `true` |
+| an object / array | `JSON.stringify(v)` |
+| `null` / `undefined` | **not sent at all** |
+
+A blank optional field is *absent*, never `''` — so the WorkflowTemplate's own
+declared default applies, which an empty string would silently override.
+
+A param name containing `=`, whitespace or a newline **fails the submit**, naming
+the offending param. Argo parses `submitOptions.parameters` as `k=v` strings, so
+such a name would not be rejected — it would be silently misparsed.
+
+### Precedence, and turning it off
+
+```yaml
+argoSubmit:
+  forwardParams: false          # default: true
+  parameters:
+    data: "<< paramsJson >>"
+```
+
+`argoSubmit.parameters` is merged **over** the forwarded params, so naming one
+there overrides the forwarded value of the same name. `forwardParams: false`
+sends only what `parameters` states — for a workflow like `git-ops`, which takes
+the whole param set as one `data` blob and declares none of the request's own
+fields.
+
+**A template must now declare the parameters it receives.** There is no implicit
+`request` parameter any more; a workflow that used to read
+`{{inputs.parameters.request}}` declares the fields it actually uses instead.
+`<< paramsJson >>` still works when you write it explicitly.
+
 ## The three templating layers (don't confuse them)
 
 | Layer | Syntax | Resolved by | Where |

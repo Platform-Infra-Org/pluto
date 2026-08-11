@@ -72,9 +72,11 @@ spec:
         argoSubmit:
           namespace: argo
           workflowTemplate: provision-postgres
+          # `size` needs no wiring: every request param is forwarded to Argo as
+          # its own named parameter, and the WorkflowTemplate declares it.
           parameters:
-            request: "<< paramsJson >>"
             # The backend fills << secretName >> with the request's Secret name.
+            # Not a request param, so it does have to be named here.
             secretName: "<< secretName >>"
         secrets:
           # Minted by the backend at approval, straight into the Secret.

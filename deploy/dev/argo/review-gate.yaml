@@ -30,20 +30,23 @@ spec:
     secondsAfterCompletion: 600
     secondsAfterSuccess: 600
     secondsAfterFailure: 3600
+  # Each request param arrives as its own Argo parameter — the backend forwards
+  # them by name (argoSubmit.forwardParams, default true), so this template
+  # declares the request fields it reads rather than parsing a JSON blob.
   arguments:
     parameters:
-      - { name: request, value: "{}" }
+      - { name: region, value: "eu-west-1" }
   templates:
     - name: main
       inputs:
         parameters:
-          - { name: request }
+          - { name: region }
       steps:
         - - name: plan
             template: plan
             arguments:
               parameters:
-                - { name: request, value: "{{inputs.parameters.request}}" }
+                - { name: region, value: "{{inputs.parameters.region}}" }
         - - name: approve
             template: approve
             arguments:
@@ -66,14 +69,14 @@ spec:
     - name: plan
       inputs:
         parameters:
-          - { name: request }
+          - { name: region }
       container:
         image: alpine:3.20
         command: [sh, -c]
         args:
           - |
             set -eu
-            echo "planning for: {{inputs.parameters.request}}"
+            echo "planning for region: {{inputs.parameters.region}}"
             printf '3 to add, 1 to change, 0 to destroy' > /tmp/summary
             printf '$41.20/month' > /tmp/cost
       outputs:

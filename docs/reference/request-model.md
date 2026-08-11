@@ -94,7 +94,7 @@ owning team) — see **[Per-team RBAC](../explanation/rbac.md)**.
 | `requester` | who filed it |
 | `ownerGroup` | the owning team (from the template owner); drives the gate |
 | `policy` | SINGLE / N_OF_M |
-| `argoSubmit` | the submit spec (per-request) |
+| `argoSubmit` | the submit spec (per-request). Its `parameters` are merged **over** the request's `params`, each of which is forwarded to Argo as its own named parameter unless `forwardParams: false`. See [Submit tokens](tokens.md) |
 | `resultOutput` / `resultRef` | which Argo output to read → the created resource ref |
 | `workflowName` / `workflowNamespace` / `workflowPhase` | Argo tracking |
 | `approvals[]` | recorded decisions (approver, decision, note, timestamp) |

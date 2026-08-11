@@ -7,6 +7,7 @@ import {
   ArgoSubmitSpec,
   SuspendedNode,
 } from '@internal/plugin-platform-common';
+import { paramsToArgo } from './paramsToArgo';
 
 /** Values available to `<< token >>` templating in an ArgoSubmitSpec. */
 export interface ResolveCtx {
@@ -275,9 +276,9 @@ export class ArgoClient {
 
   /**
    * Submit the workflow for a request from an optional per-request spec.
-   * `spec` undefined = today's default (resourceType template, cfg.namespace,
-   * `request` param, request-id label). Returns the created workflow name and
-   * the namespace it landed in.
+   * `spec` undefined = the resourceType template in cfg.namespace, every
+   * request param forwarded as its own Argo parameter, request-id label.
+   * Returns the created workflow name and the namespace it landed in.
    */
   async submitSpec(
     spec: ArgoSubmitSpec | undefined,
@@ -291,9 +292,16 @@ export class ArgoClient {
       (spec?.workflowTemplate && resolveTemplate(spec.workflowTemplate, ctx)) ||
       ctx.resourceType;
 
-    const parameters = Object.entries(
-      resolveMap(spec?.parameters ?? { request: '<< paramsJson >>' }, ctx),
-    ).map(([k, v]) => `${k}=${v}`);
+    // Forwarded request params first, explicit `parameters` last: naming a
+    // parameter in the spec overrides the forwarded value of the same name.
+    // There is no implicit `request` blob any more — a template declares the
+    // fields it reads, and one it does not declare is Argo's to reject.
+    const auto =
+      spec?.forwardParams === false ? {} : paramsToArgo(ctx.params ?? {});
+    const parameters = Object.entries({
+      ...auto,
+      ...resolveMap(spec?.parameters, ctx),
+    }).map(([k, v]) => `${k}=${v}`);
 
     // request-id label always wins (correlation key for status/completion).
     const labels = {

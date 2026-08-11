@@ -20,15 +20,18 @@ spec:
     secondsAfterCompletion: 300 # GC the workflow (and its owned Secret) 5m after done
     secondsAfterSuccess: 300
     secondsAfterFailure: 3600 # keep failures a little longer for debugging
+  # Each request param arrives as its own Argo parameter — the backend forwards
+  # them by name (argoSubmit.forwardParams, default true). A template declares
+  # the fields it reads; anything it does not declare it simply never sees.
   arguments:
     parameters:
-      - { name: request, value: "{}" } # the request params JSON (name, size, …)
+      - { name: size, value: "small" } # forwarded from the request's params
       - { name: secretName, value: "" } # the per-request Secret (<< secretName >>)
   templates:
     - name: provision
       inputs:
         parameters:
-          - { name: request }
+          - { name: size }
           - { name: secretName }
       container:
         image: alpine:3.20
@@ -45,8 +48,8 @@ spec:
         args:
           - |
             set -eu
-            REQ='{{inputs.parameters.request}}'
-            echo "provisioning postgres for request: $REQ"
+            SIZE='{{inputs.parameters.size}}'
+            echo "provisioning a $SIZE postgres"
             # DB_PASSWORD is present in the environment but MUST NOT be echoed.
             if [ -n "${DB_PASSWORD:-}" ]; then
               echo "db password injected from Secret (${#DB_PASSWORD} chars) — not printed"
