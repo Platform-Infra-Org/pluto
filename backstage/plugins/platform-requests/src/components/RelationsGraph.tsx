@@ -135,10 +135,12 @@ export function RelationsGraph() {
               onChange={setDirection}
               id="relations-dir"
             />
+            {/* Depth is explicit: this link asks for two hops rather than
+                inheriting whatever the graph page happens to default to. */}
             <Link
               to={`/catalog-graph?rootEntityRefs[]=${encodeURIComponent(
                 stringifyEntityRef(entity),
-              )}`}
+              )}&maxDepth=2`}
               className="sc-btn sc-btn-outline sc-btn-sm sc-btn-accent"
               title="Open the full relations graph, rooted on this entity"
             >

@@ -17,7 +17,11 @@ export type GraphState = {
 
 export const EMPTY: GraphState = {
   rootEntityRefs: [],
-  maxDepth: Infinity,
+  // Bounded on purpose. Every entity reaches every other within a few hops
+  // (resource -> ownedBy -> group -> hasMember -> user -> ownerOf -> ...), so
+  // an unbounded default pulls the whole catalog in on a production instance.
+  // `∞` stays selectable in the filters and still parses from a URL.
+  maxDepth: 2,
   selectedKinds: [],
   selectedRelations: [],
   unidirectional: false,
@@ -38,6 +42,10 @@ function parseArray(v: unknown): string[] {
   return Array.isArray(v) ? (v as string[]) : [];
 }
 
+function finiteOr(v: number, fallback: number): number {
+  return Number.isFinite(v) ? v : fallback;
+}
+
 function parseBool(v: unknown, fallback: boolean): boolean {
   if (v === 'true') return true;
   if (v === 'false') return false;
@@ -53,10 +61,12 @@ export function parseGraphQuery(search: string): GraphState {
   });
 
   const maxDepthRaw = parsed.maxDepth;
+  // A junk value falls back to the default rather than to NaN: `depth >= NaN`
+  // is never true, so NaN is the unbounded walk again, through a bad URL.
   const maxDepth =
-    maxDepthRaw === undefined || maxDepthRaw === INFINITY_SYMBOL
+    maxDepthRaw === INFINITY_SYMBOL
       ? Infinity
-      : Number(maxDepthRaw);
+      : finiteOr(Number(maxDepthRaw), EMPTY.maxDepth);
 
   const direction = DIRECTIONS.includes(parsed.direction as Direction)
     ? (parsed.direction as Direction)

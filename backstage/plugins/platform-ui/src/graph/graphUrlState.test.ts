@@ -18,8 +18,16 @@ describe('graph url state', () => {
     expect(toGraphQuery({ ...EMPTY, maxDepth: Infinity })).toContain('maxDepth=%E2%88%9E');
   });
 
-  it('defaults to infinite depth when absent', () => {
-    expect(parseGraphQuery('').maxDepth).toBe(Infinity);
+  it('defaults to a bounded depth when absent', () => {
+    // Pinned deliberately: an unbounded default walks the entire production
+    // catalog from any entity. Changing this number should be a decision.
+    expect(EMPTY.maxDepth).toBe(2);
+    expect(parseGraphQuery('').maxDepth).toBe(2);
+  });
+
+  it('falls back to the default rather than NaN on a junk depth', () => {
+    // `depth >= NaN` is never true, so NaN is the unbounded walk by another door.
+    expect(parseGraphQuery('?maxDepth=abc').maxDepth).toBe(EMPTY.maxDepth);
   });
 
   it('parses the booleans and the enums', () => {

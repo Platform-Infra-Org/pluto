@@ -215,6 +215,23 @@ body, body *, input, select, textarea, button, optgroup {
 }
 /* The BUI page title is the biggest type on a native page. */
 [class*="bui-HeaderTitle"] { font-size: 28px !important; }
+/* The API explorer's title sits on a different gutter from its own table.
+   Its page is <HeaderPage> + <Content>, while every other native page is
+   <Header> + <Container>: the header's slots ARE bui Containers
+   (max-width: 120rem; margin-inline: auto; padding-inline: 20px), and
+   BackstageContent is a full-width article padded 24px. So the title is 4px
+   left of the table it heads, and once the content column passes 120rem the
+   header centres while the table does not and the gap becomes hundreds of
+   pixels. Squaring the header's containers with Content is the whole fix; the
+   class is route-scoped because no other page pairs the two. Bounded by the
+   breakpoint Content itself uses — below it Content drops to 16px and the two
+   already agree. */
+@media (min-width: 600px) {
+  .sc-route-api-docs [class*="bui-HeaderTop"],
+  .sc-route-api-docs [class*="bui-HeaderContent"],
+  .sc-route-api-docs [class*="bui-HeaderBottom"] {
+    max-width: none; margin-inline: 0; padding-inline: 24px; }
+}
 /* Heading scale for the pixel face.
    Sized by measurement, not by eye: Pixelify Sans advances 'n' at 0.586em,
    a third narrower than the old face's 0.875em, so each size below is the
