@@ -117,10 +117,10 @@ export function RelationsGraph() {
             to={`/catalog-graph?rootEntityRefs[]=${encodeURIComponent(
               stringifyEntityRef(entity),
             )}`}
-            className="sc-link"
+            className="sc-btn sc-btn-outline sc-btn-sm"
             title="Open the full relations graph, rooted on this entity"
           >
-            View in catalog graph
+            Explore graph
           </Link>
         }
       />

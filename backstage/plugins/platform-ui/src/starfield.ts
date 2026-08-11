@@ -14,20 +14,20 @@
 export const STARFIELD = {
   /** Near-black, faintly blue so it does not read as a dead pixel field. */
   bg: '#05050c',
-  /** The bright, sparse stars. */
-  star: 'rgba(255, 255, 255, 0.62)',
-  /** The faint majority. */
-  starDim: 'rgba(255, 255, 255, 0.26)',
-  /** Spacing of the dim layer, in px. */
-  gap: 17,
+  /** The bright, sparse stars. Kept low: this is a backdrop, not a texture. */
+  star: 'rgba(255, 255, 255, 0.42)',
+  /** The faint majority — barely there, which is the point. */
+  starDim: 'rgba(255, 255, 255, 0.14)',
+  /** Spacing of the dim layer, in px. Wide, so the field stays sparse. */
+  gap: 30,
   /** Radius of a bright star. */
-  size: 1.4,
+  size: 1.2,
   /** Radius of a dim star. */
-  dimSize: 1,
+  dimSize: 0.8,
 } as const;
 
 /** Spacing of the bright layer. Deliberately not a multiple of `gap`. */
-export const STAR_WIDE = STARFIELD.gap * 2.5;
+export const STAR_WIDE = STARFIELD.gap * 3.5;
 
 /**
  * The starfield as CSS declarations, for a surface React Flow does not own.

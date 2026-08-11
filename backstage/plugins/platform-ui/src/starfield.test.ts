@@ -24,6 +24,9 @@ describe('starfield', () => {
   it('spaces the two layers differently, or they moire into one grid', () => {
     const d = starfieldDeclarations();
     expect(STAR_WIDE).not.toBe(STARFIELD.gap);
+    // And not an integer multiple either: at 2x or 3x every bright star lands
+    // exactly on a dim one and the two layers read as a single aligned grid.
+    expect(STAR_WIDE % STARFIELD.gap).not.toBe(0);
     expect(d.backgroundSize).toBe(
       `${STAR_WIDE}px ${STAR_WIDE}px, ${STARFIELD.gap}px ${STARFIELD.gap}px`,
     );
