@@ -17,6 +17,7 @@ import { useRouteRef } from '@backstage/core-plugin-api';
 import { Card, CardBody, Page, PageHeader } from './components';
 import { STARFIELD, STAR_WIDE } from './starfield';
 import { layout, NODE_H, NODE_W } from './graph/layout';
+import { dedupeEdges, handlePositions } from './graph/flow';
 import { parseGraphQuery, toGraphQuery } from './graph/graphUrlState';
 import { useCatalogGraphData } from './graph/useCatalogGraphData';
 import { GraphFilters } from './GraphFilters';
@@ -76,6 +77,10 @@ export function CatalogGraphPage() {
       layout(gNodes, gEdges, state.direction).map(p => [p.id, p]),
     );
     const roots = new Set(state.rootEntityRefs);
+    // Handles follow the layout direction: with React Flow's defaults every
+    // edge leaves the bottom and enters the top, so a left-to-right graph has
+    // its lines looping around the boxes instead of running between them.
+    const handles = handlePositions(state.direction);
     const nodes: Node[] = gNodes.map(n => ({
       id: n.id,
       position: pos.get(n.id) ?? { x: 0, y: 0 },
@@ -85,8 +90,12 @@ export function CatalogGraphPage() {
       className: roots.has(n.id) ? 'sc-graph-node root' : 'sc-graph-node',
       style: { width: NODE_W, height: NODE_H },
       connectable: false,
+      ...handles,
     }));
-    const edges: Edge[] = gEdges.map(e => ({
+    // One line per pair of nodes. A reciprocal pair drew two lines taking
+    // different routes around the boxes, which reads as a tangle rather than a
+    // relationship.
+    const edges: Edge[] = dedupeEdges(gEdges).map(e => ({
       id: e.id,
       source: e.source,
       target: e.target,
