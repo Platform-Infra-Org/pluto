@@ -1058,6 +1058,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-sidebar-is-decluttering-not-access-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The sidebar is decluttering, not access control
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#where-it-could-go-further" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1267,6 +1278,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#the-sidebar-is-decluttering-not-access-control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The sidebar is decluttering, not access control
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#where-it-could-go-further" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1328,6 +1350,16 @@ was a 1:1 rename of two groups and bought nothing.</p>
 <p><code>GET /requests</code> is scoped server-side: admins see everything; others see their own
 requests plus requests owned by their teams. The three request tabs (My / For
 approval / All) are views over that scoping.</p>
+<h2 id="the-sidebar-is-decluttering-not-access-control">The sidebar is decluttering, not access control<a class="headerlink" href="#the-sidebar-is-decluttering-not-access-control" title="Permanent link">&para;</a></h2>
+<p>Three routes are offered to admins only — <strong>APIs</strong> (<code>/api-docs</code>), <strong>Register
+Existing Component</strong> (<code>/catalog-import</code>) and <strong>Visualizer</strong> (<code>/visualizer</code>).
+They are operator tooling, and a self-service user has no errand that starts
+there. The list lives in <code>plugins/platform-ui/src/navVisibility.ts</code>, and the
+admin test is the same group membership the backend policy uses.</p>
+<p>This is a <em>sidebar</em> rule and nothing more. Each route still resolves if it is
+typed into the address bar, and it is meant to: what may actually be done on a
+page is decided by the permission policy on the backend, which is the only
+check a URL cannot walk around. Hiding a link declutters; it never protects.</p>
 <h2 id="where-it-could-go-further">Where it could go further<a class="headerlink" href="#where-it-could-go-further" title="Permanent link">&para;</a></h2>
 <p>Service-owner scope is currently flat per type — any owning-team member can
 approve any request for that type. The <em>designed</em> <code>COMPOSITE</code> policy (in the graph
