@@ -7,6 +7,7 @@ import {
 } from '@backstage/plugin-catalog-react';
 import { parseEntityRef } from '@backstage/catalog-model';
 import { Card, EmptyState, LAUREL } from '@internal/plugin-platform-ui';
+import { useCatalogNamespace } from '../useCatalogNamespace';
 
 interface Favourite {
   ref: string;
@@ -24,6 +25,7 @@ interface Favourite {
  */
 export function FavouriteTemplates({ max }: { max: number }) {
   const catalog = useApi(catalogApiRef);
+  const defaultNamespace = useCatalogNamespace();
   const { starredEntities } = useStarredEntities();
   const [rows, setRows] = useState<Favourite[]>();
 
@@ -52,14 +54,17 @@ export function FavouriteTemplates({ max }: { max: number }) {
                 ref: refs[i],
                 name: e.metadata.name ?? name,
                 title: e.metadata.title ?? e.metadata.name ?? name,
-                namespace: e.metadata.namespace ?? namespace ?? 'default',
+                // The entity's own namespace first; the configured one only
+                // when metadata omits it, so a deployment that moved off
+                // `default` does not still get `default` here.
+                namespace: e.metadata.namespace ?? namespace ?? defaultNamespace,
               },
             ];
           }),
         );
       })
       .catch(() => setRows([]));
-  }, [catalog, starredEntities]);
+  }, [catalog, starredEntities, defaultNamespace]);
 
   return (
     <Card>

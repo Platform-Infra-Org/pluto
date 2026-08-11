@@ -6,7 +6,11 @@ import {
 } from '@backstage/core-plugin-api';
 import { Link } from '@backstage/core-components';
 import { catalogApiRef } from '@backstage/plugin-catalog-react';
-import { Request, isTerminal } from '@internal/plugin-platform-common';
+import {
+  Request,
+  isTerminal,
+  catalogPath,
+} from '@internal/plugin-platform-common';
 import {
   Page,
   PageHeader,
@@ -14,6 +18,8 @@ import {
   PixelStar,
 } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
+import { useCatalogNamespace } from '../useCatalogNamespace';
+import { titleOf, useResourceTitles } from '../useResourceTitles';
 import { stateBadge } from './RequestsPage';
 import { RecentlyVisited } from './HomeVisits';
 import { FavouriteTemplates } from './HomeFavourites';
@@ -88,6 +94,7 @@ function QuickActions() {
 function OwnedResources({ max }: { max: number }) {
   const catalog = useApi(catalogApiRef);
   const identity = useApi(identityApiRef);
+  const namespace = useCatalogNamespace();
   const [rows, setRows] = useState<OwnedResource[]>();
 
   useEffect(() => {
@@ -127,7 +134,10 @@ function OwnedResources({ max }: { max: number }) {
             {cap(rows, max).map(r => (
               <tr key={r.name}>
                 <td>
-                  <Link to={`/catalog/default/resource/${r.name}`} className="sc-link">
+                  <Link
+                    to={catalogPath(namespace, 'resource', r.name)}
+                    className="sc-link"
+                  >
                     {r.name}
                   </Link>
                 </td>
@@ -151,6 +161,10 @@ function StandingRequests({ max }: { max: number }) {
       .then(rs => setRows(rs.filter(r => !isTerminal(r.state))));
   }, [requests]);
 
+  // One call per card, over the rows this card actually shows.
+  const shown = cap(rows ?? [], max);
+  const titles = useResourceTitles(shown.map(r => r.resourceName));
+
   return (
     <Card className="sc-span-2">
       <div className="sc-card-h">
@@ -170,15 +184,18 @@ function StandingRequests({ max }: { max: number }) {
             </tr>
           </thead>
           <tbody>
-            {cap(rows, max).map(r => (
+            {shown.map(r => (
               <tr key={r.id}>
                 <td>
                   <Link to={`/requests/${r.id}`} className="sc-link">
                     #{r.id}
                   </Link>
                 </td>
-                <td className="sc-cell-ellip">
-                  {r.resourceType}/{r.resourceName}
+                {/* sc-cell-ellip caps the column at 220px, so a long title
+                    ellipsises instead of widening the table; the tooltip keeps
+                    the addressable name reachable. */}
+                <td className="sc-cell-ellip" title={r.resourceName}>
+                  {r.resourceType}/{titleOf(r.resourceName, titles)}
                 </td>
                 <td>{stateBadge(r.state)}</td>
               </tr>
@@ -201,6 +218,10 @@ function PendingApprovals({ max }: { max: number }) {
       .then(setRows);
   }, [requests]);
 
+  // One call per card, over the rows this card actually shows.
+  const shown = cap(rows ?? [], max);
+  const titles = useResourceTitles(shown.map(r => r.resourceName));
+
   return (
     <Card>
       <div className="sc-card-h">
@@ -220,15 +241,15 @@ function PendingApprovals({ max }: { max: number }) {
             </tr>
           </thead>
           <tbody>
-            {cap(rows, max).map(r => (
+            {shown.map(r => (
               <tr key={r.id}>
                 <td>
                   <Link to={`/requests/${r.id}`} className="sc-link">
                     #{r.id}
                   </Link>
                 </td>
-                <td>
-                  {r.resourceType}/{r.resourceName}
+                <td className="sc-cell-ellip" title={r.resourceName}>
+                  {r.resourceType}/{titleOf(r.resourceName, titles)}
                 </td>
                 <td className="sc-muted">{r.requester}</td>
               </tr>
