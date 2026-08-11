@@ -133,7 +133,7 @@ describe('SHADCN_CSS', () => {
     // build served from packages/app/dist: 221 Mui* and 28 bui-* class names
     // survive; Backstage*, PluginCatalogGraph* and DependencyGraph* all come
     // back as zero.
-    const SURVIVES = (n: string) =>
+    const survives = (n: string) =>
       n.startsWith('Mui') || // MUI keeps its own prefix in production
       n.startsWith('bui-') || // Backstage UI ships plain CSS, not JSS
       n.startsWith('sc-') || // ours
@@ -151,7 +151,7 @@ describe('SHADCN_CSS', () => {
     const dead = Array.from(
       rules.matchAll(/\[class\*="([A-Za-z][A-Za-z0-9_-]*)"\]/g),
       m => m[1],
-    ).filter(n => !SURVIVES(n) && !KNOWN_DEAD.includes(n));
+    ).filter(n => !survives(n) && !KNOWN_DEAD.includes(n));
     expect([...new Set(dead)]).toEqual([]);
   });
 });

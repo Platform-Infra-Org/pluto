@@ -163,15 +163,12 @@ export function CatalogGraphPage() {
             still render (they are absolutely positioned) but nothing is
             interactive, so clicks and panning silently do nothing. */}
         <div className="sc-graph-canvas" style={{ height: 620 }}>
-          {state.rootEntityRefs.length === 0 ? (
-            <Empty text="Pick an entity to root the graph on — open one from the catalog and use Explore graph." />
-          ) : error ? (
-            <Empty text={`Could not load the graph: ${error.message}`} />
-          ) : loading && !positioned.nodes.length ? (
-            <Empty text="Loading…" />
-          ) : positioned.nodes.length === 0 ? (
-            <Empty text="Nothing is related to this entity." />
-          ) : (
+          {placeholder({
+            rooted: state.rootEntityRefs.length > 0,
+            error,
+            loading,
+            nodeCount: positioned.nodes.length,
+          }) ?? (
             <ReactFlow
               nodes={positioned.nodes}
               edges={positioned.edges}
@@ -210,4 +207,27 @@ export function CatalogGraphPage() {
 /** A sentence beats a blank canvas — the built-in page showed neither. */
 function Empty({ text }: { text: string }) {
   return <div className="sc-graph-empty">{text}</div>;
+}
+
+/**
+ * What the canvas shows instead of the graph, or undefined to show the graph.
+ * Order matters: an error while unrooted is still "pick an entity", and the
+ * loading line only stands in for a canvas that has nothing on it yet.
+ */
+function placeholder(s: {
+  rooted: boolean;
+  error?: Error;
+  loading: boolean;
+  nodeCount: number;
+}) {
+  if (!s.rooted)
+    return (
+      <Empty text="Pick an entity to root the graph on — open one from the catalog and use Explore graph." />
+    );
+  if (s.error)
+    return <Empty text={`Could not load the graph: ${s.error.message}`} />;
+  if (s.loading && s.nodeCount === 0) return <Empty text="Loading…" />;
+  if (s.nodeCount === 0)
+    return <Empty text="Nothing is related to this entity." />;
+  return undefined;
 }

@@ -83,17 +83,17 @@ describe('readStoredPos', () => {
 });
 
 describe('corner anchoring', () => {
-  const BOX = { w: 190, h: 46 };
+  const CORNER_BOX = { w: 190, h: 46 };
 
   it('anchors to the nearest corner', () => {
     // Bottom-left in a 1000x800 view.
-    expect(toAnchored({ x: 14, y: 740 }, BOX, { w: 1000, h: 800 })).toEqual({
+    expect(toAnchored({ x: 14, y: 740 }, CORNER_BOX, { w: 1000, h: 800 })).toEqual({
       ax: 'left', ay: 'bottom', dx: 14, dy: 14,
     });
   });
 
   it('anchors to the bottom-right when nearer to it', () => {
-    expect(toAnchored({ x: 796, y: 740 }, BOX, { w: 1000, h: 800 })).toEqual({
+    expect(toAnchored({ x: 796, y: 740 }, CORNER_BOX, { w: 1000, h: 800 })).toEqual({
       ax: 'right', ay: 'bottom', dx: 14, dy: 14,
     });
   });
@@ -101,18 +101,18 @@ describe('corner anchoring', () => {
   it('round-trips unchanged when the viewport does not change', () => {
     const view = { w: 1000, h: 800 };
     const pos = { x: 796, y: 740 };
-    expect(fromAnchored(toAnchored(pos, BOX, view), BOX, view)).toEqual(pos);
+    expect(fromAnchored(toAnchored(pos, CORNER_BOX, view), CORNER_BOX, view)).toEqual(pos);
   });
 
   it('keeps a bottom-right picker in the corner when the window shrinks', () => {
-    const a = toAnchored({ x: 796, y: 740 }, BOX, { w: 1000, h: 800 });
+    const a = toAnchored({ x: 796, y: 740 }, CORNER_BOX, { w: 1000, h: 800 });
     // 300px narrower, 200px shorter: it must stay 14px off both edges.
-    expect(fromAnchored(a, BOX, { w: 700, h: 600 })).toEqual({ x: 496, y: 540 });
+    expect(fromAnchored(a, CORNER_BOX, { w: 700, h: 600 })).toEqual({ x: 496, y: 540 });
   });
 
   it('clamps when the new viewport cannot hold the offset', () => {
-    const a = toAnchored({ x: 796, y: 740 }, BOX, { w: 1000, h: 800 });
-    const out = fromAnchored(a, BOX, { w: 150, h: 100 });
+    const a = toAnchored({ x: 796, y: 740 }, CORNER_BOX, { w: 1000, h: 800 });
+    const out = fromAnchored(a, CORNER_BOX, { w: 150, h: 100 });
     expect(out.x).toBeGreaterThanOrEqual(8);
     expect(out.y).toBeGreaterThanOrEqual(8);
   });

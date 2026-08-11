@@ -128,7 +128,9 @@ export function traverse(opts: TraverseOptions): { nodes: GraphNode[]; edges: Gr
     while (queue.length > 0) {
       const ref = queue.shift()!;
       for (const e of rawEdges) {
-        const other = e.source === ref ? e.target : e.target === ref ? e.source : undefined;
+        let other: string | undefined;
+        if (e.source === ref) other = e.target;
+        else if (e.target === ref) other = e.source;
         if (other && !outputIds.has(other)) {
           outputIds.add(other);
           queue.push(other);
