@@ -290,23 +290,29 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .MuiCheckbox-colorPrimary.Mui-checked, .MuiRadio-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiChip-root { border-radius: var(--sc-radius) !important; }
 /* ===== Graphs =====
-   The built-in catalog/dependency graph is themed in theme.tsx through the
-   style hooks its components register (PluginCatalogGraph* and
-   BackstageDependencyGraph*), because MUI applies those by component name and
-   they therefore survive a production build. The selectors that used to live
-   here named generated class names, which production mangles to jss<n> — they
-   were dead in every deployed release while working on the dev server. */
-/* our React Flow workflow DAG — dark + dots (dot color set in the component). */
-/* The rooted node, tinted with the picked accent.
-   The plugin puts its focused marker on the label only, never on the rect, so
-   the rooted node is otherwise identical to every other one — which made
-   clicking a node look like it did nothing. focused is a literal class and
-   #dependency-graph is a stable id, so both survive a production build. */
-#dependency-graph g:has(> text.focused) > rect {
-  fill: hsl(var(--sc-primary) / .22) !important;
-  stroke: hsl(var(--sc-primary)) !important;
-  stroke-width: 2 !important;
-}
+   All three graphs are ours and drawn with React Flow, whose class names are
+   literal and so survive a production build. Backstage's own SVG graph is no
+   longer rendered: its selectors named generated class names, which production
+   mangles to jss<n>, so they were dead in every deployed release while working
+   perfectly on the dev server. */
+/* ===== Catalog graph (our React Flow one) ===== */
+.sc-graph-layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px;
+  align-items: start; min-width: 0; }
+@media (max-width: 900px) { .sc-graph-layout { grid-template-columns: 1fr; } }
+.sc-graph-empty { display: flex; align-items: center; justify-content: center;
+  height: 100%; min-height: 320px; padding: 24px; text-align: center;
+  color: hsl(var(--sc-muted-fg)); font-size: 13px; }
+/* Nodes: the dark surface everywhere, the accent only on the rooted one. A
+   graph where every node looks the same is a graph where re-rooting appears to
+   do nothing, which is exactly how the built-in one failed. */
+.react-flow__node.sc-graph-node { background: #17171f; color: #e7e7ef;
+  border: var(--sc-border-w) solid #32303e; border-radius: var(--sc-radius);
+  font-size: 11px; font-weight: 500; display: flex; align-items: center;
+  justify-content: center; padding: 0 8px; text-align: center; }
+.react-flow__node.sc-graph-node.root { background: hsl(var(--sc-primary) / .22);
+  border-color: hsl(var(--sc-primary)); }
+.react-flow__edge-path { stroke: rgba(255,255,255,.24) !important; }
+.react-flow__edge-text { fill: hsl(var(--sc-muted-fg)); font-size: 10px; }
 
 /* The canvas wrapper carries the space colour. It sits BELOW react-flow's
    background svg, which is what makes the stars visible — see the note on the

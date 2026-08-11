@@ -2,6 +2,7 @@ import { ReactNode } from 'react';
 import { ThemeBlueprint } from '@backstage/plugin-app-react';
 import {
   AppRootElementBlueprint,
+  PageBlueprint,
   createFrontendModule,
 } from '@backstage/frontend-plugin-api';
 import {
@@ -14,7 +15,6 @@ import {
 import LightIcon from '@material-ui/icons/WbSunny';
 import DarkIcon from '@material-ui/icons/Brightness2';
 import { SchemeRoot } from './SchemeRoot';
-import { starfieldDeclarations } from './starfield';
 import { navContent } from './CustomNav';
 
 // MUI theme = the Backstage chrome + native pages. The injected shadcn CSS
@@ -74,79 +74,6 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
   // literals; passed in by reference it's a normal structural assignment,
   // which permits the extra key.
   const componentOverrides = {
-    // ===== Catalog graph =====
-    // These three names are registered by @backstage/plugin-catalog-graph via
-    // makeStyles, and their slots are its exported *ClassKey types. MUI applies
-    // overrides by component NAME at runtime, which a production build never
-    // mangles — unlike the generated class names, which become jss<n> there and
-    // left the CSS selectors these replace dead in every deployed release.
-    PluginCatalogGraphEntityRelationsGraph: {
-      styleOverrides: {
-        // classes.graph is spread onto the root <svg> (which also carries
-        // id="dependency-graph"), so this rule paints the canvas itself — no
-        // ancestor selector needed.
-        graph: {
-          // Derived, never restated: the React Flow canvas and this one must
-          // agree, and two copies of the numbers drift.
-          ...starfieldDeclarations(),
-          borderRadius: 'var(--sc-radius)',
-          width: '100%',
-          display: 'block',
-        },
-        container: { minHeight: 0 },
-      },
-    },
-    PluginCatalogGraphCustomNode: {
-      styleOverrides: {
-        node: {
-          fill: '#17171f',
-          stroke: '#32303e',
-          rx: 8,
-          ry: 8,
-          // `primary` and `secondary` are the plugin's COLOUR CATEGORIES and it
-          // sets one of them on every node — they do not mark the root. Painting
-          // them with the accent turned the whole graph a single colour and left
-          // the root indistinguishable from its children, so clicking a node
-          // looked like it did nothing. They stay on the base surface.
-          '&.primary, &.secondary': { fill: '#17171f', stroke: '#32303e' },
-        },
-        text: {
-          fill: '#e7e7ef',
-          fontSize: 11,
-          fontWeight: 500,
-          '&.primary, &.secondary': { fill: '#e7e7ef' },
-          // `focused` is the only marker the plugin puts on the ROOT, and it
-          // puts it on the label rather than the rect. This is what tells you
-          // which node the graph is currently rooted on.
-          '&.focused': { fill: 'hsl(var(--sc-primary))', fontWeight: 700 },
-        },
-        clickable: { cursor: 'pointer' },
-      },
-    },
-    PluginCatalogGraphCustomLabel: {
-      styleOverrides: {
-        text: { fill: '#e7e7ef', fontSize: 11 },
-        secondary: { fill: 'rgba(231, 231, 239, .6)' },
-      },
-    },
-    // The generic dependency graph underneath: edges, arrowheads, and the
-    // fallback node/label renderers. Slots read from each component's own
-    // makeStyles call — a wrong slot name silently does nothing.
-    BackstageDependencyGraphEdge: {
-      styleOverrides: { path: { stroke: 'rgba(255,255,255,.24)' } },
-    },
-    BackstageDependencyGraphNode: {
-      styleOverrides: { node: { fill: '#17171f', stroke: '#32303e' } },
-    },
-    BackstageDependencyGraphDefaultNode: {
-      styleOverrides: {
-        node: { fill: '#17171f', stroke: '#32303e', rx: 8, ry: 8 },
-        text: { fill: '#e7e7ef' },
-      },
-    },
-    BackstageDependencyGraphDefaultLabel: {
-      styleOverrides: { text: { fill: '#e7e7ef' } },
-    },
     BackstageHeader: {
         styleOverrides: {
           header: {
@@ -323,7 +250,23 @@ const schemeRoot = AppRootElementBlueprint.make({
  * global shadcn CSS + color picker (SchemeRoot), and the custom shadcn nav.
  * Add this one entry to the app's `features`.
  */
+/**
+ * Our catalog graph, replacing the built-in one at the same path.
+ *
+ * The path must stay /catalog-graph: the relations card links there, and
+ * CustomNav hides that exact href from the sidebar — registering anything else
+ * would silently un-hide it.
+ */
+const catalogGraphPage = PageBlueprint.make({
+  name: 'catalog-graph',
+  params: {
+    path: '/catalog-graph',
+    loader: () =>
+      import('./CatalogGraphPage').then(m => <m.CatalogGraphPage />),
+  },
+});
+
 export const platformUiModule = createFrontendModule({
   pluginId: 'app',
-  extensions: [lightTheme, darkTheme, schemeRoot, navContent],
+  extensions: [lightTheme, darkTheme, schemeRoot, navContent, catalogGraphPage],
 });

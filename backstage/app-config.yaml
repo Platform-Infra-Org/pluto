@@ -45,6 +45,11 @@ app:
     - theme:app/dark: false
     # Disable the default relations graph card (replaced by our shadcn one).
     - entity-card:catalog-graph/relations: false
+    # Our React Flow graph replaces it at the same path. The built-in one could
+    # not pan at the default zoom, could not align its background with the
+    # nodes, and gave the rooted node no marker of its own — so clicking a node
+    # looked like it did nothing.
+    - page:catalog-graph: false
 
 organization:
   name: Platform
