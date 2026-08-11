@@ -144,6 +144,14 @@ describe('submitWorkflow resource resolution', () => {
     expect(submitSpec).not.toHaveBeenCalled();
   });
 
+  it('passes the owning team into the submit context', async () => {
+    const submit = createSubmitWorkflow(deps());
+    await submit(request({ ownerGroup: 'group:default/team-a' }));
+    expect((submitSpec.mock.calls[0][1] as any).ownerGroup).toBe(
+      'group:default/team-a',
+    );
+  });
+
   it('passes each resource as an object, with data as a nested object', async () => {
     const submit = createSubmitWorkflow(deps());
     await submit(

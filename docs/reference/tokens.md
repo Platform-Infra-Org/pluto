@@ -16,6 +16,7 @@ by the platform backend — **no escaping needed**.
 | `<< resourceName >>` | the resource name |
 | `<< resourceType >>` | the resource type |
 | `<< requester >>` | the requesting user's short id |
+| `<< ownerGroup >>` | the owning service team's entityRef, from the Template's `spec.owner`; `''` when no owning template was found |
 | `<< paramsJson >>` | the whole `params` object as a JSON string |
 | `<< params.<field> >>` | one named param value |
 | `<< resourceData >>` | the resource's current data JSON (update/delete); `{}` if absent/empty |
@@ -23,10 +24,17 @@ by the platform backend — **no escaping needed**.
 | `<< resourcePath >>` | the resource's catalog file path in Git (for `git-ops` delete) |
 | `<< resourceDataPath >>` | the resource's data-file path in Git (for `git-ops` update/delete) |
 | `<< resourcesJson >>` | bulk requests: a JSON array of every resource, `[{name, path, dataPath, data}]` |
+| `<< secretName >>` | the per-request Kubernetes Secret's name, for the WorkflowTemplate to `secretKeyRef`; `''` when the request declares no secrets |
 
 Unknown tokens and missing fields resolve to an empty string (`resourceData` to
 `{}`). `resourcePath` / `resourceDataPath` are resolved from the resource's
 location + its `resource-data` ref, so they're correct for any layout.
+
+`<< ownerGroup >>` is the same value the approval gate is enforced on, so a
+workflow that labels, notifies or charges by team names the team that actually
+approved the change. It is empty exactly when the request is admin-only — no
+owning Template matched its `resourceType` — and a workflow that cannot act
+without an owner should fail on the empty string rather than invent one.
 
 `<< resourcesJson >>` resolves to `[]` for an ordinary single-resource request.
 Each element's `data` is a **nested object**, not a JSON string.

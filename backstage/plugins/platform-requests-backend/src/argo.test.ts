@@ -28,6 +28,19 @@ describe('resolveTemplate', () => {
     expect(resolveTemplate('<< params.size >>', ctx)).toBe('10');
   });
 
+  it('resolves ownerGroup, and to empty when the request has no owning team', () => {
+    expect(
+      resolveTemplate('<< ownerGroup >>', {
+        ...ctx,
+        ownerGroup: 'group:default/team-a',
+      }),
+    ).toBe('group:default/team-a');
+    // No owning template was found — the admin-only case. It must resolve to
+    // empty rather than to the string 'undefined', which a workflow would
+    // happily label a resource with.
+    expect(resolveTemplate('<< ownerGroup >>', ctx)).toBe('');
+  });
+
   it('is whitespace-tolerant and handles multiple/embedded tokens', () => {
     expect(resolveTemplate('<<requester>>', ctx)).toBe('alice');
     expect(resolveTemplate('ns-<< resourceType >>-<< requestId >>', ctx)).toBe(

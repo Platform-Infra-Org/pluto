@@ -14,6 +14,18 @@ export interface ResolveCtx {
   resourceName: string;
   resourceType: string;
   requester: string;
+  /**
+   * The owning service team (`<< ownerGroup >>`), resolved at creation from the
+   * `spec.owner` of the Template for this resourceType — the same value the
+   * approval gate is enforced on, so a workflow that labels or notifies by
+   * owner names the team that actually approved it.
+   *
+   * Absent when no owning template was found, which is the case that makes a
+   * request admin-only. It then resolves to '' like any other missing token: a
+   * workflow that cannot act without an owner should fail on the empty string
+   * rather than proceed with one it invented.
+   */
+  ownerGroup?: string;
   params: Record<string, unknown>;
   /**
    * The resource's data JSON (for update/delete): the resolved
@@ -51,8 +63,8 @@ export interface ResolveCtx {
 
 /**
  * Resolve `<< token >>` occurrences in a string. Tokens: requestId,
- * resourceName, resourceType, requester, paramsJson, params.<field>.
- * Unknown tokens and missing params resolve to ''. Pure.
+ * resourceName, resourceType, requester, ownerGroup, paramsJson,
+ * params.<field>. Unknown tokens and missing params resolve to ''. Pure.
  *
  * The `<< >>` delimiter is deliberately distinct from Scaffolder's `${{ }}`,
  * so these tokens pass through the template's nunjucks render untouched and
@@ -69,6 +81,8 @@ export function resolveTemplate(str: string, ctx: ResolveCtx): string {
         return ctx.resourceType;
       case 'requester':
         return ctx.requester;
+      case 'ownerGroup':
+        return ctx.ownerGroup ?? '';
       case 'paramsJson':
         return JSON.stringify(ctx.params ?? {});
       case 'resourceData':

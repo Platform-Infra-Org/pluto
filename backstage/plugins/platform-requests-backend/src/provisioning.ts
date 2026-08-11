@@ -205,6 +205,7 @@ export function createSubmitWorkflow(deps: {
       resourceName: request.resourceName,
       resourceType: request.resourceType,
       requester: request.requester,
+      ownerGroup: request.ownerGroup,
       params: request.params ?? {},
       resourceData: r.data,
       resourcePath: r.resourcePath,
