@@ -5,6 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-08-11
+
+### Added
+
+- Configure template header images at runtime
+- Show params that are serialised JSON as subtrees
+- Theme the catalog graph, and one starfield across every graph
+- Traversal, dagre layout and url state for a catalog graph
+- Replace the catalog graph with a React Flow one
+- Shared graph direction picker, and export the layout helpers
+- Direction pickers on the relations and workflow graphs
+- Offer APIs, catalog import and the visualizer to admins only
+
+### Changed
+
+- Bump appVersion off 0.1.0
+- Minimal starfield, and an Explore graph button on the card
+- Centre the starfield, and share the accent hover with the new button
+- Declare the catalog graph dependencies
+- Force the edge label backing over react-flow's own stylesheet
+
+### Fixed
+
+- Update every icon link, and match the sidebar tile
+- Size the empty-state sprite at 2x, not 1.5x
+- Antialias sprites, follow the accent in forms, unclip JSON
+- Style card headers by classes production keeps
+- Style only what a production build keeps
+- Anchor the picker to a corner, and stop it snapping on drag
+- Recolour secondary controls, restore the loading cells, tree the params
+- Only offer the raw/parsed toggle when there is something to parse
+- Stop the picker following a hover, and selecting text mid-drag
+- Recolour the last controls still using the frozen palette
+- Put the highlighted graph node back on the picked accent
+- Show the stars, link to the catalog graph, drop its sidebar entry
+- Distinguish the rooted graph node from its children
+- Keep an unbounded depth, and darken the edge labels
+- Restore the app visualizer's graph styling
+- One edge per node pair, and handles that follow the direction
+- Put the workflow direction picker in the card header
+- Declare platform-ui's missing deps and clear the lint errors
+
 ## [0.4.1] - 2026-08-10
 
 ### Fixed
