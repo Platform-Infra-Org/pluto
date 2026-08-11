@@ -74,6 +74,26 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
   // literals; passed in by reference it's a normal structural assignment,
   // which permits the extra key.
   const componentOverrides = {
+    // The app visualizer still renders Backstage's SVG DependencyGraph — it is
+    // a different feature from the catalog graph, and these four keys are what
+    // keep it on the platform's palette. They were deleted with the catalog
+    // graph's overrides and left the visualizer unstyled: a transparent canvas
+    // with default light-blue nodes on a dark page.
+    BackstageDependencyGraphNode: {
+      styleOverrides: { node: { fill: '#17171f', stroke: '#32303e' } },
+    },
+    BackstageDependencyGraphDefaultNode: {
+      styleOverrides: {
+        node: { fill: '#17171f', stroke: '#32303e', rx: 8, ry: 8 },
+        text: { fill: '#e7e7ef' },
+      },
+    },
+    BackstageDependencyGraphDefaultLabel: {
+      styleOverrides: { text: { fill: '#e7e7ef' } },
+    },
+    BackstageDependencyGraphEdge: {
+      styleOverrides: { path: { stroke: 'rgba(255,255,255,.24)' } },
+    },
     BackstageHeader: {
         styleOverrides: {
           header: {

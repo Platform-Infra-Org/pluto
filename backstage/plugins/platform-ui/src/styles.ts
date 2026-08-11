@@ -295,6 +295,11 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    longer rendered: its selectors named generated class names, which production
    mangles to jss<n>, so they were dead in every deployed release while working
    perfectly on the dev server. */
+/* The app visualizer draws Backstage's SVG graph, which is a different feature
+   from the catalog graph and still exists. Its id is stable, so the canvas can
+   take the space colour without naming any generated class. */
+#dependency-graph { background-color: #05050c; border-radius: var(--sc-radius); }
+
 /* ===== Catalog graph (our React Flow one) ===== */
 .sc-graph-layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px;
   align-items: start; min-width: 0; }
