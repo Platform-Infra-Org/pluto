@@ -22,7 +22,34 @@ backend.
    show done until the workflow is done" guarantee.**
 5. **Result linking.** On success, the backend reads the configured output
    parameter (`resultOutput`) off the finished workflow and stores it as
-   `resultRef` — the request page links to the created resource.
+   `resultRef` — the request page links to the created resource. The value is
+   stored **verbatim**, exactly as Argo emitted it; that string is the audit
+   record, and splitting a multi-resource result into links happens at
+   presentation time (see *One result, or several* below).
+
+## Names, titles, and the gap between them
+
+A request stores the resource **name** — the addressable id, the thing that
+appears in Argo logs, in catalog URLs and in tickets. The UI shows the
+catalog's **title** where there is one, because that is what a human recognises.
+
+Only the *text* changes. Catalog routes address the entity by name and titles
+are neither unique nor routable, so every link on these pages is still built
+from the name, and the name stays one hover away in a `title` tooltip.
+
+**The name showing through is the normal case, not a failure.** The workflow is
+the only writer of Git, and the catalog ingests on a poll, so a request that has
+just reached `SUCCEEDED` names a resource the catalog has not read yet. The UI
+therefore renders the name immediately and upgrades it in place when the titles
+arrive — no spinner, no blank cell, no reflow. The same fallback covers an
+entity with no title at all and a catalog that is down: a title is decoration,
+and its absence never blanks the list it decorates.
+
+One consequence worth knowing: the requests search matches title **or** name,
+and until the titles land it matches names only. A title typed in the first
+moment after the page opens returns nothing and then fills in. That is the
+deliberate trade — the alternative is holding the whole table back on a catalog
+call.
 
 ## The second gate
 
@@ -127,6 +154,21 @@ the thing being decided on. And the states keep meaning what they meant:
 `FAILED` means the workflow failed, not that nothing happened. A bulk delete
 that fails on its fourth resource has already deleted three, and the workflow
 graph — one node per resource — is where that is legible.
+
+### One result, or several
+
+A workflow that creates several resources emits a **JSON array** in its
+`resultOutput`, and the backend stores that array string unchanged. The request
+page parses it: one ref keeps the single-line "✓ Created resource: …", several
+render a count and a list, each entry linked by name and labelled with its
+title.
+
+Parsing on the way *out* rather than on the way in is what keeps the stored
+column an honest record of what Argo said. It also means nothing has to be
+migrated, and a value nobody anticipated — an object, a malformed fragment —
+degrades to one opaque ref rather than blanking the panel. A ref carrying a
+scheme is left alone as an external link; not everything a workflow creates is
+a catalog entity.
 
 There is one exception, and it is deliberate: a batch naming a resource that
 cannot be resolved is **refused whole**, before any workflow is submitted. The

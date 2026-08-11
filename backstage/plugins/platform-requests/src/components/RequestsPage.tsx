@@ -11,6 +11,7 @@ import {
 } from '@internal/plugin-platform-ui';
 import { Request, RequestState } from '@internal/plugin-platform-common';
 import { requestsApiRef } from '../api';
+import { titleOf, useResourceTitles } from '../useResourceTitles';
 
 /** ISO string -> locale date + time (e.g. "Jul 26, 2026, 3:04 PM"). */
 export const formatTs = (iso: string) =>
@@ -109,14 +110,26 @@ export function RequestsPage() {
   // The "For approval" tab is pending-only, so it has no state filter.
   const stateFilterEnabled = tab !== 'approval';
 
+  // Fed from `rows`, not `displayed`: the filter reads titles, so looking them
+  // up from the filtered set would make the two circular.
+  const titles = useResourceTitles((rows ?? []).map(r => r.resourceName));
+
   const displayed = (rows ?? [])
     .filter(r => !stateFilterEnabled || stateFilter === 'ALL' || r.state === stateFilter)
     .filter(r => {
       if (!search.trim()) return true;
       const q = search.toLowerCase();
+      // Title *or* name. The name still matches because that is what appears in
+      // Argo logs and tickets — arriving with one in hand must find its request.
+      //
+      // The loading window is deliberate: until the titles land this matches
+      // names only, so a title typed in the first moment returns nothing and
+      // then fills in. The alternative is blocking the whole table on a catalog
+      // call, which is a worse trade for the common case.
       return (
         r.resourceType.toLowerCase().includes(q) ||
         r.resourceName.toLowerCase().includes(q) ||
+        (titles.get(r.resourceName)?.toLowerCase().includes(q) ?? false) ||
         r.requester.toLowerCase().includes(q)
       );
     })
@@ -198,10 +211,12 @@ export function RequestsPage() {
                 </td>
                 <td>{r.kind}</td>
                 <td>{r.resourceType}</td>
+                {/* The tooltip keeps the name reachable: it is the row's only
+                    remaining exposure of the addressable id. */}
                 <td title={r.resourceName}>
                   {r.resourceNames
                     ? `${r.resourceNames.length} resources`
-                    : r.resourceName}
+                    : titleOf(r.resourceName, titles)}
                 </td>
                 <td>{r.requester}</td>
                 <td className="sc-muted">{formatTs(r.createdAt)}</td>

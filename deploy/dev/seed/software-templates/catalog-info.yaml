@@ -12,4 +12,6 @@ spec:
     - ./templates/checkout-service/template.yaml
     - ./templates/git-resource/template.yaml
     - ./templates/bulk-delete-resources/template.yaml
+    - ./templates/bulk-provision/template.yaml
+    - ./templates/param-forwarding-demo/template.yaml
     - ./templates/review-gate/template.yaml

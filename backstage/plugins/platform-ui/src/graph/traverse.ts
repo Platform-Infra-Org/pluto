@@ -35,6 +35,10 @@ function toGraphNode(ref: string, entity: Entity, depth: number): GraphNode {
     id: ref,
     kind: entity.kind,
     name: entity.metadata.name,
+    // ponytail: literal fallback kept on purpose. `ref` already carries the
+    // real namespace and nothing reads this field, so wiring
+    // platform.catalog.namespace down here would mean a new option on
+    // TraverseOptions and a passthrough in useCatalogGraphData for no effect.
     namespace: entity.metadata.namespace ?? 'default',
     title: (entity.metadata as { title?: string }).title,
     depth,

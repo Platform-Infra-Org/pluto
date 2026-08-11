@@ -77,9 +77,19 @@ fi
 argoSubmit:
   namespace: argo
   workflowTemplate: review-gate
-  parameters:
-    request: "<< paramsJson >>"
 ```
+
+No `parameters` block is needed: every request param is forwarded to Argo as its
+own named parameter, so a request with `region` reaches a workflow that declares
+
+```yaml
+arguments:
+  parameters:
+    - { name: region, value: "eu-west-1" }
+```
+
+Declare each request field the workflow reads — see
+**[Submit tokens](../reference/tokens.md)**.
 
 ## What the approver gets
 

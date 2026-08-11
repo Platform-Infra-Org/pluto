@@ -12,12 +12,13 @@ spec:
       inputs:
         parameters:
           - { name: template, value: "" }
-          - { name: request, value: "{}" }
+          # No `request` blob: the backend forwards each request param as its
+          # own named Argo parameter, so a block declares what it reads.
           - { name: resolved, value: "{}" }
       container:
         image: alpine:3.20
         command: [sh, -c]
-        args: ["echo 'fn-jinja-render' && echo \"request={{inputs.parameters.request}}\""]
+        args: ["echo 'fn-jinja-render' && echo \"resolved={{inputs.parameters.resolved}}\""]
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: WorkflowTemplate

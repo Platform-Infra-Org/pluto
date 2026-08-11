@@ -109,7 +109,21 @@ export function createRequestSubmitAction(services: {
               parameters: z
                 .record(z.string())
                 .optional()
-                .describe('Argo parameters (name -> value). Default: { request: paramsJson }.'),
+                .describe(
+                  'Extra Argo parameters (name -> value). Merged over the ' +
+                    'forwarded request params, so naming one here overrides it.',
+                ),
+              // Without this the field is unusable from a template: this
+              // z.object becomes JSON Schema with additionalProperties: false,
+              // so a template writing forwardParams would fail input validation
+              // at task creation rather than being ignored.
+              forwardParams: z
+                .boolean()
+                .optional()
+                .describe(
+                  'Send each request param as its own Argo parameter. ' +
+                    'Default: true. Set false to send only `parameters`.',
+                ),
               labels: z
                 .record(z.string())
                 .optional()

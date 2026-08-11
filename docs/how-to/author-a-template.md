@@ -54,6 +54,32 @@ Two templating layers meet here — keep them straight:
 `${{ parameters.x }}` is **Scaffolder** (form input); `<< token >>` is resolved by
 **the backend at submit time**. See **[Submit tokens](../reference/tokens.md)**.
 
+### Your own workflow: no `parameters` block at all
+
+Every request param is forwarded to Argo as its own named parameter, so a
+workflow of your own needs no wiring — just declare the fields it reads:
+
+```yaml
+# in the WorkflowTemplate
+arguments:
+  parameters:
+    - { name: size, value: "small" }   # ← the request's params.size
+```
+
+```yaml
+# in the template — nothing to say
+argoSubmit:
+  namespace: argo
+  workflowTemplate: my-thing
+```
+
+`git-ops` above is the other shape: it consumes the whole param set as one
+`data` blob (which becomes the resource's data file) rather than field by field,
+so it names `data: "<< paramsJson >>"` explicitly and ignores the forwarded
+parameters. Anything named in `parameters` wins over the forwarded value of the
+same name; `forwardParams: false` suppresses the forwarding entirely. See
+**[Submit tokens](../reference/tokens.md)** for the coercion rules.
+
 ## 2. Enable edit & delete
 
 Add verb annotations so the resource's **Manage resource** card works. They point

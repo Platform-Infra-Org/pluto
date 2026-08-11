@@ -25,9 +25,13 @@ import {
   Request,
   isTerminal,
   approvalProgress,
+  catalogPath,
 } from '@internal/plugin-platform-common';
 import { requestsApiRef } from '../api';
 import { requestRouteRef } from '../routes';
+import { useCatalogNamespace } from '../useCatalogNamespace';
+import { titleOf, useResourceTitles } from '../useResourceTitles';
+import { parseResultRefs } from '../resultRefs';
 import { WorkflowGraph } from './WorkflowGraph';
 import { SuspendPanel } from './SuspendPanel';
 import { ExperienceBar } from './ExperienceBar';
@@ -71,6 +75,7 @@ export function RequestPage() {
   const adminGroups = config.getOptionalStringArray(
     'platform.rbac.adminGroups',
   ) ?? ['group:default/platform-admins'];
+  const namespace = useCatalogNamespace();
   const { id } = useRouteRefParams(requestRouteRef);
   const [request, setRequest] = useState<Request>();
   // Owned here rather than inside the graph, so its control can sit in the card
@@ -126,6 +131,37 @@ export function RequestPage() {
     }
   };
 
+  // Every catalog name this page shows, resolved to titles in **one** call:
+  // the resource(s) the request acts on plus the ref(s) the workflow reported.
+  // Above the loading return because it is a hook, and harmless there — an
+  // empty list never calls the catalog.
+  const resultRefs = parseResultRefs(request?.resultRef);
+  const resourceNames =
+    request?.resourceNames ?? (request ? [request.resourceName] : []);
+  const titles = useResourceTitles([...resourceNames, ...resultRefs]);
+
+  /**
+   * A result ref as a link: the catalog entity page for a bare name, the URL
+   * itself for anything carrying a scheme. The href is always name-based —
+   * only the text becomes the title — and `title` keeps the addressable name
+   * one hover away.
+   */
+  const refLink = (ref: string) =>
+    ref.includes('://') ? (
+      <Link key={ref} to={ref} className="sc-link">
+        {ref}
+      </Link>
+    ) : (
+      <Link
+        key={ref}
+        to={catalogPath(namespace, 'resource', ref)}
+        className="sc-link"
+        title={ref}
+      >
+        {titleOf(ref, titles)}
+      </Link>
+    );
+
   if (!request) {
     return (
       <Page>
@@ -136,14 +172,6 @@ export function RequestPage() {
   }
 
   const pending = request.state === 'PENDING_APPROVAL';
-  // Link to the created resource once the workflow reports it: a bare ref -> the
-  // catalog entity page; anything with a scheme -> that URL.
-  let resourceLink: string | undefined;
-  if (request.resultRef) {
-    resourceLink = request.resultRef.includes('://')
-      ? request.resultRef
-      : `/catalog/default/resource/${request.resultRef}`;
-  }
   // Only an admin, or a member of the owning service team, may decide it.
   const canApprove =
     myGroups.some(g => adminGroups.includes(g)) ||
@@ -153,15 +181,28 @@ export function RequestPage() {
     <Page>
       <PageHeader
         title={`Request #${request.id}`}
-        subtitle={`${request.kind} · ${request.resourceType}/${request.resourceName}`}
+        subtitle={`${request.kind} · ${request.resourceType}/${titleOf(
+          request.resourceName,
+          titles,
+        )}`}
         actions={stateBadge(request.state)}
       />
-      {request.state === 'SUCCEEDED' && resourceLink && (
+      {request.state === 'SUCCEEDED' && resultRefs.length > 0 && (
         <div className="sc-notice" style={{ marginBottom: 12 }}>
-          ✓ Created resource:{' '}
-          <Link to={resourceLink} className="sc-link">
-            {request.resultRef}
-          </Link>
+          {/* One ref reads as a sentence; several need the count up front and
+              a list, because the count is what the reader is checking. */}
+          {resultRefs.length === 1 ? (
+            <>✓ Created resource: {refLink(resultRefs[0])}</>
+          ) : (
+            <>
+              ✓ Created {resultRefs.length} resources:
+              <ul style={{ margin: '4px 0 0', paddingLeft: 16 }}>
+                {resultRefs.map(ref => (
+                  <li key={ref}>{refLink(ref)}</li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
       )}
       {request.error && (
@@ -191,12 +232,19 @@ export function RequestPage() {
               <dd>
                 {request.resourceNames ? (
                   <ul style={{ margin: 0, paddingLeft: 16 }}>
+                    {/* `title` because the name is the addressable id — it is
+                        what appears in Argo logs and tickets, and the title
+                        that replaces it here is not. */}
                     {request.resourceNames.map(n => (
-                      <li key={n}>{n}</li>
+                      <li key={n} title={n}>
+                        {titleOf(n, titles)}
+                      </li>
                     ))}
                   </ul>
                 ) : (
-                  request.resourceName
+                  <span title={request.resourceName}>
+                    {titleOf(request.resourceName, titles)}
+                  </span>
                 )}
               </dd>
               <dt>Requester</dt>

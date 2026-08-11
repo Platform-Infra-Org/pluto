@@ -27,6 +27,22 @@ describe('resolveResource error reporting', () => {
     expect(r.data).toEqual({});
   });
 
+  it('looks the resource up in the configured namespace', async () => {
+    const getEntityByRef = jest.fn().mockResolvedValue(entity({}));
+    const { resolveResource } = createResourceResolver({
+      catalog: { getEntityByRef } as any,
+      urlReader: { readUrl: jest.fn() } as any,
+      auth,
+      logger,
+      namespace: 'acme',
+    });
+    await resolveResource('bucket-a');
+    expect(getEntityByRef).toHaveBeenCalledWith(
+      'resource:acme/bucket-a',
+      expect.anything(),
+    );
+  });
+
   it('reports an error when the entity is missing', async () => {
     const { resolveResource } = createResourceResolver({
       catalog: { getEntityByRef: async () => undefined } as any,
@@ -142,6 +158,14 @@ describe('submitWorkflow resource resolution', () => {
       ),
     ).rejects.toThrow(/cannot resolve 1 of 2 resources[\s\S]*broken/);
     expect(submitSpec).not.toHaveBeenCalled();
+  });
+
+  it('passes the owning team into the submit context', async () => {
+    const submit = createSubmitWorkflow(deps());
+    await submit(request({ ownerGroup: 'group:default/team-a' }));
+    expect((submitSpec.mock.calls[0][1] as any).ownerGroup).toBe(
+      'group:default/team-a',
+    );
   });
 
   it('passes each resource as an object, with data as a nested object', async () => {

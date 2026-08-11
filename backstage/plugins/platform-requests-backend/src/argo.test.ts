@@ -28,6 +28,19 @@ describe('resolveTemplate', () => {
     expect(resolveTemplate('<< params.size >>', ctx)).toBe('10');
   });
 
+  it('resolves ownerGroup, and to empty when the request has no owning team', () => {
+    expect(
+      resolveTemplate('<< ownerGroup >>', {
+        ...ctx,
+        ownerGroup: 'group:default/team-a',
+      }),
+    ).toBe('group:default/team-a');
+    // No owning template was found — the admin-only case. It must resolve to
+    // empty rather than to the string 'undefined', which a workflow would
+    // happily label a resource with.
+    expect(resolveTemplate('<< ownerGroup >>', ctx)).toBe('');
+  });
+
   it('is whitespace-tolerant and handles multiple/embedded tokens', () => {
     expect(resolveTemplate('<<requester>>', ctx)).toBe('alice');
     expect(resolveTemplate('ns-<< resourceType >>-<< requestId >>', ctx)).toBe(
@@ -134,7 +147,7 @@ describe('ArgoClient.submitSpec', () => {
 
   afterEach(() => jest.restoreAllMocks());
 
-  it('default (no spec): resourceType template, request param, request-id label', async () => {
+  it('default (no spec): resourceType template, forwarded params, request-id label', async () => {
     const fetchMock = jest
       .spyOn(global, 'fetch')
       .mockResolvedValue(okResponse());
@@ -149,8 +162,10 @@ describe('ArgoClient.submitSpec', () => {
       resourceKind: 'WorkflowTemplate',
       resourceName: 'demo-resource',
     });
+    // One Argo parameter per request field, and no `request` blob.
     expect(body.submitOptions.parameters).toEqual([
-      `request=${JSON.stringify(ctx.params)}`,
+      'region=eu-west-1',
+      'size=10',
     ]);
     expect(body.submitOptions.labels).toBe('platform.io/request-id=42');
     expect(body.submitOptions.annotations).toBeUndefined();
@@ -179,12 +194,89 @@ describe('ArgoClient.submitSpec', () => {
     expect(body.resourceName).toBe('tpl');
     expect(body.submitOptions.entryPoint).toBe('create');
     expect(body.submitOptions.serviceAccount).toBe('sa');
-    expect(body.submitOptions.parameters).toEqual(['region=eu-west-1']);
+    // Explicit `region` merges over the forwarded one; `size` is forwarded.
+    expect(body.submitOptions.parameters).toEqual([
+      'region=eu-west-1',
+      'size=10',
+    ]);
     // request-id keeps its original key position but wins on value (42, not SHOULD-LOSE).
     expect(body.submitOptions.labels).toBe(
       'platform.io/request-id=42,owner=alice',
     );
     expect(body.submitOptions.annotations).toBe('note=for my-bucket');
+  });
+
+  it('forwardParams: false sends only the explicit parameters', async () => {
+    const fetchMock = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(okResponse());
+    await client().submitSpec(
+      { forwardParams: false, parameters: { data: '<< paramsJson >>' } },
+      ctx,
+    );
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.submitOptions.parameters).toEqual([
+      `data=${JSON.stringify(ctx.params)}`,
+    ]);
+  });
+
+  it('an explicit parameter overrides the forwarded one of the same name', async () => {
+    const fetchMock = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(okResponse());
+    await client().submitSpec({ parameters: { region: 'pinned' } }, ctx);
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.submitOptions.parameters).toEqual(['region=pinned', 'size=10']);
+  });
+
+  it('coerces mixed param types and drops a null one', async () => {
+    const fetchMock = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(okResponse());
+    await client().submitSpec(undefined, {
+      ...ctx,
+      params: {
+        name: 'b',
+        retentionDays: 30,
+        versioning: true,
+        tags: ['prod'],
+        note: null,
+      },
+    });
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.submitOptions.parameters).toEqual([
+      'name=b',
+      'retentionDays=30',
+      'versioning=true',
+      'tags=["prod"]',
+    ]);
+  });
+
+  it('throws on a param name Argo would misparse, before any submit', async () => {
+    const fetchMock = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(okResponse());
+    await expect(
+      client().submitSpec(undefined, { ...ctx, params: { 'a=b': 'x' } }),
+    ).rejects.toThrow("'a=b'");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('no params and no spec: an empty parameter list, not a request blob', async () => {
+    const fetchMock = jest
+      .spyOn(global, 'fetch')
+      .mockResolvedValue(okResponse());
+    await client().submitSpec(undefined, { ...ctx, params: {} });
+    const body = JSON.parse(
+      (fetchMock.mock.calls[0][1] as RequestInit).body as string,
+    );
+    expect(body.submitOptions.parameters).toEqual([]);
   });
 
   it('falls back to defaultTemplate only when workflowTemplate not pinned', async () => {

@@ -12,12 +12,14 @@ import '@xyflow/react/dist/style.css';
 import {
   handlePositions,
   layout,
+  NODE_H,
   STARFIELD,
   STAR_WIDE,
   type Direction,
 } from '@internal/plugin-platform-ui';
 import { Typography } from '@material-ui/core';
 import { requestsApiRef, WorkflowInfo, WorkflowNode } from '../api';
+import { nodeLabel } from '../nodeLabel';
 
 const PHASE_COLOR: Record<string, string> = {
   Succeeded: 'hsl(var(--sc-success))',
@@ -61,7 +63,14 @@ function toFlow(
     return {
       id: n.id,
       position: pos.get(n.id) ?? { x: 0, y: 0 },
-      data: { label: `${n.name}\n${phase ?? ''}` },
+      data: {
+        // The untruncated name stays reachable on hover: for a loop iteration
+        // the payload nodeLabel drops is exactly what tells you *which item*
+        // failed.
+        label: (
+          <span title={n.name}>{`${nodeLabel(n.name)}\n${phase ?? ''}`}</span>
+        ),
+      },
       style: {
         // A waiting step is the one thing on this canvas someone must act on,
         // so it gets a thicker edge as well as the colour.
@@ -76,6 +85,14 @@ function toFlow(
         lineHeight: 1.3,
         whiteSpace: 'pre-line',
         width: 128,
+        // Shortening the label keeps it readable; this is what keeps it inside
+        // the box. Without a clip any label wider than 128px paints straight
+        // out of the node and over the edges. The height cap is dagre's own
+        // NODE_H, so a node can never overlap the row below the one reserved
+        // for it.
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        maxHeight: NODE_H,
       },
       ...handles,
     };

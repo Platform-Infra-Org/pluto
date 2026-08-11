@@ -50,8 +50,8 @@ spec:
         argoSubmit:
           namespace: argo
           workflowTemplate: review-gate
-          parameters:
-            request: "<< paramsJson >>"
+          # No `parameters` block: `region` reaches the workflow on its own,
+          # because every request param is forwarded as a named Argo parameter.
           labels:
             platform.io/requested-by: "<< requester >>"
         resultOutput: result

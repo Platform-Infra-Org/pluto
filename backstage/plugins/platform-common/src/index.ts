@@ -4,6 +4,13 @@
  * @packageDocumentation
  */
 
+export {
+  DEFAULT_NAMESPACE,
+  resourceRef,
+  userRef,
+  catalogPath,
+} from './refs';
+
 /** Lifecycle states of a resource request. */
 export type RequestState =
   | 'PENDING_APPROVAL'
@@ -60,7 +67,22 @@ export interface ArgoSubmitSpec {
   workflowTemplate?: string;
   entrypoint?: string;
   serviceAccount?: string;
-  /** Argo parameters (name -> value); default { request: '${{ paramsJson }}' } */
+  /**
+   * Send every request param to Argo as its own named parameter.
+   *
+   * Defaults to **true**: a template declaring `name`, `owner`, `size` receives
+   * exactly those, instead of having to parse them back out of one JSON blob.
+   * Set `false` when a template wants only what `parameters` states explicitly
+   * — for instance because it declares none of the request's fields and would
+   * reject the submit.
+   */
+  forwardParams?: boolean;
+  /**
+   * Extra Argo parameters (name -> value), each value `<< token >>`-templated.
+   *
+   * Merged **over** the forwarded request params, so naming one here overrides
+   * the forwarded value of the same name. Absent = only the forwarded params.
+   */
   parameters?: Record<string, string>;
   labels?: Record<string, string>;
   annotations?: Record<string, string>;

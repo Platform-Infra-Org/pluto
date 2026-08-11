@@ -42,6 +42,22 @@ was a 1:1 rename of two groups and bought nothing.
 requests plus requests owned by their teams. The three request tabs (My / For
 approval / All) are views over that scoping.
 
+## Notifications follow the same rule
+
+"Approval needed" goes to **everyone the gate would let approve**: the configured
+`platform.rbac.adminGroups` plus the request's `ownerGroup`, deduped — an admin
+who is also on the owning team is notified once. The list is resolved once at
+plugin start and handed to the notifier, so the recipients cannot drift away
+from the gate by being read from config twice.
+
+An admin-only request (no owning template found) has no `ownerGroup`, so it
+notifies the admin groups alone. Decisions and terminal outcomes go to the
+requester only.
+
+Notifications are **best-effort**: a failure is logged and never breaks the
+request flow. That is worth knowing when they appear not to arrive — check the
+backend log, not the request state.
+
 ## The sidebar is decluttering, not access control
 
 Three routes are offered to admins only — **APIs** (`/api-docs`), **Register
