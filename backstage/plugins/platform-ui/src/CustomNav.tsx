@@ -15,6 +15,8 @@ import { useApi, configApiRef } from '@backstage/core-plugin-api';
 import { NavContentBlueprint } from '@backstage/plugin-app-react';
 import { PlatformMark } from './components';
 import { screenName, Flavour } from './flavour';
+import { navItemVisible } from './navVisibility';
+import { useIsAdmin } from './useIsAdmin';
 
 // The nav renders outside react-router's context, so derive the active path
 // from the browser location + history events rather than useLocation().
@@ -52,15 +54,6 @@ const NAV_MIN = 180;
 const NAV_MAX = 420;
 const NAV_DEFAULT = 240;
 const NAV_COLLAPSED = 68;
-
-/**
- * Routes that exist but are not offered in the sidebar.
- *
- * `/catalog-graph` renders filters only until it is given a root entity, and
- * the page has no picker for one — Backstage expects you to arrive from an
- * entity. The relations card links to it with the root already set.
- */
-export const HIDDEN_NAV_HREFS = ['/catalog-graph'];
 
 const clampNavWidth = (px: number) =>
   Math.round(Math.min(NAV_MAX, Math.max(NAV_MIN, px)));
@@ -143,15 +136,15 @@ function CustomNav({ navItems }: { navItems: any }) {
   // from an effect and mutating it re-injects CSS, which never re-renders this
   // component — the labels would stay literal whatever the config said.
   const config = useApi(configApiRef);
+  const isAdmin = useIsAdmin();
   const flavour: Flavour =
     config.getOptionalString('app.branding.flavour') === 'fantasy'
       ? 'fantasy'
       : undefined;
   const bag = navItems.withComponent((item: any) => {
-    // The catalog graph has no way to choose a root entity of its own, so the
-    // sidebar link always landed on an empty canvas. It is reached from the
-    // relations card instead, which knows which entity to root it on.
-    if (HIDDEN_NAV_HREFS.includes(item.href)) return null;
+    // Some routes are never offered here, and some only to admins — see
+    // navVisibility.ts for which, and why.
+    if (!navItemVisible(item.href, isAdmin)) return null;
     const active = isActive(pathname, item.href);
     const label = screenName(item.title, flavour);
     return (
