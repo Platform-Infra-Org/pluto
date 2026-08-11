@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-08-11
+
+### Added
+
+- Pass the owning service team to Argo as << ownerGroup >>
+- Declare the schema's blind spots and make the namespace configurable
+- Forward request params to Argo as named parameters
+- Show resource titles, and every resource a request created
+- The ref helpers and schema declarations themselves
+- Example templates for param forwarding and multi-resource results
+
+### Fixed
+
+- Tell everyone who can approve that a request needs approval
+- Stop graph labels overflowing, bound the catalog graph, unstyle the task page
+
 ## [0.5.0] - 2026-08-11
 
 ### Added
