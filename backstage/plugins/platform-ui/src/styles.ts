@@ -297,6 +297,17 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    here named generated class names, which production mangles to jss<n> — they
    were dead in every deployed release while working on the dev server. */
 /* our React Flow workflow DAG — dark + dots (dot color set in the component). */
+/* The rooted node, tinted with the picked accent.
+   The plugin puts its focused marker on the label only, never on the rect, so
+   the rooted node is otherwise identical to every other one — which made
+   clicking a node look like it did nothing. focused is a literal class and
+   #dependency-graph is a stable id, so both survive a production build. */
+#dependency-graph g:has(> text.focused) > rect {
+  fill: hsl(var(--sc-primary) / .22) !important;
+  stroke: hsl(var(--sc-primary)) !important;
+  stroke-width: 2 !important;
+}
+
 /* The canvas wrapper carries the space colour. It sits BELOW react-flow's
    background svg, which is what makes the stars visible — see the note on the
    .react-flow rule below. */

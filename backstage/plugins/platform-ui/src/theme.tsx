@@ -103,22 +103,22 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
           stroke: '#32303e',
           rx: 8,
           ry: 8,
-          // The plugin marks the root/selected node with LITERAL `primary` and
-          // `secondary` classes (not JSS-generated ones) and paints them from
-          // palette.*.light — a fixed colour that ignores the picker. These put
-          // the highlighted node back on the picked accent.
-          '&.primary, &.secondary': {
-            fill: 'hsl(var(--sc-primary) / .22)',
-            stroke: 'hsl(var(--sc-primary))',
-          },
+          // `primary` and `secondary` are the plugin's COLOUR CATEGORIES and it
+          // sets one of them on every node — they do not mark the root. Painting
+          // them with the accent turned the whole graph a single colour and left
+          // the root indistinguishable from its children, so clicking a node
+          // looked like it did nothing. They stay on the base surface.
+          '&.primary, &.secondary': { fill: '#17171f', stroke: '#32303e' },
         },
         text: {
           fill: '#e7e7ef',
           fontSize: 11,
           fontWeight: 500,
-          // Same variants on the label, or the highlighted node's text reverts
-          // to the palette's contrast colour and disappears into the fill.
           '&.primary, &.secondary': { fill: '#e7e7ef' },
+          // `focused` is the only marker the plugin puts on the ROOT, and it
+          // puts it on the label rather than the rect. This is what tells you
+          // which node the graph is currently rooted on.
+          '&.focused': { fill: 'hsl(var(--sc-primary))', fontWeight: 700 },
         },
         clickable: { cursor: 'pointer' },
       },
