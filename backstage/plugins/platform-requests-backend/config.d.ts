@@ -1,5 +1,73 @@
 export interface Config {
+  /**
+   * Upstream gap, not a platform key.
+   *
+   * `@backstage/plugin-catalog-backend-module-ldap` 0.12.7 *reads*
+   * `catalog.providers.ldapOrg.<id>.schedule` — `readProviderConfigs` feeds it
+   * straight to `scheduler.createScheduledTaskRunner`, and the provider throws
+   * at startup when neither code nor config supplies one — but its shipped
+   * `config.schema.json` never declares it. So the key is honoured, and
+   * `config:check --strict` rejects it anyway.
+   *
+   * Declaring it here is additive: package schemas are merged with
+   * `ignoreAdditionalProperties`, so this fills the hole without shadowing the
+   * module's own declarations. Delete it once the module declares `schedule`.
+   */
+  catalog?: {
+    providers?: {
+      ldapOrg?: {
+        [id: string]: {
+          /** How often the LDAP directory is re-read. */
+          schedule?: {
+            frequency?:
+              | string
+              | { hours?: number; minutes?: number; seconds?: number };
+            timeout?:
+              | string
+              | { hours?: number; minutes?: number; seconds?: number };
+            initialDelay?:
+              | string
+              | { hours?: number; minutes?: number; seconds?: number };
+            scope?: 'global' | 'local';
+          };
+        };
+      };
+    };
+  };
   platform?: {
+    /**
+     * Argo Workflows connection. Backend-only — the browser never talks to
+     * argo-server directly, it goes through this plugin's router.
+     *
+     * Declared so a typo is a startup error rather than a silent outage:
+     * `plugin.ts` falls back to `http://localhost:2746`, so a production
+     * `baseurl` (lower-case `u`) would otherwise validate fine, fall back to
+     * localhost, and fail every submit against a host that is not there.
+     */
+    argo?: {
+      /**
+       * argo-server base URL, used when `proxyPath` is unset.
+       * @default http://localhost:2746
+       */
+      baseUrl?: string;
+      /**
+       * Namespace workflows are submitted into. Must match
+       * `platform.secrets.namespace` — a Secret's ownerReference is namespaced.
+       * @default argo
+       */
+      namespace?: string;
+      /**
+       * WorkflowTemplate used when a request's `argoSubmit` names none.
+       * @default demo-resource
+       */
+      defaultTemplate?: string;
+      /**
+       * A `proxy.endpoints` path to route Argo calls through, so the
+       * argo-server credential is injected server-side and never reaches this
+       * plugin's config. Unset = talk to `baseUrl` directly (dev only).
+       */
+      proxyPath?: string;
+    };
     /**
      * Per-request Kubernetes Secret provisioning: when a request carries secret
      * fields (a DB password, an API key, …) the backend materialises them as a
