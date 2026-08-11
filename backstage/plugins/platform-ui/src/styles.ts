@@ -580,6 +580,8 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-toolbar { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
 .sc-toolbar .sc-input { width: auto; flex: 1 1 220px; min-width: 180px; }
 .sc-toolbar .sc-select { width: auto; min-width: 150px; }
+/* Compact variant, for a select that sits in a card header beside a title. */
+.sc-select-sm { height: 28px; padding: 0 26px 0 8px; font-size: 12px; }
 /* collapsible JSON viewer */
 .sc-json { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .sc-json-bar { display: flex; gap: 8px; flex-wrap: wrap; }
