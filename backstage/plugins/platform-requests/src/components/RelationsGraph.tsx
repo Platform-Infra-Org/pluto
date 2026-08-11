@@ -21,10 +21,13 @@ import {
   CardBody,
   STARFIELD,
   STAR_WIDE,
+  GraphDirectionPicker,
+  useGraphDirection,
+  layout,
+  handlePositions,
 } from '@internal/plugin-platform-ui';
 
 const NODE = 130;
-const ROW = 88;
 
 const baseNode = {
   background: '#17171f',
@@ -54,6 +57,10 @@ export function RelationsGraph() {
   const { entity } = useEntity();
   const navigate = useNavigate();
   const entityRoute = useRouteRef(entityRouteRef);
+  const [direction, setDirection] = useGraphDirection(
+    'platform-relations-dir',
+    'LR',
+  );
 
   const { nodes, edges } = useMemo(() => {
     const centerRef = stringifyEntityRef(entity).toLowerCase();
@@ -65,12 +72,11 @@ export function RelationsGraph() {
       byTarget.get(ref)!.add(r.type);
     }
     const targets = [...byTarget.keys()];
-    const midY = ((targets.length - 1) * ROW) / 2;
 
     const n: Node[] = [
       {
         id: centerRef,
-        position: { x: 0, y: midY },
+        position: { x: 0, y: 0 },
         data: {
           label: `${entity.metadata.name}\n${entity.spec?.type ?? entity.kind}`,
         },
@@ -78,11 +84,11 @@ export function RelationsGraph() {
       },
     ];
     const e: Edge[] = [];
-    targets.forEach((ref, i) => {
+    targets.forEach(ref => {
       const parsed = parseEntityRef(ref);
       n.push({
         id: ref,
-        position: { x: 300, y: i * ROW },
+        position: { x: 0, y: 0 },
         data: { label: `${parsed.name}\n${parsed.kind}` },
         style: baseNode,
       });
@@ -96,8 +102,18 @@ export function RelationsGraph() {
         style: { stroke: 'rgba(255,255,255,.28)' },
       });
     });
-    return { nodes: n, edges: e };
-  }, [entity]);
+    // Handles follow the layout direction: React Flow's default anchors every
+    // edge to the top and bottom, so a left-to-right layout has its lines
+    // looping around the boxes instead of running between them.
+    const pos = new Map(layout(n, e, direction).map(p => [p.id, p]));
+    const handles = handlePositions(direction);
+    const positioned = n.map(node => ({
+      ...node,
+      position: pos.get(node.id) ?? node.position,
+      ...handles,
+    }));
+    return { nodes: positioned, edges: e };
+  }, [entity, direction]);
 
   const onNodeClick = (_: unknown, node: Node) => {
     try {
@@ -113,15 +129,22 @@ export function RelationsGraph() {
       <CardHeader
         title="Relations"
         action={
-          <Link
-            to={`/catalog-graph?rootEntityRefs[]=${encodeURIComponent(
-              stringifyEntityRef(entity),
-            )}`}
-            className="sc-btn sc-btn-outline sc-btn-sm sc-btn-accent"
-            title="Open the full relations graph, rooted on this entity"
-          >
-            Explore graph
-          </Link>
+          <div className="sc-row">
+            <GraphDirectionPicker
+              value={direction}
+              onChange={setDirection}
+              id="relations-dir"
+            />
+            <Link
+              to={`/catalog-graph?rootEntityRefs[]=${encodeURIComponent(
+                stringifyEntityRef(entity),
+              )}`}
+              className="sc-btn sc-btn-outline sc-btn-sm sc-btn-accent"
+              title="Open the full relations graph, rooted on this entity"
+            >
+              Explore graph
+            </Link>
+          </div>
         }
       />
       <CardBody>
