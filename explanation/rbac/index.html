@@ -1058,6 +1058,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#notifications-follow-the-same-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications follow the same rule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-sidebar-is-decluttering-not-access-control" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1278,6 +1289,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#notifications-follow-the-same-rule" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notifications follow the same rule
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-sidebar-is-decluttering-not-access-control" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1350,6 +1372,18 @@ was a 1:1 rename of two groups and bought nothing.</p>
 <p><code>GET /requests</code> is scoped server-side: admins see everything; others see their own
 requests plus requests owned by their teams. The three request tabs (My / For
 approval / All) are views over that scoping.</p>
+<h2 id="notifications-follow-the-same-rule">Notifications follow the same rule<a class="headerlink" href="#notifications-follow-the-same-rule" title="Permanent link">&para;</a></h2>
+<p>"Approval needed" goes to <strong>everyone the gate would let approve</strong>: the configured
+<code>platform.rbac.adminGroups</code> plus the request's <code>ownerGroup</code>, deduped — an admin
+who is also on the owning team is notified once. The list is resolved once at
+plugin start and handed to the notifier, so the recipients cannot drift away
+from the gate by being read from config twice.</p>
+<p>An admin-only request (no owning template found) has no <code>ownerGroup</code>, so it
+notifies the admin groups alone. Decisions and terminal outcomes go to the
+requester only.</p>
+<p>Notifications are <strong>best-effort</strong>: a failure is logged and never breaks the
+request flow. That is worth knowing when they appear not to arrive — check the
+backend log, not the request state.</p>
 <h2 id="the-sidebar-is-decluttering-not-access-control">The sidebar is decluttering, not access control<a class="headerlink" href="#the-sidebar-is-decluttering-not-access-control" title="Permanent link">&para;</a></h2>
 <p>Three routes are offered to admins only — <strong>APIs</strong> (<code>/api-docs</code>), <strong>Register
 Existing Component</strong> (<code>/catalog-import</code>) and <strong>Visualizer</strong> (<code>/visualizer</code>).

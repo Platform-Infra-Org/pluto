@@ -969,6 +969,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#names-titles-and-the-gap-between-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Names, titles, and the gap between them
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-second-gate" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1031,6 +1042,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="A request may name more than one resource">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-result-or-several" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One result, or several
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1278,6 +1306,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#names-titles-and-the-gap-between-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Names, titles, and the gap between them
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-second-gate" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1340,6 +1379,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="A request may name more than one resource">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#one-result-or-several" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        One result, or several
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -1404,8 +1460,30 @@ backend.</p>
    show done until the workflow is done" guarantee.</strong></li>
 <li><strong>Result linking.</strong> On success, the backend reads the configured output
    parameter (<code>resultOutput</code>) off the finished workflow and stores it as
-   <code>resultRef</code> — the request page links to the created resource.</li>
+   <code>resultRef</code> — the request page links to the created resource. The value is
+   stored <strong>verbatim</strong>, exactly as Argo emitted it; that string is the audit
+   record, and splitting a multi-resource result into links happens at
+   presentation time (see <em>One result, or several</em> below).</li>
 </ol>
+<h2 id="names-titles-and-the-gap-between-them">Names, titles, and the gap between them<a class="headerlink" href="#names-titles-and-the-gap-between-them" title="Permanent link">&para;</a></h2>
+<p>A request stores the resource <strong>name</strong> — the addressable id, the thing that
+appears in Argo logs, in catalog URLs and in tickets. The UI shows the
+catalog's <strong>title</strong> where there is one, because that is what a human recognises.</p>
+<p>Only the <em>text</em> changes. Catalog routes address the entity by name and titles
+are neither unique nor routable, so every link on these pages is still built
+from the name, and the name stays one hover away in a <code>title</code> tooltip.</p>
+<p><strong>The name showing through is the normal case, not a failure.</strong> The workflow is
+the only writer of Git, and the catalog ingests on a poll, so a request that has
+just reached <code>SUCCEEDED</code> names a resource the catalog has not read yet. The UI
+therefore renders the name immediately and upgrades it in place when the titles
+arrive — no spinner, no blank cell, no reflow. The same fallback covers an
+entity with no title at all and a catalog that is down: a title is decoration,
+and its absence never blanks the list it decorates.</p>
+<p>One consequence worth knowing: the requests search matches title <strong>or</strong> name,
+and until the titles land it matches names only. A title typed in the first
+moment after the page opens returns nothing and then fills in. That is the
+deliberate trade — the alternative is holding the whole table back on a catalog
+call.</p>
 <h2 id="the-second-gate">The second gate<a class="headerlink" href="#the-second-gate" title="Permanent link">&para;</a></h2>
 <p>A workflow can stop halfway and ask. Where step 4 polls for a terminal phase, it
 also reads the workflow's nodes for an Argo <code>suspend</code> step that is waiting, and
@@ -1508,6 +1586,18 @@ the thing being decided on. And the states keep meaning what they meant:
 <code>FAILED</code> means the workflow failed, not that nothing happened. A bulk delete
 that fails on its fourth resource has already deleted three, and the workflow
 graph — one node per resource — is where that is legible.</p>
+<h3 id="one-result-or-several">One result, or several<a class="headerlink" href="#one-result-or-several" title="Permanent link">&para;</a></h3>
+<p>A workflow that creates several resources emits a <strong>JSON array</strong> in its
+<code>resultOutput</code>, and the backend stores that array string unchanged. The request
+page parses it: one ref keeps the single-line "✓ Created resource: …", several
+render a count and a list, each entry linked by name and labelled with its
+title.</p>
+<p>Parsing on the way <em>out</em> rather than on the way in is what keeps the stored
+column an honest record of what Argo said. It also means nothing has to be
+migrated, and a value nobody anticipated — an object, a malformed fragment —
+degrades to one opaque ref rather than blanking the panel. A ref carrying a
+scheme is left alone as an external link; not everything a workflow creates is
+a catalog entity.</p>
 <p>There is one exception, and it is deliberate: a batch naming a resource that
 cannot be resolved is <strong>refused whole</strong>, before any workflow is submitted. The
 alternative is worse than failing — an unreadable resource would be deleted

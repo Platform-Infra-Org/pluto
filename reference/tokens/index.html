@@ -803,6 +803,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#params-reach-argo-without-any-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Params reach Argo without any token
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Params reach Argo without any token">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#precedence-and-turning-it-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Precedence, and turning it off
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-three-templating-layers-dont-confuse-them" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1201,6 +1229,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#params-reach-argo-without-any-token" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Params reach Argo without any token
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Params reach Argo without any token">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#precedence-and-turning-it-off" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Precedence, and turning it off
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#the-three-templating-layers-dont-confuse-them" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1261,6 +1317,10 @@ by the platform backend — <strong>no escaping needed</strong>.</p>
 <td>the requesting user's short id</td>
 </tr>
 <tr>
+<td><code>&lt;&lt; ownerGroup &gt;&gt;</code></td>
+<td>the owning service team's entityRef, from the Template's <code>spec.owner</code>; <code>''</code> when no owning template was found</td>
+</tr>
+<tr>
 <td><code>&lt;&lt; paramsJson &gt;&gt;</code></td>
 <td>the whole <code>params</code> object as a JSON string</td>
 </tr>
@@ -1288,11 +1348,20 @@ by the platform backend — <strong>no escaping needed</strong>.</p>
 <td><code>&lt;&lt; resourcesJson &gt;&gt;</code></td>
 <td>bulk requests: a JSON array of every resource, <code>[{name, path, dataPath, data}]</code></td>
 </tr>
+<tr>
+<td><code>&lt;&lt; secretName &gt;&gt;</code></td>
+<td>the per-request Kubernetes Secret's name, for the WorkflowTemplate to <code>secretKeyRef</code>; <code>''</code> when the request declares no secrets</td>
+</tr>
 </tbody>
 </table>
 <p>Unknown tokens and missing fields resolve to an empty string (<code>resourceData</code> to
 <code>{}</code>). <code>resourcePath</code> / <code>resourceDataPath</code> are resolved from the resource's
 location + its <code>resource-data</code> ref, so they're correct for any layout.</p>
+<p><code>&lt;&lt; ownerGroup &gt;&gt;</code> is the same value the approval gate is enforced on, so a
+workflow that labels, notifies or charges by team names the team that actually
+approved the change. It is empty exactly when the request is admin-only — no
+owning Template matched its <code>resourceType</code> — and a workflow that cannot act
+without an owner should fail on the empty string rather than invent one.</p>
 <p><code>&lt;&lt; resourcesJson &gt;&gt;</code> resolves to <code>[]</code> for an ordinary single-resource request.
 Each element's <code>data</code> is a <strong>nested object</strong>, not a JSON string.</p>
 <p>That is worth stating because the intuition points the wrong way. Argo
@@ -1306,6 +1375,60 @@ strings; the difference is the <code>withParam</code> loop, not the token.</p>
 rather than passing an element with empty data. A workflow that decommissions
 from <code>data</code> would otherwise skip the real teardown for that one resource and
 delete its files anyway, reporting success.</p>
+<h2 id="params-reach-argo-without-any-token">Params reach Argo without any token<a class="headerlink" href="#params-reach-argo-without-any-token" title="Permanent link">&para;</a></h2>
+<p>Every entry in the request's <code>params</code> is sent to Argo as <strong>its own named
+parameter</strong> — <code>size</code> arrives as <code>{{workflow.parameters.size}}</code>, not as a field
+to dig out of a JSON blob. Nothing has to be listed in <code>argoSubmit.parameters</code>
+for that to happen.</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Sent as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a string</td>
+<td>as-is</td>
+</tr>
+<tr>
+<td>a number / boolean</td>
+<td><code>String(v)</code> — <code>30</code>, <code>true</code></td>
+</tr>
+<tr>
+<td>an object / array</td>
+<td><code>JSON.stringify(v)</code></td>
+</tr>
+<tr>
+<td><code>null</code> / <code>undefined</code></td>
+<td><strong>not sent at all</strong></td>
+</tr>
+</tbody>
+</table>
+<p>A blank optional field is <em>absent</em>, never <code>''</code> — so the WorkflowTemplate's own
+declared default applies, which an empty string would silently override.</p>
+<p>A param name containing <code>=</code>, whitespace or a newline <strong>fails the submit</strong>, naming
+the offending param. Argo parses <code>submitOptions.parameters</code> as <code>k=v</code> strings, so
+such a name would not be rejected — it would be silently misparsed.</p>
+<h3 id="precedence-and-turning-it-off">Precedence, and turning it off<a class="headerlink" href="#precedence-and-turning-it-off" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">argoSubmit</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">forwardParams</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span><span class="w">          </span><span class="c1"># default: true</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">data</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;&lt;</span><span class="nv"> </span><span class="s">paramsJson</span><span class="nv"> </span><span class="s">&gt;&gt;&quot;</span>
+</code></pre></div></td></tr></table></div>
+<p><code>argoSubmit.parameters</code> is merged <strong>over</strong> the forwarded params, so naming one
+there overrides the forwarded value of the same name. <code>forwardParams: false</code>
+sends only what <code>parameters</code> states — for a workflow like <code>git-ops</code>, which takes
+the whole param set as one <code>data</code> blob and declares none of the request's own
+fields.</p>
+<p><strong>A template must now declare the parameters it receives.</strong> There is no implicit
+<code>request</code> parameter any more; a workflow that used to read
+<code>{{inputs.parameters.request}}</code> declares the fields it actually uses instead.
+<code>&lt;&lt; paramsJson &gt;&gt;</code> still works when you write it explicitly.</p>
 <h2 id="the-three-templating-layers-dont-confuse-them">The three templating layers (don't confuse them)<a class="headerlink" href="#the-three-templating-layers-dont-confuse-them" title="Permanent link">&para;</a></h2>
 <table>
 <thead>

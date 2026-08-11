@@ -1405,14 +1405,20 @@ answered for:</p>
 <h2 id="3-point-a-template-at-it">3. Point a template at it<a class="headerlink" href="#3-point-a-template-at-it" title="Permanent link">&para;</a></h2>
 <div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
-<span class="normal">3</span>
-<span class="normal">4</span>
-<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">argoSubmit</span><span class="p">:</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">argoSubmit</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">argo</span>
 <span class="w">  </span><span class="nt">workflowTemplate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">review-gate</span>
-<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">request</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;&lt;</span><span class="nv"> </span><span class="s">paramsJson</span><span class="nv"> </span><span class="s">&gt;&gt;&quot;</span>
 </code></pre></div></td></tr></table></div>
+<p>No <code>parameters</code> block is needed: every request param is forwarded to Argo as its
+own named parameter, so a request with <code>region</code> reaches a workflow that declares</p>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">arguments</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> name</span><span class="p">:</span><span class="w"> </span><span class="nv">region</span><span class="p p-Indicator">,</span><span class="nt"> value</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;eu-west-1&quot;</span><span class="w"> </span><span class="p p-Indicator">}</span>
+</code></pre></div></td></tr></table></div>
+<p>Declare each request field the workflow reads — see
+<strong><a href="../../reference/tokens/">Submit tokens</a></strong>.</p>
 <h2 id="what-the-approver-gets">What the approver gets<a class="headerlink" href="#what-the-approver-gets" title="Permanent link">&para;</a></h2>
 <p>When the workflow reaches the step, the request moves to <code>AWAITING_INPUT</code> on
 the next poll, the node turns yellow in the graph, and a panel appears above

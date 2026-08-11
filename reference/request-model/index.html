@@ -1474,7 +1474,7 @@ owning team) — see <strong><a href="../../explanation/rbac/">Per-team RBAC</a>
 </tr>
 <tr>
 <td><code>argoSubmit</code></td>
-<td>the submit spec (per-request)</td>
+<td>the submit spec (per-request). Its <code>parameters</code> are merged <strong>over</strong> the request's <code>params</code>, each of which is forwarded to Argo as its own named parameter unless <code>forwardParams: false</code>. See <a href="../tokens/">Submit tokens</a></td>
 </tr>
 <tr>
 <td><code>resultOutput</code> / <code>resultRef</code></td>

@@ -1410,7 +1410,9 @@ switch to a resolver keyed on a stable claim.</p>
   reaching Gitea on the host. In a real cluster, use the VCS's real URL.</li>
 <li><strong>Identity.</strong> Local Keycloak + OpenLDAP → your IdP and directory. The
   federation and <code>catalog.providers.ldapOrg</code> config carry over; repoint
-  <code>target</code>/<code>connectionUrl</code>, use LDAPS, and a real bind secret.</li>
+  <code>target</code>/<code>connectionUrl</code>, use LDAPS, and a real bind secret. If your catalog
+  ingests into a namespace other than <code>default</code>, set <code>platform.catalog.namespace</code>
+  to match — resource links and requester notifications are built from it.</li>
 <li><strong>Argo.</strong> kind plus a plain-HTTP port-forward on <code>:2746</code> → a real Argo
   Workflows cluster. Set <code>platform.argo.proxyPath</code> to a <code>proxy.endpoints</code> entry
   that targets the real argo-server and injects the token or mTLS <strong>server-side</strong>;

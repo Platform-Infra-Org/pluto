@@ -881,6 +881,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#platformcatalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.catalog
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#platformhome" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1367,6 +1378,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#platformcatalog" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.catalog
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#platformhome" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1536,6 +1558,21 @@ Frontend-visible (the approve button uses <code>adminGroups</code>). Multiple gr
 Set <code>proxyPath</code> to a <code>proxy.endpoints</code> entry to send Argo calls through the
 Backstage proxy (which injects the argo-server auth server-side, with a service
 token). Unset = direct <code>baseUrl</code>.</p>
+<h2 id="platformcatalog"><code>platform.catalog</code><a class="headerlink" href="#platformcatalog" title="Permanent link">&para;</a></h2>
+<p><div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">platform</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">catalog</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span><span class="w">   </span><span class="c1"># default</span>
+</code></pre></div></td></tr></table></div>
+Frontend-visible. The namespace this deployment's catalog entities live in —
+used for <strong>resource</strong> refs (<code>resource:&lt;ns&gt;/&lt;name&gt;</code>), <strong>user</strong> refs
+(<code>user:&lt;ns&gt;/&lt;id&gt;</code>, how a requester is notified) and the <code>/catalog/&lt;ns&gt;/…</code> links
+the request pages build. One key, not one per kind: users and resources are
+assumed to share a namespace.</p>
+<p><code>platform.rbac.adminGroups</code> / <code>auditorGroups</code> are <strong>unaffected</strong> — those are
+full entityRefs and already carry their namespace inline
+(<code>group:default/platform-admins</code>).</p>
 <h2 id="platformhome"><code>platform.home</code><a class="headerlink" href="#platformhome" title="Permanent link">&para;</a></h2>
 <div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
