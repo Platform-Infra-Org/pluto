@@ -37,6 +37,19 @@ class names — `theme.tsx` uses the published override keys, which are typed, s
 a renamed slot fails the build rather than silently unstyling a page. What is
 left in CSS targets stable MUI global classes and canon's `--bui-*` variables.
 
+**A route gets a class so a general selector can be specific again.**
+`routeClass.ts` maps a pathname to one `sc-route-*` class on the root element.
+Production builds discard `makeStyles` names, so a selector cannot name the
+scaffolder's card grid; only `Mui*` survives, and `.MuiCard-root` is every card
+in the app. Scoping by route is what narrows it.
+
+The list is ordered and the **first match wins**, which is load-bearing rather
+than incidental: entries match a prefix *and everything beneath it*, so
+`/create` alone also claimed `/create/tasks/<id>` and painted the template-card
+frieze over the task page's own controls. `/create/tasks` sits ahead of
+`/create` for exactly that reason. Adding a route means asking which existing
+prefix already swallows it.
+
 **Sprites are character grids.** A 16×16 (or small 8×8) array of `#` and `.`,
 run-merged into rects and rendered as SVG or drawn to canvas for the favicon.
 Some carry a second layer — `~` for a potion's liquid or a rupee's fill — so

@@ -80,6 +80,32 @@ parameters. Anything named in `parameters` wins over the forwarded value of the
 same name; `forwardParams: false` suppresses the forwarding entirely. See
 **[Submit tokens](../reference/tokens.md)** for the coercion rules.
 
+### Worked examples you can run
+
+Two templates in `deploy/dev/` exist only to demonstrate this, and both are
+runnable against the dev stack:
+
+| Template | Shows |
+|---|---|
+| **Param Forwarding (demo)** — `templates/param-forwarding-demo` with `argo/param-echo.yaml` | Five form fields mapped **once** under `params`, four of them reaching Argo with no second mapping. It names only `note` in `argoSubmit.parameters`, which collides with the form field on purpose, so one run proves both forwarding and precedence. The workflow writes nothing; it prints what it received, so the run log is the evidence — a number arriving as a string, an array as compact JSON, and a blank field absent rather than empty. |
+| **Provision Git Resources (bulk)** — `templates/bulk-provision` with `argo/bulk-provision.yaml` | One request creating several resources, returning their names as a JSON array so the request page links to each. |
+
+The mapping lives in **one** place, the request's `params`:
+
+```yaml
+params:                          # written once
+  region: ${{ parameters.region }}
+  size: ${{ parameters.size }}
+argoSubmit:
+  workflowTemplate: param-echo   # no `parameters` block restating the above
+```
+
+One thing to expect when testing: a WorkflowTemplate's own
+`arguments.parameters` are defaults, and a parameter you *stop* forwarding falls
+back to its default rather than disappearing. The step still receives a value —
+just the template's, not yours. Delete the default too if you want its absence
+to be an error.
+
 ## 2. Enable edit & delete
 
 Add verb annotations so the resource's **Manage resource** card works. They point
