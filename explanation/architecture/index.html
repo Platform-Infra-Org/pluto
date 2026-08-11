@@ -952,6 +952,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#why-the-relations-graph-is-bounded" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the relations graph is bounded
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#conventions-that-glue-it-together" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1223,6 +1234,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#why-the-relations-graph-is-bounded" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the relations graph is bounded
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#conventions-that-glue-it-together" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1291,6 +1313,22 @@ points</strong> (not by patching core): <code>PageBlueprint</code>, <code>Entity
 <code>createBackendModule</code> + <code>scaffolderActionsExtensionPoint</code>, <code>policyExtensionPoint</code>,
 <code>catalogProcessingExtensionPoint</code> on the backend. This is what makes the suite
 upgrade-stable — see <strong><a href="../../how-to/upgrade-backstage/">Upgrade Backstage</a></strong>.</p>
+<h2 id="why-the-relations-graph-is-bounded">Why the relations graph is bounded<a class="headerlink" href="#why-the-relations-graph-is-bounded" title="Permanent link">&para;</a></h2>
+<p>Rooting the graph on one entity and following every relation reaches the
+<strong>whole catalog</strong>, on any real instance. The chain is short and entirely
+ordinary:</p>
+<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>resource --ownedBy--&gt; group --hasMember--&gt; user --ownerOf--&gt; every other resource
+</code></pre></div></td></tr></table></div>
+<p>Ownership is what bridges unrelated parts of the estate, so an unbounded walk
+from a single database ends up drawing the marketing site. The default depth is
+therefore <strong>2</strong> — the entity, its neighbours, and one hop beyond, which is the
+range where a relation still says something about the thing you started from.</p>
+<p>This is invisible in development. A seeded catalog of a dozen entities looks
+identical bounded or not; the failure only appears once there are enough
+entities for the ownership bridge to matter, which is to say, in production.</p>
+<p>Depth is a URL parameter (<code>maxDepth</code>), so a deeper or unbounded view is one
+change in the filters — <code>∞</code> is still available, it is simply no longer what you
+get by arriving from a resource page.</p>
 <h2 id="conventions-that-glue-it-together">Conventions that glue it together<a class="headerlink" href="#conventions-that-glue-it-together" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>platform.io/*</code> <strong><a href="../../reference/annotations/">annotations</a></strong> on templates and

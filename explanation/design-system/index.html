@@ -1389,6 +1389,17 @@ backslash before digits is a legacy octal escape that fails the app build while
 class names — <code>theme.tsx</code> uses the published override keys, which are typed, so
 a renamed slot fails the build rather than silently unstyling a page. What is
 left in CSS targets stable MUI global classes and canon's <code>--bui-*</code> variables.</p>
+<p><strong>A route gets a class so a general selector can be specific again.</strong>
+<code>routeClass.ts</code> maps a pathname to one <code>sc-route-*</code> class on the root element.
+Production builds discard <code>makeStyles</code> names, so a selector cannot name the
+scaffolder's card grid; only <code>Mui*</code> survives, and <code>.MuiCard-root</code> is every card
+in the app. Scoping by route is what narrows it.</p>
+<p>The list is ordered and the <strong>first match wins</strong>, which is load-bearing rather
+than incidental: entries match a prefix <em>and everything beneath it</em>, so
+<code>/create</code> alone also claimed <code>/create/tasks/&lt;id&gt;</code> and painted the template-card
+frieze over the task page's own controls. <code>/create/tasks</code> sits ahead of
+<code>/create</code> for exactly that reason. Adding a route means asking which existing
+prefix already swallows it.</p>
 <p><strong>Sprites are character grids.</strong> A 16×16 (or small 8×8) array of <code>#</code> and <code>.</code>,
 run-merged into rects and rendered as SVG or drawn to canvas for the favicon.
 Some carry a second layer — <code>~</code> for a potion's liquid or a rupee's fill — so
