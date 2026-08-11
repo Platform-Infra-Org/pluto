@@ -53,6 +53,15 @@ const NAV_MAX = 420;
 const NAV_DEFAULT = 240;
 const NAV_COLLAPSED = 68;
 
+/**
+ * Routes that exist but are not offered in the sidebar.
+ *
+ * `/catalog-graph` renders filters only until it is given a root entity, and
+ * the page has no picker for one — Backstage expects you to arrive from an
+ * entity. The relations card links to it with the root already set.
+ */
+export const HIDDEN_NAV_HREFS = ['/catalog-graph'];
+
 const clampNavWidth = (px: number) =>
   Math.round(Math.min(NAV_MAX, Math.max(NAV_MIN, px)));
 
@@ -139,6 +148,10 @@ function CustomNav({ navItems }: { navItems: any }) {
       ? 'fantasy'
       : undefined;
   const bag = navItems.withComponent((item: any) => {
+    // The catalog graph has no way to choose a root entity of its own, so the
+    // sidebar link always landed on an empty canvas. It is reached from the
+    // relations card instead, which knows which entity to root it on.
+    if (HIDDEN_NAV_HREFS.includes(item.href)) return null;
     const active = isActive(pathname, item.href);
     const label = screenName(item.title, flavour);
     return (

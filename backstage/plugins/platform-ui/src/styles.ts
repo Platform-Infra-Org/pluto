@@ -297,7 +297,15 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    here named generated class names, which production mangles to jss<n> — they
    were dead in every deployed release while working on the dev server. */
 /* our React Flow workflow DAG — dark + dots (dot color set in the component). */
-.react-flow, .react-flow__renderer, .react-flow__pane { background: ${STARFIELD.bg} !important; }
+/* The canvas wrapper carries the space colour. It sits BELOW react-flow's
+   background svg, which is what makes the stars visible — see the note on the
+   .react-flow rule below. */
+.sc-graph-canvas { background: ${STARFIELD.bg}; border-radius: var(--sc-radius); }
+/* Transparent, NOT the space colour. React Flow renders its dot pattern into an
+   svg with z-index:-1, which paints behind its parent's own background — so an
+   opaque colour here hid the stars completely (the old grey ones too). The
+   colour goes on the wrapper element instead, which sits below that svg. */
+.react-flow, .react-flow__renderer, .react-flow__pane { background: transparent !important; }
 .react-flow__node { border-radius: var(--sc-radius) !important; }
 .react-flow__controls { box-shadow: none !important; }
 .react-flow__controls button { background: #17171f !important; border-color: #32303e !important; }
@@ -470,6 +478,10 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-card { background: hsl(var(--sc-card)); color: hsl(var(--sc-card-fg));
   border: var(--sc-border-w) solid hsl(var(--sc-border)); border-radius: var(--sc-radius); overflow: hidden; }
 .sc-card-h { padding: 18px 20px 0; }
+/* Title and its optional action share a row; the action keeps to the right and
+   never squeezes the title, which wraps first. */
+.sc-card-hrow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.sc-card-action { flex: 0 0 auto; font-size: 13px; }
 .sc-card-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
 .sc-card-desc { color: hsl(var(--sc-muted-fg)); font-size: 13px; margin-top: 2px; }
 .sc-card-b { padding: 18px 20px; }

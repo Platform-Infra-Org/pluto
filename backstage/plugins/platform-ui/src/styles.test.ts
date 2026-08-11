@@ -95,6 +95,16 @@ describe('SHADCN_CSS', () => {
     expect(SHADCN_CSS).toMatch(/shape-rendering:\s*geometricPrecision/);
   });
 
+  it('keeps react-flow transparent so its star pattern is not covered', () => {
+    // The pattern svg is z-index:-1, so it paints behind its parent's own
+    // background. An opaque colour on .react-flow hid the stars completely;
+    // the colour belongs on the wrapper, which sits below that svg.
+    expect(SHADCN_CSS).toMatch(
+      /\.react-flow,[^{]*\{[^}]*background:\s*transparent/,
+    );
+    expect(SHADCN_CSS).toMatch(/\.sc-graph-canvas\s*\{[^}]*background:/);
+  });
+
   it('paints the React Flow canvas with the shared starfield', () => {
     // The catalog graph gets the same colour through theme.tsx. If these drift,
     // the two graph surfaces stop looking like the same product.

@@ -239,13 +239,19 @@ export function Card({
 export function CardHeader({
   title,
   description,
+  action,
 }: {
   title: ReactNode;
   description?: ReactNode;
+  /** Right-aligned affordance on the title row — a link or a small button. */
+  action?: ReactNode;
 }) {
   return (
     <div className="sc-card-h">
-      <div className="sc-card-title">{title}</div>
+      <div className="sc-card-hrow">
+        <div className="sc-card-title">{title}</div>
+        {action && <div className="sc-card-action">{action}</div>}
+      </div>
       {description && <div className="sc-card-desc">{description}</div>}
     </div>
   );

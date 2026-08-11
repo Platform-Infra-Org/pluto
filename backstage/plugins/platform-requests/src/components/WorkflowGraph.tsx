@@ -118,7 +118,7 @@ export function WorkflowGraph({ id, live }: { id: number; live: boolean }) {
   }
   const { nodes, edges } = toFlow(wf);
   return (
-    <div style={{ height: 300, background: '#0a0a10', borderRadius: 10 }}>
+    <div className="sc-graph-canvas" style={{ height: 300 }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}

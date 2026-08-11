@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Background,
   BackgroundVariant,
@@ -110,12 +110,25 @@ export function RelationsGraph() {
 
   return (
     <Card>
-      <CardHeader title="Relations" />
+      <CardHeader
+        title="Relations"
+        action={
+          <Link
+            to={`/catalog-graph?rootEntityRefs[]=${encodeURIComponent(
+              stringifyEntityRef(entity),
+            )}`}
+            className="sc-link"
+            title="Open the full relations graph, rooted on this entity"
+          >
+            View in catalog graph
+          </Link>
+        }
+      />
       <CardBody>
         {edges.length === 0 ? (
           <div className="sc-muted">No relations.</div>
         ) : (
-          <div style={{ height: 300, background: '#0a0a10', borderRadius: 10 }}>
+          <div className="sc-graph-canvas" style={{ height: 300 }}>
             <ReactFlow
               nodes={nodes}
               edges={edges}
