@@ -3,7 +3,7 @@ import { useApi } from '@backstage/core-plugin-api';
 import { Link } from '@backstage/core-components';
 import { useEntity } from '@backstage/plugin-catalog-react';
 import {
-  Card, CardHeader, CardBody, Button, Dialog, Field, Input, JsonTree,
+  Card, CardHeader, CardBody, Button, Dialog, JsonTree, JsonEditTree,
   leavesOf, mergeDeepEdits, pathKey, type Leaf,
 } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
@@ -117,52 +117,13 @@ export function ResourceActionsCard() {
           </>
         }
       >
-        {leaves.map(leaf => {
-          const k = pathKey(leaf.path);
-          // The label carries the whole path, so a field is identifiable
-          // without hunting for which group it sits under; the leading
-          // segments are dimmed so the leaf name still reads first.
-          const parents = leaf.path.slice(0, -1);
-          const own = leaf.path[leaf.path.length - 1];
-          return (
-            <div key={k} style={{ marginLeft: parents.length * 12 }}>
-              <Field
-                label={
-                  <>
-                    {parents.length > 0 && (
-                      <span className="sc-muted">
-                        {parents.map(p => `${p} / `).join('')}
-                      </span>
-                    )}
-                    {String(own)}
-                    {leaf.type !== 'string' && (
-                      <span className="sc-muted"> ({leaf.type})</span>
-                    )}
-                  </>
-                }
-              >
-                <Input
-                  value={fields[k] ?? ''}
-                  onChange={e =>
-                    setFields(f => ({ ...f, [k]: e.target.value }))
-                  }
-                />
-                {errors[k] && (
-                  <div
-                    role="alert"
-                    style={{
-                      color: 'hsl(var(--sc-destructive))',
-                      fontSize: 13,
-                      marginTop: 4,
-                    }}
-                  >
-                    {errors[k]}
-                  </div>
-                )}
-              </Field>
-            </div>
-          );
-        })}
+        <JsonEditTree
+          data={original}
+          leaves={leaves}
+          fields={fields}
+          errors={errors}
+          onChange={(k, v) => setFields(f => ({ ...f, [k]: v }))}
+        />
         {leaves.length === 0 && (
           <div className="sc-muted">This resource has no data to edit.</div>
         )}

@@ -35,6 +35,7 @@ export { Quickstart } from './quickstart/Quickstart';
 export { QUICKSTART_VERSION } from './quickstart/steps';
 export type { Visit } from './useVisits';
 export { JsonTree } from './JsonTree';
+export { JsonEditTree } from './JsonEditTree';
 export { STARFIELD, STAR_WIDE, starfieldCss } from './starfield';
 export { layout, NODE_W, NODE_H } from './graph/layout';
 export { handlePositions, dedupeEdges } from './graph/flow';
