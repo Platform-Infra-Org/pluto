@@ -42,6 +42,8 @@ export type { Direction } from './graph/graphUrlState';
 export { GraphDirectionPicker, useGraphDirection, DIRECTION_OPTIONS } from './GraphDirection';
 export { mergeResourceEdits } from './mergeResourceEdits';
 export type { MergeResult } from './mergeResourceEdits';
+export { leavesOf, mergeDeepEdits, pathKey } from './deepEdits';
+export type { Leaf, DeepMergeResult } from './deepEdits';
 export { DynamicSelect, toChoiceOptions } from './DynamicSelect';
 export type { DynamicSelectProps, ChoiceOption, Fetcher } from './DynamicSelect';
 export { platformScaffolderFieldsModule } from './DynamicSelectField';

@@ -67,8 +67,17 @@ function toFlow(
         // The untruncated name stays reachable on hover: for a loop iteration
         // the payload nodeLabel drops is exactly what tells you *which item*
         // failed.
+        // `color: inherit` is load-bearing, not tidiness. The canvas is dark in
+        // both themes, and the node below sets its own light text — but that is
+        // an *inline* style on the node, which this span only inherits while
+        // nothing targets it directly. `.sc, .sc * { color: hsl(var(--sc-fg)) }`
+        // targets every descendant, and a direct rule beats inheritance, so in
+        // light mode the span took the page's dark text and vanished into the
+        // node. Wrapping a plain string in an element is what exposed it.
         label: (
-          <span title={n.name}>{`${nodeLabel(n.name)}\n${phase ?? ''}`}</span>
+          <span title={n.name} style={{ color: 'inherit' }}>
+            {`${nodeLabel(n.name)}\n${phase ?? ''}`}
+          </span>
         ),
       },
       style: {
