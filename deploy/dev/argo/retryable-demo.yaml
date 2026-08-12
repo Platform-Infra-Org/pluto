@@ -85,4 +85,9 @@ spec:
               echo "failing on purpose — flip the configmap and retry this workflow"
               exit 1
             fi
-            echo "succeeding"
+            # Long enough that a person can press "Re-check status" while the
+            # retried run is still Running, and see the request move back to
+            # IN_PROGRESS rather than straight to SUCCEEDED.
+            echo "succeeding in 45s"
+            sleep 45
+            echo "done"
