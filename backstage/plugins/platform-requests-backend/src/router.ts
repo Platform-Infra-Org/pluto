@@ -14,6 +14,9 @@ import express from 'express';
 import Router from 'express-promise-router';
 import { z } from 'zod/v3';
 import { requestApprovePermission, requestCreatePermission } from './permissions';
+// Type-only: plugin.ts imports createRouter from here, and a type import is
+// erased at compile time, so the cycle never exists at runtime.
+import type { ReconcileOutcome } from './plugin';
 import { applyDecision } from './stateMachine';
 import { RequestsStore } from './store';
 import { Cipher } from './crypto';
@@ -68,6 +71,11 @@ export interface RouterOptions {
     name: string,
     opts: { namespace?: string; message?: string },
   ) => Promise<void>;
+  /**
+   * Re-read Argo and mirror the workflow's phase onto the request — the same
+   * step the poller runs, shared so the two cannot drift (see plugin.ts).
+   */
+  reconcileRequest?: (request: PlatformRequest) => Promise<ReconcileOutcome>;
   /** Release one suspended node, optionally supplying its declared outputs. */
   resumeNode?: (
     name: string,
@@ -552,6 +560,57 @@ export async function createRouter(
     });
 
     res.json({ stopped: true, request: await store.get(request.id) });
+  });
+
+  /**
+   * Re-check a FAILED request against Argo, on demand.
+   *
+   * An operator may have retried (same workflow) or resubmitted (a new one
+   * carrying the same request-id label) outside the platform; nothing polls a
+   * FAILED request, so without this the request stays failed forever while its
+   * workflow runs. This only ever *reads* Argo and mirrors what it already
+   * says — it never calls Argo's `/retry` or `/resubmit`. Restarting a workflow
+   * is a cluster operation the platform deliberately does not offer, and
+   * router.test.ts asserts on the fetch URLs so that cannot rot.
+   */
+  router.post('/requests/:id/refresh', async (req, res) => {
+    // The same gate as GET /requests/:id: whoever may see the request may
+    // re-check it. It grants no new power — the outcome is a function of
+    // Argo's state, not of the caller.
+    await httpAuth.credentials(req, { allow: ['user', 'service'] });
+    const request = await store.get(Number(req.params.id));
+    if (!request) throw new NotFoundError(`No request ${req.params.id}`);
+
+    // Only from FAILED. This is not a general-purpose "sync everything"
+    // button: the poller already owns every non-terminal state.
+    if (request.state !== 'FAILED') {
+      res.json({ request, changed: false, reason: 'not-failed' });
+      return;
+    }
+    if (!options.reconcileRequest) {
+      // Argo is not wired (unit tests, a stripped deployment). Nothing to
+      // re-read, so the request is exactly as failed as it was.
+      res.json({ request, changed: false, reason: 'still-failed' });
+      return;
+    }
+
+    const outcome = await options.reconcileRequest(request);
+    if (outcome.state === 'IN_PROGRESS') {
+      // A request showing IN_PROGRESS beside the previous run's failure reason
+      // is worse than either state alone. `setWorkflow` writes only the keys it
+      // is given, so '' is how the column is emptied; the DTO renders `error`
+      // on truthiness, so an empty one shows nothing.
+      await store.setWorkflow(request.id, { error: '' });
+    }
+
+    // Re-read: reconcileRequest wrote the new state, phase and possibly a new
+    // workflowName (the resubmit case) straight to the store, so the row read
+    // above is already stale.
+    res.json({
+      request: await store.get(request.id),
+      changed: outcome.changed,
+      reason: outcome.reason,
+    });
   });
 
   router.post('/requests/:id/approve', decide('approve'));

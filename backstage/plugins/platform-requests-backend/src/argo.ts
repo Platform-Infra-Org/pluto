@@ -378,7 +378,7 @@ export class ArgoClient {
     if (!res.ok) throw new Error(`argo list failed: ${res.status}`);
     const data = (await res.json()) as {
       items?: Array<{
-        metadata?: { name?: string };
+        metadata?: { name?: string; creationTimestamp?: string };
         status?: {
           phase?: string;
           message?: string;
@@ -387,7 +387,17 @@ export class ArgoClient {
         };
       }>;
     };
-    const wf = data.items?.[0];
+    // A resubmit creates a NEW workflow and copies the request-id label, so more
+    // than one item can match the selector. The newest is the live one. Argo
+    // happens to list newest-first, but that is its default ordering and not a
+    // documented contract, so sort instead of trusting it. RFC3339 timestamps
+    // compare correctly as strings; a missing one sorts last rather than
+    // throwing, since a malformed item must not hide a good one.
+    const wf = [...(data.items ?? [])].sort((a, b) =>
+      (b.metadata?.creationTimestamp ?? '').localeCompare(
+        a.metadata?.creationTimestamp ?? '',
+      ),
+    )[0];
     const outputs: Record<string, string> = {};
     for (const p of wf?.status?.outputs?.parameters ?? []) {
       if (p.name !== undefined && p.value !== undefined) outputs[p.name] = p.value;

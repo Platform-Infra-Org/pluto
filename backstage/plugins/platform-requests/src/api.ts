@@ -33,6 +33,22 @@ export interface ResumeResult {
   request: Request;
 }
 
+/**
+ * What re-reading a failed request's workflow found. `reason` is a closed set
+ * so the page can render a sentence per case without parsing prose.
+ */
+export interface RefreshResult {
+  request: Request;
+  changed: boolean;
+  reason:
+    | 'moved-to-in-progress'
+    | 'moved-to-awaiting-input'
+    | 'moved-to-succeeded'
+    | 'still-failed'
+    | 'workflow-gone'
+    | 'not-failed';
+}
+
 /** Client for the platform-requests backend. */
 export interface RequestsApi {
   list(opts?: {
@@ -51,6 +67,8 @@ export interface RequestsApi {
     nodeId: string,
     opts?: { note?: string; parameters?: Record<string, string> },
   ): Promise<ResumeResult>;
+  /** Re-read a failed request's workflow in Argo. Restarts nothing. */
+  refresh(id: number): Promise<RefreshResult>;
   /** Refuse the gate: stop the workflow instead of releasing it. */
   stop(id: number, note?: string): Promise<{ stopped: boolean; request: Request }>;
   /** The resource's resolved data (ref'd file or spec.resourceData). */
@@ -160,6 +178,15 @@ export class RequestsClient implements RequestsApi {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ nodeId, ...opts }),
         },
+      ),
+    );
+  }
+
+  async refresh(id: number): Promise<RefreshResult> {
+    return this.json(
+      await this.opts.fetchApi.fetch(
+        `${await this.base()}/requests/${id}/refresh`,
+        { method: 'POST' },
       ),
     );
   }

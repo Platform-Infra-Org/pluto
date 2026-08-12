@@ -1,0 +1,55 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: retryable-demo
+  title: Retryable Demo (fails on purpose)
+  description: >
+    Raises a request whose workflow always fails. Approve it, watch it fail,
+    then flip the `retryable-demo-switch` ConfigMap to `pass`, retry the
+    workflow in Argo, and press "Re-check status" on the request — it should
+    come back to IN_PROGRESS and finish. Exists to exercise the re-check flow;
+    it provisions nothing.
+
+      kubectl patch configmap retryable-demo-switch -n argo \
+        --type merge -p '{"data":{"mode":"pass"}}'
+
+    The switch is a ConfigMap rather than a parameter because Argo's retry
+    re-runs from the workflow's stored spec, so patching parameters before a
+    retry has no effect.
+  tags:
+    - platform
+    - demo
+  # No platform.io/resource-type: this must not shadow the real git-resource
+  # template, which is how a request's owning team is resolved.
+spec:
+  owner: group:default/checkout
+  type: resource
+  parameters:
+    - title: How should it end?
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          title: Name
+          default: retry-demo
+  steps:
+    - id: submit
+      name: Submit request
+      action: platform:request:submit
+      input:
+        resourceType: git-resource
+        resourceName: ${{ parameters.name }}
+        kind: CREATE
+        # Mapped once; forwarded to Argo as named parameters.
+        params:
+          name: ${{ parameters.name }}
+        argoSubmit:
+          namespace: argo
+          workflowTemplate: retryable-demo
+          entrypoint: main
+        resultOutput: resource-ref
+  output:
+    links:
+      - title: Open request
+        url: /requests/${{ steps.submit.output.requestId }}

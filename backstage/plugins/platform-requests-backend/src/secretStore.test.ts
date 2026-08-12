@@ -1,6 +1,8 @@
 import { mockServices } from '@backstage/backend-test-utils';
+import { RequestState } from '@internal/plugin-platform-common';
 import { CoreV1Api, V1Secret } from '@kubernetes/client-node';
 import { KubernetesSecretStore } from './secretStore';
+import { SECRET_ACTIVE_STATES } from './plugin';
 
 const logger = mockServices.logger.mock();
 
@@ -105,5 +107,72 @@ describe('KubernetesSecretStore', () => {
     expect(deleted).toBe(2);
     const deletedNames = (api as any).deleteNamespacedSecret.mock.calls.map((c: any[]) => c[0].name).sort();
     expect(deletedNames).toEqual(['old', 'orphan']);
+  });
+});
+
+describe('the sweep active set', () => {
+  // The states the poller's sweep task feeds into activeRequestIds, and one
+  // request in each: a Secret survives iff its request's state is in the set.
+  const requests: { id: number; state: RequestState }[] = [
+    { id: 1, state: 'IN_PROGRESS' },
+    { id: 2, state: 'AWAITING_INPUT' },
+    { id: 3, state: 'FAILED' },
+    { id: 4, state: 'SUCCEEDED' },
+    { id: 5, state: 'REJECTED' },
+    { id: 6, state: 'EXPIRED' },
+  ];
+  const now = 1_700_000_000_000;
+  const maxAgeMs = 24 * 3600_000;
+
+  // Built exactly as plugin.ts's sweep task builds it.
+  const activeRequestIds = new Set(
+    requests
+      .filter(r => SECRET_ACTIVE_STATES.includes(r.state))
+      .map(r => r.id),
+  );
+
+  const sweepWithAge = async (ageMs: number) => {
+    const api = mockApi({
+      listNamespacedSecret: jest.fn().mockResolvedValue({
+        items: requests.map(r => ({
+          metadata: {
+            name: `secret-${r.state}`,
+            labels: {
+              'platform.io/managed-by': 'platform-requests',
+              'platform.io/request-id': String(r.id),
+            },
+            annotations: {
+              'platform.io/created-at': new Date(now - ageMs).toISOString(),
+            },
+          },
+        })),
+      }),
+    });
+    const store = new KubernetesSecretStore(api, 'argo', logger, () => now);
+    await store.sweep({ activeRequestIds, maxAgeMs });
+    return (api as any).deleteNamespacedSecret.mock.calls
+      .map((c: any[]) => c[0].name)
+      .sort();
+  };
+
+  it('keeps the Secret of a request whose workflow may still need it', async () => {
+    // AWAITING_INPUT: suspended at a gate, the resumed step still mounts it.
+    // FAILED: the workflow may still exist and be retried by an operator.
+    expect(await sweepWithAge(60_000)).toEqual([
+      'secret-EXPIRED',
+      'secret-REJECTED',
+      'secret-SUCCEEDED',
+    ]);
+  });
+
+  it('still sweeps on age, whatever the state — the backstop is untouched', async () => {
+    expect(await sweepWithAge(48 * 3600_000)).toEqual([
+      'secret-AWAITING_INPUT',
+      'secret-EXPIRED',
+      'secret-FAILED',
+      'secret-IN_PROGRESS',
+      'secret-REJECTED',
+      'secret-SUCCEEDED',
+    ]);
   });
 });

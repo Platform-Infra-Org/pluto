@@ -353,6 +353,56 @@ describe('ArgoClient.submitSpec', () => {
     expect(s.phase).toBe('Succeeded');
     expect(s.outputs).toEqual({ 'resource-ref': 'my-bucket', other: '42' });
   });
+
+  // A resubmit copies the request-id label onto a new workflow, so two match the
+  // selector. Items are supplied oldest-first here — the order Argo does NOT
+  // use — so this fails against a plain items[0].
+  it('statusFor picks the newest labelled workflow, whatever order it is listed in', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        items: [
+          {
+            metadata: { name: 'wf-old', creationTimestamp: '2026-08-11T09:00:00Z' },
+            status: { phase: 'Failed', message: 'failing on purpose' },
+          },
+          {
+            metadata: { name: 'wf-new', creationTimestamp: '2026-08-12T09:00:00Z' },
+            status: {
+              phase: 'Running',
+              outputs: { parameters: [{ name: 'resource-ref', value: 'r' }] },
+              nodes: {
+                s: { id: 's', displayName: 'gate', type: 'Suspend', phase: 'Running' },
+              },
+            },
+          },
+        ],
+      }),
+    } as Response);
+    const s = await client().statusFor(42, 'argo');
+    expect(s.name).toBe('wf-new');
+    expect(s.phase).toBe('Running');
+    expect(s.outputs).toEqual({ 'resource-ref': 'r' });
+    expect(s.suspendedNodes.map(n => n.name)).toEqual(['gate']);
+  });
+
+  // An item with no creationTimestamp must not throw or shadow a good one.
+  it('statusFor tolerates a missing creationTimestamp', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        items: [
+          { metadata: { name: 'wf-undated' }, status: { phase: 'Failed' } },
+          {
+            metadata: { name: 'wf-dated', creationTimestamp: '2026-08-12T09:00:00Z' },
+            status: { phase: 'Running' },
+          },
+        ],
+      }),
+    } as Response);
+    const s = await client().statusFor(42, 'argo');
+    expect(s.name).toBe('wf-dated');
+  });
 });
 
 describe('suspendedNodesOf', () => {
