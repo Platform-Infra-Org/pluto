@@ -171,33 +171,42 @@ export function createSubmitWorkflow(deps: {
       | undefined;
 
     if (request.kind !== 'CREATE') {
-      if (names?.length) {
-        const resolved = await Promise.all(names.map(n => resolveResource(n)));
-        // Refuse the whole batch rather than deleting one of its members with
-        // an empty payload: a workflow that decommissions from `data` would
-        // skip the real teardown and remove the files anyway, and report
-        // success. A batch is all-or-nothing about *knowing what it is doing*,
-        // even though it is not all-or-nothing about doing it.
-        const bad = resolved
-          .map((x, i) => (x.error ? `${names[i]} (${x.error})` : undefined))
-          .filter(Boolean);
-        if (bad.length) {
-          throw new Error(
-            `request ${request.id}: cannot resolve ${bad.length} of ${names.length} resources: ${bad.join('; ')}`,
-          );
-        }
-        resources = names.map((name, i) => ({
-          name,
-          path: resolved[i].resourcePath ?? '',
-          dataPath: resolved[i].dataPath ?? '',
-          data: resolved[i].data ?? {},
-        }));
-      } else {
-        r = await resolveResource(request.resourceName);
-        if (r.error) {
-          throw new Error(`request ${request.id}: ${r.error}`);
-        }
+      // One resource is a batch of one. Resolving both through the same path is
+      // what lets a template use `<< resourcesJson >>` for single and bulk
+      // alike — otherwise the delete button and the bulk delete send different
+      // shapes and every workflow has to exist twice.
+      const all = names?.length ? names : [request.resourceName];
+      const resolved = await Promise.all(all.map(n => resolveResource(n)));
+
+      // Refuse the whole batch rather than deleting one of its members with
+      // an empty payload: a workflow that decommissions from `data` would
+      // skip the real teardown and remove the files anyway, and report
+      // success. A batch is all-or-nothing about *knowing what it is doing*,
+      // even though it is not all-or-nothing about doing it.
+      const bad = resolved
+        .map((x, i) => (x.error ? `${all[i]} (${x.error})` : undefined))
+        .filter(Boolean);
+      if (bad.length) {
+        // A single resource keeps its own sentence: "cannot resolve 1 of 1"
+        // reads as a batch failure and sends the reader looking for the batch.
+        throw new Error(
+          all.length === 1
+            ? `request ${request.id}: ${resolved[0].error}`
+            : `request ${request.id}: cannot resolve ${bad.length} of ${all.length} resources: ${bad.join('; ')}`,
+        );
       }
+
+      resources = all.map((name, i) => ({
+        name,
+        path: resolved[i].resourcePath ?? '',
+        dataPath: resolved[i].dataPath ?? '',
+        data: resolved[i].data ?? {},
+      }));
+      // The scalar tokens stay populated from the first (and, for a single
+      // request, only) resource, so `<< resourceData >>`, `<< resourcePath >>`
+      // and `<< resourceDataPath >>` keep working for every template that
+      // already uses them — verb-update among them. Nothing has to migrate.
+      r = resolved[0];
     }
 
     // Secret name is generated up-front so the workflow can secretKeyRef it (as

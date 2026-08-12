@@ -168,6 +168,34 @@ describe('submitWorkflow resource resolution', () => {
     );
   });
 
+  /**
+   * The point of resolving single and bulk through one path: a template can use
+   * `<< resourcesJson >>` for both, instead of every workflow existing twice —
+   * once for the delete button's four scalars and once for the batch's array.
+   */
+  it('gives a single-resource request a one-element resources array', async () => {
+    const submit = createSubmitWorkflow(deps());
+    await submit(request({ resourceName: 'bucket-a' }));
+    const ctx = submitSpec.mock.calls[0][1] as any;
+    expect(ctx.resources).toEqual([
+      {
+        name: 'bucket-a',
+        path: 'resources/bucket-a.yaml',
+        dataPath: 'resources/bucket-a-data.json',
+        data: { region: 'eu-west-1', tags: ['prod'] },
+      },
+    ]);
+  });
+
+  it('still populates the scalar tokens, so verb-update needs no migration', async () => {
+    const submit = createSubmitWorkflow(deps());
+    await submit(request({ resourceName: 'bucket-a' }));
+    const ctx = submitSpec.mock.calls[0][1] as any;
+    expect(ctx.resourceData).toEqual({ region: 'eu-west-1', tags: ['prod'] });
+    expect(ctx.resourcePath).toBe('resources/bucket-a.yaml');
+    expect(ctx.resourceDataPath).toBe('resources/bucket-a-data.json');
+  });
+
   it('passes each resource as an object, with data as a nested object', async () => {
     const submit = createSubmitWorkflow(deps());
     await submit(

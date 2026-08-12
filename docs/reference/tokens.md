@@ -23,7 +23,7 @@ by the platform backend — **no escaping needed**.
 | `<< resourceData.<field> >>` | one field of the resource data |
 | `<< resourcePath >>` | the resource's catalog file path in Git (for `git-ops` delete) |
 | `<< resourceDataPath >>` | the resource's data-file path in Git (for `git-ops` update/delete) |
-| `<< resourcesJson >>` | bulk requests: a JSON array of every resource, `[{name, path, dataPath, data}]` |
+| `<< resourcesJson >>` | every resource the request acts on, as `[{name, path, dataPath, data}]` — **one element for a single-resource request**, several for a bulk one |
 | `<< secretName >>` | the per-request Kubernetes Secret's name, for the WorkflowTemplate to `secretKeyRef`; `''` when the request declares no secrets |
 
 Unknown tokens and missing fields resolve to an empty string (`resourceData` to
@@ -36,7 +36,17 @@ approved the change. It is empty exactly when the request is admin-only — no
 owning Template matched its `resourceType` — and a workflow that cannot act
 without an owner should fail on the empty string rather than invent one.
 
-`<< resourcesJson >>` resolves to `[]` for an ordinary single-resource request.
+`<< resourcesJson >>` is an array in every case, including a single-resource
+request — one resource is a batch of one. That is what lets a template use the
+same `argoSubmit` and the same workflow entrypoint for the delete button and the
+bulk delete, instead of maintaining one workflow that takes four scalars and a
+second that takes an array. It is `[]` only for CREATE, which has no resource to
+resolve yet.
+
+The scalar tokens are still populated from the first resource, so
+`<< resourceData >>`, `<< resourcePath >>` and `<< resourceDataPath >>` keep
+working unchanged — `verb-update` uses them and needs no migration.
+
 Each element's `data` is a **nested object**, not a JSON string.
 
 That is worth stating because the intuition points the wrong way. Argo
