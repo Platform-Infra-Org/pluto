@@ -136,6 +136,10 @@ spec:
           # a real deletion workflow does, to decommission the thing itself
           # before its record disappears.
           - { name: data, value: "{}" }
+          # The resource's own spec.owner, from << resourcesJson >>. Defaulted
+          # so the legacy single-resource `delete` entrypoint, which does not
+          # pass it, still validates.
+          - { name: owner, value: "" }
           - { name: repoUrl }
           - { name: creds }
       container:
@@ -144,12 +148,16 @@ spec:
           - { name: REPO_URL, value: "{{inputs.parameters.repoUrl}}" }
           - { name: GIT_CREDS, value: "{{inputs.parameters.creds}}" }
           - { name: RESOURCE_DATA, value: "{{inputs.parameters.data}}" }
+          - { name: OWNER, value: "{{inputs.parameters.owner}}" }
         command: [sh, -c]
         args:
           - |
             set -eu
             NAME="{{inputs.parameters.name}}"
             printf 'resource data: %s\n' "$RESOURCE_DATA"
+            # Proves the per-resource owner reached this step. A batch can span
+            # owners, so this is printed per iteration rather than once.
+            printf 'resource owner: %s\n' "${OWNER:-(none declared)}"
             YAML="{{inputs.parameters.path}}"; [ -n "$YAML" ] || YAML="resources/$NAME.yaml"
             DATA="{{inputs.parameters.dataPath}}"; [ -n "$DATA" ] || DATA="resources/$NAME-data.json"
             git clone --depth 1 --quiet \
@@ -189,5 +197,6 @@ spec:
                 - { name: path, value: "{{item.path}}" }
                 - { name: dataPath, value: "{{item.dataPath}}" }
                 - { name: data, value: "{{item.data}}" }
+                - { name: owner, value: "{{item.owner}}" }
                 - { name: repoUrl, value: "{{inputs.parameters.repoUrl}}" }
                 - { name: creds, value: "{{inputs.parameters.creds}}" }
