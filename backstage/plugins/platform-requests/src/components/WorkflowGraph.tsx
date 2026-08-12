@@ -46,6 +46,11 @@ export function displayPhase(n: WorkflowNode): string | undefined {
 
 /** One line of a node label: never wraps, ends in an ellipsis at the box edge. */
 const LINE: CSSProperties = {
+  // Explicit, because `.sc, .sc *` in styles.ts colours every descendant and a
+  // direct rule beats inheriting the node's own colour. The stylesheet now
+  // carries a matching rule for the whole canvas; this keeps the component
+  // readable on its own rather than relying on that at a distance.
+  color: 'inherit',
   display: 'block',
   overflow: 'hidden',
   textOverflow: 'ellipsis',

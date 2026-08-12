@@ -352,6 +352,17 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    colour goes on the wrapper element instead, which sits below that svg. */
 .react-flow, .react-flow__renderer, .react-flow__pane { background: transparent !important; }
 .react-flow__node { border-radius: var(--sc-radius) !important; }
+/* A graph node's text belongs to the node, not to the page.
+   The canvas is the dark starfield in BOTH themes, and every node sets its own
+   light text — but the .sc descendant rule above assigns a colour to every
+   descendant, and
+   a direct rule beats inheritance. So any element inside a node label (a span
+   wrapping a line, a tooltip host, anything added later) silently took the
+   page's foreground, which in light mode is dark text on the dark node.
+   Scoped here rather than on each label because the fix has to survive the
+   next person nesting one more element — it has already regressed once. Equal
+   specificity to that rule, so this wins by sitting after it. */
+.react-flow__node * { color: inherit; }
 .react-flow__controls { box-shadow: none !important; }
 .react-flow__controls button { background: #17171f !important; border-color: #32303e !important; }
 .react-flow__controls button svg, .react-flow__controls-button svg { fill: #e7e7ef !important; }
