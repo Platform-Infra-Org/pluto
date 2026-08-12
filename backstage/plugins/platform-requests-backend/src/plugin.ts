@@ -434,17 +434,28 @@ export const platformRequestsPlugin = createBackendPlugin({
             frequency,
             timeout: { minutes: 2 },
             fn: async () => {
-              // Keep the Secret of every request whose workflow may still need
-              // it (SECRET_ACTIVE_STATES) — not just the running ones. Anything
-              // else labelled ours is orphaned. maxAgeMs still applies to all of
-              // them: it is the backstop for a workflow with no ttlStrategy.
-              const active = await Promise.all(
-                SECRET_ACTIVE_STATES.map(state => store.list({ state })),
-              );
-              await secretStore.sweep({
-                activeRequestIds: new Set(active.flat().map(r => r.id)),
-                maxAgeMs,
-              });
+              try {
+                // Keep the Secret of every request whose workflow may still need
+                // it (SECRET_ACTIVE_STATES) — not just the running ones. Anything
+                // else labelled ours is orphaned. maxAgeMs still applies to all of
+                // them: it is the backstop for a workflow with no ttlStrategy.
+                const active = await Promise.all(
+                  SECRET_ACTIVE_STATES.map(state => store.list({ state })),
+                );
+                await secretStore.sweep({
+                  activeRequestIds: new Set(active.flat().map(r => r.id)),
+                  maxAgeMs,
+                });
+              } catch (e) {
+                // A Kubernetes client error carries nothing enumerable, so
+                // letting it reach the scheduler logs `"message":{}` every
+                // tick — a task that is visibly failing and says nothing about
+                // why, which is worse than either succeeding or being off.
+                // Log the reason and let the next tick retry: this sweep is
+                // the safety net, the Workflow ownerReference is the happy
+                // path, and one missed pass deletes nothing prematurely.
+                logger.warn(`secret sweep failed: ${e}`);
+              }
             },
           });
         }
