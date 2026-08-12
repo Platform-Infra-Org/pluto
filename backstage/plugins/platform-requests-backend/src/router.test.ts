@@ -394,6 +394,11 @@ describe('createRouter', () => {
       store: RequestsStore,
     ): Promise<number> {
       const created = await request(app).post('/requests').send(NEW_REQUEST);
+      // Assert the seed worked before using its id. Without this a failed
+      // create hands `undefined` to setWorkflow, and the suite reports a knex
+      // "undefined binding" from store.ts — a stack trace that names neither
+      // this helper nor the reason the create failed.
+      expect(created.status).toBe(201);
       const id = created.body.id as number;
       await store.setWorkflow(id, {
         name: 'wf-1',

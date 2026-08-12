@@ -2,6 +2,9 @@ apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
   name: orders-db
+  # A title that differs from the name on purpose: the UI shows the title,
+  # while every link and ref still addresses the name.
+  title: Orders Database (primary)
   annotations:
     platform.io/resource-type: database
     # Resource data ref (like backstage.io/techdocs-ref):
