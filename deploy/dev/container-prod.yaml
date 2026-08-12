@@ -1,0 +1,91 @@
+# Overlay for running the production IMAGE against the local dev stack.
+#
+# Not app-config.production.yaml: that one points the catalog at Bitbucket and
+# drops Gitea, which do not exist locally. The point here is production *build*
+# semantics — NODE_ENV=production, the minified bundle, mangled MUI class names
+# — while still talking to the dev containers.
+#
+# Every host that both the browser and the container must resolve is
+# host.docker.internal. Keycloak runs `start-dev` with no KC_HOSTNAME, so it
+# derives its issuer and endpoints from the request's Host header: if the
+# container discovered it as `keycloak:8081`, the browser would be redirected
+# to a name it cannot resolve. host.docker.internal resolves from both.
+#
+# app.baseUrl stays localhost:7007 because that is the redirect URI registered
+# in the dev realm, and the browser reaches the container on the published port.
+#
+# Applied by scripts/prod-image-up.sh, after app-config.local.yaml so the keys
+# here win. See docs/how-to/run-the-production-image.md.
+
+app:
+  baseUrl: http://localhost:7007
+
+backend:
+  baseUrl: http://localhost:7007
+  listen:
+    port: 7007
+    host: 0.0.0.0
+  cors:
+    origin: http://localhost:7007
+  database:
+    client: pg
+    connection:
+      host: host.docker.internal
+      port: 5433
+      user: backstage
+      password: backstage
+  reading:
+    allow:
+      - host: host.docker.internal:3001
+
+integrations:
+  gitea:
+    - host: host.docker.internal:3001
+      baseUrl: http://host.docker.internal:3001
+
+auth:
+  providers:
+    oidc:
+      development:
+        metadataUrl: http://host.docker.internal:8081/realms/platform/.well-known/openid-configuration
+
+catalog:
+  locations:
+    - type: url
+      target: http://host.docker.internal:3001/platform/catalog/raw/branch/main/catalog-info.yaml
+      rules:
+        - allow: [Location, Resource, Group, User]
+    - type: url
+      target: http://host.docker.internal:3001/platform/software-templates/raw/branch/main/catalog-info.yaml
+      rules:
+        - allow: [Location, Template]
+  providers:
+    ldapOrg:
+      default:
+        target: ldap://host.docker.internal:1389
+
+platform:
+  argo:
+    # localhost inside a container is the container. Argo runs on the host
+    # (port-forwarded from the kind cluster), so it has to be addressed the same
+    # way as every other host service here.
+    baseUrl: http://host.docker.internal:2746
+
+  secrets:
+    # Off in this flow, deliberately — and this is the one behaviour that does
+    # not match production.
+    #
+    # The Secret store talks to the Kubernetes API through the SDK's default
+    # credential chain: an in-cluster ServiceAccount token, or a kubeconfig.
+    # This container has neither. It is a plain `docker run` beside the kind
+    # cluster, not a Pod in it, and no kubeconfig is mounted — kind's kubeconfig
+    # points at 127.0.0.1:<random>, which inside a container is the container.
+    #
+    # Left enabled, every 15-minute sweep tick fails against an unreachable
+    # API, and any request declaring a secret fails at submit — after approval,
+    # which is the expensive place to find out. Off, the submit is refused
+    # up-front with "needs secrets but platform.secrets is disabled".
+    #
+    # To exercise secrets, run the backend on the host (`yarn start`), which
+    # uses your kubeconfig and reaches the cluster normally.
+    enabled: false

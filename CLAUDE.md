@@ -21,6 +21,7 @@ All Node commands run from `backstage/` (Yarn 4 via corepack, Node 22).
 ```bash
 bash scripts/backstage-up.sh    # (repo root) Postgres/Keycloak/LDAP/Gitea + kind/Argo + port-forward
 bash scripts/backstage-down.sh  # (repo root) tear the containers + volumes down
+bash scripts/prod-image-up.sh   # (repo root) build + run the prod image on :7007 (instead of yarn start)
 
 cd backstage
 yarn start                      # frontend :3000, backend :7007

@@ -103,6 +103,10 @@ yarn start
 Frontend on **:3000**, backend on **:7007**. The frontend is what you open; the
 backend serves the API and, in production, the built frontend too.
 
+To run the **production image** instead of the dev build — same dev stack, one
+container on :7007, minified bundle — use `bash scripts/prod-image-up.sh`. See
+[Run the production image locally](docs/how-to/run-the-production-image.md).
+
 ### 3. Sign in
 
 Sign in with Keycloak, using one of the LDAP fixtures:
