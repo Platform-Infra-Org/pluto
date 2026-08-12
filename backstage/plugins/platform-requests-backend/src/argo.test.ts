@@ -119,6 +119,40 @@ describe('resolveTemplate', () => {
     expect(resolveTemplate('<< resourcesJson >>', empty as any)).toBe('[]');
   });
 
+  it('resolves entity.<path>, including dotted annotation keys', () => {
+    const withEntity: ResolveCtx = {
+      ...ctx,
+      entity: {
+        metadata: {
+          name: 'my-bucket',
+          annotations: { 'platform.io/resource-data': 'dir:data.yaml' },
+        },
+        spec: { type: 'bucket', owner: 'group:default/team-a', tags: ['a'] },
+      },
+    };
+    expect(resolveTemplate('<< entity.spec.type >>', withEntity)).toBe('bucket');
+    expect(resolveTemplate('<< entity.metadata.name >>', withEntity)).toBe(
+      'my-bucket',
+    );
+    // The key is literally `platform.io/resource-data`; a naive dotted walk
+    // would look for an object called `platform` and silently return ''.
+    expect(
+      resolveTemplate(
+        '<< entity.metadata.annotations.platform.io/resource-data >>',
+        withEntity,
+      ),
+    ).toBe('dir:data.yaml');
+    // Sub-objects and arrays render as JSON, not `[object Object]`.
+    expect(resolveTemplate('<< entity.spec.tags >>', withEntity)).toBe('["a"]');
+    expect(resolveTemplate('<< entityJson >>', withEntity)).toBe(
+      JSON.stringify(withEntity.entity),
+    );
+    // Missing path, and no entity at all (CREATE), are both ''.
+    expect(resolveTemplate('<< entity.spec.nope >>', withEntity)).toBe('');
+    expect(resolveTemplate('<< entity.spec.type >>', ctx)).toBe('');
+    expect(resolveTemplate('<< entityJson >>', ctx)).toBe('{}');
+  });
+
   it('resolves missing params and unknown tokens to empty string', () => {
     expect(resolveTemplate('<< params.nope >>', ctx)).toBe('');
     expect(resolveTemplate('<< bogus >>', ctx)).toBe('');

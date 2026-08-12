@@ -44,6 +44,16 @@ export interface ResolveCtx {
    */
   secretName?: string;
   /**
+   * The whole catalog entity for the resource, as the catalog parsed it —
+   * `<< entityJson >>` for all of it, `<< entity.<path> >>` for one field.
+   * Absent for CREATE, which has no entity yet.
+   *
+   * This is the escape hatch for anything the named tokens do not cover
+   * (`spec.system`, `spec.type`, a `platform.io/*` annotation), so a template
+   * needing one more field of the entity does not need a backend change.
+   */
+  entity?: Record<string, unknown>;
+  /**
    * Every resource a bulk request acts on (`<< resourcesJson >>`), resolved at
    * submit time. Absent for a single-resource request.
    *
@@ -65,16 +75,44 @@ export interface ResolveCtx {
 }
 
 /**
+ * Walk a dotted path into a parsed object. Absent -> undefined.
+ *
+ * Longest key first at every level, because catalog keys contain dots
+ * themselves: `metadata.annotations.platform.io/resource-data` has to find the
+ * key `platform.io/resource-data`, not an object called `platform`. A plain
+ * `split('.')` walk resolves every annotation to '' — silently, which is the
+ * worst way for a template to be wrong.
+ */
+function pick(obj: unknown, path: string): unknown {
+  if (!path) return obj;
+  if (!obj || typeof obj !== 'object') return undefined;
+  const rec = obj as Record<string, unknown>;
+  const parts = path.split('.');
+  for (let i = parts.length; i > 0; i--) {
+    const key = parts.slice(0, i).join('.');
+    if (key in rec) {
+      const v = pick(rec[key], parts.slice(i).join('.'));
+      if (v !== undefined) return v;
+    }
+  }
+  return undefined;
+}
+
+/**
  * Resolve `<< token >>` occurrences in a string. Tokens: requestId,
  * resourceName, resourceType, requester, ownerGroup, paramsJson,
- * params.<field>. Unknown tokens and missing params resolve to ''. Pure.
+ * params.<field>, entity.<path>. Unknown tokens and missing params resolve to
+ * ''. Pure.
  *
  * The `<< >>` delimiter is deliberately distinct from Scaffolder's `${{ }}`,
  * so these tokens pass through the template's nunjucks render untouched and
  * are resolved here, at submit time, against the request's runtime context.
+ *
+ * The token charset allows `/` and `-` so annotation keys are reachable
+ * (`<< entity.metadata.annotations.platform.io/resource-data >>`).
  */
 export function resolveTemplate(str: string, ctx: ResolveCtx): string {
-  return str.replace(/<<\s*([\w.]+)\s*>>/g, (_m, token: string) => {
+  return str.replace(/<<\s*([\w./-]+)\s*>>/g, (_m, token: string) => {
     switch (token) {
       case 'requestId':
         return String(ctx.requestId);
@@ -99,6 +137,8 @@ export function resolveTemplate(str: string, ctx: ResolveCtx): string {
         return ctx.resourceDataPath ?? '';
       case 'secretName':
         return ctx.secretName ?? '';
+      case 'entityJson':
+        return JSON.stringify(ctx.entity ?? {});
       default: {
         if (token.startsWith('params.')) {
           const v = ctx.params?.[token.slice('params.'.length)];
@@ -107,6 +147,16 @@ export function resolveTemplate(str: string, ctx: ResolveCtx): string {
         if (token.startsWith('resourceData.')) {
           const v = ctx.resourceData?.[token.slice('resourceData.'.length)];
           return v === null || v === undefined ? '' : String(v);
+        }
+        if (token.startsWith('entity.')) {
+          const v = pick(ctx.entity, token.slice('entity.'.length));
+          if (v === null || v === undefined) return '';
+          // A sub-object renders as JSON, not `[object Object]`, so
+          // `<< entity.metadata.annotations >>` is usable as a workflow
+          // parameter. The older `params.`/`resourceData.` tokens keep
+          // `String()` — a template relying on an array rendering as `a,b`
+          // must not change shape under it.
+          return typeof v === 'object' ? JSON.stringify(v) : String(v);
         }
         return '';
       }

@@ -25,6 +25,8 @@ by the platform backend — **no escaping needed**.
 | `<< resourceDataPath >>` | the resource's data-file path in Git (for `git-ops` update/delete) |
 | `<< resourcesJson >>` | every resource the request acts on, as `[{name, path, dataPath, data, owner}]` — **one element for a single-resource request**, several for a bulk one |
 | `<< secretName >>` | the per-request Kubernetes Secret's name, for the WorkflowTemplate to `secretKeyRef`; `''` when the request declares no secrets |
+| `<< entityJson >>` | the resource's whole catalog entity as JSON; `{}` for CREATE |
+| `<< entity.<path> >>` | one field of that entity, by dotted path |
 
 Unknown tokens and missing fields resolve to an empty string (`resourceData` to
 `{}`). `resourcePath` / `resourceDataPath` are resolved from the resource's
@@ -67,6 +69,35 @@ If any resource in a bulk request cannot be resolved, the submit **fails**
 rather than passing an element with empty data. A workflow that decommissions
 from `data` would otherwise skip the real teardown for that one resource and
 delete its files anyway, reporting success.
+
+## `<< entity.<path> >>` — anything the named tokens don't cover
+
+The named tokens are the fields a workflow usually wants. When it wants one
+they don't cover, `entity` is the whole catalog entity, exactly as the catalog
+parsed it — no backend change needed to reach one more field.
+
+```yaml
+argoSubmit:
+  parameters:
+    system: "<< entity.spec.system >>"
+    kind: "<< entity.kind >>"
+    dataRef: "<< entity.metadata.annotations.platform.io/resource-data >>"
+```
+
+- **Dotted keys work.** `metadata.annotations.platform.io/resource-data` finds
+  the key `platform.io/resource-data`; the path is matched longest-key-first at
+  each level, not split blindly on `.`.
+- **A sub-object renders as JSON**, so `<< entity.metadata.annotations >>` is a
+  usable parameter. (The older `params.` / `resourceData.` tokens still use
+  plain `String()`, where an array renders as `a,b` — unchanged, so nothing
+  relying on that shape moves under it.)
+- **It is the resource's entity, not the template's.** Empty for CREATE, which
+  has no resource yet, and populated from the *first* resource of a bulk
+  request. `<< resourcesJson >>` elements deliberately do not carry the whole
+  entity — that would bloat every bulk workflow's parameters.
+- Prefer a named token where one exists (`<< resourceData >>`,
+  `<< resourcePath >>`): those resolve the `resource-data` ref and the git
+  layout for you, which reading the raw entity does not.
 
 ## Params reach Argo without any token
 

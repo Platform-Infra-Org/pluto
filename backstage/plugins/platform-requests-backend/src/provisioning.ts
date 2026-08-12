@@ -30,6 +30,12 @@ export interface ResolvedResource {
    */
   owner?: string;
   /**
+   * The catalog entity itself, for `<< entityJson >>` / `<< entity.<path> >>`.
+   * Kept whole rather than cherry-picked so a template can reach a field the
+   * named tokens never anticipated, without a backend change.
+   */
+  entity?: Record<string, unknown>;
+  /**
    * Why this resource could not be resolved, when it could not.
    *
    * Absent means resolved — including resolved to genuinely empty data, which
@@ -131,6 +137,7 @@ export function createResourceResolver(deps: {
         resourcePath,
         dataPath,
         owner: (entity.spec as { owner?: string } | undefined)?.owner,
+        entity: entity as unknown as Record<string, unknown>,
       };
     } catch (e) {
       const error = `resolveResource '${resourceName}' failed: ${e}`;
@@ -244,6 +251,11 @@ export function createSubmitWorkflow(deps: {
       resourceData: r.data,
       resourcePath: r.resourcePath,
       resourceDataPath: r.dataPath,
+      // Like the other scalar tokens: the first (and, for a single request,
+      // only) resource. Deliberately not added to `resourcesJson` — a whole
+      // entity per element would bloat every bulk workflow's parameters for a
+      // field almost no template reads. Add it there when one actually does.
+      entity: r.entity,
       resources,
       secretName,
     });
