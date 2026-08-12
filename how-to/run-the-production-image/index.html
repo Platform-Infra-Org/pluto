@@ -11,10 +11,10 @@
       
       
       
-        <link rel="prev" href="../deploy-with-helm/">
+        <link rel="prev" href="../upgrade-backstage/">
       
       
-        <link rel="next" href="../../reference/plugins/">
+        <link rel="next" href="../deploy-with-helm/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Prepare for production - Platform Plugin Suite</title>
+        <title>Run the production image locally - Platform Plugin Suite</title>
       
     
     
@@ -66,7 +66,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#how-to-prepare-for-production" class="md-skip">
+        <a href="#how-to-run-the-production-image-locally" class="md-skip">
           Skip to content
         </a>
       
@@ -102,7 +102,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Prepare for production
+              Run the production image locally
             
           </span>
         </div>
@@ -563,10 +563,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../run-the-production-image/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run the production image locally
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -582,6 +609,70 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-it-actually-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What it actually runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-every-host-is-hostdockerinternal" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why every host is host.docker.internal
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#secrets-are-off-in-this-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Secrets are off in this flow
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#when-the-build-fails-on-disk-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the build fails on disk space
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -619,37 +710,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Prepare for production
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../prepare-for-production/" class="md-nav__link">
         
   
   
@@ -665,92 +729,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#1-externalise-every-secret" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        1. Externalise every secret
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-auth" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Auth
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-replace-the-local-demo-services" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Replace the local demo services
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-hardening" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        4. Hardening
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-already-needs-no-change" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What already needs no change
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pre-flight-checklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pre-flight checklist
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1262,10 +1240,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-externalise-every-secret" class="md-nav__link">
+  <a href="#what-it-actually-runs" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Externalise every secret
+        What it actually runs
       
     </span>
   </a>
@@ -1273,10 +1251,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-auth" class="md-nav__link">
+  <a href="#why-every-host-is-hostdockerinternal" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Auth
+        Why every host is host.docker.internal
       
     </span>
   </a>
@@ -1284,10 +1262,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-replace-the-local-demo-services" class="md-nav__link">
+  <a href="#secrets-are-off-in-this-flow" class="md-nav__link">
     <span class="md-ellipsis">
       
-        3. Replace the local demo services
+        Secrets are off in this flow
       
     </span>
   </a>
@@ -1295,32 +1273,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-hardening" class="md-nav__link">
+  <a href="#when-the-build-fails-on-disk-space" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Hardening
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#what-already-needs-no-change" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        What already needs no change
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pre-flight-checklist" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pre-flight checklist
+        When the build fails on disk space
       
     </span>
   </a>
@@ -1344,140 +1300,87 @@
 
 
 
-<h1 id="how-to-prepare-for-production">How-to: prepare for production<a class="headerlink" href="#how-to-prepare-for-production" title="Permanent link">&para;</a></h1>
-<p>This repo boots the whole platform — Backstage, Keycloak, OpenLDAP, Gitea,
-Argo-on-kind, Postgres — on one machine with <strong>throwaway dev credentials</strong>, by
-design, so it runs out of the box. Going to production is a configuration and
-infrastructure exercise, not a code rewrite: the plugin code is already
-production-shaped.</p>
-<p>Production loads <code>app-config.yaml</code> <strong>and</strong> <code>app-config.production.yaml</code> on top,
-so anything you set in the production file wins.</p>
-<h2 id="1-externalise-every-secret">1. Externalise every secret<a class="headerlink" href="#1-externalise-every-secret" title="Permanent link">&para;</a></h2>
-<p>The base config carries inline dev secrets on purpose. Move each to an
-<code>${ENV_VAR}</code> reference in <code>app-config.production.yaml</code> and inject it from your
-secret manager.</p>
+<h1 id="how-to-run-the-production-image-locally">How to run the production image locally<a class="headerlink" href="#how-to-run-the-production-image-locally" title="Permanent link">&para;</a></h1>
+<p><code>yarn start</code> runs the dev build. Some bugs only exist in the production one —
+anything that depends on a hashed MUI class name, a dev-only export, or a file
+the bundle does not carry. This runs the <strong>real image</strong> against the same dev
+stack, on the same URL.</p>
+<div class="language-bash highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>bash<span class="w"> </span>scripts/backstage-up.sh<span class="w">      </span><span class="c1"># once: Postgres, Keycloak, Gitea, LDAP, kind + Argo</span>
+bash<span class="w"> </span>scripts/prod-image-up.sh<span class="w">     </span><span class="c1"># build the image, run it on :7007</span>
+</code></pre></div></td></tr></table></div>
+<p>Then open <a href="http://localhost:7007">http://localhost:7007</a> — the backend serves the frontend, so there is
+no :3000 in this flow. Re-run the script after a code change; it rebuilds and
+replaces the container.</p>
+<div class="language-bash highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>docker<span class="w"> </span>logs<span class="w"> </span>-f<span class="w"> </span>platform-prod
+docker<span class="w"> </span>rm<span class="w"> </span>-f<span class="w"> </span>platform-prod<span class="w">        </span><span class="c1"># stop; the dev stack keeps running</span>
+</code></pre></div></td></tr></table></div>
+<h2 id="what-it-actually-runs">What it actually runs<a class="headerlink" href="#what-it-actually-runs" title="Permanent link">&para;</a></h2>
+<p><code>packages/backend/Dockerfile</code>, unmodified — the same image <code>build:all</code> and CI
+produce. Two configs are mounted over the baked-in <code>app-config.yaml</code>:</p>
 <table>
 <thead>
 <tr>
-<th>Config key</th>
-<th>Dev value</th>
-<th>Production</th>
+<th>Mounted</th>
+<th>Why</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>backend.auth.externalAccess[].options.token</code></td>
-<td>generated into <code>app-config.local.yaml</code> (gitignored)</td>
-<td>absent entirely, or a strong <code>${…}</code> — it is a static bearer token</td>
+<td><code>backstage/app-config.local.yaml</code></td>
+<td>your generated dev secrets, same file <code>yarn start</code> uses</td>
 </tr>
 <tr>
-<td><code>auth.session.secret</code></td>
-<td>generated into <code>app-config.local.yaml</code> (gitignored)</td>
-<td><code>${AUTH_SESSION_SECRET}</code></td>
-</tr>
-<tr>
-<td><code>auth.providers.oidc.*.clientSecret</code></td>
-<td><code>backstage-dev-secret</code></td>
-<td><code>${OIDC_CLIENT_SECRET}</code></td>
-</tr>
-<tr>
-<td><code>backend.database.connection.password</code></td>
-<td><code>backstage</code></td>
-<td><code>${POSTGRES_PASSWORD}</code> (already done in the production file)</td>
-</tr>
-<tr>
-<td><code>catalog.providers.ldapOrg.default.bind.secret</code></td>
-<td><code>admin</code></td>
-<td><code>${LDAP_BIND_SECRET}</code></td>
-</tr>
-<tr>
-<td><code>platform.secrets.encryptionKey</code></td>
-<td>unset (dev sets a throwaway locally)</td>
-<td><code>${PLATFORM_SECRET_KEY}</code> — see <a href="../../explanation/secrets-lifecycle/">secret lifecycle</a></td>
-</tr>
-<tr>
-<td><code>proxy.endpoints./demo-options.headers.Authorization</code></td>
-<td><code>Bearer dev-smoke-token…</code></td>
-<td>the upstream API's real key</td>
+<td><code>deploy/dev/container-prod.yaml</code></td>
+<td>rewrites every dependency's address for a container</td>
 </tr>
 </tbody>
 </table>
-<h2 id="2-auth">2. Auth<a class="headerlink" href="#2-auth" title="Permanent link">&para;</a></h2>
-<ul>
-<li>
-<p><strong>Remove the <code>guest</code> provider — with <code>null</code>, not by omission.</strong></p>
-<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
-<span class="normal">2</span>
-<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">auth</span><span class="p">:</span>
-<span class="w">  </span><span class="nt">providers</span><span class="p">:</span>
-<span class="w">    </span><span class="nt">guest</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span>
+<p>It is <strong>not</strong> <code>app-config.production.yaml</code>: that one points the catalog at
+Bitbucket and drops Gitea, neither of which exists on a laptop. The goal is
+production <em>build</em> semantics against dev <em>infrastructure</em>.</p>
+<h2 id="why-every-host-is-hostdockerinternal">Why every host is <code>host.docker.internal</code><a class="headerlink" href="#why-every-host-is-hostdockerinternal" title="Permanent link">&para;</a></h2>
+<p><code>localhost</code> inside a container is the container. Postgres, Gitea, Keycloak, LDAP
+and the port-forwarded argo-server all run on the host, so the overlay addresses
+them as <code>host.docker.internal</code>.</p>
+<p>Keycloak is the one that bites if you shortcut it. It runs <code>start-dev</code> with no
+<code>KC_HOSTNAME</code>, so it derives its issuer and endpoints from the request's <code>Host</code>
+header — reach it as <code>keycloak:8081</code> from the container and the <em>browser</em> gets
+redirected to a name it cannot resolve. <code>host.docker.internal</code> resolves from
+both sides, which is why it is used even where a container name would connect.</p>
+<p><code>app.baseUrl</code> stays <code>localhost:7007</code>: that is the redirect URI registered in the
+dev realm, and the browser reaches the container on the published port.</p>
+<h2 id="secrets-are-off-in-this-flow">Secrets are off in this flow<a class="headerlink" href="#secrets-are-off-in-this-flow" title="Permanent link">&para;</a></h2>
+<p><code>platform.secrets.enabled: false</code> in the overlay, and this is the one behaviour
+that does not match production.</p>
+<p>The Secret store reaches the Kubernetes API through the SDK's default credential
+chain — an in-cluster ServiceAccount token, or a kubeconfig. This container has
+neither: it is a plain <code>docker run</code> <em>beside</em> the kind cluster, not a Pod in it,
+and kind's kubeconfig points at <code>127.0.0.1:&lt;random&gt;</code>, which inside a container is
+the container.</p>
+<p>Left enabled, the symptom is quiet and misleading: the 15-minute sweep fails
+every tick, and a request declaring a secret fails at submit — <em>after</em> approval,
+which is the expensive place to discover it. Disabled, the request is refused
+up-front with <code>needs secrets but platform.secrets is disabled</code>.</p>
+<p>To exercise secrets, run the backend on the host with <code>yarn start</code>, which picks
+up your kubeconfig. See
+<strong><a href="../../explanation/secrets-lifecycle/">Secret lifecycle</a></strong>.</p>
+<h2 id="when-the-build-fails-on-disk-space">When the build fails on disk space<a class="headerlink" href="#when-the-build-fails-on-disk-space" title="Permanent link">&para;</a></h2>
+<p>The image is ~1.5 GB and every rebuild leaves the previous one dangling, so a
+few iterations fill the Docker VM. The build fails with <code>ENOSPC</code> /
+<code>no space left on device</code>:</p>
+<div class="language-bash highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>docker<span class="w"> </span>image<span class="w"> </span>prune<span class="w"> </span>-f<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>docker<span class="w"> </span>builder<span class="w"> </span>prune<span class="w"> </span>-f
 </code></pre></div></td></tr></table></div>
-<p>Backstage <strong>merges</strong> config objects across files: a production file that
-simply leaves <code>guest</code> out inherits it from <code>app-config.yaml</code>, and the guest
-provider is an auth bypass. Only <code>null</code> removes a key.</p>
-<p>Verified against <code>@backstage/config</code>: with the key omitted,
-<code>auth.providers</code> reports <code>["oidc","guest"]</code> and guest is readable; with
-<code>guest: null</code> it reports <code>["oidc"]</code>.
-- Set <code>auth.environment: production</code> and add a <code>production:</code> block under the
-<code>oidc</code> provider — the demo only defines <code>development:</code>.
-- Leave <code>backend.auth.dangerouslyDisableDefaultAuthPolicy</code> <strong>unset</strong>.
-- The sign-in resolver (<code>emailLocalPartMatchingUserEntityName</code>) assumes the email
-local part equals the LDAP <code>uid</code>. Confirm that holds in your directory, or
-switch to a resolver keyed on a stable claim.</p>
-</li>
-</ul>
-<h2 id="3-replace-the-local-demo-services">3. Replace the local demo services<a class="headerlink" href="#3-replace-the-local-demo-services" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Git.</strong> Dev uses Gitea on <code>localhost:3001</code>; production uses Bitbucket Data
-  Center, already wired in <code>app-config.production.yaml</code> via
-  <code>integrations.bitbucketServer</code> and the <code>catalog.locations</code> entries. That covers
-  <strong>reads</strong>. The <strong>write</strong> path is the <code>git-ops</code> Argo workflow — point its
-  <code>repoUrl</code> parameter at the real repo and give <code>creds</code> an account with push
-  access.</li>
-<li><strong><code>host.docker.internal</code></strong> in <code>git-ops.yaml</code> is a Docker-Desktop shim for
-  reaching Gitea on the host. In a real cluster, use the VCS's real URL.</li>
-<li><strong>Identity.</strong> Local Keycloak + OpenLDAP → your IdP and directory. The
-  federation and <code>catalog.providers.ldapOrg</code> config carry over; repoint
-  <code>target</code>/<code>connectionUrl</code>, use LDAPS, and a real bind secret. If your catalog
-  ingests into a namespace other than <code>default</code>, set <code>platform.catalog.namespace</code>
-  to match — resource links and requester notifications are built from it.</li>
-<li><strong>Argo.</strong> kind plus a plain-HTTP port-forward on <code>:2746</code> → a real Argo
-  Workflows cluster. Set <code>platform.argo.proxyPath</code> to a <code>proxy.endpoints</code> entry
-  that targets the real argo-server and injects the token or mTLS <strong>server-side</strong>;
-  the client then routes everything through the proxy. Leave <code>proxyPath</code> unset
-  only for a dev argo-server running <code>--auth-mode=server --secure=false</code>.</li>
-<li><strong>TLS everywhere</strong>, and real <code>app.baseUrl</code> / <code>backend.baseUrl</code> values instead
-  of <code>localhost:7007</code>.</li>
-</ul>
-<h2 id="4-hardening">4. Hardening<a class="headerlink" href="#4-hardening" title="Permanent link">&para;</a></h2>
-<ul>
-<li>Scope <code>backend.reading.allow</code> to the real hosts (production already points it
-  at the Bitbucket host).</li>
-<li>Give the backend's Kubernetes service account only <code>create</code> and <code>delete</code> on
-  Secrets in the workflow namespace — it never reads them back.</li>
-<li>Drop or rotate the static <code>externalAccess</code> token; it exists for seed scripts
-  and smoke tests.</li>
-</ul>
-<h2 id="what-already-needs-no-change">What already needs no change<a class="headerlink" href="#what-already-needs-no-change" title="Permanent link">&para;</a></h2>
-<p>The plugin suite itself, per-team RBAC driven by LDAP groups, the
-request/approval state machine, completion-gated Argo tracking, notifications,
-the workflow-owns-Git model, and the config-driven admin/auditor groups, home
-page and <code>argoSubmit</code> / <code>resource-data</code> conventions.</p>
-<h2 id="pre-flight-checklist">Pre-flight checklist<a class="headerlink" href="#pre-flight-checklist" title="Permanent link">&para;</a></h2>
-<ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Every secret in <code>app-config.production.yaml</code> as <code>${ENV}</code>; nothing sensitive in <code>app-config.yaml</code></li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>guest</code> provider removed; <code>auth.environment: production</code>; OIDC <code>production</code> block present</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Bitbucket reads configured; <code>git-ops</code> <code>repoUrl</code> + <code>creds</code> point at the real repo</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>host.docker.internal</code> replaced</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> IdP, LDAPS and Argo (TLS + auth) endpoints real; <code>platform.argo.proxyPath</code> set</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> TLS and real base URLs; <code>backend.reading.allow</code> scoped</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>platform.secrets.encryptionKey</code> set from the secret manager</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> A retention policy decided: either <code>platform.requests.retention.enabled</code>
-      with windows that suit your compliance position, or a deliberate choice to
-      keep every request forever</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>yarn tsc</code>, <code>yarn lint:all</code> and <code>yarn test</code> green</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> Smoke: LDAP login, request → approve → workflow, edit, delete, Resource Data tab</li>
-</ul>
+<p><strong>Not <code>--volumes</code>.</strong> The dev stack's Postgres, Gitea and Keycloak state lives in
+Docker volumes; pruning those is what <code>backstage-down.sh</code> is for, and it is not
+what you want mid-iteration.</p>
+<p>Check Postgres before assuming the build was the only casualty — a full disk can
+take it down mid-write, and it will not come back on its own:</p>
+<div class="language-bash highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>docker<span class="w"> </span>ps<span class="w"> </span>-a<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>postgres<span class="w">      </span><span class="c1"># &quot;Exited (1)&quot; means look at its logs</span>
+docker<span class="w"> </span>start<span class="w"> </span>backstage-postgres-1<span class="w"> </span><span class="c1"># replays WAL once there is space again</span>
+</code></pre></div></td></tr></table></div>
 
 
 
@@ -1507,7 +1410,7 @@ page and <code>argoSubmit</code> / <code>resource-data</code> conventions.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../deploy-with-helm/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Deploy to Kubernetes with Helm">
+          <a href="../upgrade-backstage/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Upgrade Backstage">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1517,20 +1420,20 @@ page and <code>argoSubmit</code> / <code>resource-data</code> conventions.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Deploy to Kubernetes with Helm
+                Upgrade Backstage
               </div>
             </div>
           </a>
         
         
           
-          <a href="../../reference/plugins/" class="md-footer__link md-footer__link--next" aria-label="Next: Plugins">
+          <a href="../deploy-with-helm/" class="md-footer__link md-footer__link--next" aria-label="Next: Deploy to Kubernetes with Helm">
             <div class="md-footer__title">
               <span class="md-footer__direction">
                 Next
               </span>
               <div class="md-ellipsis">
-                Plugins
+                Deploy to Kubernetes with Helm
               </div>
             </div>
             <div class="md-footer__button md-icon">

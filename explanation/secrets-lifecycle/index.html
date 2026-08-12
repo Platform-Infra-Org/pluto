@@ -564,6 +564,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../how-to/run-the-production-image/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run the production image locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../how-to/deploy-with-helm/" class="md-nav__link">
         
   
@@ -1493,6 +1521,47 @@ that are older than <code>maxAgeHours</code>. It exists for the gaps <code>owner
 close: a workflow lingering with no TTL, an owner GC that didn't fire, a stuck
 request. It is a net, not the mechanism — Secrets labelled <code>platform.io/keep</code>
 (resource-owned, meant to outlive the workflow) are left alone.</p>
+<p><strong>Active means "the workflow may still need it"</strong>, not "the request is in
+progress":</p>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Kept</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IN_PROGRESS</code></td>
+<td>yes</td>
+<td>the workflow is running and mounting it</td>
+</tr>
+<tr>
+<td><code>AWAITING_INPUT</code></td>
+<td>yes</td>
+<td>suspended at a review gate; the step after the gate still has to mount it, possibly hours later</td>
+</tr>
+<tr>
+<td><code>FAILED</code></td>
+<td>yes</td>
+<td>the workflow may still exist and be retried — see <em>Re-checking a failed request</em> in the request lifecycle</td>
+</tr>
+<tr>
+<td><code>SUCCEEDED</code> / <code>REJECTED</code> / <code>EXPIRED</code> / <code>PENDING_APPROVAL</code></td>
+<td>no</td>
+<td>nothing left that can mount it</td>
+</tr>
+</tbody>
+</table>
+<p><code>maxAgeHours</code> still applies to <strong>every</strong> state, including the kept ones. That
+backstop is why this is a narrowing of the sweep rather than switching it off:
+a template with no <code>ttlStrategy</code> keeps its workflow forever, and without the age
+bound its Secret would live forever too.</p>
+<p>In practice a kept Secret rarely reaches that bound — it is owned by the
+Workflow, so Argo's <code>ttlStrategy.secondsAfterFailure</code> deletes both together. That
+same window is the window in which a retry is possible at all, so a retry that
+can happen is a retry whose Secret is still there.</p>
 <h2 id="key-rotation">Key rotation<a class="headerlink" href="#key-rotation" title="Permanent link">&para;</a></h2>
 <p>The encryption key comes from <code>platform.secrets.encryptionKey</code>, which accepts
 either a single string or a <strong>list</strong>:</p>

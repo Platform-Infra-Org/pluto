@@ -564,6 +564,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../how-to/run-the-production-image/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run the production image locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../how-to/deploy-with-helm/" class="md-nav__link">
         
   
@@ -796,6 +824,17 @@
     <span class="md-ellipsis">
       
         Tokens
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#entitypath-anything-the-named-tokens-dont-cover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        &lt;&lt; entity.&lt;path&gt; &gt;&gt; — anything the named tokens don't cover
       
     </span>
   </a>
@@ -1229,6 +1268,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#entitypath-anything-the-named-tokens-dont-cover" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        &lt;&lt; entity.&lt;path&gt; &gt;&gt; — anything the named tokens don't cover
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#params-reach-argo-without-any-token" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1346,11 +1396,19 @@ by the platform backend — <strong>no escaping needed</strong>.</p>
 </tr>
 <tr>
 <td><code>&lt;&lt; resourcesJson &gt;&gt;</code></td>
-<td>bulk requests: a JSON array of every resource, <code>[{name, path, dataPath, data}]</code></td>
+<td>every resource the request acts on, as <code>[{name, path, dataPath, data, owner}]</code> — <strong>one element for a single-resource request</strong>, several for a bulk one</td>
 </tr>
 <tr>
 <td><code>&lt;&lt; secretName &gt;&gt;</code></td>
 <td>the per-request Kubernetes Secret's name, for the WorkflowTemplate to <code>secretKeyRef</code>; <code>''</code> when the request declares no secrets</td>
+</tr>
+<tr>
+<td><code>&lt;&lt; entityJson &gt;&gt;</code></td>
+<td>the resource's whole catalog entity as JSON; <code>{}</code> for CREATE</td>
+</tr>
+<tr>
+<td><code>&lt;&lt; entity.&lt;path&gt; &gt;&gt;</code></td>
+<td>one field of that entity, by dotted path</td>
 </tr>
 </tbody>
 </table>
@@ -1362,8 +1420,21 @@ workflow that labels, notifies or charges by team names the team that actually
 approved the change. It is empty exactly when the request is admin-only — no
 owning Template matched its <code>resourceType</code> — and a workflow that cannot act
 without an owner should fail on the empty string rather than invent one.</p>
-<p><code>&lt;&lt; resourcesJson &gt;&gt;</code> resolves to <code>[]</code> for an ordinary single-resource request.
-Each element's <code>data</code> is a <strong>nested object</strong>, not a JSON string.</p>
+<p><code>&lt;&lt; resourcesJson &gt;&gt;</code> is an array in every case, including a single-resource
+request — one resource is a batch of one. That is what lets a template use the
+same <code>argoSubmit</code> and the same workflow entrypoint for the delete button and the
+bulk delete, instead of maintaining one workflow that takes four scalars and a
+second that takes an array. It is <code>[]</code> only for CREATE, which has no resource to
+resolve yet.</p>
+<p>The scalar tokens are still populated from the first resource, so
+<code>&lt;&lt; resourceData &gt;&gt;</code>, <code>&lt;&lt; resourcePath &gt;&gt;</code> and <code>&lt;&lt; resourceDataPath &gt;&gt;</code> keep
+working unchanged — <code>verb-update</code> uses them and needs no migration.</p>
+<p>Each element's <code>data</code> is a <strong>nested object</strong>, not a JSON string.</p>
+<p><code>owner</code> is the resource's own <code>spec.owner</code>, verbatim, and <code>''</code> when it declares
+none. It is <strong>not</strong> <code>&lt;&lt; ownerGroup &gt;&gt;</code>: that is the team that owns the
+<em>template</em>, which is who may approve the request. This is who owns the resource
+being acted on — per element, because a batch can span owners, which is exactly
+when a workflow needs to notify or tag them separately.</p>
 <p>That is worth stating because the intuition points the wrong way. Argo
 substitutes <code>{{item.data}}</code> inside a JSON string context, so a <em>string</em> field
 has its quotes escaped and reaches the container as
@@ -1375,6 +1446,36 @@ strings; the difference is the <code>withParam</code> loop, not the token.</p>
 rather than passing an element with empty data. A workflow that decommissions
 from <code>data</code> would otherwise skip the real teardown for that one resource and
 delete its files anyway, reporting success.</p>
+<h2 id="entitypath-anything-the-named-tokens-dont-cover"><code>&lt;&lt; entity.&lt;path&gt; &gt;&gt;</code> — anything the named tokens don't cover<a class="headerlink" href="#entitypath-anything-the-named-tokens-dont-cover" title="Permanent link">&para;</a></h2>
+<p>The named tokens are the fields a workflow usually wants. When it wants one
+they don't cover, <code>entity</code> is the whole catalog entity, exactly as the catalog
+parsed it — no backend change needed to reach one more field.</p>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">argoSubmit</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">system</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;&lt;</span><span class="nv"> </span><span class="s">entity.spec.system</span><span class="nv"> </span><span class="s">&gt;&gt;&quot;</span>
+<span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;&lt;</span><span class="nv"> </span><span class="s">entity.kind</span><span class="nv"> </span><span class="s">&gt;&gt;&quot;</span>
+<span class="w">    </span><span class="nt">dataRef</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;&lt;</span><span class="nv"> </span><span class="s">entity.metadata.annotations.platform.io/resource-data</span><span class="nv"> </span><span class="s">&gt;&gt;&quot;</span>
+</code></pre></div></td></tr></table></div>
+<ul>
+<li><strong>Dotted keys work.</strong> <code>metadata.annotations.platform.io/resource-data</code> finds
+  the key <code>platform.io/resource-data</code>; the path is matched longest-key-first at
+  each level, not split blindly on <code>.</code>.</li>
+<li><strong>A sub-object renders as JSON</strong>, so <code>&lt;&lt; entity.metadata.annotations &gt;&gt;</code> is a
+  usable parameter. (The older <code>params.</code> / <code>resourceData.</code> tokens still use
+  plain <code>String()</code>, where an array renders as <code>a,b</code> — unchanged, so nothing
+  relying on that shape moves under it.)</li>
+<li><strong>It is the resource's entity, not the template's.</strong> Empty for CREATE, which
+  has no resource yet, and populated from the <em>first</em> resource of a bulk
+  request. <code>&lt;&lt; resourcesJson &gt;&gt;</code> elements deliberately do not carry the whole
+  entity — that would bloat every bulk workflow's parameters.</li>
+<li>Prefer a named token where one exists (<code>&lt;&lt; resourceData &gt;&gt;</code>,
+  <code>&lt;&lt; resourcePath &gt;&gt;</code>): those resolve the <code>resource-data</code> ref and the git
+  layout for you, which reading the raw entity does not.</li>
+</ul>
 <h2 id="params-reach-argo-without-any-token">Params reach Argo without any token<a class="headerlink" href="#params-reach-argo-without-any-token" title="Permanent link">&para;</a></h2>
 <p>Every entry in the request's <code>params</code> is sent to Argo as <strong>its own named
 parameter</strong> — <code>size</code> arrives as <code>{{workflow.parameters.size}}</code>, not as a field
