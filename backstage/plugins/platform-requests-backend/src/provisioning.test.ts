@@ -43,6 +43,33 @@ describe('resolveResource error reporting', () => {
     );
   });
 
+  it("carries the resource's own spec.owner", async () => {
+    const { resolveResource } = createResourceResolver({
+      catalog: {
+        getEntityByRef: async () => ({
+          metadata: { name: 'bucket-a', annotations: {} },
+          spec: { owner: 'group:default/payments' },
+        }),
+      } as any,
+      urlReader: { readUrl: jest.fn() } as any,
+      auth,
+      logger,
+    });
+    expect((await resolveResource('bucket-a')).owner).toBe(
+      'group:default/payments',
+    );
+  });
+
+  it('has no owner when the resource declares none', async () => {
+    const { resolveResource } = createResourceResolver({
+      catalog: { getEntityByRef: async () => entity({}) } as any,
+      urlReader: { readUrl: jest.fn() } as any,
+      auth,
+      logger,
+    });
+    expect((await resolveResource('bucket-a')).owner).toBeUndefined();
+  });
+
   it('reports an error when the entity is missing', async () => {
     const { resolveResource } = createResourceResolver({
       catalog: { getEntityByRef: async () => undefined } as any,
@@ -130,6 +157,7 @@ describe('submitWorkflow resource resolution', () => {
             data: { region: 'eu-west-1', tags: ['prod'] },
             resourcePath: `resources/${n}.yaml`,
             dataPath: `resources/${n}-data.json`,
+            owner: `group:default/${n === 'bucket-b' ? 'search' : 'payments'}`,
           },
     ),
   });
@@ -183,6 +211,7 @@ describe('submitWorkflow resource resolution', () => {
         path: 'resources/bucket-a.yaml',
         dataPath: 'resources/bucket-a-data.json',
         data: { region: 'eu-west-1', tags: ['prod'] },
+        owner: 'group:default/payments',
       },
     ]);
   });
@@ -211,7 +240,11 @@ describe('submitWorkflow resource resolution', () => {
       path: 'resources/bucket-a.yaml',
       dataPath: 'resources/bucket-a-data.json',
       data: { region: 'eu-west-1', tags: ['prod'] },
+      owner: 'group:default/payments',
     });
+    // A batch can span owners, which is the reason this is per-resource rather
+    // than one value on the request.
+    expect(ctx.resources[1].owner).toBe('group:default/search');
     // Not a JSON string: Argo escapes a string field's quotes when it
     // substitutes {{item.data}}, an object it serialises cleanly.
     expect(typeof ctx.resources[0].data).toBe('object');

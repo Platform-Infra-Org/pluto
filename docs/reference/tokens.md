@@ -23,7 +23,7 @@ by the platform backend — **no escaping needed**.
 | `<< resourceData.<field> >>` | one field of the resource data |
 | `<< resourcePath >>` | the resource's catalog file path in Git (for `git-ops` delete) |
 | `<< resourceDataPath >>` | the resource's data-file path in Git (for `git-ops` update/delete) |
-| `<< resourcesJson >>` | every resource the request acts on, as `[{name, path, dataPath, data}]` — **one element for a single-resource request**, several for a bulk one |
+| `<< resourcesJson >>` | every resource the request acts on, as `[{name, path, dataPath, data, owner}]` — **one element for a single-resource request**, several for a bulk one |
 | `<< secretName >>` | the per-request Kubernetes Secret's name, for the WorkflowTemplate to `secretKeyRef`; `''` when the request declares no secrets |
 
 Unknown tokens and missing fields resolve to an empty string (`resourceData` to
@@ -48,6 +48,12 @@ The scalar tokens are still populated from the first resource, so
 working unchanged — `verb-update` uses them and needs no migration.
 
 Each element's `data` is a **nested object**, not a JSON string.
+
+`owner` is the resource's own `spec.owner`, verbatim, and `''` when it declares
+none. It is **not** `<< ownerGroup >>`: that is the team that owns the
+*template*, which is who may approve the request. This is who owns the resource
+being acted on — per element, because a batch can span owners, which is exactly
+when a workflow needs to notify or tag them separately.
 
 That is worth stating because the intuition points the wrong way. Argo
 substitutes `{{item.data}}` inside a JSON string context, so a *string* field

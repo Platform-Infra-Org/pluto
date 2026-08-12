@@ -59,6 +59,8 @@ export interface ResolveCtx {
     path: string;
     dataPath: string;
     data: Record<string, unknown>;
+    /** The resource's own `spec.owner`; '' when it has none. */
+    owner: string;
   }>;
 }
 

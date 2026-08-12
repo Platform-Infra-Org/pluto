@@ -21,6 +21,15 @@ export interface ResolvedResource {
   resourcePath?: string;
   dataPath?: string;
   /**
+   * The resource's own `spec.owner`, verbatim.
+   *
+   * Not the same thing as the request's `<< ownerGroup >>`: that is the team
+   * that owns the *template*, and is who may approve. This is who owns the
+   * resource being acted on, which is what a workflow needs to notify, tag or
+   * charge per resource in a batch that may span owners.
+   */
+  owner?: string;
+  /**
    * Why this resource could not be resolved, when it could not.
    *
    * Absent means resolved — including resolved to genuinely empty data, which
@@ -117,7 +126,12 @@ export function createResourceResolver(deps: {
           data = sd as Record<string, unknown>;
         }
       }
-      return { data, resourcePath, dataPath };
+      return {
+        data,
+        resourcePath,
+        dataPath,
+        owner: (entity.spec as { owner?: string } | undefined)?.owner,
+      };
     } catch (e) {
       const error = `resolveResource '${resourceName}' failed: ${e}`;
       logger.warn(error);
@@ -155,18 +169,14 @@ export function createSubmitWorkflow(deps: {
     // data + the git paths of its files (for git-ops). A bulk request resolves
     // every name it holds.
     const names = request.resourceNames;
-    let r: {
-      data: Record<string, unknown>;
-      resourcePath?: string;
-      dataPath?: string;
-      error?: string;
-    } = { data: {} };
+    let r: ResolvedResource = { data: {} };
     let resources:
       | Array<{
           name: string;
           path: string;
           dataPath: string;
           data: Record<string, unknown>;
+          owner: string;
         }>
       | undefined;
 
@@ -201,6 +211,9 @@ export function createSubmitWorkflow(deps: {
         path: resolved[i].resourcePath ?? '',
         dataPath: resolved[i].dataPath ?? '',
         data: resolved[i].data ?? {},
+        // '' rather than absent, so every element has the same shape and a
+        // workflow can read `{{item.owner}}` without a conditional.
+        owner: resolved[i].owner ?? '',
       }));
       // The scalar tokens stay populated from the first (and, for a single
       // request, only) resource, so `<< resourceData >>`, `<< resourcePath >>`
