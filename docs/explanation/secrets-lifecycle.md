@@ -102,6 +102,26 @@ close: a workflow lingering with no TTL, an owner GC that didn't fire, a stuck
 request. It is a net, not the mechanism — Secrets labelled `platform.io/keep`
 (resource-owned, meant to outlive the workflow) are left alone.
 
+**Active means "the workflow may still need it"**, not "the request is in
+progress":
+
+| State | Kept | Why |
+|---|---|---|
+| `IN_PROGRESS` | yes | the workflow is running and mounting it |
+| `AWAITING_INPUT` | yes | suspended at a review gate; the step after the gate still has to mount it, possibly hours later |
+| `FAILED` | yes | the workflow may still exist and be retried — see *Re-checking a failed request* in the request lifecycle |
+| `SUCCEEDED` / `REJECTED` / `EXPIRED` / `PENDING_APPROVAL` | no | nothing left that can mount it |
+
+`maxAgeHours` still applies to **every** state, including the kept ones. That
+backstop is why this is a narrowing of the sweep rather than switching it off:
+a template with no `ttlStrategy` keeps its workflow forever, and without the age
+bound its Secret would live forever too.
+
+In practice a kept Secret rarely reaches that bound — it is owned by the
+Workflow, so Argo's `ttlStrategy.secondsAfterFailure` deletes both together. That
+same window is the window in which a retry is possible at all, so a retry that
+can happen is a retry whose Secret is still there.
+
 ## Key rotation
 
 The encryption key comes from `platform.secrets.encryptionKey`, which accepts

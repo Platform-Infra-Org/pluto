@@ -119,6 +119,40 @@ describe('resolveTemplate', () => {
     expect(resolveTemplate('<< resourcesJson >>', empty as any)).toBe('[]');
   });
 
+  it('resolves entity.<path>, including dotted annotation keys', () => {
+    const withEntity: ResolveCtx = {
+      ...ctx,
+      entity: {
+        metadata: {
+          name: 'my-bucket',
+          annotations: { 'platform.io/resource-data': 'dir:data.yaml' },
+        },
+        spec: { type: 'bucket', owner: 'group:default/team-a', tags: ['a'] },
+      },
+    };
+    expect(resolveTemplate('<< entity.spec.type >>', withEntity)).toBe('bucket');
+    expect(resolveTemplate('<< entity.metadata.name >>', withEntity)).toBe(
+      'my-bucket',
+    );
+    // The key is literally `platform.io/resource-data`; a naive dotted walk
+    // would look for an object called `platform` and silently return ''.
+    expect(
+      resolveTemplate(
+        '<< entity.metadata.annotations.platform.io/resource-data >>',
+        withEntity,
+      ),
+    ).toBe('dir:data.yaml');
+    // Sub-objects and arrays render as JSON, not `[object Object]`.
+    expect(resolveTemplate('<< entity.spec.tags >>', withEntity)).toBe('["a"]');
+    expect(resolveTemplate('<< entityJson >>', withEntity)).toBe(
+      JSON.stringify(withEntity.entity),
+    );
+    // Missing path, and no entity at all (CREATE), are both ''.
+    expect(resolveTemplate('<< entity.spec.nope >>', withEntity)).toBe('');
+    expect(resolveTemplate('<< entity.spec.type >>', ctx)).toBe('');
+    expect(resolveTemplate('<< entityJson >>', ctx)).toBe('{}');
+  });
+
   it('resolves missing params and unknown tokens to empty string', () => {
     expect(resolveTemplate('<< params.nope >>', ctx)).toBe('');
     expect(resolveTemplate('<< bogus >>', ctx)).toBe('');
@@ -352,6 +386,56 @@ describe('ArgoClient.submitSpec', () => {
     const s = await client().statusFor(42, 'argo');
     expect(s.phase).toBe('Succeeded');
     expect(s.outputs).toEqual({ 'resource-ref': 'my-bucket', other: '42' });
+  });
+
+  // A resubmit copies the request-id label onto a new workflow, so two match the
+  // selector. Items are supplied oldest-first here — the order Argo does NOT
+  // use — so this fails against a plain items[0].
+  it('statusFor picks the newest labelled workflow, whatever order it is listed in', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        items: [
+          {
+            metadata: { name: 'wf-old', creationTimestamp: '2026-08-11T09:00:00Z' },
+            status: { phase: 'Failed', message: 'failing on purpose' },
+          },
+          {
+            metadata: { name: 'wf-new', creationTimestamp: '2026-08-12T09:00:00Z' },
+            status: {
+              phase: 'Running',
+              outputs: { parameters: [{ name: 'resource-ref', value: 'r' }] },
+              nodes: {
+                s: { id: 's', displayName: 'gate', type: 'Suspend', phase: 'Running' },
+              },
+            },
+          },
+        ],
+      }),
+    } as Response);
+    const s = await client().statusFor(42, 'argo');
+    expect(s.name).toBe('wf-new');
+    expect(s.phase).toBe('Running');
+    expect(s.outputs).toEqual({ 'resource-ref': 'r' });
+    expect(s.suspendedNodes.map(n => n.name)).toEqual(['gate']);
+  });
+
+  // An item with no creationTimestamp must not throw or shadow a good one.
+  it('statusFor tolerates a missing creationTimestamp', async () => {
+    jest.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        items: [
+          { metadata: { name: 'wf-undated' }, status: { phase: 'Failed' } },
+          {
+            metadata: { name: 'wf-dated', creationTimestamp: '2026-08-12T09:00:00Z' },
+            status: { phase: 'Running' },
+          },
+        ],
+      }),
+    } as Response);
+    const s = await client().statusFor(42, 'argo');
+    expect(s.name).toBe('wf-dated');
   });
 });
 

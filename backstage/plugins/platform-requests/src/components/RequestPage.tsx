@@ -27,7 +27,7 @@ import {
   approvalProgress,
   catalogPath,
 } from '@internal/plugin-platform-common';
-import { requestsApiRef } from '../api';
+import { RefreshResult, requestsApiRef } from '../api';
 import { requestRouteRef } from '../routes';
 import { useCatalogNamespace } from '../useCatalogNamespace';
 import { titleOf, useResourceTitles } from '../useResourceTitles';
@@ -68,6 +68,21 @@ function ApprovalProgress({ request }: { request: Request }) {
   );
 }
 
+/**
+ * One sentence per outcome of a re-check. The button must say what it found
+ * even when it found nothing — a control that returns silently invites a
+ * second click.
+ */
+const RECHECK_SAID: Record<RefreshResult['reason'], string> = {
+  'moved-to-in-progress': 'The workflow is running again — tracking it here.',
+  'moved-to-awaiting-input': 'The workflow is waiting for an approver again.',
+  'moved-to-succeeded': 'The workflow finished successfully.',
+  'still-failed': 'The workflow is still failed.',
+  'workflow-gone':
+    'The workflow no longer exists in Argo — it was cleaned up, so there is nothing left to track.',
+  'not-failed': 'Nothing to do — this request is not failed.',
+};
+
 export function RequestPage() {
   const api = useApi(requestsApiRef);
   const identity = useApi(identityApiRef);
@@ -88,6 +103,11 @@ export function RequestPage() {
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  // What the last re-check said, already rendered as a sentence. Kept as text
+  // rather than a reason code because it must survive the state moving off
+  // FAILED — that is the case where the user most needs to be told why the
+  // button just vanished.
+  const [recheckSaid, setRecheckSaid] = useState<string>();
 
   // While this request's workflow runs, the tab says so — the page is worth
   // leaving open and coming back to.
@@ -126,6 +146,25 @@ export function RequestPage() {
       setNote('');
     } catch (e) {
       setError(String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Re-read the workflow in Argo. This never restarts anything: it only asks
+  // the backend to look again, for the case where an operator retried the
+  // workflow by hand. Setting the returned request updates the badge at once,
+  // and if the state moved off FAILED the page's existing poll takes over.
+  const recheck = async () => {
+    setBusy(true);
+    setRecheckSaid(undefined);
+    try {
+      const res = await api.refresh(Number(id));
+      setRequest(res.request);
+      const said: string | undefined = RECHECK_SAID[res.reason];
+      setRecheckSaid(said ?? `The workflow was re-checked (${res.reason}).`);
+    } catch (e) {
+      setRecheckSaid(`Could not re-check the workflow: ${e}`);
     } finally {
       setBusy(false);
     }
@@ -208,6 +247,28 @@ export function RequestPage() {
       {request.error && (
         <div className="sc-notice sc-notice-fail" style={{ marginBottom: 12 }}>
           <strong>Failed:</strong> {request.error}
+        </div>
+      )}
+      {/* Rendered while failed, and afterwards for as long as there is an
+          outcome to show — a re-check that moved the request would otherwise
+          take its own answer off the screen with it. */}
+      {(request.state === 'FAILED' || recheckSaid) && (
+        <div style={{ marginBottom: 12 }}>
+          {request.state === 'FAILED' && (
+            <div className="sc-row">
+              <Button variant="outline" disabled={busy} onClick={recheck}>
+                Re-check status
+              </Button>
+              <span className="sc-muted">
+                Re-reads the workflow in Argo. It does not restart anything.
+              </span>
+            </div>
+          )}
+          {recheckSaid && (
+            <div className="sc-muted" style={{ marginTop: 8 }}>
+              {recheckSaid}
+            </div>
+          )}
         </div>
       )}
       {request.workflowName && (

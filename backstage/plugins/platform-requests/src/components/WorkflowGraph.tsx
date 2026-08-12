@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { CSSProperties, useEffect, useState } from 'react';
 import { useApi } from '@backstage/core-plugin-api';
 import {
   Background,
@@ -44,6 +44,19 @@ export function displayPhase(n: WorkflowNode): string | undefined {
   return n.type === 'Suspend' && n.phase === 'Running' ? 'Suspended' : n.phase;
 }
 
+/** One line of a node label: never wraps, ends in an ellipsis at the box edge. */
+const LINE: CSSProperties = {
+  // Explicit, because `.sc, .sc *` in styles.ts colours every descendant and a
+  // direct rule beats inheriting the node's own colour. The stylesheet now
+  // carries a matching rule for the whole canvas; this keeps the component
+  // readable on its own rather than relying on that at a distance.
+  color: 'inherit',
+  display: 'block',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+
 function toFlow(
   wf: WorkflowInfo,
   direction: Direction,
@@ -67,8 +80,27 @@ function toFlow(
         // The untruncated name stays reachable on hover: for a loop iteration
         // the payload nodeLabel drops is exactly what tells you *which item*
         // failed.
+        // `color: inherit` is load-bearing, not tidiness. The canvas is dark in
+        // both themes, and the node below sets its own light text — but that is
+        // an *inline* style on the node, which this span only inherits while
+        // nothing targets it directly. `.sc, .sc * { color: hsl(var(--sc-fg)) }`
+        // targets every descendant, and a direct rule beats inheritance, so in
+        // light mode the span took the page's dark text and vanished into the
+        // node. Wrapping a plain string in an element is what exposed it.
         label: (
-          <span title={n.name}>{`${nodeLabel(n.name)}\n${phase ?? ''}`}</span>
+          // Two block lines, each clipped on its own, rather than one string
+          // with a newline. A single string wraps when it is wider than the
+          // box, so a long name became three lines in a box sized for two and
+          // the last one was sliced through the middle. `nowrap` makes each
+          // line exactly one line; `ellipsis` ends it at the box edge instead
+          // of painting past it.
+          <span
+            title={n.name}
+            style={{ color: 'inherit', display: 'block', width: '100%' }}
+          >
+            <span style={LINE}>{nodeLabel(n.name)}</span>
+            <span style={{ ...LINE, opacity: 0.75 }}>{phase ?? ''}</span>
+          </span>
         ),
       },
       style: {
@@ -80,19 +112,23 @@ function toFlow(
         background: '#17171f',
         color: '#e7e7ef',
         borderRadius: 8,
-        padding: '5px 8px',
+        // The box has to hold exactly two lines of 12px text. `styles.ts` sets
+        // `.sc *  { font-size: max(12px, 1em) }` as a deliberate legibility
+        // floor, so the label renders at 12px however small this asks — the
+        // arithmetic that matters is 2 x 12 x 1.2 = 28.8px of text, plus 8px
+        // padding and ~3px of border, inside NODE_H (44). It used to be
+        // 2 x 12 x 1.3 = 31.2px inside ~31px, which clipped the second line
+        // through the middle even before any wrapping.
+        padding: '4px 8px',
         fontSize: 10,
-        lineHeight: 1.3,
-        whiteSpace: 'pre-line',
-        width: 128,
-        // Shortening the label keeps it readable; this is what keeps it inside
-        // the box. Without a clip any label wider than 128px paints straight
-        // out of the node and over the edges. The height cap is dagre's own
-        // NODE_H, so a node can never overlap the row below the one reserved
-        // for it.
+        lineHeight: 1.2,
+        // 160 of the 180 dagre reserves (NODE_W), so ~25% more of the name is
+        // visible than at 128 while the gap to the next node stays generous.
+        width: 160,
+        height: NODE_H,
+        // The backstop. Each line already clips itself, so nothing should
+        // reach this — which is exactly why it stays.
         overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        maxHeight: NODE_H,
       },
       ...handles,
     };

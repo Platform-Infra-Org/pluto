@@ -7,6 +7,7 @@ import { notificationService } from '@backstage/plugin-notifications-node';
 import {
   DEFAULT_NAMESPACE,
   Request as PlatformRequest,
+  RequestState,
 } from '@internal/plugin-platform-common';
 import { createRouter } from './router';
 import { RequestsStore } from './store';
@@ -16,6 +17,41 @@ import { createSecretStore } from './secretStore';
 import { createCipher } from './crypto';
 import { createResourceResolver, createSubmitWorkflow } from './provisioning';
 import { planRetention, readRetentionConfig } from './retention';
+
+/**
+ * States whose workflow may still need the request's Secret: running,
+ * suspended at a review gate, or failed and still retryable by an operator
+ * (the workflow lives until its ttlStrategy, and a retry mounts the same
+ * Secret). Anything else is terminal for the workflow, so its Secret is
+ * orphaned and the sweep takes it.
+ *
+ * @public
+ */
+export const SECRET_ACTIVE_STATES: RequestState[] = [
+  'IN_PROGRESS',
+  'AWAITING_INPUT',
+  'FAILED',
+];
+
+/**
+ * What {@link reconcileRequest} did — the endpoint reports this to the user, so
+ * a no-op says which no-op it was rather than returning a bare 200.
+ *
+ * @public
+ */
+export interface ReconcileOutcome {
+  /** The request's state after reconciling. */
+  state: RequestState;
+  /** Did the state actually move? */
+  changed: boolean;
+  reason:
+    | 'moved-to-in-progress'
+    | 'moved-to-awaiting-input'
+    | 'moved-to-succeeded'
+    | 'still-failed'
+    | 'workflow-gone'
+    | 'not-failed';
+}
 
 /**
  * platformRequestsPlugin backend plugin
@@ -208,6 +244,116 @@ export const platformRequestsPlugin = createBackendPlugin({
           }
         };
 
+        // Read the configured output parameter off a request's finished workflow.
+        const readResult = async (
+          r: PlatformRequest,
+        ): Promise<string | undefined> => {
+          if (!r.resultOutput || !r.workflowName) return undefined;
+          try {
+            const outs = await argo.outputsFor(r.workflowName, r.workflowNamespace);
+            return outs[r.resultOutput];
+          } catch (e) {
+            logger.warn(`readResult failed for request ${r.id}: ${e}`);
+            return undefined;
+          }
+        };
+
+        // Read Argo and mirror the workflow's phase onto the request. The poll
+        // task runs this per non-terminal request; the re-check endpoint runs
+        // the same thing on demand for a FAILED one. One copy, so the two
+        // cannot drift apart on the next lifecycle change.
+        const reconcileRequest = async (
+          r: PlatformRequest,
+        ): Promise<ReconcileOutcome> => {
+          const { name, phase, message, suspendedNodes } = await argo.statusFor(
+            r.id,
+            r.workflowNamespace,
+          );
+          // Nothing carries the request's label any more: Argo's TTL deleted the
+          // workflow, so there is nothing left to mirror (or to retry).
+          if (!phase) {
+            return { state: r.state, changed: false, reason: 'workflow-gone' };
+          }
+          await store.setWorkflow(r.id, { phase, suspendedNodes });
+          // A resubmit runs under a NEW name but copies the request-id label,
+          // so follow whichever workflow is authoritative now.
+          if (name && name !== r.workflowName) {
+            await store.setWorkflow(r.id, { name });
+          }
+
+          // A suspend step reports phase Running, and so does the workflow
+          // around it — without this the request would sit in IN_PROGRESS
+          // indefinitely, looking healthy.
+          if (suspendedNodes.length > 0 && r.state !== 'AWAITING_INPUT') {
+            await store.setState(r.id, 'AWAITING_INPUT');
+            await notify.approvalNeeded(r);
+            logger.info(
+              `request ${r.id}: workflow suspended at ${suspendedNodes
+                .map(n => n.name)
+                .join(', ')} — awaiting input`,
+            );
+            return {
+              state: 'AWAITING_INPUT',
+              changed: true,
+              reason: 'moved-to-awaiting-input',
+            };
+          }
+          let movedToInProgress = false;
+          if (suspendedNodes.length === 0 && r.state !== 'IN_PROGRESS') {
+            // Resumed here or in the Argo UI, or an operator retried a failed
+            // workflow; either way it is moving again.
+            await store.setState(r.id, 'IN_PROGRESS');
+            movedToInProgress = true;
+            logger.info(`request ${r.id}: running, back in progress`);
+          }
+
+          if (phase === 'Succeeded') {
+            // The workflow is the sole Git writer — it created/updated/
+            // deleted the resource in the catalog repo itself.
+            // Read the configured output → the created resource ref/URL.
+            const resultRef = await readResult(r);
+            if (resultRef) await store.setResult(r.id, resultRef);
+            await store.setState(r.id, 'SUCCEEDED');
+            await notify.finished(r, true, resultRef);
+            logger.info(
+              `request ${r.id}: workflow succeeded${
+                resultRef ? ` → ${resultRef}` : ''
+              }`,
+            );
+            return {
+              state: 'SUCCEEDED',
+              changed: r.state !== 'SUCCEEDED',
+              reason: 'moved-to-succeeded',
+            };
+          }
+          if (phase === 'Failed' || phase === 'Error') {
+            // Refresh the message: a second failure may differ from the first.
+            await store.setWorkflow(r.id, { error: message });
+            await store.setState(r.id, 'FAILED');
+            await notify.finished(r, false);
+            logger.info(`request ${r.id}: workflow ${phase}`);
+            return {
+              state: 'FAILED',
+              changed: r.state !== 'FAILED',
+              reason: 'still-failed',
+            };
+          }
+          // Still running: either parked at a gate it was already parked at, or
+          // in progress.
+          if (suspendedNodes.length > 0) {
+            return {
+              state: 'AWAITING_INPUT',
+              changed: false,
+              reason: 'moved-to-awaiting-input',
+            };
+          }
+          return {
+            state: 'IN_PROGRESS',
+            changed: movedToInProgress,
+            reason: 'moved-to-in-progress',
+          };
+        };
+
         httpRouter.use(
           await createRouter({
             httpAuth,
@@ -222,6 +368,7 @@ export const platformRequestsPlugin = createBackendPlugin({
             resumeNode: (name, nodeId, opts) =>
               argo.resumeNode(name, nodeId, opts),
             stopWorkflow: (name, opts) => argo.stopWorkflow(name, opts),
+            reconcileRequest,
             principalResolver,
             ownerResolver,
             verbConfigResolver,
@@ -230,20 +377,6 @@ export const platformRequestsPlugin = createBackendPlugin({
             secretsEnabled: !!secretStore,
           }),
         );
-
-        // Read the configured output parameter off a request's finished workflow.
-        const readResult = async (
-          r: PlatformRequest,
-        ): Promise<string | undefined> => {
-          if (!r.resultOutput || !r.workflowName) return undefined;
-          try {
-            const outs = await argo.outputsFor(r.workflowName, r.workflowNamespace);
-            return outs[r.resultOutput];
-          } catch (e) {
-            logger.warn(`readResult failed for request ${r.id}: ${e}`);
-            return undefined;
-          }
-        };
 
         // Poll Argo and mirror workflow phase onto IN_PROGRESS requests; a request
         // is only SUCCEEDED once its workflow Succeeds (completion gating).
@@ -261,50 +394,7 @@ export const platformRequestsPlugin = createBackendPlugin({
             ];
             for (const r of inProgress) {
               try {
-                const { phase, message, suspendedNodes } = await argo.statusFor(
-                  r.id,
-                  r.workflowNamespace,
-                );
-                if (!phase) continue;
-                await store.setWorkflow(r.id, { phase, suspendedNodes });
-
-                // A suspend step reports phase Running, and so does the
-                // workflow around it — without this the request would sit in
-                // IN_PROGRESS indefinitely, looking healthy.
-                if (suspendedNodes.length > 0 && r.state !== 'AWAITING_INPUT') {
-                  await store.setState(r.id, 'AWAITING_INPUT');
-                  await notify.approvalNeeded(r);
-                  logger.info(
-                    `request ${r.id}: workflow suspended at ${suspendedNodes
-                      .map(n => n.name)
-                      .join(', ')} — awaiting input`,
-                  );
-                  continue;
-                }
-                if (suspendedNodes.length === 0 && r.state === 'AWAITING_INPUT') {
-                  // Resumed here or in the Argo UI; either way it is moving again.
-                  await store.setState(r.id, 'IN_PROGRESS');
-                  logger.info(`request ${r.id}: resumed, back in progress`);
-                }
-                if (phase === 'Succeeded') {
-                  // The workflow is the sole Git writer — it created/updated/
-                  // deleted the resource in the catalog repo itself.
-                  // Read the configured output → the created resource ref/URL.
-                  const resultRef = await readResult(r);
-                  if (resultRef) await store.setResult(r.id, resultRef);
-                  await store.setState(r.id, 'SUCCEEDED');
-                  await notify.finished(r, true, resultRef);
-                  logger.info(
-                    `request ${r.id}: workflow succeeded${
-                      resultRef ? ` → ${resultRef}` : ''
-                    }`,
-                  );
-                } else if (phase === 'Failed' || phase === 'Error') {
-                  await store.setWorkflow(r.id, { error: message });
-                  await store.setState(r.id, 'FAILED');
-                  await notify.finished(r, false);
-                  logger.info(`request ${r.id}: workflow ${phase}`);
-                }
+                await reconcileRequest(r);
               } catch (e) {
                 logger.warn(`poll failed for request ${r.id}: ${e}`);
               }
@@ -344,13 +434,28 @@ export const platformRequestsPlugin = createBackendPlugin({
             frequency,
             timeout: { minutes: 2 },
             fn: async () => {
-              // A Secret exists only for IN_PROGRESS requests (created at approval,
-              // GC'd by the Workflow after). Anything else labelled ours is orphaned.
-              const inProgress = await store.list({ state: 'IN_PROGRESS' });
-              await secretStore.sweep({
-                activeRequestIds: new Set(inProgress.map(r => r.id)),
-                maxAgeMs,
-              });
+              try {
+                // Keep the Secret of every request whose workflow may still need
+                // it (SECRET_ACTIVE_STATES) — not just the running ones. Anything
+                // else labelled ours is orphaned. maxAgeMs still applies to all of
+                // them: it is the backstop for a workflow with no ttlStrategy.
+                const active = await Promise.all(
+                  SECRET_ACTIVE_STATES.map(state => store.list({ state })),
+                );
+                await secretStore.sweep({
+                  activeRequestIds: new Set(active.flat().map(r => r.id)),
+                  maxAgeMs,
+                });
+              } catch (e) {
+                // A Kubernetes client error carries nothing enumerable, so
+                // letting it reach the scheduler logs `"message":{}` every
+                // tick — a task that is visibly failing and says nothing about
+                // why, which is worse than either succeeding or being off.
+                // Log the reason and let the next tick retry: this sweep is
+                // the safety net, the Workflow ownerReference is the happy
+                // path, and one missed pass deletes nothing prematurely.
+                logger.warn(`secret sweep failed: ${e}`);
+              }
             },
           });
         }

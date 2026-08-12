@@ -3,8 +3,8 @@ import { useApi } from '@backstage/core-plugin-api';
 import { Link } from '@backstage/core-components';
 import { useEntity } from '@backstage/plugin-catalog-react';
 import {
-  Card, CardHeader, CardBody, Button, Dialog, Field, Input, Textarea,
-  mergeResourceEdits, JsonTree,
+  Card, CardHeader, CardBody, Button, Dialog, JsonTree, JsonEditTree,
+  leavesOf, mergeDeepEdits, pathKey, type Leaf,
 } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
 
@@ -20,34 +20,31 @@ export function ResourceActionsCard() {
   const [del, setDel] = useState(false);
   const [original, setOriginal] = useState<Record<string, unknown>>({});
   const [fields, setFields] = useState<Record<string, string>>({});
+  // Every scalar in the document, at any depth, in document order. Held in
+  // state rather than recomputed so the merge writes back against exactly the
+  // shape the form was built from.
+  const [leaves, setLeaves] = useState<Leaf[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<number>();
 
   const type = (entity.spec?.type as string) ?? 'resource';
   const name = entity.metadata.name;
 
-  // Load the resource's full data and offer every key for editing — scalars as
-  // inputs, objects and arrays as JSON. `original` is kept so submit merges over
-  // the whole document rather than replacing it with what the form showed.
+  // Load the resource's full data and offer every scalar for editing, however
+  // deep. `original` is kept so submit merges over the whole document rather
+  // than replacing it with what the form showed.
   const openEdit = async () => {
     const data = await requests.getResourceData(name).catch(() => ({}));
+    const ls = leavesOf(data);
     setOriginal(data);
-    setFields(
-      Object.fromEntries(
-        Object.entries(data).map(([k, v]) => [
-          k,
-          v !== null && typeof v === 'object'
-            ? JSON.stringify(v, null, 2)
-            : String(v),
-        ]),
-      ),
-    );
+    setLeaves(ls);
+    setFields(Object.fromEntries(ls.map(l => [pathKey(l.path), l.value])));
     setErrors({});
     setEdit(true);
   };
 
   const submitEdit = async () => {
-    const { data, errors: problems } = mergeResourceEdits(original, fields);
+    const { data, errors: problems } = mergeDeepEdits(original, leaves, fields);
     if (Object.keys(problems).length) {
       setErrors(problems);
       return;
@@ -120,42 +117,14 @@ export function ResourceActionsCard() {
           </>
         }
       >
-        {Object.keys(fields).map(k => {
-          const multiline =
-            original[k] !== null && typeof original[k] === 'object';
-          return (
-            <Field key={k} label={k}>
-              {multiline ? (
-                <Textarea
-                  value={fields[k]}
-                  onChange={e =>
-                    setFields(f => ({ ...f, [k]: e.target.value }))
-                  }
-                />
-              ) : (
-                <Input
-                  value={fields[k]}
-                  onChange={e =>
-                    setFields(f => ({ ...f, [k]: e.target.value }))
-                  }
-                />
-              )}
-              {errors[k] && (
-                <div
-                  role="alert"
-                  style={{
-                    color: 'hsl(var(--sc-destructive))',
-                    fontSize: 13,
-                    marginTop: 4,
-                  }}
-                >
-                  {errors[k]}
-                </div>
-              )}
-            </Field>
-          );
-        })}
-        {Object.keys(fields).length === 0 && (
+        <JsonEditTree
+          data={original}
+          leaves={leaves}
+          fields={fields}
+          errors={errors}
+          onChange={(k, v) => setFields(f => ({ ...f, [k]: v }))}
+        />
+        {leaves.length === 0 && (
           <div className="sc-muted">This resource has no data to edit.</div>
         )}
       </Dialog>

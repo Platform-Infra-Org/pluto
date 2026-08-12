@@ -26,6 +26,7 @@ import {
   layout,
   handlePositions,
 } from '@internal/plugin-platform-ui';
+import { useEntityTitles } from '../useResourceTitles';
 
 const NODE = 130;
 
@@ -55,6 +56,14 @@ const centerNode = {
  */
 export function RelationsGraph() {
   const { entity } = useEntity();
+  // Related entities arrive as refs only, so their titles need a lookup — the
+  // same batched one the request pages use. The centre needs none: its entity
+  // is already in hand.
+  const relatedRefs = useMemo(
+    () => [...new Set((entity.relations ?? []).map(r => r.targetRef.toLowerCase()))],
+    [entity.relations],
+  );
+  const titles = useEntityTitles(relatedRefs);
   const navigate = useNavigate();
   const entityRoute = useRouteRef(entityRouteRef);
   const [direction, setDirection] = useGraphDirection(
@@ -78,7 +87,12 @@ export function RelationsGraph() {
         id: centerRef,
         position: { x: 0, y: 0 },
         data: {
-          label: `${entity.metadata.name}\n${entity.spec?.type ?? entity.kind}`,
+          // Title over name, as everywhere else. The name stays the address —
+          // it is what the node id and the navigation use — but a graph is
+          // read, so it shows what a person calls the thing.
+          label: `${entity.metadata.title ?? entity.metadata.name}\n${
+            entity.spec?.type ?? entity.kind
+          }`,
         },
         style: centerNode,
       },
@@ -89,7 +103,9 @@ export function RelationsGraph() {
       n.push({
         id: ref,
         position: { x: 0, y: 0 },
-        data: { label: `${parsed.name}\n${parsed.kind}` },
+        // Falls back to the parsed name while the lookup is in flight, or for
+        // an entity with no title, or if the catalog is unreachable.
+        data: { label: `${titles.get(ref) ?? parsed.name}\n${parsed.kind}` },
         style: baseNode,
       });
       e.push({
@@ -113,7 +129,7 @@ export function RelationsGraph() {
       ...handles,
     }));
     return { nodes: positioned, edges: e };
-  }, [entity, direction]);
+  }, [entity, direction, titles]);
 
   const onNodeClick = (_: unknown, node: Node) => {
     try {

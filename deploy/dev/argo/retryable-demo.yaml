@@ -1,0 +1,93 @@
+# A workflow that can be failed and then retried into success, so the re-check
+# flow can be exercised by hand end to end.
+#
+# THE SWITCH IS A CONFIGMAP, NOT A PARAMETER, AND THAT IS THE WHOLE POINT.
+#
+# Argo's `retry` re-runs a workflow from its **stored** spec —
+# `status.storedWorkflowTemplateSpec` — not from `spec.arguments`. The platform
+# submits everything with a `workflowTemplateRef`, so every workflow it creates
+# has a stored spec, and patching `spec.arguments` before a retry changes
+# nothing:
+#
+#     spec.arguments                       -> [{mode: pass}]   (patched)
+#     status.storedWorkflowTemplateSpec    -> [{mode: fail}]   (what retry uses)
+#
+# Measured, not assumed — the first version of this file did exactly that and
+# the retry failed again with the old value. So the failure condition lives
+# outside the workflow entirely: a ConfigMap the pod mounts and reads at start.
+# Flip it, press retry, and the new pod sees the new value.
+#
+#     kubectl patch configmap retryable-demo-switch -n argo \
+#       --type merge -p '{"data":{"mode":"pass"}}'
+#     curl -X PUT http://localhost:2746/api/v1/workflows/argo/<name>/retry -d '{}'
+#
+# `retry` reuses the same workflow — same name, same uid, same
+# `platform.io/request-id` label — which is why the request can pick it up again
+# by re-reading alone. A `resubmit` would create a second workflow carrying the
+# same label; the platform treats the newest as authoritative.
+#
+# `ttlStrategy.secondsAfterFailure` bounds all of it: once Argo deletes the
+# workflow there is nothing left to retry, and the request's Kubernetes Secret
+# goes with it (the Secret has an ownerReference to this workflow).
+#
+# The switch is global to the namespace, not per-run. That is fine for a dev
+# demo and would not be fine for anything real.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: retryable-demo-switch
+  namespace: argo
+data:
+  mode: "fail"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: retryable-demo
+  namespace: argo
+spec:
+  entrypoint: main
+  ttlStrategy:
+    secondsAfterCompletion: 1800
+    secondsAfterSuccess: 300
+    secondsAfterFailure: 1800 # long enough to retry by hand
+  arguments:
+    parameters:
+      - { name: name, value: "retry-demo" }
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - { name: name }
+      outputs:
+        parameters:
+          # Read back as the request's resultRef on success, so a re-check that
+          # lands on Succeeded has something to link to.
+          - name: resource-ref
+            valueFrom: { path: /tmp/ref }
+      volumes:
+        - name: switch
+          configMap:
+            name: retryable-demo-switch
+      container:
+        image: alpine:3.20
+        volumeMounts:
+          - { name: switch, mountPath: /etc/switch, readOnly: true }
+        command: [sh, -c]
+        args:
+          - |
+            set -eu
+            NAME="{{inputs.parameters.name}}"
+            printf '%s' "$NAME" > /tmp/ref
+            MODE="$(cat /etc/switch/mode 2>/dev/null || echo fail)"
+            echo "switch says: $MODE"
+            if [ "$MODE" != "pass" ]; then
+              echo "failing on purpose — flip the configmap and retry this workflow"
+              exit 1
+            fi
+            # Long enough that a person can press "Re-check status" while the
+            # retried run is still Running, and see the request move back to
+            # IN_PROGRESS rather than straight to SUCCEEDED.
+            echo "succeeding in 45s"
+            sleep 45
+            echo "done"

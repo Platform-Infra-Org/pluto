@@ -11,6 +11,8 @@ import request from 'supertest';
 import { createRouter, PrincipalResolver } from './router';
 import { RequestsStore } from './store';
 import { Cipher, createCipher } from './crypto';
+import { ArgoClient } from './argo';
+import type { ReconcileOutcome } from './plugin';
 
 jest.setTimeout(60_000);
 
@@ -31,6 +33,7 @@ describe('createRouter', () => {
     submitWorkflow?: jest.Mock<Promise<void>, [PlatformRequest]>;
     cipher?: Cipher;
     secretsEnabled?: boolean;
+    reconcileRequest?: jest.Mock<Promise<ReconcileOutcome>, [PlatformRequest]>;
   }) {
     const knex = await databases.init('SQLITE_3');
     const store = await RequestsStore.create(mockServices.database({ knex }));
@@ -43,6 +46,7 @@ describe('createRouter', () => {
       submitWorkflow: opts.submitWorkflow,
       cipher: opts.cipher,
       secretsEnabled: opts.secretsEnabled,
+      reconcileRequest: opts.reconcileRequest,
     });
     const app = express();
     app.use(router);
@@ -376,4 +380,179 @@ describe('createRouter', () => {
     expect(after!.error).toMatch(/cannot resolve 1 of 2 resources/);
   });
 
+  /**
+   * Re-checking a FAILED request: the endpoint reads Argo through the shared
+   * reconcile step and reports what it found. It must never restart anything.
+   */
+  describe('POST /requests/:id/refresh', () => {
+    afterEach(() => jest.restoreAllMocks());
+
+    // A request that ran and failed, with the workflow and reason a real one
+    // would carry.
+    async function seedFailed(
+      app: express.Express,
+      store: RequestsStore,
+    ): Promise<number> {
+      const created = await request(app).post('/requests').send(NEW_REQUEST);
+      // Assert the seed worked before using its id. Without this a failed
+      // create hands `undefined` to setWorkflow, and the suite reports a knex
+      // "undefined binding" from store.ts — a stack trace that names neither
+      // this helper nor the reason the create failed.
+      expect(created.status).toBe(201);
+      const id = created.body.id as number;
+      await store.setWorkflow(id, {
+        name: 'wf-1',
+        namespace: 'argo',
+        phase: 'Failed',
+        error: 'main step exited with code 1',
+      });
+      await store.setState(id, 'FAILED');
+      return id;
+    }
+
+    it('moves a FAILED request back to IN_PROGRESS and clears the old error', async () => {
+      const reconcileRequest = jest.fn() as jest.Mock<
+        Promise<ReconcileOutcome>,
+        [PlatformRequest]
+      >;
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        reconcileRequest,
+      });
+      // Stands in for plugin.ts's reconcileRequest: it writes the new state to
+      // the store, exactly as the real one does.
+      reconcileRequest.mockImplementation(async r => {
+        await store.setState(r.id, 'IN_PROGRESS');
+        await store.setWorkflow(r.id, { name: 'wf-2', phase: 'Running' });
+        return { state: 'IN_PROGRESS', changed: true, reason: 'moved-to-in-progress' };
+      });
+      const id = await seedFailed(app, store);
+
+      const res = await request(app).post(`/requests/${id}/refresh`).send({});
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({
+        changed: true,
+        reason: 'moved-to-in-progress',
+      });
+      // Read back after the reconcile, not the stale pre-reconcile row: the new
+      // state and the resubmitted workflow's name are both in the response.
+      expect(res.body.request.state).toBe('IN_PROGRESS');
+      expect(res.body.request.workflowName).toBe('wf-2');
+      // IN_PROGRESS beside last run's failure reason is worse than either alone.
+      expect(res.body.request.error).toBeFalsy();
+      expect((await store.get(id))!.error).toBeFalsy();
+    });
+
+    it('leaves a non-FAILED request alone (not-failed, never reconciled)', async () => {
+      const reconcileRequest = jest.fn() as jest.Mock<
+        Promise<ReconcileOutcome>,
+        [PlatformRequest]
+      >;
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        reconcileRequest,
+      });
+      const created = await request(app).post('/requests').send(NEW_REQUEST);
+
+      const res = await request(app)
+        .post(`/requests/${created.body.id}/refresh`)
+        .send({});
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ changed: false, reason: 'not-failed' });
+      expect(res.body.request.state).toBe('PENDING_APPROVAL');
+      expect(reconcileRequest).not.toHaveBeenCalled();
+    });
+
+    it('reports workflow-gone and keeps the request FAILED, with its reason', async () => {
+      const reconcileRequest = jest.fn(async (_r: PlatformRequest) => ({
+        state: 'FAILED' as const,
+        changed: false,
+        reason: 'workflow-gone' as const,
+      })) as jest.Mock<Promise<ReconcileOutcome>, [PlatformRequest]>;
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        reconcileRequest,
+      });
+      const id = await seedFailed(app, store);
+
+      const res = await request(app).post(`/requests/${id}/refresh`).send({});
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ changed: false, reason: 'workflow-gone' });
+      expect(res.body.request.state).toBe('FAILED');
+      // Nothing moved, so the reason it failed must still be on screen.
+      expect(res.body.request.error).toBe('main step exited with code 1');
+    });
+
+    it('refuses a caller who may not see the request', async () => {
+      const { app, store } = await makeApp({ result: AuthorizeResult.ALLOW });
+      const id = await seedFailed(app, store);
+      const res = await request(app)
+        .post(`/requests/${id}/refresh`)
+        .set('Authorization', mockCredentials.none.header())
+        .send({});
+      expect(res.status).toBe(401);
+    });
+
+    it('returns the request unchanged when Argo is not wired', async () => {
+      const { app, store } = await makeApp({ result: AuthorizeResult.ALLOW });
+      const id = await seedFailed(app, store);
+      const res = await request(app).post(`/requests/${id}/refresh`).send({});
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ changed: false, reason: 'still-failed' });
+      expect(res.body.request.state).toBe('FAILED');
+    });
+
+    /**
+     * The constraint the whole feature rests on: this is a re-read, not a
+     * retry. Restarting a workflow is a cluster operation the platform does not
+     * offer, so the assertion is on the URLs the real ArgoClient issues rather
+     * than on any observable behaviour — behaviour can be re-derived, a URL
+     * assertion cannot be argued with.
+     */
+    it('issues no /retry or /resubmit call to Argo', async () => {
+      const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          items: [
+            {
+              metadata: {
+                name: 'wf-1',
+                creationTimestamp: '2026-08-12T10:00:00Z',
+              },
+              status: { phase: 'Running' },
+            },
+          ],
+        }),
+      } as Response);
+      const argo = new ArgoClient(
+        { baseUrl: 'http://argo', namespace: 'argo', defaultTemplate: 'demo' },
+        mockServices.logger.mock(),
+      );
+      // The real client, so the URLs below are the ones production issues. The
+      // endpoint's entire Argo surface is this one list call.
+      const reconcileRequest = jest.fn(async (r: PlatformRequest) => {
+        const { phase } = await argo.statusFor(r.id, r.workflowNamespace);
+        return {
+          state: 'IN_PROGRESS',
+          changed: phase === 'Running',
+          reason: 'moved-to-in-progress',
+        } as ReconcileOutcome;
+      }) as jest.Mock<Promise<ReconcileOutcome>, [PlatformRequest]>;
+
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        reconcileRequest,
+      });
+      const id = await seedFailed(app, store);
+      const res = await request(app).post(`/requests/${id}/refresh`).send({});
+      expect(res.status).toBe(200);
+
+      const urls = fetchMock.mock.calls.map(c => String(c[0]));
+      // Vacuously true if nothing was called at all, so prove it did talk to Argo.
+      expect(urls.length).toBeGreaterThan(0);
+      expect(urls.every(u => !u.includes('/retry') && !u.includes('/resubmit'))).toBe(
+        true,
+      );
+    });
+  });
 });

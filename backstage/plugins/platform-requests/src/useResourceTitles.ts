@@ -38,8 +38,35 @@ export function titleOf(name: string, titles: ReadonlyMap<string, string>) {
 export function useResourceTitles(
   names: string[],
 ): ReadonlyMap<string, string> {
-  const catalog = useApi(catalogApiRef);
   const namespace = useCatalogNamespace();
+  // Resource names are turned into refs here and the map is keyed back on the
+  // name, so callers keep passing the names they already hold.
+  const refs = useMemo(
+    () => names.filter(n => n && !n.includes('://')).map(n => resourceRef(namespace, n)),
+    [names, namespace],
+  );
+  const byRef = useEntityTitles(refs);
+  return useMemo(() => {
+    if (byRef.size === 0) return EMPTY;
+    const out = new Map<string, string>();
+    for (const n of names) {
+      const t = byRef.get(resourceRef(namespace, n));
+      if (t) out.set(n, t);
+    }
+    return out;
+  }, [byRef, names, namespace]);
+}
+
+/**
+ * Catalog titles for a batch of full entity refs, keyed by ref.
+ *
+ * The kind-agnostic form: a relations graph holds refs of every kind, not
+ * resource names. Same contract as above — one call per batch, absent means
+ * "no title, use what you had", and a catalog outage degrades to the fallback
+ * rather than blanking the graph.
+ */
+export function useEntityTitles(refs: string[]): ReadonlyMap<string, string> {
+  const catalog = useApi(catalogApiRef);
   const [titles, setTitles] = useState(EMPTY);
 
   // Keyed on the *contents*, not the array identity: call sites build a fresh
@@ -48,13 +75,13 @@ export function useResourceTitles(
   // name cannot contain one.
   const key = useMemo(
     () =>
-      [...new Set(names)]
+      [...new Set(refs)]
         // A ref with a scheme is an external URL, not a catalog entity; asking
         // the catalog about it would be a guaranteed miss.
-        .filter(n => n && !n.includes('://'))
+        .filter(r => r && !r.includes('://'))
         .sort()
         .join('\n'),
-    [names],
+    [refs],
   );
 
   useEffect(() => {
@@ -66,7 +93,7 @@ export function useResourceTitles(
     let live = true;
     catalog
       .getEntitiesByRefs({
-        entityRefs: wanted.map(n => resourceRef(namespace, n)),
+        entityRefs: wanted,
         fields: ['metadata.name', 'metadata.title'],
       })
       .then(({ items }) => {
@@ -89,7 +116,7 @@ export function useResourceTitles(
     return () => {
       live = false;
     };
-  }, [catalog, namespace, key]);
+  }, [catalog, key]);
 
   return titles;
 }

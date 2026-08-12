@@ -15,7 +15,11 @@ metadata:
     # Edit → git-ops update (rewrites the resource's data file with the edited
     # data). Delete → git-ops delete (removes the resource + its data file).
     platform.io/verb-update: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"update","parameters":{"name":"<< resourceName >>","dataPath":"<< resourceDataPath >>","data":"<< paramsJson >>"}},"resultOutput":"resource-ref"}'
-    platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"delete","parameters":{"name":"<< resourceName >>","path":"<< resourcePath >>","dataPath":"<< resourceDataPath >>","data":"<< resourceData >>"}}}'
+    # Same entrypoint and same shape as the bulk delete: a single resource is a
+    # batch of one, so `<< resourcesJson >>` is a one-element array here. One
+    # workflow serves both, instead of `delete` and `bulk-delete` having to be
+    # kept in step by hand.
+    platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"bulk-delete","parameters":{"resources":"<< resourcesJson >>"}}}'
 spec:
   owner: group:default/checkout
   type: resource

@@ -85,6 +85,68 @@ still clean up. Both are gated like any approval and both are recorded in the
 same audit trail. See
 **[Add a mid-workflow review gate](../how-to/add-a-review-gate.md)**.
 
+## When a failed run comes back
+
+`FAILED` is terminal by default, and for a long time it was also a dead end. The
+poll in step 4 reconciles `IN_PROGRESS` and `AWAITING_INPUT` only, so once a
+request reached `FAILED` nothing ever looked at it again — not because the
+mirroring could not run backwards, but because it was never pointed at failed
+requests. The machinery was already correct and already reversible, exactly as
+it is at the review gate.
+
+It is now, on demand. A `FAILED` request can be **re-checked**: the backend
+re-reads the workflow by its label and applies the same rules the poller
+applies. If an operator has retried or resubmitted the run outside the platform
+and it is going again, the request returns to `IN_PROGRESS`, drops the stored
+error, and is tracked to completion as normal. If the workflow failed again it
+stays `FAILED` with the newer message — the second failure need not be the first
+one. If Argo's TTL has already removed the workflow, it stays `FAILED` and says
+so; "nothing moved" and "there is nothing left to look at" are different answers
+and a button that gave neither would just be pressed twice.
+
+**Clearing the error is not cosmetic.** A request showing `IN_PROGRESS` beside
+the previous run's failure reason is worse than either state on its own.
+
+Retry and resubmit are not the same thing, and the difference is the whole
+design. Measured against argo-server rather than reasoned about:
+
+| Action | Workflow name | UID | `platform.io/request-id` | Phase after |
+|---|---|---|---|---|
+| `retry` | same | same | preserved | `Running` |
+| `resubmit` | **new** | new | **copied** | `Running` |
+
+A retry keeps everything — same name, same uid, same label — so it was always
+visible to a status read; only the absence of a poll stood in the way. A
+resubmit creates a *new* workflow and copies the label onto it, leaving two
+workflows answering to the same request id. That is why the **newest** labelled
+workflow is authoritative, and why a request updates its stored workflow name
+when the one it finds is not the one it submitted. Taking whichever the list API
+happened to return first would be correct only by luck.
+
+**There is no retry button here, and that is deliberate.** Re-checking reads; it
+never acts. The platform does not call Argo's `retry` or `resubmit` at all.
+Restarting a workflow is a cluster operation wanting cluster permissions, which
+the portal would then have to hold on everyone's behalf — and the approval the
+request carries was for the *original* submission, not for a re-run decided
+later. Re-reading grants no new power, so anyone who may see a request may
+re-check it: the outcome is a function of Argo's state, not of who pressed the
+button. Press it against an untouched workflow and nothing in the cluster
+changes.
+
+This is also why a failed request's Kubernetes Secret is now kept rather than
+swept. The Secret then lives exactly as long as its workflow does, which is
+precisely the window in which a retry is possible at all — once the workflow is
+gone there is nothing to retry, and the Secret goes with it. The two bounds
+coincide, so a retry that can happen is a retry whose Secret is still there. See
+**[the secrets lifecycle](secrets-lifecycle.md)**.
+
+Two edges are worth stating. A request that failed before there was a workflow
+has nothing to re-check (see *Failing before there is a workflow* below), and a
+`FAILED` request that retention has already deleted is gone for good — correctly
+so. And the requester, already told the run failed, is told again when it
+settles a second time. That is the honest sequence of events, not a duplicate to
+suppress.
+
 ## When nobody decides
 
 A request can also end without a decision. If it sits in `PENDING_APPROVAL`
@@ -118,9 +180,9 @@ that state is kept forever.
 
 **`APPROVED` and `IN_PROGRESS` are never deleted**, at any age, and that is not
 configurable. A live Argo workflow still references its request, and the secret
-sweep reads the set of `IN_PROGRESS` ids to decide which Kubernetes Secrets are
-orphaned — removing one of those rows would make the sweep delete a Secret a
-running workflow is mounting.
+sweep reads the ids of the requests whose workflow may still need a Secret to
+decide which Kubernetes Secrets are orphaned — removing one of those rows would
+make the sweep delete a Secret a running workflow is mounting.
 
 `APPROVED`, `IN_PROGRESS` and `AWAITING_INPUT` are never deleted or expired,
 whatever the configuration. A live workflow still references its request, and
