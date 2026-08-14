@@ -32,6 +32,7 @@ import { requestRouteRef } from '../routes';
 import { useCatalogNamespace } from '../useCatalogNamespace';
 import { titleOf, useResourceTitles } from '../useResourceTitles';
 import { parseResultRefs } from '../resultRefs';
+import { argoWorkflowUrl } from '../argoUrl';
 import { WorkflowGraph } from './WorkflowGraph';
 import { SuspendPanel } from './SuspendPanel';
 import { ExperienceBar } from './ExperienceBar';
@@ -90,6 +91,7 @@ export function RequestPage() {
   const adminGroups = config.getOptionalStringArray(
     'platform.rbac.adminGroups',
   ) ?? ['group:default/platform-admins'];
+  const argoUiUrl = config.getOptionalString('platform.argo.uiUrl');
   const namespace = useCatalogNamespace();
   const { id } = useRouteRefParams(requestRouteRef);
   const [request, setRequest] = useState<Request>();
@@ -211,6 +213,13 @@ export function RequestPage() {
   }
 
   const pending = request.state === 'PENDING_APPROVAL';
+  // Undefined whenever the Argo UI is not configured or the request has no
+  // workflow yet — both render the name as the plain text it always was.
+  const workflowUrl = argoWorkflowUrl(
+    argoUiUrl,
+    request.workflowNamespace,
+    request.workflowName,
+  );
   // Only an admin, or a member of the owning service team, may decide it.
   const canApprove =
     myGroups.some(g => adminGroups.includes(g)) ||
@@ -319,7 +328,15 @@ export function RequestPage() {
               <dt>Policy</dt>
               <dd>{JSON.stringify(request.policy)}</dd>
               <dt>Workflow</dt>
-              <dd>{request.workflowName ?? '—'}</dd>
+              <dd>
+                {workflowUrl ? (
+                  <Link to={workflowUrl} className="sc-link">
+                    {request.workflowName}
+                  </Link>
+                ) : (
+                  (request.workflowName ?? '—')
+                )}
+              </dd>
               <dt>Phase</dt>
               <dd>{request.workflowPhase ?? '—'}</dd>
               <dt>Created</dt>
@@ -418,7 +435,18 @@ export function RequestPage() {
           <div style={{ gridColumn: '1 / -1' }}>
             <Card>
               <CardHeader
-                title={`Workflow — ${request.workflowName}`}
+                title={
+                  <>
+                    Workflow —{' '}
+                    {workflowUrl ? (
+                      <Link to={workflowUrl} className="sc-link">
+                        {request.workflowName}
+                      </Link>
+                    ) : (
+                      request.workflowName
+                    )}
+                  </>
+                }
                 description={request.workflowPhase ?? undefined}
                 action={
                   <GraphDirectionPicker
@@ -438,6 +466,7 @@ export function RequestPage() {
             </Card>
           </div>
         )}
+
       </div>
     </Page>
   );

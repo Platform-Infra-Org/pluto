@@ -70,6 +70,7 @@ Frontend-visible (the approve button uses `adminGroups`). Multiple groups allowe
 platform:
   argo:
     baseUrl: http://localhost:2746   # direct argo-server (dev)
+    uiUrl: http://localhost:2746     # optional — browser-reachable Argo UI
     namespace: argo
     defaultTemplate: demo-resource
     proxyPath: /argo-workflows       # optional — route calls through the proxy
@@ -77,6 +78,13 @@ platform:
 Set `proxyPath` to a `proxy.endpoints` entry to send Argo calls through the
 Backstage proxy (which injects the argo-server auth server-side, with a service
 token). Unset = direct `baseUrl`.
+
+`uiUrl` is the only frontend-visible key here, and is deliberately separate from
+`baseUrl`: that one is the address the **backend** dials argo-server on —
+in-cluster in production, and unset entirely when `proxyPath` is used — so it is
+not a URL a browser can follow. Set `uiUrl` and a request page links its
+workflow name into the Argo UI; leave it unset and the name renders as plain
+text.
 
 ## `platform.catalog`
 
