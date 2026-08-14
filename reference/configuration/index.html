@@ -1576,9 +1576,11 @@ Frontend-visible (the approve button uses <code>adminGroups</code>). Multiple gr
 <span class="normal">3</span>
 <span class="normal">4</span>
 <span class="normal">5</span>
-<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">platform</span><span class="p">:</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">platform</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">argo</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">baseUrl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://localhost:2746</span><span class="w">   </span><span class="c1"># direct argo-server (dev)</span>
+<span class="w">    </span><span class="nt">uiUrl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://localhost:2746</span><span class="w">     </span><span class="c1"># optional — browser-reachable Argo UI</span>
 <span class="w">    </span><span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">argo</span>
 <span class="w">    </span><span class="nt">defaultTemplate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">demo-resource</span>
 <span class="w">    </span><span class="nt">proxyPath</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/argo-workflows</span><span class="w">       </span><span class="c1"># optional — route calls through the proxy</span>
@@ -1586,6 +1588,12 @@ Frontend-visible (the approve button uses <code>adminGroups</code>). Multiple gr
 Set <code>proxyPath</code> to a <code>proxy.endpoints</code> entry to send Argo calls through the
 Backstage proxy (which injects the argo-server auth server-side, with a service
 token). Unset = direct <code>baseUrl</code>.</p>
+<p><code>uiUrl</code> is the only frontend-visible key here, and is deliberately separate from
+<code>baseUrl</code>: that one is the address the <strong>backend</strong> dials argo-server on —
+in-cluster in production, and unset entirely when <code>proxyPath</code> is used — so it is
+not a URL a browser can follow. Set <code>uiUrl</code> and a request page links its
+workflow name into the Argo UI; leave it unset and the name renders as plain
+text.</p>
 <h2 id="platformcatalog"><code>platform.catalog</code><a class="headerlink" href="#platformcatalog" title="Permanent link">&para;</a></h2>
 <p><div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>

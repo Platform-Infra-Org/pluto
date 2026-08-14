@@ -1052,6 +1052,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#deleting-a-request-on-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deleting a request on purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#why-poll-instead-of-webhooks" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1400,6 +1411,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#deleting-a-request-on-purpose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deleting a request on purpose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#why-poll-instead-of-webhooks" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1691,6 +1713,21 @@ whatever the configuration. A live workflow still references its request, and
 <code>AWAITING_INPUT</code> is the longest-lived of the three — it waits on a human and
 can sit for weeks, which makes it the state most likely to look stale to
 anything that only reads timestamps.</p>
+<h2 id="deleting-a-request-on-purpose">Deleting a request on purpose<a class="headerlink" href="#deleting-a-request-on-purpose" title="Permanent link">&para;</a></h2>
+<p>Retention is a timer, and a timer is the wrong tool for "this one was a mistake,
+clear it now". An admin, or a member of the request's owning service team, can
+delete it from the request page (<code>DELETE /requests/:id</code>).</p>
+<p>It is the same act as retention's, so it obeys the same rule about <em>which</em> rows
+may go — the four states in the table above, named once as <code>DELETABLE_STATES</code> in
+<code>platform-common</code> and shared by both. That set is deliberately not <code>isTerminal</code>:
+<code>EXPIRED</code> is not terminal (nobody ever decided it) but has always been deleted
+by retention, and a button that could not clear an abandoned request would be a
+strange button. The live states are refused for the reason above;
+<code>PENDING_APPROVAL</code> is refused because it still has a decision ahead of it —
+approve, reject, or let it expire.</p>
+<p>The row and its approvals go together and do not come back. Since the record is
+what would normally answer "who removed this", the backend logs the actor, the
+id and the state at deletion; that log line is the audit trail afterwards.</p>
 <h2 id="why-poll-instead-of-webhooks">Why poll instead of webhooks<a class="headerlink" href="#why-poll-instead-of-webhooks" title="Permanent link">&para;</a></h2>
 <p>Argo is the source of truth for workflow state; the backend <strong>mirrors</strong> it by
 polling by label every few seconds. It's simple and self-healing (a missed read

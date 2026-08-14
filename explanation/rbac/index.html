@@ -1390,7 +1390,7 @@ a team that owns a type owns everything done to instances of it.</p>
 (<code>platform.rbac.adminGroups</code> / <code>auditorGroups</code>) decide:</p>
 <ul>
 <li><strong>admin</strong> → bypasses the gate, sees all requests;</li>
-<li><strong>auditor</strong> → read-only (the permission policy denies create/approve);</li>
+<li><strong>auditor</strong> → read-only (the permission policy denies create/approve/delete);</li>
 <li>everyone else → scoped to their own + their teams' requests.</li>
 </ul>
 <p>Everything else is a <strong>raw group membership</strong> check (<code>ownerGroup ∈ your groups</code>),

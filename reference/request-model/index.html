@@ -1552,11 +1552,23 @@ owning team) — see <strong><a href="../../explanation/rbac/">Per-team RBAC</a>
 <td>decide</td>
 </tr>
 <tr>
+<td><code>DELETE /requests/:id</code></td>
+<td>destroy the request + its approvals (admin or owning team; deletable states only)</td>
+</tr>
+<tr>
 <td><code>GET /resources/:name/data</code></td>
 <td>resolved resource data (for the tab/edit)</td>
 </tr>
 </tbody>
 </table>
+<p><code>DELETE</code> is retention's rule with a person behind it, not a second one: the same
+states may go (<code>SUCCEEDED</code>, <code>FAILED</code>, <code>REJECTED</code>, <code>EXPIRED</code> — <code>DELETABLE_STATES</code>
+in <code>platform-common</code>, which <code>planRetention</code> is typed against so the two cannot
+drift). <code>APPROVED</code>, <code>IN_PROGRESS</code> and <code>AWAITING_INPUT</code> are refused because a
+live workflow still references its request and the secret sweep reads
+<code>IN_PROGRESS</code> ids; <code>PENDING_APPROVAL</code> is refused because it has a decision ahead
+of it. Authorisation matches <code>/stop</code>: the <code>platform.request.delete</code> permission,
+then admin-or-owning-service-team on the request itself.</p>
 
 
 
