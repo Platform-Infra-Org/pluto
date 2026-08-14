@@ -71,6 +71,11 @@ export interface RequestsApi {
   refresh(id: number): Promise<RefreshResult>;
   /** Refuse the gate: stop the workflow instead of releasing it. */
   stop(id: number, note?: string): Promise<{ stopped: boolean; request: Request }>;
+  /**
+   * Destroy a finished request and its approvals. Irreversible, and refused by
+   * the backend for any request whose workflow may still be live.
+   */
+  delete(id: number): Promise<void>;
   /** The resource's resolved data (ref'd file or spec.resourceData). */
   getResourceData(resourceName: string): Promise<Record<string, unknown>>;
 }
@@ -202,5 +207,14 @@ export class RequestsClient implements RequestsApi {
         },
       ),
     );
+  }
+
+  // Not `json()`: the route answers 204, and parsing an empty body throws.
+  async delete(id: number): Promise<void> {
+    const res = await this.opts.fetchApi.fetch(
+      `${await this.base()}/requests/${id}`,
+      { method: 'DELETE' },
+    );
+    if (!res.ok) throw new Error(`${res.status}: ${await res.text()}`);
   }
 }

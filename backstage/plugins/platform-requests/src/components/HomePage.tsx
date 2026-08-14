@@ -34,6 +34,7 @@ type Section =
 
 interface OwnedResource {
   name: string;
+  title?: string;
   type: string;
 }
 
@@ -105,8 +106,13 @@ function OwnedResources({ max }: { max: number }) {
       setRows(
         res.items
           .filter(e => owned.has(String(e.spec?.owner ?? '')))
+          // The title comes from the entities already in hand — this call has
+          // no `fields` projection, so adding `useResourceTitles` here would
+          // only buy a second, redundant catalog round-trip. Keep
+          // `metadata.title` in the list if this is ever narrowed.
           .map(e => ({
             name: e.metadata.name,
+            title: e.metadata.title,
             type: (e.spec?.type as string) ?? 'resource',
           })),
       );
@@ -134,11 +140,16 @@ function OwnedResources({ max }: { max: number }) {
             {cap(rows, max).map(r => (
               <tr key={r.name}>
                 <td>
+                  {/* `title` because the name is the addressable id — it is
+                      what appears in Argo logs and tickets, and the title that
+                      replaces it here is not. The href stays name-based:
+                      titles are neither unique nor routable. */}
                   <Link
                     to={catalogPath(namespace, 'resource', r.name)}
                     className="sc-link"
+                    title={r.name}
                   >
-                    {r.name}
+                    {r.title ?? r.name}
                   </Link>
                 </td>
                 <td className="sc-muted">{r.type}</td>

@@ -29,7 +29,7 @@ There are no elaborate roles. Two configurable group lists
 (`platform.rbac.adminGroups` / `auditorGroups`) decide:
 
 - **admin** → bypasses the gate, sees all requests;
-- **auditor** → read-only (the permission policy denies create/approve);
+- **auditor** → read-only (the permission policy denies create/approve/delete);
 - everyone else → scoped to their own + their teams' requests.
 
 Everything else is a **raw group membership** check (`ownerGroup ∈ your groups`),

@@ -247,11 +247,40 @@ export const PLATFORM_PERMISSIONS = {
   requestCreate: 'platform.request.create',
   requestApprove: 'platform.request.approve',
   requestRead: 'platform.request.read',
+  requestDelete: 'platform.request.delete',
 } as const;
 
 /** A request in a terminal state is "finished". */
 export function isTerminal(state: RequestState): boolean {
   return state === 'SUCCEEDED' || state === 'FAILED' || state === 'REJECTED';
+}
+
+/**
+ * States whose rows may be destroyed — by retention, or by a person.
+ *
+ * Deliberately **not** `isTerminal`. That answers "did this request reach an
+ * outcome", and EXPIRED did not: nobody ever decided it. But an expired request
+ * is exactly as dead as a rejected one, and retention has always deleted it, so
+ * leaving it out here would make the one state that exists *because* it was
+ * abandoned the only one nobody could clear from the UI.
+ *
+ * The complement is what matters: APPROVED, IN_PROGRESS and AWAITING_INPUT are
+ * absent because a live Argo workflow still references its request, and the
+ * secret sweep reads IN_PROGRESS ids to decide which Secrets are orphaned.
+ * PENDING_APPROVAL is absent because it has an outcome ahead of it — approve,
+ * reject or expire it instead.
+ */
+export const DELETABLE_STATES = [
+  'SUCCEEDED',
+  'FAILED',
+  'REJECTED',
+  'EXPIRED',
+] as const satisfies readonly RequestState[];
+
+export type DeletableState = (typeof DELETABLE_STATES)[number];
+
+export function isDeletable(state: RequestState): boolean {
+  return (DELETABLE_STATES as readonly RequestState[]).includes(state);
 }
 
 /**

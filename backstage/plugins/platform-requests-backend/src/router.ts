@@ -1,11 +1,13 @@
 import {
   BackstageCredentials,
   HttpAuthService,
+  LoggerService,
   PermissionsService,
 } from '@backstage/backend-plugin-api';
 import { InputError, NotAllowedError, NotFoundError } from '@backstage/errors';
 import { AuthorizeResult } from '@backstage/plugin-permission-common';
 import {
+  isDeletable,
   Request as PlatformRequest,
   RequestState,
   SuspendedNode,
@@ -13,7 +15,11 @@ import {
 import express from 'express';
 import Router from 'express-promise-router';
 import { z } from 'zod/v3';
-import { requestApprovePermission, requestCreatePermission } from './permissions';
+import {
+  requestApprovePermission,
+  requestCreatePermission,
+  requestDeletePermission,
+} from './permissions';
 // Type-only: plugin.ts imports createRouter from here, and a type import is
 // erased at compile time, so the cycle never exists at runtime.
 import type { ReconcileOutcome } from './plugin';
@@ -34,6 +40,13 @@ export interface RouterOptions {
   httpAuth: HttpAuthService;
   permissions: PermissionsService;
   store: RequestsStore;
+  /**
+   * Optional so the router stays constructible from tests with three lines of
+   * fakes. Only the delete route uses it, and there it is the point: the row is
+   * about to stop existing, so this log is the only surviving record of who
+   * removed it.
+   */
+  logger?: LoggerService;
   /** Resolves the acting user's roles + groups (per-team approval). */
   principalResolver?: PrincipalResolver;
   /** Resolves the owning service team (group ref) for a resourceType. */
@@ -611,6 +624,60 @@ export async function createRouter(
       changed: outcome.changed,
       reason: outcome.reason,
     });
+  });
+
+  /**
+   * Destroy a finished request and its approvals, on demand.
+   *
+   * Retention already deletes these rows on a timer; this is the same act with
+   * a person behind it, and it answers to the same rule about *which* rows may
+   * go — `isDeletable`, shared with `planRetention` so the button and the sweep
+   * cannot disagree. A live request (APPROVED, IN_PROGRESS, AWAITING_INPUT) is
+   * refused: its workflow still references it, and the secret sweep reads
+   * IN_PROGRESS ids to decide which Secrets are orphaned. PENDING_APPROVAL is
+   * refused too — it has a decision ahead of it, not behind it.
+   *
+   * Authorisation is `/stop`'s, deliberately: the coarse permission, then the
+   * same admin-or-owning-team check on the request itself.
+   */
+  router.delete('/requests/:id', async (req, res) => {
+    const { credentials, actor } = await actorOf(req);
+
+    const [authz] = await permissions.authorize(
+      [{ permission: requestDeletePermission }],
+      { credentials },
+    );
+    if (authz.result !== AuthorizeResult.ALLOW) {
+      throw new NotAllowedError('Not allowed to delete requests');
+    }
+
+    const request = await store.get(Number(req.params.id));
+    if (!request) throw new NotFoundError(`No request ${req.params.id}`);
+
+    const { isAdmin, groups } = await principalResolver(credentials);
+    const allowed =
+      isAdmin || (!!request.ownerGroup && groups.includes(request.ownerGroup));
+    if (!allowed) {
+      throw new NotAllowedError(
+        'Only the owning service team or an admin can delete this request',
+      );
+    }
+
+    if (!isDeletable(request.state)) {
+      throw new InputError(
+        `Request ${request.id} is ${request.state} and cannot be deleted. ` +
+          `Stop its workflow or decide it first.`,
+      );
+    }
+
+    await store.deleteById(request.id);
+    // The row and its approvals are gone; this line is the audit trail now.
+    options.logger?.info(
+      `request ${request.id} (${request.state}, ${request.kind} ` +
+        `${request.resourceType}/${request.resourceName}) deleted by ${actor}`,
+    );
+
+    res.status(204).end();
   });
 
   router.post('/requests/:id/approve', decide('approve'));

@@ -274,6 +274,11 @@ platform:
   argo:
     # Dev: direct to the local argo-server (plain HTTP, no auth).
     baseUrl: http://localhost:2746
+    # Where a *browser* reaches the Argo UI, so a request page can link its
+    # workflow. Separate from baseUrl on purpose: that one is dialled by the
+    # backend and is in-cluster (or unset, when proxyPath is used). Omit it and
+    # the workflow name renders as plain text.
+    uiUrl: http://localhost:2746
     namespace: argo
     defaultTemplate: demo-resource
     # Production: set proxyPath to a proxy.endpoints entry (above) so Argo calls

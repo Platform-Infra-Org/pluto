@@ -19,6 +19,25 @@ export interface Config {
        */
       namespace?: string;
     };
+    argo?: {
+      /**
+       * Base URL of the Argo Workflows **UI**, as a browser can reach it, used
+       * to turn a request's workflow name into a link.
+       *
+       * Deliberately separate from `platform.argo.baseUrl` (declared by
+       * `backstage-plugin-platform-requests-backend`) rather than a
+       * frontend-visible re-use of it. That one is the address the *backend*
+       * dials argo-server on: in-cluster in production, and unset entirely when
+       * `proxyPath` is configured. Neither is a URL a browser can follow, so
+       * pointing links at it would produce a page that never loads.
+       *
+       * Unset means the workflow name renders as plain text, exactly as it did
+       * before this key existed — no broken link, and nothing to configure for
+       * a deployment that does not expose the Argo UI.
+       * @visibility frontend
+       */
+      uiUrl?: string;
+    };
     /** Home / landing page configuration. */
     home?: {
       /**
