@@ -1,5 +1,9 @@
 import { RootConfigService } from '@backstage/backend-plugin-api';
-import { RequestState } from '@internal/plugin-platform-common';
+import {
+  DELETABLE_STATES,
+  DeletableState,
+  RequestState,
+} from '@internal/plugin-platform-common';
 
 export interface RetentionConfig {
   enabled: boolean;
@@ -49,20 +53,26 @@ const cutoff = (now: Date, days: number) =>
 export function planRetention(cfg: RetentionConfig, now: Date): RetentionPlan {
   if (!cfg.enabled) return { deleteBefore: [] };
 
-  const windows: Array<[RequestState, number]> = [
-    ['SUCCEEDED', cfg.succeededDays],
-    ['FAILED', cfg.failedDays],
-    ['REJECTED', cfg.rejectedDays],
-    ['EXPIRED', cfg.expiredDays],
-  ];
+  // A Record over DELETABLE_STATES rather than a literal list, so the two
+  // cannot drift: adding a state to that constant fails the build here until it
+  // is given a window. They went out of step once already — EXPIRED is deleted
+  // by retention but is not `isTerminal` — and that is what the UI's delete
+  // route would otherwise have inherited.
+  const days: Record<DeletableState, number> = {
+    SUCCEEDED: cfg.succeededDays,
+    FAILED: cfg.failedDays,
+    REJECTED: cfg.rejectedDays,
+    EXPIRED: cfg.expiredDays,
+  };
 
   return {
     // 0 means "never expire", not "expire everything".
     expirePendingBefore:
       cfg.pendingExpiryDays > 0 ? cutoff(now, cfg.pendingExpiryDays) : undefined,
-    deleteBefore: windows
-      .filter(([, days]) => days > 0)
-      .map(([state, days]) => ({ state, before: cutoff(now, days) })),
+    deleteBefore: DELETABLE_STATES.filter(s => days[s] > 0).map(s => ({
+      state: s as RequestState,
+      before: cutoff(now, days[s]),
+    })),
   };
 }
 

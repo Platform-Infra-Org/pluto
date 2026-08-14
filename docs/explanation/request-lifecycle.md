@@ -190,6 +190,25 @@ whatever the configuration. A live workflow still references its request, and
 can sit for weeks, which makes it the state most likely to look stale to
 anything that only reads timestamps.
 
+## Deleting a request on purpose
+
+Retention is a timer, and a timer is the wrong tool for "this one was a mistake,
+clear it now". An admin, or a member of the request's owning service team, can
+delete it from the request page (`DELETE /requests/:id`).
+
+It is the same act as retention's, so it obeys the same rule about *which* rows
+may go — the four states in the table above, named once as `DELETABLE_STATES` in
+`platform-common` and shared by both. That set is deliberately not `isTerminal`:
+`EXPIRED` is not terminal (nobody ever decided it) but has always been deleted
+by retention, and a button that could not clear an abandoned request would be a
+strange button. The live states are refused for the reason above;
+`PENDING_APPROVAL` is refused because it still has a decision ahead of it —
+approve, reject, or let it expire.
+
+The row and its approvals go together and do not come back. Since the record is
+what would normally answer "who removed this", the backend logs the actor, the
+id and the state at deletion; that log line is the audit trail afterwards.
+
 ## Why poll instead of webhooks
 
 Argo is the source of truth for workflow state; the backend **mirrors** it by

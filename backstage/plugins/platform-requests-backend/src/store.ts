@@ -241,6 +241,20 @@ export class RequestsStore {
     return this.db('platform_requests').whereIn('id', ids).del();
   }
 
+  /**
+   * Delete one request and its approvals. Returns rows deleted (0 = gone
+   * already).
+   *
+   * The caller decides whether the state permits it — `isDeletable` in the
+   * router, `planRetention` for the sweep. Same ordering as
+   * `deleteTerminalBefore`: approvals first, because the FK points at the
+   * request.
+   */
+  async deleteById(id: number): Promise<number> {
+    await this.db('platform_approvals').where({ request_id: id }).del();
+    return this.db('platform_requests').where({ id }).del();
+  }
+
   /** Test-only: backdate a row so retention can be exercised without waiting. */
   async testOnlySetUpdatedAt(id: number, at: string): Promise<void> {
     await this.db('platform_requests').where({ id }).update({ updated_at: at });

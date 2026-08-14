@@ -109,4 +109,14 @@ owning team) — see **[Per-team RBAC](../explanation/rbac.md)**.
 | `GET /requests/:id` | one request |
 | `GET /requests/:id/workflow` | the workflow DAG |
 | `POST /requests/:id/approve` \| `/reject` | decide |
+| `DELETE /requests/:id` | destroy the request + its approvals (admin or owning team; deletable states only) |
 | `GET /resources/:name/data` | resolved resource data (for the tab/edit) |
+
+`DELETE` is retention's rule with a person behind it, not a second one: the same
+states may go (`SUCCEEDED`, `FAILED`, `REJECTED`, `EXPIRED` — `DELETABLE_STATES`
+in `platform-common`, which `planRetention` is typed against so the two cannot
+drift). `APPROVED`, `IN_PROGRESS` and `AWAITING_INPUT` are refused because a
+live workflow still references its request and the secret sweep reads
+`IN_PROGRESS` ids; `PENDING_APPROVAL` is refused because it has a decision ahead
+of it. Authorisation matches `/stop`: the `platform.request.delete` permission,
+then admin-or-owning-service-team on the request itself.

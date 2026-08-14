@@ -19,8 +19,15 @@ const DEFAULT_AUDITOR_GROUPS = ['group:default/platform-auditors'];
 
 /**
  * Coarse gate on the identity's ownershipEntityRefs:
- * - approve/create requests → anyone except a pure auditor (auditor = read-only)
+ * - approve/create/delete requests → anyone except a pure auditor (auditor =
+ *   read-only)
  * - everything else → allow (read, catalog, scaffolder, …)
+ *
+ * Delete shares approve's branch rather than getting its own. The catch-all
+ * below is ALLOW, so a permission name listed nowhere is permitted for
+ * everyone, auditors included — a separate branch would be fail-open the moment
+ * someone forgot it. Splitting delete out later (admin-only, say) is a
+ * deliberate edit to a name that already exists.
  *
  * The admin/auditor group sets are configurable (`platform.rbac.adminGroups`,
  * `platform.rbac.auditorGroups`), so multiple groups can map to either. Per-team
@@ -45,7 +52,8 @@ export class PlatformPermissionPolicy implements PermissionPolicy {
 
     if (
       name === PLATFORM_PERMISSIONS.requestApprove ||
-      name === PLATFORM_PERMISSIONS.requestCreate
+      name === PLATFORM_PERMISSIONS.requestCreate ||
+      name === PLATFORM_PERMISSIONS.requestDelete
     ) {
       return {
         result:

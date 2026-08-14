@@ -149,6 +149,114 @@ describe('createRouter', () => {
     expect(res.body.state).toBe('REJECTED');
   });
 
+  describe('DELETE /requests/:id', () => {
+    /** A request in REJECTED — the cheapest deletable state to reach. */
+    async function seedRejected(app: express.Express) {
+      const created = await request(app).post('/requests').send(NEW_REQUEST);
+      await request(app)
+        .post(`/requests/${created.body.id}/reject`)
+        .set('Authorization', asAdmin)
+        .send({ note: 'no' });
+      return created.body.id as number;
+    }
+
+    it('deletes a rejected request, and its approvals, for an admin', async () => {
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        principalResolver: async () => ({ isAdmin: true, groups: [] }),
+      });
+      const id = await seedRejected(app);
+      // The rejection itself is an approval row, so this proves the FK-ordered
+      // cascade rather than a vacuous count of zero.
+      expect(await store.testOnlyCountApprovals(id)).toBe(1);
+
+      const res = await request(app)
+        .delete(`/requests/${id}`)
+        .set('Authorization', asAdmin);
+
+      expect(res.status).toBe(204);
+      expect(await store.get(id)).toBeUndefined();
+      expect(await store.testOnlyCountApprovals(id)).toBe(0);
+    });
+
+    it('deletes for a member of the owning service team', async () => {
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        ownerResolver: async () => 'group:default/team-a',
+        principalResolver: async () => ({
+          isAdmin: false,
+          groups: ['group:default/team-a'],
+        }),
+      });
+      const id = await seedRejected(app);
+      const res = await request(app).delete(`/requests/${id}`);
+      expect(res.status).toBe(204);
+      expect(await store.get(id)).toBeUndefined();
+    });
+
+    it('refuses someone in neither the owning team nor admin (403)', async () => {
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        ownerResolver: async () => 'group:default/team-a',
+        // Requests it, so this also covers "the requester alone may not delete".
+        principalResolver: async () => ({
+          isAdmin: false,
+          groups: ['group:default/team-b'],
+        }),
+      });
+      const id = await seedRejected(app);
+      const res = await request(app).delete(`/requests/${id}`);
+      expect(res.status).toBe(403);
+      expect(await store.get(id)).toBeDefined();
+    });
+
+    // The one that matters: a live workflow still references its request, and
+    // the secret sweep reads IN_PROGRESS ids to decide which Secrets are
+    // orphaned. Deleting one here would strand a Secret.
+    it('refuses an IN_PROGRESS request (400) and leaves it alone', async () => {
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        principalResolver: async () => ({ isAdmin: true, groups: [] }),
+        submitWorkflow: jest.fn().mockResolvedValue(undefined),
+      });
+      const created = await request(app).post('/requests').send(NEW_REQUEST);
+      const id = created.body.id;
+      const approved = await request(app)
+        .post(`/requests/${id}/approve`)
+        .set('Authorization', asAdmin)
+        .send({});
+      expect(approved.body.state).toBe('IN_PROGRESS');
+
+      const res = await request(app)
+        .delete(`/requests/${id}`)
+        .set('Authorization', asAdmin);
+
+      expect(res.status).toBe(400);
+      expect(await store.get(id)).toBeDefined();
+    });
+
+    // EXPIRED is not `isTerminal`, but retention has always deleted it. If this
+    // fails, the UI and the retention sweep have gone out of step again.
+    it('deletes an EXPIRED request', async () => {
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        principalResolver: async () => ({ isAdmin: true, groups: [] }),
+      });
+      const created = await request(app).post('/requests').send(NEW_REQUEST);
+      const id = created.body.id;
+      await store.testOnlySetUpdatedAt(id, '2000-01-01T00:00:00.000Z');
+      expect(await store.expireStale('2001-01-01T00:00:00.000Z')).toBe(1);
+      expect((await store.get(id))!.state).toBe('EXPIRED');
+
+      const res = await request(app)
+        .delete(`/requests/${id}`)
+        .set('Authorization', asAdmin);
+
+      expect(res.status).toBe(204);
+      expect(await store.get(id)).toBeUndefined();
+    });
+  });
+
   it('scopes GET /requests: non-admin sees own + their teams, not others', async () => {
     const { app } = await makeApp({
       result: AuthorizeResult.ALLOW,
