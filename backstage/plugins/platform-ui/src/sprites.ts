@@ -687,16 +687,22 @@ export const SUN: Sprite = [
   '...##...',
 ];
 
-/** Autumn: a lantern cut for the season — stem, two eyes and a mouth. */
-export const PUMPKIN: Sprite = [
-  '...##...',
-  '.######.',
-  '########',
-  '##.##.##',
-  '########',
-  '#.####.#',
+/**
+ * Autumn: a fallen leaf, tilted, on its stem.
+ *
+ * A leaf rather than a lantern because the blade and stem read at eight pixels
+ * where a carved face does not — two eyes and a mouth need holes, and holes
+ * that small close up the moment the sprite is scaled into a bottle.
+ */
+export const LEAF: Sprite = [
+  '....##..',
+  '...####.',
+  '..######',
+  '.#######',
   '.######.',
   '..####..',
+  '..##....',
+  '.##.....',
 ];
 
 /** Space: a world with a ring through it. */

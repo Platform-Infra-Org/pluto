@@ -103,7 +103,7 @@ export const SCHEMES: Scheme[] = [
   { id: 'blue', label: 'Winter', hsl: '205 85% 34%', fg: WHITE, mode: 'winter' }, // 6.34
   // Then the three that are not seasons at all.
   { id: 'violet', label: 'Space', hsl: '265 72% 38%', fg: WHITE, mode: 'space' }, // 7.51
-  { id: 'slate', label: 'Zeus', hsl: '45 92% 28%', fg: WHITE, mode: 'zeus' }, // 5.72
+  { id: 'slate', label: 'Zeus', hsl: '48 100% 47%', fg: INK, mode: 'zeus' }, // 10.83
   {
     id: 'greek',
     label: 'Ancient Greek',

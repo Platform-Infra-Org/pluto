@@ -93,8 +93,16 @@ export function PixelPotion({
           <rect key={`g-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
         ))}
       </g>
+      {/*
+        Placement is arithmetic, not taste. The bottle's liquid runs y 7-13 and
+        x 4-12 (x 5-11 on its narrowed top and bottom rows), so an 8px sprite at
+        this scale spans x 5.92-10.16 and y 7.2-11.36 — and the drift animation
+        adds its own offset *inside* this scale, making the real extent
+        y 7.2-12.4. An earlier scale(0.72) at y 8 reached y 15.2 and poured the
+        contents out through the base of the glass.
+      */}
       {inner && (
-        <g transform="translate(5.2 8) scale(0.72)">
+        <g transform="translate(5.92 7.2) scale(0.52)">
           <g className="sc-potion-inner">
             {spriteRects(inner, '#').map(r => (
               <rect

@@ -21,9 +21,10 @@
  * third and fourth green would leave SUCCEEDED looking different depending on
  * which bottle you happen to hold.
  */
-import { BOLT, PLANET, PUMPKIN, SAPLING, Sprite, SUN } from './sprites';
+import { BOLT, LEAF, PLANET, SAPLING, Sprite, SUN } from './sprites';
 
 const WHITE = '0 0% 100%';
+const INK = '240 10% 8%';
 
 /** The ten values that differ per register; the rest are derived or shared. */
 type Register = {
@@ -107,7 +108,7 @@ export const MODE_DEFS: ModeDef[] = [
   },
   {
     id: 'autumn',
-    inner: PUMPKIN,
+    inner: LEAF,
     light: {
       bg: '32 42% 96%',
       fg: '25 42% 12%',
@@ -170,9 +171,12 @@ export const MODE_DEFS: ModeDef[] = [
       card: '220 26% 99%',
       muted: '220 20% 92%',
       mutedFg: '220 16% 33%',
-      border: '45 85% 30%',
-      primary: '45 92% 28%',
-      primaryFg: WHITE,
+      // Lightning is yellow, and a yellow bright enough to read as lightning
+      // cannot carry white text — 1.72:1. The foreground flips to ink, which
+      // is also what a bolt looks like against a storm sky.
+      border: '45 88% 33%',
+      primary: '48 100% 47%',
+      primaryFg: INK,
       accent: '220 22% 90%',
       accentFg: '220 32% 18%',
     },
@@ -182,8 +186,8 @@ export const MODE_DEFS: ModeDef[] = [
       card: '220 34% 8%',
       muted: '220 26% 19%',
       mutedFg: '215 20% 72%',
-      border: '48 80% 58%',
-      primary: '50 95% 64%',
+      border: '50 88% 60%',
+      primary: '52 100% 62%',
       primaryFg: '220 40% 7%',
       accent: '220 28% 15%',
       accentFg: '210 25% 95%',
