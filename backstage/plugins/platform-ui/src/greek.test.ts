@@ -54,7 +54,10 @@ describe('greekCss', () => {
   });
 
   it('names no class a production build discards', () => {
-    const names = Array.from(greekCss().matchAll(/\.([A-Za-z][\w-]*)/g), m => m[1]);
+    // Strip comments first: prose explaining the hazard is allowed to name
+    // the forbidden vocabulary, only live selectors are not.
+    const selectorsOnly = greekCss().replace(/\/\*[\s\S]*?\*\//g, '');
+    const names = Array.from(selectorsOnly.matchAll(/\.([A-Za-z][\w-]*)/g), m => m[1]);
     const bad = names.filter(
       n =>
         !n.startsWith('Mui') &&
@@ -90,8 +93,9 @@ describe('greek chrome', () => {
 
   it('supplies header art through a variable, not a Backstage class name', () => {
     const css = greekCss();
+    const selectorsOnly = css.replace(/\/\*[\s\S]*?\*\//g, '');
     expect(css).toContain('--sc-header-art');
-    expect(css).not.toContain('BackstageHeader');
+    expect(selectorsOnly).not.toContain('BackstageHeader');
   });
 
   it('marks dialog corners with rotated squares', () => {

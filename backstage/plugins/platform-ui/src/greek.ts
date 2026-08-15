@@ -112,9 +112,9 @@ export function greekCss(): string {
 :root.sc-greek [class*="bui-DialogInner"]::after,
 :root.sc-greek .MuiDialog-paper::after { bottom: -8px; right: -8px; }
 
-/* The filigree band behind page headers. Read by the theme module through
-   --sc-header-art, because a selector naming the page-header component is
-   dead in a production build (its makeStyles class hashes to jss<n>). */
+/* The filigree band behind page headers. Read by theme.tsx through
+   --sc-header-art, because a selector naming BackstageHeader is dead in a
+   production build (its makeStyles class hashes to jss<n>). */
 :root.sc-greek {
   --sc-header-art:
     repeating-linear-gradient(
