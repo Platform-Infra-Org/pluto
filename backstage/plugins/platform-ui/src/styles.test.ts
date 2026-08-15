@@ -20,6 +20,9 @@ describe('SHADCN_CSS', () => {
       '--sc-radius',
       '.sc-nav',
       'prefers-reduced-motion',
+      // Proves greekCss() is actually interpolated. Without this, greek.ts can
+      // be perfectly correct and simply never reach the page.
+      ':root.sc-greek',
     ]) {
       expect(`${marker}:${SHADCN_CSS.includes(marker)}`).toBe(`${marker}:true`);
     }

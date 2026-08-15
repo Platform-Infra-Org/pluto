@@ -1,4 +1,4 @@
-import { SCHEMES } from './SchemeRoot';
+import { SCHEMES, applyScheme } from './SchemeRoot';
 
 /** WCAG relative luminance for an "H S% L%" triplet. */
 function luminance(hsl: string): number {
@@ -27,7 +27,7 @@ describe('colour schemes', () => {
     }
   });
 
-  it('keeps six schemes with stable ids', () => {
+  it('keeps seven schemes with stable ids', () => {
     expect(SCHEMES.map(s => s.id)).toEqual([
       'violet',
       'blue',
@@ -35,6 +35,19 @@ describe('colour schemes', () => {
       'rose',
       'amber',
       'slate',
+      'greek',
     ]);
+  });
+
+  it('marks exactly one scheme as a mode', () => {
+    const modes = SCHEMES.filter(s => s.mode);
+    expect(modes.map(s => s.mode)).toEqual(['greek']);
+  });
+
+  it('toggles sc-greek on the root element when the mode is picked', () => {
+    applyScheme('greek');
+    expect(document.documentElement.classList.contains('sc-greek')).toBe(true);
+    applyScheme('violet');
+    expect(document.documentElement.classList.contains('sc-greek')).toBe(false);
   });
 });

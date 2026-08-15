@@ -3,6 +3,7 @@
 // picker can swap the accent live. Scoped under `.sc` so it never fights
 // Backstage's own MUI styles outside our pages.
 import { statusTokenCss } from './statusTokens';
+import { greekCss } from './greek';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
@@ -63,6 +64,7 @@ export const SHADCN_CSS = `
   --sc-accent-fg: 0 0% 98%;
 }
 ${statusTokenCss()}
+${greekCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because

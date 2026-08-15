@@ -43,17 +43,40 @@ const DRAG_THRESHOLD = 4;
 const WHITE = '0 0% 100%';
 const INK = '240 10% 8%';
 
+/**
+ * A picker entry. `mode` marks the one that carries a whole palette rather than
+ * an accent — see greek.ts. Declared explicitly rather than inferred, so that
+ * `s.mode` is readable on every element instead of only the one that sets it.
+ */
+type Scheme = {
+  id: string;
+  label: string;
+  hsl: string;
+  fg: string;
+  mode?: 'greek';
+};
+
 // Saturated toward NES-era values. `fg` is the text colour that sits on the
 // accent: white where it clears 4.5:1, near-black where it doesn't. Green and
 // amber are the reason this field exists — darkening them enough for white text
 // would have turned them to mud. Ratios are measured, see SchemeRoot.test.ts.
-export const SCHEMES = [
+export const SCHEMES: Scheme[] = [
   { id: 'violet', label: 'Violet', hsl: '250 75% 60%', fg: WHITE }, // 5.60
   { id: 'blue', label: 'Blue', hsl: '217 85% 52%', fg: WHITE }, // 4.74
   { id: 'green', label: 'Green', hsl: '145 75% 42%', fg: INK }, // 7.41
   { id: 'rose', label: 'Rose', hsl: '345 80% 49%', fg: WHITE }, // 4.73
   { id: 'amber', label: 'Amber', hsl: '38 90% 52%', fg: INK }, // 8.85
   { id: 'slate', label: 'Slate', hsl: '215 30% 45%', fg: WHITE }, // 5.29
+  // The mode potion. `hsl` here is the bottle's own liquid colour and what
+  // SchemeRoot.test.ts measures — the applied accent comes from greek.ts and
+  // differs by register (ox-blood in light, ember in dark).
+  {
+    id: 'greek',
+    label: 'Ancient Greek',
+    hsl: '10 68% 34%',
+    fg: WHITE, // 7.94
+    mode: 'greek',
+  },
 ];
 
 /**
@@ -253,6 +276,10 @@ export function applyScheme(scheme?: string) {
       : null;
   const id = scheme || stored || 'violet';
   const s = SCHEMES.find(x => x.id === id) ?? SCHEMES[0];
+  // A mode potion carries a whole palette rather than an accent. Everything it
+  // changes hangs off this class — see greek.ts for why specificity makes that
+  // enough, and sc-konami for the same mechanism used as an easter egg.
+  document.documentElement.classList.toggle('sc-greek', s.mode === 'greek');
   ensureStyle(
     'sc-accent',
     // --sc-primary-shade is the opposite of the foreground: it is what text on
