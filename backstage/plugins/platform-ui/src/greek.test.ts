@@ -119,6 +119,17 @@ describe('greek motion', () => {
   it('leaves the reduced-motion case lit, not frozen mid-cycle', () => {
     // A static creature on a bar is a smudge; the same reasoning applies to a
     // glow caught at 40% opacity.
-    expect(greekCss()).toMatch(/@keyframes sc-greek-ember/);
+    const css = greekCss();
+    expect(css).toMatch(/@keyframes sc-greek-ember/);
+
+    // The static (unanimated) box-shadow is the last one declared before the
+    // reduced-motion media block; the "lit" keyframe is the 0%, 100% one.
+    const beforeMedia = css.slice(0, css.indexOf('@media (prefers-reduced-motion: no-preference)'));
+    const shadowsBeforeMedia = Array.from(beforeMedia.matchAll(/box-shadow:\s*([^;]+);/g));
+    const staticShadow = shadowsBeforeMedia[shadowsBeforeMedia.length - 1]?.[1].trim();
+    const litShadow = /0%,\s*100%\s*{\s*box-shadow:\s*([^;]+);/.exec(css)?.[1].trim();
+
+    expect(staticShadow).toBeDefined();
+    expect(litShadow).toBe(staticShadow);
   });
 });
