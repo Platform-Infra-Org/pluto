@@ -62,5 +62,74 @@ export function greekCss(): string {
   --sc-destructive: 12 78% 50%;
   --sc-gold: 43 62% 46%;
 }
+
+/* ===== Ornate chrome. One grammar, two brightnesses: the light register is
+   the same filigree in bronze on bone, the dark one is gold on obsidian with
+   the glow doing real work. No image assets — box-shadow and gradients. ===== */
+
+/* Cards get a gold rule and a thin inner line. Single frame only. */
+:root.sc-greek .MuiCard-root,
+:root.sc-greek .MuiPaper-elevation1,
+:root.sc-greek .MuiPaper-elevation2,
+:root.sc-greek .sc-card {
+  border-color: hsl(var(--sc-gold)) !important;
+  box-shadow:
+    inset 0 0 0 1px hsl(var(--sc-gold) / .3),
+    var(--sc-shadow) !important;
+}
+
+/* The command window, in gold. Same three-shadow construction the base sheet
+   already uses for dialogs, retinted, plus an ember bloom behind it. */
+:root.sc-greek [class*="bui-DialogInner"],
+:root.sc-greek .MuiDialog-paper {
+  position: relative;
+  border-color: hsl(var(--sc-gold)) !important;
+  box-shadow:
+    0 0 0 2px hsl(var(--sc-card)),
+    0 0 0 4px hsl(var(--sc-gold)),
+    0 0 14px hsl(var(--sc-primary) / .3),
+    var(--sc-shadow) !important;
+}
+/* Diamond corner marks. ponytail: two corners, not four — a diamond needs its
+   own box and an element has two pseudo-elements. Asymmetric corner accents
+   are a real Hades motif, so this is a deliberate stop rather than a
+   limitation; add a wrapper span if four are ever wanted. */
+:root.sc-greek [class*="bui-DialogInner"]::before,
+:root.sc-greek .MuiDialog-paper::before,
+:root.sc-greek [class*="bui-DialogInner"]::after,
+:root.sc-greek .MuiDialog-paper::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: hsl(var(--sc-gold));
+  transform: rotate(45deg);
+  pointer-events: none;
+  z-index: 1;
+}
+:root.sc-greek [class*="bui-DialogInner"]::before,
+:root.sc-greek .MuiDialog-paper::before { top: -8px; left: -8px; }
+:root.sc-greek [class*="bui-DialogInner"]::after,
+:root.sc-greek .MuiDialog-paper::after { bottom: -8px; right: -8px; }
+
+/* The filigree band behind page headers. Read by the theme module through
+   --sc-header-art, because a selector naming the page-header component is
+   dead in a production build (its makeStyles class hashes to jss<n>). */
+:root.sc-greek {
+  --sc-header-art:
+    repeating-linear-gradient(
+      90deg,
+      hsl(var(--sc-gold) / .22) 0 2px,
+      transparent 2px 6px,
+      hsl(var(--sc-gold) / .22) 6px 8px,
+      transparent 8px 18px
+    );
+}
+
+/* Primary buttons carry the gold rule too. */
+:root.sc-greek .MuiButton-containedPrimary,
+:root.sc-greek .sc-btn-primary {
+  border: var(--sc-border-w) solid hsl(var(--sc-gold)) !important;
+}
 `;
 }

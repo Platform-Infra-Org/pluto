@@ -97,7 +97,10 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
     BackstageHeader: {
         styleOverrides: {
           header: {
-            backgroundImage: 'none',
+            // The hook a mode potion fills; `none` keeps every other scheme
+            // byte-identical. A CSS selector cannot reach this element —
+            // BackstageHeader-* becomes jss<n> in a production build.
+            backgroundImage: 'var(--sc-header-art, none)',
             backgroundColor: 'hsl(var(--sc-card))',
             boxShadow: 'none',
             borderBottom: '1px solid hsl(var(--sc-border))',

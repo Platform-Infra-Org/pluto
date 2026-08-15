@@ -79,3 +79,22 @@ describe('greekCss', () => {
     expect(cardIn(':root.sc-greek.sc-dark')).toBe(GREEK_CARD_DARK);
   });
 });
+
+describe('greek chrome', () => {
+  it('frames dialogs in gold without touching plain cards', () => {
+    const css = greekCss();
+    // Windows only, never cards: the existing design keeps a double frame as
+    // the difference between a decision and a panel of content.
+    expect(css).toMatch(/:root\.sc-greek[^{]*MuiDialog-paper[^{]*\{[^}]*--sc-gold/);
+  });
+
+  it('supplies header art through a variable, not a Backstage class name', () => {
+    const css = greekCss();
+    expect(css).toContain('--sc-header-art');
+    expect(css).not.toContain('BackstageHeader');
+  });
+
+  it('marks dialog corners with rotated squares', () => {
+    expect(greekCss()).toMatch(/rotate\(45deg\)/);
+  });
+});
