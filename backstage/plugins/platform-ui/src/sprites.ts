@@ -214,6 +214,32 @@ export const AMPHORA: Sprite = [
   '.....######.....',
 ];
 
+/**
+ * The amphora as a *vessel*: '#' is the clay, '~' is what it holds.
+ *
+ * Two layers rather than reusing AMPHORA, which is a solid silhouette and has
+ * nothing for the picker to fill with the scheme colour. Same reason POTION
+ * and RUPEE carry a second layer.
+ */
+export const AMPHORA_VESSEL: Sprite = [
+  '.....######.....',
+  '.....#~~~~#.....',
+  '......####......',
+  '..##..#~~#..##..',
+  '.####.#~~#.####.',
+  '.##.##~~~~##.##.',
+  '.##.#~~~~~~#.##.',
+  '..#~~~~~~~~~~#..',
+  '..#~~~~~~~~~~#..',
+  '..#~~~~~~~~~~#..',
+  '..#~~~~~~~~~~#..',
+  '...#~~~~~~~~#...',
+  '....#~~~~~~#....',
+  '.....#~~~~#.....',
+  '......####......',
+  '.....######.....',
+];
+
 /** A secret: what a request carries that must not be printed. */
 export const KEY: Sprite = [
   '....######......',

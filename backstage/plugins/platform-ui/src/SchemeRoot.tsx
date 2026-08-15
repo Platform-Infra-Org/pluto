@@ -7,7 +7,7 @@ import {
 } from 'react';
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
-import { SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
+import { SPRITE_SIZE, spriteRects, TEMPLE, AMPHORA_VESSEL } from './sprites';
 import { PixelPotion } from './components';
 import { templateHeaderCss } from './templateHeaders';
 import { listenForKonami } from './konami';
@@ -548,7 +548,10 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
           title={s.label}
           onClick={() => setScheme(s.id)}
         >
-          <PixelPotion liquid={`hsl(${s.hsl})`} />
+          <PixelPotion
+            liquid={`hsl(${s.hsl})`}
+            sprite={s.mode === 'greek' ? AMPHORA_VESSEL : undefined}
+          />
         </button>
       ))}
     </div>
