@@ -59,10 +59,21 @@ export function PixelPotion({
   liquid,
   className,
   sprite = POTION,
+  inner,
 }: {
   liquid: string;
   className?: string;
   sprite?: Sprite;
+  /**
+   * A small sprite suspended in the liquid — the winter bottle's snowflake.
+   *
+   * Drawn last so it sits above the fill, and wrapped in two groups: the outer
+   * one places and scales it, the inner one carries the class CSS animates.
+   * They cannot be the same group, because a CSS transform would replace the
+   * placement transform rather than compose with it, and the flake would jump
+   * to the bottle's top-left corner the moment it started moving.
+   */
+  inner?: Sprite;
 }) {
   return (
     <svg
@@ -82,6 +93,21 @@ export function PixelPotion({
           <rect key={`g-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
         ))}
       </g>
+      {inner && (
+        <g transform="translate(5.2 8) scale(0.72)">
+          <g className="sc-flake">
+            {spriteRects(inner, '#').map(r => (
+              <rect
+                key={`i-${r.x}-${r.y}`}
+                x={r.x}
+                y={r.y}
+                width={r.w}
+                height={1}
+              />
+            ))}
+          </g>
+        </g>
+      )}
     </svg>
   );
 }

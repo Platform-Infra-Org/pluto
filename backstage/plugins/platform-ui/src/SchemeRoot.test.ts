@@ -39,15 +39,33 @@ describe('colour schemes', () => {
     ]);
   });
 
-  it('marks exactly one scheme as a mode', () => {
-    const modes = SCHEMES.filter(s => s.mode);
-    expect(modes.map(s => s.mode)).toEqual(['greek']);
+  it('gives each mode to exactly one potion', () => {
+    const modes = SCHEMES.filter(s => s.mode).map(s => s.mode);
+    expect(modes.sort()).toEqual(['greek', 'winter']);
+    expect(new Set(modes).size).toBe(modes.length);
   });
 
-  it('toggles sc-greek on the root element when the mode is picked', () => {
+  it('toggles the mode class on the root element when a mode is picked', () => {
     applyScheme('greek');
     expect(document.documentElement.classList.contains('sc-greek')).toBe(true);
     applyScheme('violet');
     expect(document.documentElement.classList.contains('sc-greek')).toBe(false);
+  });
+
+  it('never leaves two modes applied at once', () => {
+    // The failure this guards is silent and total: a mode class left behind is
+    // a second complete palette still matching, and which one wins is then
+    // decided by stylesheet order rather than by what was clicked. Every mode
+    // must be cleared on every pick, not only the one being replaced.
+    const classesFor = (id: string) => {
+      applyScheme(id);
+      return ['sc-greek', 'sc-winter'].filter(c =>
+        document.documentElement.classList.contains(c),
+      );
+    };
+    expect(classesFor('greek')).toEqual(['sc-greek']);
+    expect(classesFor('blue')).toEqual(['sc-winter']);
+    expect(classesFor('greek')).toEqual(['sc-greek']);
+    expect(classesFor('slate')).toEqual([]);
   });
 });

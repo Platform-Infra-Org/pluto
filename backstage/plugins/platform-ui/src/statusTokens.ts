@@ -62,11 +62,15 @@ export const STATUS_TOKENS: StatusToken[] = [
 ];
 
 /** Which palette a scheme drives. `default` is the six accent-only potions. */
-export type SchemeMode = 'default' | 'greek';
+export type SchemeMode = 'default' | 'greek' | 'winter';
 
 /** `--sc-card` in the Greek registers, from greek.ts. */
 export const GREEK_CARD_LIGHT = '42 45% 98%';
 export const GREEK_CARD_DARK = '265 26% 10%';
+
+/** `--sc-card` in the winter registers, from winter.ts. */
+export const WINTER_CARD_LIGHT = '200 50% 99%';
+export const WINTER_CARD_DARK = '215 42% 8.5%';
 
 /**
  * Ancient Greek status colours: laurel-gold, Styx cyan, ember.
@@ -119,11 +123,17 @@ export const GREEK_STATUS_TOKENS: StatusToken[] = [
 export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   default: STATUS_TOKENS,
   greek: GREEK_STATUS_TOKENS,
+  // Winter keeps the default status colours on purpose — the design system
+  // allows a mode to redefine status hue, and Greek already spends that
+  // exception. What winter DOES change is the card underneath, so the same ink
+  // has to be re-measured against new paper.
+  winter: STATUS_TOKENS,
 };
 
 export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   default: { light: CARD_LIGHT, dark: CARD_DARK },
   greek: { light: GREEK_CARD_LIGHT, dark: GREEK_CARD_DARK },
+  winter: { light: WINTER_CARD_LIGHT, dark: WINTER_CARD_DARK },
 };
 
 /** The `:root` declarations for every mode, for interpolation into SHADCN_CSS. */

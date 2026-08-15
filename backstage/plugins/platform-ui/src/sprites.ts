@@ -595,6 +595,67 @@ export const OWL: Sprite = [
   '...####..####...',
 ];
 
+/* ===== Winter ornament =====
+   The ice register's vocabulary. Same pixel grid, same data-URI route into CSS
+   as the Greek set. */
+
+/** A snow crystal: four arms with branches, symmetric under a quarter turn. */
+export const SNOWFLAKE: Sprite = [
+  '.......##.......',
+  '.....#.##.#.....',
+  '......####......',
+  '..#...####...#..',
+  '...#..####..#...',
+  '....#.####.#....',
+  '##....####....##',
+  '.##############.',
+  '.##############.',
+  '##....####....##',
+  '....#.####.#....',
+  '...#..####..#...',
+  '..#...####...#..',
+  '......####......',
+  '.....#.##.#.....',
+  '.......##.......',
+];
+
+/**
+ * The small flake that drifts inside the winter bottle, on the 8px grid.
+ *
+ * Its own sprite rather than a scaled SNOWFLAKE: at six user units the big
+ * crystal's single-pixel branches fall below one device pixel and dissolve into
+ * grey mush, which is the usual way pixel art dies when it is merely resized.
+ */
+export const FLAKE: Sprite = [
+  '...##...',
+  '#..##..#',
+  '.#.##.#.',
+  '..####..',
+  '..####..',
+  '.#.##.#.',
+  '#..##..#',
+  '...##...',
+];
+
+/**
+ * An icicle fringe, 16x10, tiling horizontally under a rail.
+ *
+ * Teeth of three different lengths: an even comb reads as a machine part, and
+ * ice does not grow evenly.
+ */
+export const ICICLES: Sprite = [
+  '################',
+  '################',
+  '###..####..#####',
+  '###..####..#####',
+  '.##..###....###.',
+  '.##...##....##..',
+  '..#...##.....#..',
+  '..#....#.....#..',
+  '.......#........',
+  '................',
+];
+
 export const STATE_SPRITES: Record<RequestState, Sprite> = {
   PENDING_APPROVAL: HOURGLASS,
   /* Was SCROLL, which meant nothing in particular and is now free for what it

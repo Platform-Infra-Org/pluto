@@ -7,7 +7,13 @@ import {
 } from 'react';
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
-import { SPRITE_SIZE, spriteRects, TEMPLE, AMPHORA_VESSEL } from './sprites';
+import {
+  AMPHORA_VESSEL,
+  FLAKE,
+  SPRITE_SIZE,
+  spriteRects,
+  TEMPLE,
+} from './sprites';
 import { PixelPotion } from './components';
 import { templateHeaderCss } from './templateHeaders';
 import { listenForKonami } from './konami';
@@ -53,8 +59,18 @@ type Scheme = {
   label: string;
   hsl: string;
   fg: string;
-  mode?: 'greek';
+  mode?: Mode;
 };
+
+/**
+ * The modes a potion can carry, and the source of the `sc-<mode>` root classes.
+ *
+ * Listed rather than inferred so `applyScheme` can clear every one of them on
+ * each pick: a mode class left behind is a second palette still applying, and
+ * which one wins is then decided by stylesheet order rather than by the click.
+ */
+const MODES = ['greek', 'winter'] as const;
+type Mode = (typeof MODES)[number];
 
 // Saturated toward NES-era values. `fg` is the text colour that sits on the
 // accent: white where it clears 4.5:1, near-black where it doesn't. Green and
@@ -62,7 +78,17 @@ type Scheme = {
 // would have turned them to mud. Ratios are measured, see SchemeRoot.test.ts.
 export const SCHEMES: Scheme[] = [
   { id: 'violet', label: 'Violet', hsl: '250 75% 60%', fg: WHITE }, // 5.60
-  { id: 'blue', label: 'Blue', hsl: '217 85% 52%', fg: WHITE }, // 4.74
+  // The winter mode potion. Its bottle carries a snowflake drifting in the
+  // liquid, and the id stays 'blue' so anyone who picked it before keeps their
+  // choice across the rename — the id is the persisted key, the label is only
+  // what people read.
+  {
+    id: 'blue',
+    label: 'Winter',
+    hsl: '205 85% 34%',
+    fg: WHITE, // 6.34
+    mode: 'winter',
+  },
   { id: 'green', label: 'Green', hsl: '145 75% 42%', fg: INK }, // 7.41
   { id: 'rose', label: 'Rose', hsl: '345 80% 49%', fg: WHITE }, // 4.73
   { id: 'amber', label: 'Amber', hsl: '38 90% 52%', fg: INK }, // 8.85
@@ -277,9 +303,14 @@ export function applyScheme(scheme?: string) {
   const id = scheme || stored || 'violet';
   const s = SCHEMES.find(x => x.id === id) ?? SCHEMES[0];
   // A mode potion carries a whole palette rather than an accent. Everything it
-  // changes hangs off this class — see greek.ts for why specificity makes that
+  // changes hangs off one class — see greek.ts for why specificity makes that
   // enough, and sc-konami for the same mechanism used as an easter egg.
-  document.documentElement.classList.toggle('sc-greek', s.mode === 'greek');
+  // Every mode is toggled on every pick, not just the chosen one: setting the
+  // new class without clearing the old leaves two whole palettes fighting, and
+  // the loser is decided by source order rather than by what was clicked.
+  for (const m of MODES) {
+    document.documentElement.classList.toggle(`sc-${m}`, s.mode === m);
+  }
   ensureStyle(
     'sc-accent',
     // --sc-primary-shade is the opposite of the foreground: it is what text on
@@ -551,6 +582,7 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
           <PixelPotion
             liquid={`hsl(${s.hsl})`}
             sprite={s.mode === 'greek' ? AMPHORA_VESSEL : undefined}
+            inner={s.mode === 'winter' ? FLAKE : undefined}
           />
         </button>
       ))}
