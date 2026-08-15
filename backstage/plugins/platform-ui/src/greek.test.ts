@@ -102,3 +102,23 @@ describe('greek chrome', () => {
     expect(greekCss()).toMatch(/rotate\(45deg\)/);
   });
 });
+
+describe('greek motion', () => {
+  it('puts every animation behind the reduced-motion query', () => {
+    const css = greekCss();
+    const guarded = css.slice(css.indexOf('@media (prefers-reduced-motion: no-preference)'));
+    const animations = (css.match(/animation:/g) ?? []).length;
+    const guardedAnimations = (guarded.match(/animation:/g) ?? []).length;
+    expect(`${guardedAnimations}/${animations}`).toBe(`${animations}/${animations}`);
+  });
+
+  it('steps the ember pulse', () => {
+    expect(greekCss()).toMatch(/animation:[^;]*steps\(/);
+  });
+
+  it('leaves the reduced-motion case lit, not frozen mid-cycle', () => {
+    // A static creature on a bar is a smudge; the same reasoning applies to a
+    // glow caught at 40% opacity.
+    expect(greekCss()).toMatch(/@keyframes sc-greek-ember/);
+  });
+});

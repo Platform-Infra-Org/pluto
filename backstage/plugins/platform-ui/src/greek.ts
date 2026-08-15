@@ -131,5 +131,24 @@ export function greekCss(): string {
 :root.sc-greek .sc-btn-primary {
   border: var(--sc-border-w) solid hsl(var(--sc-gold)) !important;
 }
+
+/* The ember bloom on primary surfaces. Two frames, stepped — no interpolation,
+   which is the rule the whole design system follows. The unanimated default
+   below is the LIT frame, so someone who asked for stillness gets the intended
+   look rather than a glow frozen halfway. */
+:root.sc-greek .MuiButton-containedPrimary,
+:root.sc-greek .sc-btn-primary {
+  box-shadow: 0 0 8px hsl(var(--sc-primary) / .45), var(--sc-shadow);
+}
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes sc-greek-ember {
+    0%, 100% { box-shadow: 0 0 8px hsl(var(--sc-primary) / .45), var(--sc-shadow); }
+    50% { box-shadow: 0 0 14px hsl(var(--sc-primary) / .7), var(--sc-shadow); }
+  }
+  :root.sc-greek .MuiButton-containedPrimary,
+  :root.sc-greek .sc-btn-primary {
+    animation: sc-greek-ember 1.6s steps(2) infinite;
+  }
+}
 `;
 }
