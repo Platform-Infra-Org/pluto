@@ -101,9 +101,47 @@ that is what choosing means.
 ## Where colour deliberately ignores the picker
 
 The experience bar is yellow while a workflow runs, green when it lands, red
-when it does not — regardless of the picked scheme. Status has to mean the same
-thing in every theme; a bar that is violet on Tuesday and amber on Wednesday
-says nothing at a glance.
+when it does not — regardless of the picked *accent*. Status has to mean the
+same thing across a working session; a bar that is violet on Tuesday and amber
+on Wednesday says nothing at a glance.
+
+The rule is about the accent, and there is exactly one exception: a **mode**
+potion may redefine status hue, and Ancient Greek does — laurel-gold, Styx
+cyan, ember. What makes that admissible rather than a hole in the rule is that
+it is wholesale and measured:
+
+- A mode redefines **every** status token or none of them. A partial override
+  puts a default colour on a surface it was never measured against, which is
+  why `contrast.test.ts` checks that each mode covers the same token names.
+- The text label is untouched. `SUCCEEDED` is still the word on the badge, so
+  no meaning rests on hue alone and the change costs consistency, not access.
+- Every pair is re-measured against **that mode's** card colours, to the same
+  5.0:1 target as the defaults.
+
+The cost is real and worth naming: Greek's gold success sits near the amber
+that means *running* elsewhere. Success is pushed to 60° rather than a straight
+gold to open that gap to 25°, and running moves to a cold 188° cyan that no
+other scheme uses.
+
+## Mode potions
+
+Six of the seven bottles are one accent hue. The seventh, Ancient Greek, is a
+*mode*: it carries a whole palette and its own chrome, hung off a single
+`sc-greek` class on the root element.
+
+That works on specificity alone. The injected accent sheet writes `:root`,
+which is (0,1,0); `:root.sc-greek` is (0,2,0) and wins whatever the injection
+order, and `:root.sc-greek.sc-dark` is (0,3,0) and settles the dark register
+over both. `sc-konami` has always worked this way — the mode potion is the same
+mechanism, persisted instead of thrown away on reload.
+
+Its CSS lives in `greek.ts`, not `styles.ts`. That is not tidiness: `styles.ts`
+is a single template literal that a stray backtick has silently truncated
+twice, and a second complete art direction inline makes a known hazard worse.
+`greek.test.ts` carries a parity check that every colour token the default
+`:root` declares is declared in both Greek registers — a half-declared mode
+inherits a colour from the wrong register and degrades into unreadable text
+rather than an obvious break.
 
 ## Motion
 
