@@ -119,17 +119,64 @@ describe('greek motion', () => {
   it('leaves the reduced-motion case lit, not frozen mid-cycle', () => {
     // A static creature on a bar is a smudge; the same reasoning applies to a
     // glow caught at 40% opacity.
-    const css = greekCss();
+    // Comments stripped first: the prose here explains the box-shadow hazard
+    // and would otherwise be matched as a declaration.
+    const css = greekCss().replace(/\/\*[\s\S]*?\*\//g, '');
     expect(css).toMatch(/@keyframes sc-greek-ember/);
 
-    // The static (unanimated) box-shadow is the last one declared before the
+    // The static (unanimated) glow is the last `filter` declared before the
     // reduced-motion media block; the "lit" keyframe is the 0%, 100% one.
+    // It is `filter`, not `box-shadow`: styles.ts claims box-shadow on buttons
+    // with `!important`, which beats both a normal declaration and the
+    // animation origin, so a box-shadow glow here paints nothing.
     const beforeMedia = css.slice(0, css.indexOf('@media (prefers-reduced-motion: no-preference)'));
-    const shadowsBeforeMedia = Array.from(beforeMedia.matchAll(/box-shadow:\s*([^;]+);/g));
-    const staticShadow = shadowsBeforeMedia[shadowsBeforeMedia.length - 1]?.[1].trim();
-    const litShadow = /0%,\s*100%\s*{\s*box-shadow:\s*([^;]+);/.exec(css)?.[1].trim();
+    const filtersBeforeMedia = Array.from(beforeMedia.matchAll(/[^-]filter:\s*([^;]+);/g));
+    const staticFilter = filtersBeforeMedia[filtersBeforeMedia.length - 1]?.[1].trim();
+    const litFilter = /0%,\s*100%\s*{\s*filter:\s*([^;]+);/.exec(css)?.[1].trim();
 
-    expect(staticShadow).toBeDefined();
-    expect(litShadow).toBe(staticShadow);
+    expect(staticFilter).toBeDefined();
+    expect(litFilter).toBeDefined();
+    expect(litFilter).toBe(staticFilter);
+  });
+
+  it('glows with a property nothing else claims !important', () => {
+    // Both Critical defects in this file shipped green because the tests
+    // matched strings anywhere in the sheet. styles.ts sets `box-shadow` with
+    // `!important` on `.MuiButton-root`; an important author declaration beats
+    // a normal one at any specificity AND beats the animation origin, so a
+    // box-shadow glow would silently stop painting on every Backstage page.
+    const css = greekCss().replace(/\/\*[\s\S]*?\*\//g, '');
+    const beforeMedia = css.slice(0, css.indexOf('@media (prefers-reduced-motion: no-preference)'));
+    const staticGlow = beforeMedia.slice(beforeMedia.lastIndexOf('{'));
+    const frames = Array.from(
+      css.matchAll(/(?:0%,\s*100%|50%)\s*{([^}]*)}/g),
+      m => m[1],
+    );
+
+    expect(frames).toHaveLength(2);
+    for (const rule of [staticGlow, ...frames]) {
+      expect(rule).toMatch(/filter:\s*drop-shadow\(/);
+      expect(rule).not.toMatch(/box-shadow/);
+    }
+  });
+});
+
+describe('greek dialog marks', () => {
+  it('positions the diamonds inside the box, never on a negative offset', () => {
+    // styles.ts sets `overflow: hidden` on the dialog inner so its header and
+    // footer edges follow the rounded corners. That clips absolutely
+    // positioned children, so a mark at a negative offset paints nothing at
+    // all — and no string-matching test notices.
+    const css = greekCss().replace(/\/\*[\s\S]*?\*\//g, '');
+    const pseudoRules = Array.from(
+      css.matchAll(/([^{}]*::(?:before|after)[^{}]*){([^}]*)}/g),
+      m => `${m[1].trim()} => ${m[2].trim()}`,
+    );
+
+    expect(pseudoRules.length).toBeGreaterThan(0);
+    const negative = pseudoRules.filter(r =>
+      /\b(top|left|bottom|right):\s*-/.test(r),
+    );
+    expect(negative).toEqual([]);
   });
 });
