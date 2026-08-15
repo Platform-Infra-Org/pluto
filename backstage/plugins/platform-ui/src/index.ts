@@ -27,7 +27,6 @@ export {
   SCROLL,
   HOURGLASS,
   LAUREL,
-  AMPHORA_VESSEL,
 } from './sprites';
 export type { Sprite } from './sprites';
 export { useTabActivity } from './tabActivity';

@@ -77,35 +77,42 @@ export const GREEK_CARD_DARK = '265 26% 10%';
  * means *running* in the other six schemes, instead of the 15deg a plain gold
  * gave. Every value here is the lowest lightness clearing 5.0:1 against BOTH
  * the Greek card and the covered dither pixel — the same method as above.
+ *
+ * `cell` and `cellAlpha` mirror what styles.ts actually paints, not what this
+ * mode would like painted: .26 success, .3 warning, .26 destructive (the worse
+ * of the badge's .24 and the fail notice's .26), .38 muted. Measuring against
+ * invented alphas is how a "5.0:1" claim ends up untrue on screen.
+ * `on-muted`'s cell is the hardcoded grey `240 5% 62%` in `.sc-badge-muted` —
+ * a literal, not a token, so no mode can recolour it.
  */
 export const GREEK_STATUS_TOKENS: StatusToken[] = [
   {
     name: 'on-success',
     light: '60 95% 19%',
-    dark: '60 72% 42%',
+    dark: '60 72% 41%',
     cell: '58 62% 42%',
-    cellAlpha: 0.28,
+    cellAlpha: 0.26,
   },
   {
     name: 'on-warning',
-    light: '188 95% 23%',
-    dark: '188 72% 49%',
+    light: '188 95% 22%',
+    dark: '188 72% 50%',
     cell: '188 65% 45%',
-    cellAlpha: 0.28,
+    cellAlpha: 0.3,
   },
   {
     name: 'on-destructive',
-    light: '12 88% 34%',
-    dark: '12 92% 65%',
+    light: '12 88% 33%',
+    dark: '12 92% 66%',
     cell: '12 78% 50%',
-    cellAlpha: 0.24,
+    cellAlpha: 0.26,
   },
   {
     name: 'on-muted',
     light: '38 12% 32%',
-    dark: '38 14% 72%',
-    cell: '38 10% 58%',
-    cellAlpha: 0.36,
+    dark: '38 14% 74%',
+    cell: '240 5% 62%',
+    cellAlpha: 0.38,
   },
 ];
 

@@ -67,7 +67,13 @@ export function greekCss(): string {
    the same filigree in bronze on bone, the dark one is gold on obsidian with
    the glow doing real work. No image assets — box-shadow and gradients. ===== */
 
-/* Cards get a gold rule and a thin inner line. Single frame only. */
+/* Cards get a gold rule and a thin inner line. Single frame only.
+   ponytail: the spec's clipped corner notches (clip-path) are dropped — the
+   gold rule plus the inset line already reads as a distinct surface, and
+   clip-path would clip away the hard offset shadow every surface in this
+   design system carries.
+   No backticks in this comment: it lives inside a template literal, and one
+   stray backtick truncates the whole sheet. */
 :root.sc-greek .MuiCard-root,
 :root.sc-greek .MuiPaper-elevation1,
 :root.sc-greek .MuiPaper-elevation2,
@@ -107,10 +113,14 @@ export function greekCss(): string {
   pointer-events: none;
   z-index: 1;
 }
+/* Inside the border box, not outside it: styles.ts sets overflow: hidden on
+   this same element so its header and footer edges follow the rounded corners,
+   and that clips any absolutely positioned child of it. A mark at -8px paints
+   nothing at all. */
 :root.sc-greek [class*="bui-DialogInner"]::before,
-:root.sc-greek .MuiDialog-paper::before { top: -8px; left: -8px; }
+:root.sc-greek .MuiDialog-paper::before { top: 3px; left: 3px; }
 :root.sc-greek [class*="bui-DialogInner"]::after,
-:root.sc-greek .MuiDialog-paper::after { bottom: -8px; right: -8px; }
+:root.sc-greek .MuiDialog-paper::after { bottom: 3px; right: 3px; }
 
 /* The filigree band behind page headers. Read by theme.tsx through
    --sc-header-art, because a selector naming BackstageHeader is dead in a
@@ -135,18 +145,25 @@ export function greekCss(): string {
 /* The ember bloom on primary surfaces. Two frames, stepped — no interpolation,
    which is the rule the whole design system follows. The unanimated default
    below is the LIT frame, so someone who asked for stillness gets the intended
-   look rather than a glow frozen halfway. */
+   look rather than a glow frozen halfway.
+   filter: drop-shadow(), not box-shadow: styles.ts claims box-shadow with
+   !important on the button root, and an important author declaration beats
+   both a normal one at any specificity AND the animation origin — so a
+   box-shadow glow here would never paint, animated or not. Nothing claims
+   filter. */
 :root.sc-greek .MuiButton-containedPrimary,
-:root.sc-greek .sc-btn-primary {
-  box-shadow: 0 0 8px hsl(var(--sc-primary) / .45), var(--sc-shadow);
+:root.sc-greek .sc-btn-primary,
+:root.sc-greek [data-variant="primary"][class*="bui-Button"] {
+  filter: drop-shadow(0 0 5px hsl(var(--sc-primary) / .5));
 }
 @media (prefers-reduced-motion: no-preference) {
   @keyframes sc-greek-ember {
-    0%, 100% { box-shadow: 0 0 8px hsl(var(--sc-primary) / .45), var(--sc-shadow); }
-    50% { box-shadow: 0 0 14px hsl(var(--sc-primary) / .7), var(--sc-shadow); }
+    0%, 100% { filter: drop-shadow(0 0 5px hsl(var(--sc-primary) / .5)); }
+    50% { filter: drop-shadow(0 0 9px hsl(var(--sc-primary) / .8)); }
   }
   :root.sc-greek .MuiButton-containedPrimary,
-  :root.sc-greek .sc-btn-primary {
+  :root.sc-greek .sc-btn-primary,
+  :root.sc-greek [data-variant="primary"][class*="bui-Button"] {
     animation: sc-greek-ember 1.6s steps(2) infinite;
   }
 }
