@@ -6,6 +6,7 @@ import { statusTokenCss } from './statusTokens';
 import { greekCss } from './greek';
 import { winterCss } from './winter';
 import { modesCss } from './modes';
+import { anthropicCss } from './anthropic';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
@@ -69,6 +70,7 @@ ${statusTokenCss()}
 ${greekCss()}
 ${winterCss()}
 ${modesCss()}
+${anthropicCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because
@@ -938,7 +940,19 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* collapsed: icons only */
 .sc-nav.collapsed .sc-nav-word, .sc-nav.collapsed .sc-nav-tx { display: none; }
 .sc-nav.collapsed .sc-nav-item { justify-content: center; padding: 9px; }
-.sc-nav.collapsed .sc-nav-top { justify-content: center; }
+/* Collapsed, the brand mark and the toggle stack instead of sitting side by
+   side. The arithmetic is why: the rail is 68px, less .sc-nav's 24px of padding
+   and .sc-nav-top's 12px leaves a 32px row — and it was being asked to hold a
+   26px mark AND a 26px toggle, both flex: 0 0 auto. 52px into 32px overran the
+   box and overflow-x: hidden clipped the result, so the two controls appeared
+   to sit on top of each other. In a column each is 26px against 44px of width
+   and neither has to shrink. */
+.sc-nav.collapsed .sc-nav-top {
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 0 14px;
+}
 /* Force the content gutter to match the nav width (hashed SidebarPage class). */
 /* Content offset for the fixed nav, and its mobile override, both live in the
    theme (BackstageSidebarPage.styleOverrides.root). */

@@ -72,6 +72,7 @@ const MODES = [
   'space',
   'zeus',
   'greek',
+  'anthropic',
 ] as const;
 type Mode = (typeof MODES)[number];
 
@@ -110,6 +111,15 @@ export const SCHEMES: Scheme[] = [
     hsl: '10 68% 34%',
     fg: WHITE, // 7.94
     mode: 'greek',
+  },
+  // Clay carries ink rather than white: white on Clay measures 3.11:1, below
+  // AA, and Slate Dark on Clay measures 5.94:1. See anthropic.ts.
+  {
+    id: 'anthropic',
+    label: 'Anthropic',
+    hsl: '15 63% 60%',
+    fg: INK, // 5.94
+    mode: 'anthropic',
   },
 ];
 

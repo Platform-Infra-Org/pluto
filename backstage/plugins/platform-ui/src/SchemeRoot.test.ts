@@ -27,7 +27,7 @@ describe('colour schemes', () => {
     }
   });
 
-  it('keeps seven schemes with stable ids, seasons in series', () => {
+  it('keeps stable ids with the seasons in series', () => {
     // Ids are the persisted key and never change; the ORDER is what makes the
     // shelf read as a year, with the four seasons adjacent and in calendar
     // order before the three that are not seasons.
@@ -39,6 +39,7 @@ describe('colour schemes', () => {
       'violet',
       'slate',
       'greek',
+      'anthropic',
     ]);
     expect(SCHEMES.slice(0, 4).map(s => s.label)).toEqual([
       'Spring',
@@ -51,6 +52,7 @@ describe('colour schemes', () => {
   it('gives each mode to exactly one potion', () => {
     const modes = SCHEMES.filter(s => s.mode).map(s => s.mode);
     expect([...modes].sort()).toEqual([
+      'anthropic',
       'autumn',
       'greek',
       'space',
@@ -82,6 +84,7 @@ describe('colour schemes', () => {
       'sc-space',
       'sc-zeus',
       'sc-greek',
+      'sc-anthropic',
     ];
     const classesFor = (id: string) => {
       applyScheme(id);

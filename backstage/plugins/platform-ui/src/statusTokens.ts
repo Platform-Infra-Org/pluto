@@ -70,7 +70,8 @@ export type SchemeMode =
   | 'summer'
   | 'autumn'
   | 'space'
-  | 'zeus';
+  | 'zeus'
+  | 'anthropic';
 
 /** `--sc-card` in the Greek registers, from greek.ts. */
 export const GREEK_CARD_LIGHT = '42 45% 98%';
@@ -141,6 +142,7 @@ export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   autumn: STATUS_TOKENS,
   space: STATUS_TOKENS,
   zeus: STATUS_TOKENS,
+  anthropic: STATUS_TOKENS,
 };
 
 export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
@@ -154,6 +156,7 @@ export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   autumn: { light: '36 46% 99%', dark: '20 42% 8%' },
   space: { light: '265 46% 99%', dark: '265 46% 7%' },
   zeus: { light: '220 26% 99%', dark: '220 34% 8%' },
+  anthropic: { light: '48 33% 97%', dark: '60 3% 8%' },
 };
 
 /** The `:root` declarations for every mode, for interpolation into SHADCN_CSS. */

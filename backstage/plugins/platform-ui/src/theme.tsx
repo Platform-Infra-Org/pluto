@@ -25,7 +25,11 @@ const PRIMARY_DARK = '#818cf8';
 const ACCENT = '#8b5cf6';
 // Full arcade: the MUI theme's base face is the pixel one, so native Backstage
 // components inherit it rather than falling back to Inter.
-const FONT = "'Pixelify Sans', ui-monospace, SFMono-Regular, monospace";
+// Read through a variable so a mode potion can change the face. MUI freezes
+// typography at theme construction, so a static string here would leave every
+// native Backstage surface in the pixel font while our own pages changed.
+const FONT =
+  "var(--sc-font-pixel, 'Pixelify Sans', ui-monospace, SFMono-Regular, monospace)";
 
 type Tone = {
   primary: string;
@@ -117,7 +121,7 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
           },
           title: {
             color: 'hsl(var(--sc-fg))',
-            fontFamily: "'Pixelify Sans', ui-monospace, monospace",
+            fontFamily: FONT,
             textTransform: 'uppercase',
             fontWeight: 400,
             // 18px/1.35 was a separate class*="BackstageContentHeader-title"

@@ -127,6 +127,17 @@ describe('SHADCN_CSS', () => {
     expect(SHADCN_CSS).toContain(STARFIELD.bg);
   });
 
+  it('stacks the collapsed rail so its two controls cannot collide', () => {
+    // The rail is 68px. Less .sc-nav's 24px of padding and .sc-nav-top's 12px,
+    // a row has 32px to hold a 26px brand mark AND a 26px toggle, both
+    // flex: 0 0 auto. Side by side that is 52px into 32px: they overran the box
+    // and overflow-x: hidden clipped the result. A column gives each 26px
+    // against 44px of width.
+    expect(SHADCN_CSS).toMatch(
+      /\.sc-nav\.collapsed \.sc-nav-top\s*\{[^}]*flex-direction:\s*column/,
+    );
+  });
+
   it('uses no class name that a production build discards', () => {
     // Material-UI keeps a makeStyles `name` in the generated class only outside
     // production; in a built image BackstageItemCardHeader-root-130 is jss130.
