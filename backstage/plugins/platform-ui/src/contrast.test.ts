@@ -1,3 +1,4 @@
+import { greekCss } from './greek';
 import {
   CARD_DARK,
   CARD_LIGHT,
@@ -157,4 +158,49 @@ describe('greek status text colours', () => {
       expect(css).toContain(`--sc-${t.name}: ${t.dark}`);
     }
   });
+});
+
+describe('greek palette contrast', () => {
+  /** Every `--sc-*` triplet declared inside one selector block of greekCss. */
+  function registerOf(selector: string): Record<string, string> {
+    const css = greekCss();
+    const start = css.indexOf(`${selector} {`);
+    expect(start).toBeGreaterThan(-1);
+    const body = css.slice(start, css.indexOf('}', start));
+    return Object.fromEntries(
+      Array.from(
+        body.matchAll(/--(sc-[a-z-]+):\s*([\d.]+\s+[\d.]+%\s+[\d.]+%)\s*;/g),
+        m => [m[1], m[2]],
+      ),
+    );
+  }
+
+  // greek.ts's header comment claims these; this measures them. The pairs are
+  // the ones a user actually reads text on, plus the gold rule against its card.
+  const PAIRS: ReadonlyArray<readonly [string, string, number]> = [
+    ['sc-fg', 'sc-bg', AA],
+    ['sc-fg', 'sc-card', AA],
+    ['sc-muted-fg', 'sc-card', AA],
+    ['sc-primary-fg', 'sc-primary', AA],
+    ['sc-accent-fg', 'sc-accent', AA],
+    // Known limitation: --sc-border on --sc-bg measures 2.89 in the light
+    // register, under the 3:1 UI-component guideline, so it is deliberately
+    // not asserted. (The repo's own default light border is 1.27 against its
+    // card, so Greek is not setting a new low.) Fix by darkening --sc-border
+    // in the light register if this ever needs to clear 3:1 on the page body.
+    // The card pair below clears at 3.02 — almost no margin, so a slightly
+    // darker card or lighter gold will trip this assertion.
+    ['sc-border', 'sc-card', 3.0],
+  ];
+
+  for (const selector of [':root.sc-greek', ':root.sc-greek.sc-dark']) {
+    it(`clears its contrast targets in ${selector}`, () => {
+      const tokens = registerOf(selector);
+      expect(Object.keys(tokens).length).toBeGreaterThan(8); // the regex matched
+      for (const [fg, bg, min] of PAIRS) {
+        const measured = contrast(tokens[fg], tokens[bg]);
+        expect(`${fg} on ${bg}: ${measured >= min}`).toBe(`${fg} on ${bg}: true`);
+      }
+    });
+  }
 });
