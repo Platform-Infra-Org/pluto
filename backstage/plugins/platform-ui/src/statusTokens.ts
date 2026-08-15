@@ -61,9 +61,78 @@ export const STATUS_TOKENS: StatusToken[] = [
   },
 ];
 
-/** The `:root` and `:root.sc-dark` declarations, for interpolation into SHADCN_CSS. */
+/** Which palette a scheme drives. `default` is the six accent-only potions. */
+export type SchemeMode = 'default' | 'greek';
+
+/** `--sc-card` in the Greek registers, from greek.ts. */
+export const GREEK_CARD_LIGHT = '42 45% 98%';
+export const GREEK_CARD_DARK = '265 26% 10%';
+
+/**
+ * Ancient Greek status colours: laurel-gold, Styx cyan, ember.
+ *
+ * This mode deliberately redefines status hue, which the rest of the design
+ * system does not do — see docs/explanation/design-system.md. Success is at
+ * 60deg rather than a straight gold so it sits 25deg off the stock amber that
+ * means *running* in the other six schemes, instead of the 15deg a plain gold
+ * gave. Every value here is the lowest lightness clearing 5.0:1 against BOTH
+ * the Greek card and the covered dither pixel — the same method as above.
+ */
+export const GREEK_STATUS_TOKENS: StatusToken[] = [
+  {
+    name: 'on-success',
+    light: '60 95% 19%',
+    dark: '60 72% 42%',
+    cell: '58 62% 42%',
+    cellAlpha: 0.28,
+  },
+  {
+    name: 'on-warning',
+    light: '188 95% 23%',
+    dark: '188 72% 49%',
+    cell: '188 65% 45%',
+    cellAlpha: 0.28,
+  },
+  {
+    name: 'on-destructive',
+    light: '12 88% 34%',
+    dark: '12 92% 65%',
+    cell: '12 78% 50%',
+    cellAlpha: 0.24,
+  },
+  {
+    name: 'on-muted',
+    light: '38 12% 32%',
+    dark: '38 14% 72%',
+    cell: '38 10% 58%',
+    cellAlpha: 0.36,
+  },
+];
+
+export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
+  default: STATUS_TOKENS,
+  greek: GREEK_STATUS_TOKENS,
+};
+
+export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
+  default: { light: CARD_LIGHT, dark: CARD_DARK },
+  greek: { light: GREEK_CARD_LIGHT, dark: GREEK_CARD_DARK },
+};
+
+/** The `:root` declarations for every mode, for interpolation into SHADCN_CSS. */
 export function statusTokenCss(): string {
-  const light = STATUS_TOKENS.map(t => `  --sc-${t.name}: ${t.light};`).join('\n');
-  const dark = STATUS_TOKENS.map(t => `  --sc-${t.name}: ${t.dark};`).join('\n');
-  return `:root {\n${light}\n}\n:root.sc-dark {\n${dark}\n}`;
+  const block = (selector: string, tokens: StatusToken[], key: 'light' | 'dark') =>
+    `${selector} {\n${tokens
+      .map(t => `  --sc-${t.name}: ${t[key]};`)
+      .join('\n')}\n}`;
+  // ORDER IS LOAD-BEARING. `:root.sc-dark` and `:root.sc-greek` are both
+  // specificity (0,2,0), so whichever is written last wins when both match.
+  // The greek light block must therefore follow the default dark block, and
+  // `:root.sc-greek.sc-dark` — (0,3,0) — settles greek-in-dark outright.
+  return [
+    block(':root', STATUS_TOKENS, 'light'),
+    block(':root.sc-dark', STATUS_TOKENS, 'dark'),
+    block(':root.sc-greek', GREEK_STATUS_TOKENS, 'light'),
+    block(':root.sc-greek.sc-dark', GREEK_STATUS_TOKENS, 'dark'),
+  ].join('\n');
 }

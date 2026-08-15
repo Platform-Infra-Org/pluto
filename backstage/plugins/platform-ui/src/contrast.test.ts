@@ -1,6 +1,9 @@
 import {
   CARD_DARK,
   CARD_LIGHT,
+  GREEK_STATUS_TOKENS,
+  MODE_CARDS,
+  MODE_TOKENS,
   STATUS_TOKENS,
   statusTokenCss,
 } from './statusTokens';
@@ -88,5 +91,70 @@ describe('status text colours', () => {
     }
     // The dark half must be scoped, or it would win in light mode too.
     expect(css).toContain(':root.sc-dark');
+  });
+});
+
+describe('greek status text colours', () => {
+  it('clears AA on the plain card in every mode', () => {
+    for (const [mode, tokens] of Object.entries(MODE_TOKENS)) {
+      const cards = MODE_CARDS[mode as keyof typeof MODE_CARDS];
+      for (const t of tokens) {
+        const light = contrast(t.light, cards.light);
+        const dark = contrast(t.dark, cards.dark);
+        expect(`${mode}/${t.name} light:${light >= AA}`).toBe(
+          `${mode}/${t.name} light:true`,
+        );
+        expect(`${mode}/${t.name} dark:${dark >= AA}`).toBe(
+          `${mode}/${t.name} dark:true`,
+        );
+      }
+    }
+  });
+
+  it('clears AA on the dithered fill in every mode', () => {
+    for (const [mode, tokens] of Object.entries(MODE_TOKENS)) {
+      const cards = MODE_CARDS[mode as keyof typeof MODE_CARDS];
+      for (const t of tokens) {
+        const light = contrastOver(t.light, t.cell, t.cellAlpha, cards.light);
+        const dark = contrastOver(t.dark, t.cell, t.cellAlpha, cards.dark);
+        expect(`${mode}/${t.name} light:${light >= AA}`).toBe(
+          `${mode}/${t.name} light:true`,
+        );
+        expect(`${mode}/${t.name} dark:${dark >= AA}`).toBe(
+          `${mode}/${t.name} dark:true`,
+        );
+      }
+    }
+  });
+
+  it('covers the same token names in every mode', () => {
+    // A mode that forgets a token inherits the default colour on a surface it
+    // was never measured against, which is exactly the failure this file exists
+    // to catch.
+    const names = STATUS_TOKENS.map(t => t.name).sort();
+    for (const tokens of Object.values(MODE_TOKENS)) {
+      expect(tokens.map(t => t.name).sort()).toEqual(names);
+    }
+  });
+
+  it('emits the greek blocks after the default dark block', () => {
+    // `:root.sc-dark` and `:root.sc-greek` are both specificity (0,2,0), so the
+    // tie is broken by source order alone. Emit greek first and a greek page in
+    // dark mode silently keeps the default dark status colours.
+    const css = statusTokenCss();
+    expect(css.indexOf(':root.sc-greek')).toBeGreaterThan(
+      css.indexOf(':root.sc-dark'),
+    );
+    expect(css.indexOf(':root.sc-greek.sc-dark')).toBeGreaterThan(
+      css.indexOf(':root.sc-greek {'),
+    );
+  });
+
+  it('emits a light and dark value for every greek token', () => {
+    const css = statusTokenCss();
+    for (const t of GREEK_STATUS_TOKENS) {
+      expect(css).toContain(`--sc-${t.name}: ${t.light}`);
+      expect(css).toContain(`--sc-${t.name}: ${t.dark}`);
+    }
   });
 });
