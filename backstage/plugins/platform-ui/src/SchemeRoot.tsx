@@ -73,6 +73,7 @@ const MODES = [
   'zeus',
   'greek',
   'anthropic',
+  'gsap',
 ] as const;
 type Mode = (typeof MODES)[number];
 
@@ -120,6 +121,15 @@ export const SCHEMES: Scheme[] = [
     hsl: '15 63% 60%',
     fg: INK, // 5.94
     mode: 'anthropic',
+  },
+  // Shockingly-green, darkened for the bottle: the published 47% is a colour
+  // designed to sit on near-black and carries cream at 1.9:1. See gsap.ts.
+  {
+    id: 'gsap',
+    label: 'GSAP',
+    hsl: '140 92% 26%',
+    fg: WHITE, // 4.96
+    mode: 'gsap',
   },
 ];
 

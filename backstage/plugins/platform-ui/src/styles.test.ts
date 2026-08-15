@@ -138,6 +138,23 @@ describe('SHADCN_CSS', () => {
     );
   });
 
+  it('presses buttons by highlighting them, never by moving them', () => {
+    // A 2px translate on :active shifted the button out from under the pointer,
+    // fought the filter-based glows the mode potions paint, and left anything
+    // anchored to the button a frame behind. Highlight only.
+    expect(SHADCN_CSS).not.toMatch(/:active[^{]*\{[^}]*transform:\s*translate/);
+    expect(SHADCN_CSS).toMatch(/:active[^{]*\{[^}]*box-shadow:\s*inset/);
+  });
+
+  it('puts the collapsed rail icons on the logo axis', () => {
+    // Both the brand mark and every nav icon get the same 26px centred box, so
+    // they share one vertical axis by construction rather than by two padding
+    // sums happening to agree — which they did not.
+    expect(SHADCN_CSS).toMatch(
+      /\.sc-nav\.collapsed \.sc-nav-brand,\s*\.sc-nav\.collapsed \.sc-nav-ic\s*\{[^}]*width:\s*26px/,
+    );
+  });
+
   it('uses no class name that a production build discards', () => {
     // Material-UI keeps a makeStyles `name` in the generated class only outside
     // production; in a built image BackstageItemCardHeader-root-130 is jss130.

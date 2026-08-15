@@ -7,6 +7,7 @@ import { greekCss } from './greek';
 import { winterCss } from './winter';
 import { modesCss } from './modes';
 import { anthropicCss } from './anthropic';
+import { gsapCss } from './gsap';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
@@ -71,6 +72,7 @@ ${greekCss()}
 ${winterCss()}
 ${modesCss()}
 ${anthropicCss()}
+${gsapCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because
@@ -267,10 +269,15 @@ h4, h5, h6, .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 { font-size:
   box-shadow: var(--sc-shadow) !important;
   transition: none !important;
 }
+/* Pressing highlights; it does not move anything. The arcade press-down was a
+   2px translate, which shifted the button out from under the pointer, fought
+   the filter-based glows the mode potions paint, and left anything anchored to
+   the button a frame behind. An inset wash reads as pressed without moving a
+   pixel. */
 .MuiButton-root:active:not(.Mui-disabled),
 button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
-  transform: translate(2px, 2px);
-  box-shadow: none !important;
+  transform: none;
+  box-shadow: inset 0 0 0 2em hsl(var(--sc-fg) / .14) !important;
 }
 .MuiButton-text, .MuiButton-textPrimary, .MuiIconButton-root {
   border: none !important; box-shadow: none !important;
@@ -939,7 +946,17 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   border-radius: var(--sc-radius); background: hsl(var(--sc-primary)); }
 /* collapsed: icons only */
 .sc-nav.collapsed .sc-nav-word, .sc-nav.collapsed .sc-nav-tx { display: none; }
-.sc-nav.collapsed .sc-nav-item { justify-content: center; padding: 9px; }
+.sc-nav.collapsed .sc-nav-item { justify-content: center; padding: 9px 0; }
+/* Collapsed, the brand mark and every nav icon sit in the SAME 26px box,
+   centred on the rail — so they share one vertical axis by construction rather
+   than by two independent padding sums happening to agree. They did not agree:
+   the row kept .sc-nav-top's side padding while the items kept their own, and
+   the icons ended up off the logo's centre line. */
+.sc-nav.collapsed .sc-nav-brand,
+.sc-nav.collapsed .sc-nav-ic {
+  width: 26px;
+  justify-content: center;
+}
 /* Collapsed, the brand mark and the toggle stack instead of sitting side by
    side. The arithmetic is why: the rail is 68px, less .sc-nav's 24px of padding
    and .sc-nav-top's 12px leaves a 32px row — and it was being asked to hold a
@@ -1290,7 +1307,11 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   box-shadow: var(--sc-shadow);
   transition: none;
 }
-.sc-btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: none; }
+/* Same rule for our own buttons: highlight, never displace. */
+.sc-btn:active:not(:disabled) {
+  transform: none;
+  box-shadow: inset 0 0 0 2em hsl(var(--sc-fg) / .14);
+}
 .sc-btn:focus-visible,
 .sc-input:focus-visible, .sc-select:focus-visible {
   outline: var(--sc-border-w) solid hsl(var(--sc-ring));

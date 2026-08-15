@@ -40,6 +40,7 @@ describe('colour schemes', () => {
       'slate',
       'greek',
       'anthropic',
+      'gsap',
     ]);
     expect(SCHEMES.slice(0, 4).map(s => s.label)).toEqual([
       'Spring',
@@ -55,6 +56,7 @@ describe('colour schemes', () => {
       'anthropic',
       'autumn',
       'greek',
+      'gsap',
       'space',
       'spring',
       'summer',
@@ -85,6 +87,7 @@ describe('colour schemes', () => {
       'sc-zeus',
       'sc-greek',
       'sc-anthropic',
+      'sc-gsap',
     ];
     const classesFor = (id: string) => {
       applyScheme(id);

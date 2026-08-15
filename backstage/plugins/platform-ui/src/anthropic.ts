@@ -106,6 +106,28 @@ export function anthropicCss(): string {
   box-shadow: none !important;
 }
 
+/* A 24px corner only looks like a corner if what is inside it is clipped.
+   A table is a rectangle with its own filled header, so at this radius its
+   square corners pushed out through the card's curve and the rounding appeared
+   to break. Clipping the card is what fixes it — and it is safe here because
+   MUI renders menus, popovers and tooltips into portals on <body>, so nothing
+   that needs to escape the card is actually inside it.
+   The tables themselves keep square corners: rounding a cell as well would put
+   a second curve inside the first. */
+:root.sc-anthropic .MuiCard-root,
+:root.sc-anthropic .sc-card {
+  overflow: hidden;
+}
+:root.sc-anthropic .MuiTable-root,
+:root.sc-anthropic .sc-table {
+  border-radius: 0 !important;
+}
+/* The header sits flush to the clipped edge rather than carrying its own rule
+   into the curve, which is the other half of what read as a glitch. */
+:root.sc-anthropic .MuiTableCell-head {
+  border-top: none !important;
+}
+
 /* Chrome — nav, buttons, badges, table headers — takes the sans. Body text and
    headings keep the serif, which is the pairing the reference describes. */
 :root.sc-anthropic .sc-nav,
