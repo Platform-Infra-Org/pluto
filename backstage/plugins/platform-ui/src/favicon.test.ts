@@ -102,17 +102,15 @@ describe('generated tab icon', () => {
     // A mode potion sets --sc-primary in CSS, so the record's own hsl is not
     // what the page is painted with. Reading the computed value keeps the tab
     // icon correct for any mode, not just this one.
+    const COMPUTED: Record<string, string> = {
+      '--sc-primary': '14 88% 55%',
+      '--sc-primary-fg': '240 10% 8%',
+      '--sc-card': '265 26% 10%',
+    };
     const spy = jest
       .spyOn(window, 'getComputedStyle')
       .mockReturnValue({
-        getPropertyValue: (p: string) =>
-          p === '--sc-primary'
-            ? '14 88% 55%'
-            : p === '--sc-primary-fg'
-              ? '240 10% 8%'
-              : p === '--sc-card'
-                ? '265 26% 10%'
-                : '',
+        getPropertyValue: (p: string) => COMPUTED[p] ?? '',
       } as unknown as CSSStyleDeclaration);
     try {
       applyScheme('greek');
