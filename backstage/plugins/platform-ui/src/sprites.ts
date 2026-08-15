@@ -580,19 +580,19 @@ export const OWL: Sprite = [
   '..##........##..',
   '.####......####.',
   '.##############.',
-  '##..##....##..##',
+  '################',
   '##.####..####.##',
+  '##.#..#..#..#.##',
+  '##.#..#..#..#.##',
   '##.####..####.##',
-  '##..##....##..##',
-  '##....####....##',
-  '##...######...##',
-  '.##..######..##.',
-  '.##..######..##.',
+  '################',
+  '.####..##..####.',
+  '.##############.',
+  '.##.########.##.',
+  '.##.########.##.',
   '..############..',
-  '..##.######.##..',
   '...##########...',
-  '....##....##....',
-  '...####..####...',
+  '..##..####..##..',
 ];
 
 /* ===== Winter ornament =====
@@ -602,20 +602,20 @@ export const OWL: Sprite = [
 /** A snow crystal: four arms with branches, symmetric under a quarter turn. */
 export const SNOWFLAKE: Sprite = [
   '.......##.......',
+  '.#.....##.....#.',
+  '..#....##....#..',
+  '...#...##...#...',
+  '....##.##.##....',
   '.....#.##.#.....',
   '......####......',
-  '..#...####...#..',
-  '...#..####..#...',
-  '....#.####.#....',
-  '##....####....##',
-  '.##############.',
-  '.##############.',
-  '##....####....##',
-  '....#.####.#....',
-  '...#..####..#...',
-  '..#...####...#..',
+  '################',
+  '################',
   '......####......',
   '.....#.##.#.....',
+  '....##.##.##....',
+  '...#...##...#...',
+  '..#....##....#..',
+  '.#.....##.....#.',
   '.......##.......',
 ];
 
@@ -627,14 +627,14 @@ export const SNOWFLAKE: Sprite = [
  * grey mush, which is the usual way pixel art dies when it is merely resized.
  */
 export const FLAKE: Sprite = [
-  '...##...',
   '#..##..#',
   '.#.##.#.',
   '..####..',
+  '########',
+  '########',
   '..####..',
   '.#.##.#.',
   '#..##..#',
-  '...##...',
 ];
 
 /**
@@ -654,6 +654,73 @@ export const ICICLES: Sprite = [
   '..#....#.....#..',
   '.......#........',
   '................',
+];
+
+/* ===== What lives in each bottle =====
+   One 8px sprite per mode potion, suspended in the liquid. Small on purpose:
+   at roughly six user units a silhouette has about twenty legible pixels, so
+   each of these is a single idea — a tree, a sun, a bolt — and never a scene.
+   FLAKE above belongs to this set; it sits with the winter ornament because
+   the big crystal is authored beside it. */
+
+/** Spring: a sapling. Crown, trunk, and the ground it is coming out of. */
+export const SAPLING: Sprite = [
+  '...##...',
+  '..####..',
+  '.######.',
+  '..####..',
+  '...##...',
+  '...##...',
+  '...##...',
+  '..####..',
+];
+
+/** Summer: the sun at its height, four rays and a full disc. */
+export const SUN: Sprite = [
+  '...##...',
+  '#.####.#',
+  '.######.',
+  '.######.',
+  '.######.',
+  '.######.',
+  '#.####.#',
+  '...##...',
+];
+
+/** Autumn: a lantern cut for the season — stem, two eyes and a mouth. */
+export const PUMPKIN: Sprite = [
+  '...##...',
+  '.######.',
+  '########',
+  '##.##.##',
+  '########',
+  '#.####.#',
+  '.######.',
+  '..####..',
+];
+
+/** Space: a world with a ring through it. */
+export const PLANET: Sprite = [
+  '........',
+  '..####..',
+  '.######.',
+  '########',
+  '.######.',
+  '.######.',
+  '..####..',
+  '........',
+];
+
+/** Zeus: the bolt itself, the one object in the set that is pure motion. */
+export const BOLT: Sprite = [
+  '....##..',
+  '...##...',
+  '..##....',
+  '.#####..',
+  '...##...',
+  '..##....',
+  '.##.....',
+  '#.......',
 ];
 
 export const STATE_SPRITES: Record<RequestState, Sprite> = {

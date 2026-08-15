@@ -62,7 +62,15 @@ export const STATUS_TOKENS: StatusToken[] = [
 ];
 
 /** Which palette a scheme drives. `default` is the six accent-only potions. */
-export type SchemeMode = 'default' | 'greek' | 'winter';
+export type SchemeMode =
+  | 'default'
+  | 'greek'
+  | 'winter'
+  | 'spring'
+  | 'summer'
+  | 'autumn'
+  | 'space'
+  | 'zeus';
 
 /** `--sc-card` in the Greek registers, from greek.ts. */
 export const GREEK_CARD_LIGHT = '42 45% 98%';
@@ -128,12 +136,24 @@ export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   // exception. What winter DOES change is the card underneath, so the same ink
   // has to be re-measured against new paper.
   winter: STATUS_TOKENS,
+  spring: STATUS_TOKENS,
+  summer: STATUS_TOKENS,
+  autumn: STATUS_TOKENS,
+  space: STATUS_TOKENS,
+  zeus: STATUS_TOKENS,
 };
 
 export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   default: { light: CARD_LIGHT, dark: CARD_DARK },
   greek: { light: GREEK_CARD_LIGHT, dark: GREEK_CARD_DARK },
   winter: { light: WINTER_CARD_LIGHT, dark: WINTER_CARD_DARK },
+  // The table-driven modes, from modes.ts. Every one of them moves the card, so
+  // every one has to have the default status ink re-measured against it.
+  spring: { light: '100 42% 99%', dark: '140 32% 8%' },
+  summer: { light: '40 52% 99%', dark: '5 36% 8.5%' },
+  autumn: { light: '36 46% 99%', dark: '20 42% 8%' },
+  space: { light: '265 46% 99%', dark: '265 46% 7%' },
+  zeus: { light: '220 26% 99%', dark: '220 34% 8%' },
 };
 
 /** The `:root` declarations for every mode, for interpolation into SHADCN_CSS. */

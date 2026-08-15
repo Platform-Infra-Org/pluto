@@ -27,21 +27,38 @@ describe('colour schemes', () => {
     }
   });
 
-  it('keeps seven schemes with stable ids', () => {
+  it('keeps seven schemes with stable ids, seasons in series', () => {
+    // Ids are the persisted key and never change; the ORDER is what makes the
+    // shelf read as a year, with the four seasons adjacent and in calendar
+    // order before the three that are not seasons.
     expect(SCHEMES.map(s => s.id)).toEqual([
-      'violet',
-      'blue',
       'green',
       'rose',
       'amber',
+      'blue',
+      'violet',
       'slate',
       'greek',
+    ]);
+    expect(SCHEMES.slice(0, 4).map(s => s.label)).toEqual([
+      'Spring',
+      'Summer',
+      'Autumn',
+      'Winter',
     ]);
   });
 
   it('gives each mode to exactly one potion', () => {
     const modes = SCHEMES.filter(s => s.mode).map(s => s.mode);
-    expect(modes.sort()).toEqual(['greek', 'winter']);
+    expect([...modes].sort()).toEqual([
+      'autumn',
+      'greek',
+      'space',
+      'spring',
+      'summer',
+      'winter',
+      'zeus',
+    ]);
     expect(new Set(modes).size).toBe(modes.length);
   });
 
@@ -57,15 +74,24 @@ describe('colour schemes', () => {
     // a second complete palette still matching, and which one wins is then
     // decided by stylesheet order rather than by what was clicked. Every mode
     // must be cleared on every pick, not only the one being replaced.
+    const ALL = [
+      'sc-spring',
+      'sc-summer',
+      'sc-autumn',
+      'sc-winter',
+      'sc-space',
+      'sc-zeus',
+      'sc-greek',
+    ];
     const classesFor = (id: string) => {
       applyScheme(id);
-      return ['sc-greek', 'sc-winter'].filter(c =>
-        document.documentElement.classList.contains(c),
-      );
+      return ALL.filter(c => document.documentElement.classList.contains(c));
     };
-    expect(classesFor('greek')).toEqual(['sc-greek']);
-    expect(classesFor('blue')).toEqual(['sc-winter']);
-    expect(classesFor('greek')).toEqual(['sc-greek']);
-    expect(classesFor('slate')).toEqual([]);
+    // Walk the whole shelf: every pick must leave exactly one mode standing.
+    for (const s of SCHEMES) {
+      expect(`${s.id}:${classesFor(s.id).join(',')}`).toBe(
+        `${s.id}:sc-${s.mode}`,
+      );
+    }
   });
 });

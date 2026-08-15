@@ -167,28 +167,5 @@ export function winterCss(): string {
   filter: drop-shadow(0 0 5px hsl(var(--sc-primary) / .45));
 }
 
-/* The snowflake suspended in the winter bottle.
-   NOT scoped to :root.sc-winter, and that is deliberate: the shelf shows every
-   bottle in every mode, so the flake has to drift whichever theme is active.
-   It is the one rule in this file that describes an object rather than a mode.
-   Four discrete positions with steps(1), which holds each frame until the next
-   — the drift of something settling through water, not a smooth glide. The
-   unanimated default is the centre of the loop, so stillness looks deliberate
-   rather than caught mid-fall. */
-.sc-potion .sc-flake {
-  fill: hsl(0 0% 100% / .92);
-}
-@media (prefers-reduced-motion: no-preference) {
-  @keyframes sc-flake-drift {
-    0%   { transform: translate(0, 0); }
-    25%  { transform: translate(0.9px, 1.1px); }
-    50%  { transform: translate(0, 2px); }
-    75%  { transform: translate(-0.9px, 1.1px); }
-    100% { transform: translate(0, 0); }
-  }
-  .sc-potion .sc-flake {
-    animation: sc-flake-drift 3.2s steps(1) infinite;
-  }
-}
 `;
 }

@@ -5,6 +5,7 @@
 import { statusTokenCss } from './statusTokens';
 import { greekCss } from './greek';
 import { winterCss } from './winter';
+import { modesCss } from './modes';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
@@ -67,6 +68,7 @@ export const SHADCN_CSS = `
 ${statusTokenCss()}
 ${greekCss()}
 ${winterCss()}
+${modesCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because

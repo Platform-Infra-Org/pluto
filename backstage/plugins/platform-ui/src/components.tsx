@@ -95,7 +95,7 @@ export function PixelPotion({
       </g>
       {inner && (
         <g transform="translate(5.2 8) scale(0.72)">
-          <g className="sc-flake">
+          <g className="sc-potion-inner">
             {spriteRects(inner, '#').map(r => (
               <rect
                 key={`i-${r.x}-${r.y}`}

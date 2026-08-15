@@ -7,13 +7,8 @@ import {
 } from 'react';
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
-import {
-  AMPHORA_VESSEL,
-  FLAKE,
-  SPRITE_SIZE,
-  spriteRects,
-  TEMPLE,
-} from './sprites';
+import { AMPHORA_VESSEL, FLAKE, SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
+import { MODE_DEFS } from './modes';
 import { PixelPotion } from './components';
 import { templateHeaderCss } from './templateHeaders';
 import { listenForKonami } from './konami';
@@ -69,33 +64,46 @@ type Scheme = {
  * each pick: a mode class left behind is a second palette still applying, and
  * which one wins is then decided by stylesheet order rather than by the click.
  */
-const MODES = ['greek', 'winter'] as const;
+const MODES = [
+  'spring',
+  'summer',
+  'autumn',
+  'winter',
+  'space',
+  'zeus',
+  'greek',
+] as const;
 type Mode = (typeof MODES)[number];
+
+/**
+ * What floats in a given mode's bottle.
+ *
+ * The five table-driven modes carry their own sprite in `MODE_DEFS`; winter's
+ * lives with the ice ornament it was drawn beside, and Greek has an amphora
+ * rather than a flask so it holds nothing extra.
+ */
+function innerFor(mode: Mode | undefined) {
+  if (!mode) return undefined;
+  if (mode === 'winter') return FLAKE;
+  return MODE_DEFS.find(m => m.id === mode)?.inner;
+}
 
 // Saturated toward NES-era values. `fg` is the text colour that sits on the
 // accent: white where it clears 4.5:1, near-black where it doesn't. Green and
 // amber are the reason this field exists — darkening them enough for white text
 // would have turned them to mud. Ratios are measured, see SchemeRoot.test.ts.
 export const SCHEMES: Scheme[] = [
-  { id: 'violet', label: 'Violet', hsl: '250 75% 60%', fg: WHITE }, // 5.60
-  // The winter mode potion. Its bottle carries a snowflake drifting in the
-  // liquid, and the id stays 'blue' so anyone who picked it before keeps their
-  // choice across the rename — the id is the persisted key, the label is only
-  // what people read.
-  {
-    id: 'blue',
-    label: 'Winter',
-    hsl: '205 85% 34%',
-    fg: WHITE, // 6.34
-    mode: 'winter',
-  },
-  { id: 'green', label: 'Green', hsl: '145 75% 42%', fg: INK }, // 7.41
-  { id: 'rose', label: 'Rose', hsl: '345 80% 49%', fg: WHITE }, // 4.73
-  { id: 'amber', label: 'Amber', hsl: '38 90% 52%', fg: INK }, // 8.85
-  { id: 'slate', label: 'Slate', hsl: '215 30% 45%', fg: WHITE }, // 5.29
-  // The mode potion. `hsl` here is the bottle's own liquid colour and what
-  // SchemeRoot.test.ts measures — the applied accent comes from greek.ts and
-  // differs by register (ox-blood in light, ember in dark).
+  // The four seasons run in calendar order and sit together, so the shelf reads
+  // as a year rather than a jumble. Ids never change — an id is the key a
+  // browser has already persisted, a label is only what someone reads — which
+  // is why 'green' is Spring and 'blue' is Winter rather than being renamed.
+  { id: 'green', label: 'Spring', hsl: '142 68% 27%', fg: WHITE, mode: 'spring' }, // 7.30
+  { id: 'rose', label: 'Summer', hsl: '5 78% 36%', fg: WHITE, mode: 'summer' }, // 6.70
+  { id: 'amber', label: 'Autumn', hsl: '22 88% 32%', fg: WHITE, mode: 'autumn' }, // 6.55
+  { id: 'blue', label: 'Winter', hsl: '205 85% 34%', fg: WHITE, mode: 'winter' }, // 6.34
+  // Then the three that are not seasons at all.
+  { id: 'violet', label: 'Space', hsl: '265 72% 38%', fg: WHITE, mode: 'space' }, // 7.51
+  { id: 'slate', label: 'Zeus', hsl: '45 92% 28%', fg: WHITE, mode: 'zeus' }, // 5.72
   {
     id: 'greek',
     label: 'Ancient Greek',
@@ -582,7 +590,7 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
           <PixelPotion
             liquid={`hsl(${s.hsl})`}
             sprite={s.mode === 'greek' ? AMPHORA_VESSEL : undefined}
-            inner={s.mode === 'winter' ? FLAKE : undefined}
+            inner={innerFor(s.mode)}
           />
         </button>
       ))}
