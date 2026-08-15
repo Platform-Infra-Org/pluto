@@ -306,7 +306,15 @@ export function applyScheme(scheme?: string) {
       position: branding.headerPosition,
     }),
   );
-  updateFavicon(s.hsl, s.fg);
+  // The record's own hsl is not necessarily what is painted: a mode potion
+  // sets --sc-primary from CSS, which wins on specificity. Reading the
+  // computed value is what keeps the tab icon in step with the page — the
+  // same reason cardHsl() reads computed style rather than a constant.
+  const root = getComputedStyle(document.documentElement);
+  updateFavicon(
+    root.getPropertyValue('--sc-primary').trim() || s.hsl,
+    root.getPropertyValue('--sc-primary-fg').trim() || s.fg,
+  );
 }
 
 // Theme the login gate immediately, before React mounts anything.

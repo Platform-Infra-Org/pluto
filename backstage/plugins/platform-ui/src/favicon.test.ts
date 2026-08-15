@@ -97,4 +97,28 @@ describe('generated tab icon', () => {
     expect(stops).not.toEqual(first);
     expect(stops[0]).toBe(`hsl(${SCHEMES.find(s => s.id === 'amber')!.hsl})`);
   });
+
+  it('draws the tile from the computed accent, not the record literal', () => {
+    // A mode potion sets --sc-primary in CSS, so the record's own hsl is not
+    // what the page is painted with. Reading the computed value keeps the tab
+    // icon correct for any mode, not just this one.
+    const spy = jest
+      .spyOn(window, 'getComputedStyle')
+      .mockReturnValue({
+        getPropertyValue: (p: string) =>
+          p === '--sc-primary'
+            ? '14 88% 55%'
+            : p === '--sc-primary-fg'
+              ? '240 10% 8%'
+              : p === '--sc-card'
+                ? '265 26% 10%'
+                : '',
+      } as unknown as CSSStyleDeclaration);
+    try {
+      applyScheme('greek');
+      expect(stops[0]).toBe('hsl(14 88% 55%)');
+    } finally {
+      spy.mockRestore();
+    }
+  });
 });
