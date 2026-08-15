@@ -1,6 +1,47 @@
 import { greekCss } from './greek';
 import { SHADCN_CSS } from './styles';
 import { GREEK_CARD_DARK, GREEK_CARD_LIGHT } from './statusTokens';
+import {
+  COLUMN,
+  MEANDER,
+  OWL,
+  PALMETTE,
+  POMEGRANATE,
+  ROSETTE,
+  spriteDataUri,
+} from './sprites';
+
+/** CSS with comments removed, so prose is never mistaken for a declaration. */
+const stripComments = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '');
+
+/**
+ * Only the parts a selector engine would read: no comments, and no inlined
+ * ornament. A data URI is opaque content, not markup — its `www.w3.org` xmlns
+ * is not a class named `org`, and its encoded body is not a declaration.
+ */
+const selectorsIn = (css: string) =>
+  stripComments(css).replace(/url\("data:[^"]*"\)/g, 'url(ORNAMENT)');
+
+/** Every rule, as selector plus body, with ornament payloads neutralised. */
+const rulesOf = (css: string) =>
+  Array.from(selectorsIn(css).matchAll(/([^{}]+)\{([^}]*)\}/g), m => ({
+    sel: m[1].trim().replace(/\s+/g, ' '),
+    body: m[2],
+  }));
+
+/**
+ * The element a rule targets, ignoring the mode prefix — so the light rule and
+ * its `.sc-dark` override are recognised as dressing the same thing.
+ */
+const target = (sel: string) => sel.split(',')[0].trim().split(/\s+/).pop();
+
+/** The dialog rule that actually paints the corner medallions. */
+function dialogRule(css: string): string {
+  const rule = rulesOf(css).find(
+    r => r.sel.includes('MuiDialog-paper') && r.body.includes('background-image'),
+  );
+  return rule ? rule.body : '';
+}
 
 /** Every `--sc-*` whose value is an "H S% L%" triplet, inside one selector block. */
 function colourTokens(css: string, selector: string): string[] {
@@ -54,9 +95,11 @@ describe('greekCss', () => {
   });
 
   it('names no class a production build discards', () => {
-    // Strip comments first: prose explaining the hazard is allowed to name
-    // the forbidden vocabulary, only live selectors are not.
-    const selectorsOnly = greekCss().replace(/\/\*[\s\S]*?\*\//g, '');
+    // Strip comments AND data URIs first: prose explaining the hazard is
+    // allowed to name the forbidden vocabulary, and an inlined ornament
+    // carries an xmlns of `www.w3.org` whose dots are not class selectors.
+    // Only live selectors are subject to the rule.
+    const selectorsOnly = selectorsIn(greekCss());
     const names = Array.from(selectorsOnly.matchAll(/\.([A-Za-z][\w-]*)/g), m => m[1]);
     const bad = names.filter(
       n =>
@@ -98,8 +141,13 @@ describe('greek chrome', () => {
     expect(selectorsOnly).not.toContain('BackstageHeader');
   });
 
-  it('marks dialog corners with rotated squares', () => {
-    expect(greekCss()).toMatch(/rotate\(45deg\)/);
+  it('marks all four dialog corners with a rosette medallion', () => {
+    // Four corners, not two. The rosette is symmetric under a quarter turn, so
+    // one sprite serves every corner as four background layers — which is what
+    // lifts this past the two-pseudo-element ceiling the old diamonds hit.
+    const rule = dialogRule(greekCss());
+    expect((rule.match(/ORNAMENT/g) ?? []).length).toBe(4);
+    expect(rule).toMatch(/background-repeat:\s*no-repeat/);
   });
 });
 
@@ -161,22 +209,90 @@ describe('greek motion', () => {
   });
 });
 
-describe('greek dialog marks', () => {
-  it('positions the diamonds inside the box, never on a negative offset', () => {
-    // styles.ts sets `overflow: hidden` on the dialog inner so its header and
-    // footer edges follow the rounded corners. That clips absolutely
-    // positioned children, so a mark at a negative offset paints nothing at
-    // all — and no string-matching test notices.
-    const css = greekCss().replace(/\/\*[\s\S]*?\*\//g, '');
-    const pseudoRules = Array.from(
-      css.matchAll(/([^{}]*::(?:before|after)[^{}]*){([^}]*)}/g),
-      m => `${m[1].trim()} => ${m[2].trim()}`,
+describe('greek ornament renders inside its box', () => {
+  // The defect this whole describe exists for: a background is clipped to the
+  // border box, and styles.ts additionally sets `overflow: hidden` on the
+  // dialog. Ornament hung outside either boundary paints nothing at all, and a
+  // string-matching test happily passes on it. Two corner marks already shipped
+  // dead this way once.
+  it('never positions ornament on a negative offset', () => {
+    const offenders = rulesOf(greekCss()).filter(
+      r =>
+        /background-position:[^;]*-\d/.test(r.body) ||
+        /\b(?:top|left|bottom|right):\s*-\d/.test(r.body),
     );
+    expect(offenders.map(o => o.sel)).toEqual([]);
+  });
 
-    expect(pseudoRules.length).toBeGreaterThan(0);
-    const negative = pseudoRules.filter(r =>
-      /\b(top|left|bottom|right):\s*-/.test(r),
+  it('keeps every ornament paired with a repeat', () => {
+    // A background-image with no background-repeat tiles across the whole
+    // surface: a corner medallion becomes wallpaper, a header band becomes a
+    // field. Checked per target element rather than per rule, because a
+    // register override legitimately swaps only the image and inherits the
+    // repeat from the rule above it.
+    const rules = rulesOf(greekCss());
+    const repeated = new Set(
+      rules.filter(r => /background-repeat:/.test(r.body)).map(r => target(r.sel)),
     );
-    expect(negative).toEqual([]);
+    const unpaired = rules.filter(
+      r =>
+        r.body.includes('ORNAMENT') &&
+        !r.body.includes('--sc-header-art') &&
+        !repeated.has(target(r.sel)),
+    );
+    expect(unpaired.map(u => u.sel)).toEqual([]);
+  });
+
+  it('gives the header band its own repeat and position hooks', () => {
+    // The header art reaches the page through variables read by theme.tsx, so
+    // its repeat cannot live in a rule here — it needs its own hook, or the
+    // band tiles down the whole header instead of sitting on one edge.
+    const css = greekCss();
+    for (const hook of [
+      '--sc-header-art:',
+      '--sc-header-art-size:',
+      '--sc-header-art-repeat:',
+      '--sc-header-art-pos:',
+    ]) {
+      expect(`${hook}${css.includes(hook)}`).toBe(`${hook}true`);
+    }
+  });
+});
+
+describe('greek ornament is drawn from sprites', () => {
+  it('renders every ornament it defines, none left unused', () => {
+    // Colour alone does not make the mode Greek. These are the motifs that do,
+    // and each must actually reach the stylesheet as a rendered ornament rather
+    // than sitting unused in sprites.ts — an ornament nobody sees is weight,
+    // and the bundler strips it out anyway.
+    const css = greekCss();
+    for (const [name, sprite] of Object.entries({
+      MEANDER,
+      PALMETTE,
+      COLUMN,
+      ROSETTE,
+      POMEGRANATE,
+      OWL,
+    })) {
+      const light = spriteDataUri(sprite, 'hsl(40 55% 46%)');
+      const dark = spriteDataUri(sprite, 'hsl(43 62% 46%)');
+      expect(`${name}:${css.includes(light) || css.includes(dark)}`).toBe(
+        `${name}:true`,
+      );
+    }
+  });
+
+  it('bakes a colour that matches the register it is used in', () => {
+    // A data URI is its own document — it inherits neither currentColor nor a
+    // custom property. The literals therefore have to track --sc-border by
+    // hand, and this is what notices when they stop.
+    const css = greekCss();
+    const borderIn = (selector: string) => {
+      const start = css.indexOf(`${selector} {`);
+      const body = css.slice(start, css.indexOf('}', start));
+      return /--sc-border:\s*([^;]+);/.exec(body)?.[1].trim();
+    };
+    expect(borderIn(':root.sc-greek')).toBe('40 55% 46%');
+    expect(borderIn(':root.sc-greek.sc-dark')).toBe('43 62% 46%');
   });
 });

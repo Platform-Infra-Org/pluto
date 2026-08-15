@@ -101,6 +101,13 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
             // byte-identical. A CSS selector cannot reach this element —
             // BackstageHeader-* becomes jss<n> in a production build.
             backgroundImage: 'var(--sc-header-art, none)',
+            // The band needs more than an image to be a band: a repeating
+            // ornament has to be sized, tiled on one axis and pinned to an
+            // edge. Four hooks rather than one, each inert by default so every
+            // other scheme renders exactly as it did before.
+            backgroundSize: 'var(--sc-header-art-size, auto)',
+            backgroundRepeat: 'var(--sc-header-art-repeat, repeat)',
+            backgroundPosition: 'var(--sc-header-art-pos, 0 0)',
             backgroundColor: 'hsl(var(--sc-card))',
             boxShadow: 'none',
             borderBottom: '1px solid hsl(var(--sc-border))',

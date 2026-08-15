@@ -16,7 +16,41 @@
  * Colour values are solved, not chosen: every pair that carries text clears
  * 4.5:1, the gold rule clears 3:1 against its card, and the status set clears
  * 5.0:1 against both card and dithered cell. See statusTokens.ts.
+ *
+ * Colour alone does not make a theme Greek, though — a recoloured app is just a
+ * recoloured app. The ornament is what carries it: the meander running under
+ * every page title, the fluting down the sidebar, the rosettes at the corners
+ * of a command window, the palmette on an empty shelf. Those are drawn from
+ * sprite grids (sprites.ts) rather than approximated with gradients, so they
+ * sit in the same pixel language as the rest of the app instead of looking like
+ * a decal applied over it.
  */
+import {
+  COLUMN,
+  MEANDER,
+  OWL,
+  PALMETTE,
+  POMEGRANATE,
+  ROSETTE,
+  Sprite,
+  spriteDataUri,
+} from './sprites';
+
+/**
+ * The two metals, as literals.
+ *
+ * Baked rather than read from --sc-gold because these are painted into SVG data
+ * URIs, and a data URI is its own document: it inherits neither currentColor nor
+ * a custom property from the page. Two registers, two literals. They must track
+ * --sc-border in each register below, and greek.test.ts checks that they do.
+ */
+const BRONZE = 'hsl(40 55% 46%)';
+const GOLD = 'hsl(43 62% 46%)';
+
+/** An ornament as a CSS url(), ready to interpolate. */
+const art = (sprite: Sprite, fill: string) =>
+  `url("${spriteDataUri(sprite, fill)}")`;
+
 export function greekCss(): string {
   return `
 /* ===== Ancient Greek mode — light register: Olympus ===== */
@@ -96,44 +130,111 @@ export function greekCss(): string {
     0 0 14px hsl(var(--sc-primary) / .3),
     var(--sc-shadow) !important;
 }
-/* Diamond corner marks. ponytail: two corners, not four — a diamond needs its
-   own box and an element has two pseudo-elements. Asymmetric corner accents
-   are a real Hades motif, so this is a deliberate stop rather than a
-   limitation; add a wrapper span if four are ever wanted. */
-:root.sc-greek [class*="bui-DialogInner"]::before,
-:root.sc-greek .MuiDialog-paper::before,
-:root.sc-greek [class*="bui-DialogInner"]::after,
-:root.sc-greek .MuiDialog-paper::after {
-  content: '';
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background: hsl(var(--sc-gold));
-  transform: rotate(45deg);
-  pointer-events: none;
-  z-index: 1;
+/* Rosette medallions at all FOUR corners of a command window — the ornate
+   corner accent a Hades menu frame carries.
+   Four corners from one sprite, as four background layers rather than
+   pseudo-elements: an element has only two of those, which is what previously
+   capped this at two corners. The rosette is symmetric under a quarter turn,
+   so the same tile is correct at every corner.
+   Inset 4px, not outset: styles.ts sets overflow: hidden on this element so its
+   header and footer edges follow the rounded corners, and that clips anything
+   painted outside the padding box. */
+:root.sc-greek [class*="bui-DialogInner"],
+:root.sc-greek .MuiDialog-paper {
+  background-image: ${art(ROSETTE, GOLD)}, ${art(ROSETTE, GOLD)},
+    ${art(ROSETTE, GOLD)}, ${art(ROSETTE, GOLD)};
+  background-repeat: no-repeat;
+  background-size: 8px 8px;
+  background-position:
+    left 4px top 4px, right 4px top 4px,
+    left 4px bottom 4px, right 4px bottom 4px;
 }
-/* Inside the border box, not outside it: styles.ts sets overflow: hidden on
-   this same element so its header and footer edges follow the rounded corners,
-   and that clips any absolutely positioned child of it. A mark at -8px paints
-   nothing at all. */
-:root.sc-greek [class*="bui-DialogInner"]::before,
-:root.sc-greek .MuiDialog-paper::before { top: 3px; left: 3px; }
-:root.sc-greek [class*="bui-DialogInner"]::after,
-:root.sc-greek .MuiDialog-paper::after { bottom: 3px; right: 3px; }
 
-/* The filigree band behind page headers. Read by theme.tsx through
-   --sc-header-art, because a selector naming BackstageHeader is dead in a
-   production build (its makeStyles class hashes to jss<n>). */
+/* The meander — the Greek key — running under every page title.
+   Read by theme.tsx through these variables, because a selector naming the
+   page-header component is dead in a production build (its makeStyles class
+   hashes to jss<n>). The band sits at the bottom edge of the header so it
+   reads as the rule beneath the title rather than a texture behind it. */
 :root.sc-greek {
-  --sc-header-art:
-    repeating-linear-gradient(
-      90deg,
-      hsl(var(--sc-gold) / .22) 0 2px,
-      transparent 2px 6px,
-      hsl(var(--sc-gold) / .22) 6px 8px,
-      transparent 8px 18px
-    );
+  --sc-header-art: ${art(MEANDER, BRONZE)};
+  --sc-header-art-size: 24px 12px;
+  --sc-header-art-repeat: repeat-x;
+  --sc-header-art-pos: left bottom;
+}
+:root.sc-greek.sc-dark {
+  --sc-header-art: ${art(MEANDER, GOLD)};
+}
+
+/* The sign-in page as a temple facade: a fluted Doric column standing at each
+   side of the card, running the full height of the viewport.
+   Deliberately only here. Columns down the sidebar and a key along every table
+   header turned the ornament into wallpaper — a motif reads as intent when it
+   appears where it means something and as noise when it appears everywhere. A
+   threshold is worth a facade; a data grid is not. */
+:root.sc-greek .sc-login {
+  background-image: ${art(COLUMN, BRONZE)}, ${art(COLUMN, BRONZE)};
+  background-repeat: repeat-y, repeat-y;
+  background-size: 14px 36px, 14px 36px;
+  background-position: left 18px top, right 18px top;
+}
+:root.sc-greek.sc-dark .sc-login {
+  background-image: ${art(COLUMN, GOLD)}, ${art(COLUMN, GOLD)};
+}
+
+/* A meander rule under section headings, the same band at half height. */
+:root.sc-greek .sc-h1 {
+  padding-bottom: 6px;
+  background-image: ${art(MEANDER, BRONZE)};
+  background-repeat: repeat-x;
+  background-size: 20px 10px;
+  background-position: left bottom;
+}
+:root.sc-greek.sc-dark .sc-h1 {
+  background-image: ${art(MEANDER, GOLD)};
+}
+
+/* An empty shelf gets a palmette — the akroterion at the peak of a temple, and
+   a friendlier thing to meet than a blank rectangle. */
+:root.sc-greek .sc-empty {
+  background-image: ${art(PALMETTE, BRONZE)};
+  background-repeat: no-repeat;
+  background-position: center 12px;
+  background-size: 32px 32px;
+  padding-top: 52px;
+}
+:root.sc-greek.sc-dark .sc-empty {
+  background-image: ${art(PALMETTE, GOLD)};
+}
+
+/* Deliberately NOT decorating .sc-login-mark or .sc-nav-mark: the mark's whole
+   appearance is a background gradient, so any background-image here replaces
+   the tile rather than adding to it. Columns flanking it would also have to sit
+   outside the border box, where a background is never painted. The mark keeps
+   its accent tile; the ornament goes around it, not on it. */
+
+/* The sign-in card is the threshold, so it carries the pomegranate — the fruit
+   Persephone ate below, and the reason she has to come back. Set low in the
+   corner as a watermark: the card is a form first. */
+:root.sc-greek .sc-login-card {
+  background-image: ${art(POMEGRANATE, BRONZE)};
+  background-repeat: no-repeat;
+  background-size: 28px 28px;
+  background-position: right 14px bottom 14px;
+}
+:root.sc-greek.sc-dark .sc-login-card {
+  background-image: ${art(POMEGRANATE, GOLD)};
+}
+
+/* Athena's owl watches over the tour. A guide is the one place in the app where
+   wisdom-by-the-shoulder is the literal subject. */
+:root.sc-greek .sc-qs-box {
+  background-image: ${art(OWL, BRONZE)};
+  background-repeat: no-repeat;
+  background-size: 22px 22px;
+  background-position: right 12px top 12px;
+}
+:root.sc-greek.sc-dark .sc-qs-box {
+  background-image: ${art(OWL, GOLD)};
 }
 
 /* Primary buttons carry the gold rule too. */
