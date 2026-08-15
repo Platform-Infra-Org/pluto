@@ -115,13 +115,15 @@ it is wholesale and measured:
   why `contrast.test.ts` checks that each mode covers the same token names.
 - The text label is untouched. `SUCCEEDED` is still the word on the badge, so
   no meaning rests on hue alone and the change costs consistency, not access.
-- Every pair is re-measured against **that mode's** card colours, to the same
-  5.0:1 target as the defaults.
+- Every pair is re-measured against **that mode's** card colours. The suite
+  enforces WCAG AA, 4.5:1; the literals themselves are chosen at the lowest
+  lightness clearing 5.0:1, so there is headroom above the line rather than a
+  value sitting exactly on it.
 
 The cost is real and worth naming: Greek's gold success sits near the amber
 that means *running* elsewhere. Success is pushed to 60° rather than a straight
-gold to open that gap to 25°, and running moves to a cold 188° cyan that no
-other scheme uses.
+gold, 22° from the amber text hue and 25° from the amber badge fill it sits on,
+and running moves to a cold 188° cyan that no other scheme uses.
 
 ## Mode potions
 
