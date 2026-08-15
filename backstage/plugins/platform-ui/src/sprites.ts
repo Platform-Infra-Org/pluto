@@ -663,16 +663,21 @@ export const ICICLES: Sprite = [
    FLAKE above belongs to this set; it sits with the winter ornament because
    the big crystal is authored beside it. */
 
-/** Spring: a sapling. Crown, trunk, and the ground it is coming out of. */
-export const SAPLING: Sprite = [
-  '...##...',
-  '..####..',
+/**
+ * Spring: a flower rather than a tree — petals, a centre, a stem and one leaf.
+ *
+ * The gap between the petals is what makes it a bloom instead of a blob at this
+ * size; a solid disc on a stalk reads as a lollipop.
+ */
+export const FLOWER: Sprite = [
+  '..#..#..',
+  '.######.',
+  '##.##.##',
   '.######.',
   '..####..',
   '...##...',
+  '..###...',
   '...##...',
-  '...##...',
-  '..####..',
 ];
 
 /** Summer: the sun at its height, four rays and a full disc. */
@@ -727,6 +732,41 @@ export const BOLT: Sprite = [
   '..##....',
   '.##.....',
   '#.......',
+];
+
+/* ===== Spring ornament =====
+   Blossom rather than architecture. Same restraint as the ice: petals land on
+   the edges that frame something and nowhere else. */
+
+/**
+ * A four-petal blossom for corners and empty shelves.
+ *
+ * Symmetric under a quarter turn, which is what lets one sprite serve all four
+ * corners of a window as four background layers.
+ */
+export const BLOSSOM: Sprite = [
+  '.##..##.',
+  '########',
+  '##.##.##',
+  '.######.',
+  '.######.',
+  '##.##.##',
+  '########',
+  '.##..##.',
+];
+
+/** A vine in flower, 16x10, tiling along a rail under a page title. */
+export const VINE: Sprite = [
+  '..##........##..',
+  '.####......####.',
+  '.####......####.',
+  '..##........##..',
+  '...##......##...',
+  '....########....',
+  '................',
+  '################',
+  '################',
+  '................',
 ];
 
 export const STATE_SPRITES: Record<RequestState, Sprite> = {

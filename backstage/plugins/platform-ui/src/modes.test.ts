@@ -5,6 +5,14 @@ import { spriteRects } from './sprites';
 
 const stripComments = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 
+/**
+ * Only the parts a selector engine would read: no comments, and no inlined
+ * ornament. A data URI is opaque content — its `www.w3.org` xmlns is not a
+ * class named `org`, and its encoded body is not a declaration.
+ */
+const selectorsIn = (css: string) =>
+  stripComments(css).replace(/url\("data:[^"]*"\)/g, 'url(ORNAMENT)');
+
 /** Every `--sc-*` whose value is an "H S% L%" triplet, inside one selector block. */
 function colourTokens(css: string, selector: string): string[] {
   const start = css.indexOf(`${selector} {`);
@@ -110,7 +118,7 @@ describe('modesCss', () => {
 
   it('names no class a production build discards', () => {
     const names = Array.from(
-      stripComments(modesCss()).matchAll(/\.([A-Za-z][\w-]*)/g),
+      selectorsIn(modesCss()).matchAll(/\.([A-Za-z][\w-]*)/g),
       m => m[1],
     );
     const bad = names.filter(
@@ -196,6 +204,97 @@ describe('what floats in each bottle', () => {
     for (const r of rules) {
       expect(`${r.sel} scoped:${/:root\.sc-\w/.test(r.sel)}`).toBe(
         `${r.sel} scoped:false`,
+      );
+    }
+  });
+});
+
+describe('ornamented table modes', () => {
+  const ornamented = MODE_DEFS.filter(m => m.ornament);
+
+  it('gives spring its blossom, and leaves the others plain', () => {
+    // Restraint is the point: the modes that carry ornament are the ones where
+    // it means something. Five bottles all stamping petals on every surface is
+    // how a motif becomes wallpaper.
+    expect(ornamented.map(m => m.id)).toEqual(['spring']);
+  });
+
+  it('uses a corner motif that is symmetric under a quarter turn', () => {
+    // Four corners are drawn from ONE sprite as four background layers. If the
+    // motif is not rotationally symmetric, three of those corners are wrong and
+    // no string-matching test would notice.
+    for (const m of ornamented) {
+      const g = m.ornament!.motif;
+      const cols = g[0].split('').map((_, c) => g.map(row => row[c]).join(''));
+      expect(`${m.id}:${JSON.stringify(cols)}`).toBe(
+        `${m.id}:${JSON.stringify([...g])}`,
+      );
+    }
+  });
+
+  it('marks all four corners and pins the band to an edge', () => {
+    const css = modesCss();
+    for (const m of ornamented) {
+      const rule = Array.from(
+        selectorsIn(css).matchAll(/([^{}]+)\{([^}]*)\}/g),
+        x => ({ sel: x[1], body: x[2] }),
+      ).find(
+        r =>
+          r.sel.includes(`sc-${m.id} .MuiDialog-paper`) &&
+          r.body.includes('ORNAMENT'),
+      );
+      expect(`${m.id}:${(rule?.body.match(/ORNAMENT/g) ?? []).length}`).toBe(
+        `${m.id}:4`,
+      );
+      for (const hook of [
+        '--sc-header-art:',
+        '--sc-header-art-size:',
+        '--sc-header-art-repeat:',
+        '--sc-header-art-pos:',
+      ]) {
+        expect(`${m.id}${hook}${css.includes(hook)}`).toBe(`${m.id}${hook}true`);
+      }
+    }
+  });
+
+  it('never hangs ornament outside the box it is painted in', () => {
+    // A background is clipped to the border box, and styles.ts additionally
+    // sets overflow: hidden on the dialog. Ornament at a negative offset paints
+    // nothing at all, and a string-matching test passes on it.
+    const offenders = Array.from(
+      selectorsIn(modesCss()).matchAll(/([^{}]+)\{([^}]*)\}/g),
+      m => ({ sel: m[1].trim().replace(/\s+/g, ' '), body: m[2] }),
+    ).filter(r => /background-position:[^;]*-\d/.test(r.body));
+    expect(offenders.map(o => o.sel)).toEqual([]);
+  });
+
+  it('declares its extra tokens in both registers', () => {
+    const css = modesCss();
+    for (const m of MODE_DEFS) {
+      const keys = Object.keys(m.light.extra ?? {});
+      expect(Object.keys(m.dark.extra ?? {})).toEqual(keys);
+      for (const k of keys) {
+        expect(`${m.id}:${valueIn(css, `:root.sc-${m.id}`, k)}`).toBe(
+          `${m.id}:${m.light.extra![k]}`,
+        );
+        expect(`${m.id}:${valueIn(css, `:root.sc-${m.id}.sc-dark`, k)}`).toBe(
+          `${m.id}:${m.dark.extra![k]}`,
+        );
+      }
+    }
+  });
+
+  it('bakes the ornament in the colour its token declares', () => {
+    // --sc-blossom is baked into the ornament's data URIs as a literal, because
+    // a data URI inherits no custom property. The token and the literal have to
+    // agree by hand, and this is what notices when they stop.
+    for (const m of ornamented) {
+      const o = m.ornament!;
+      expect(`${m.id} light:${o.lightFill}`).toBe(
+        `${m.id} light:hsl(${m.light.extra!.blossom})`,
+      );
+      expect(`${m.id} dark:${o.darkFill}`).toBe(
+        `${m.id} dark:hsl(${m.dark.extra!.blossom})`,
       );
     }
   });

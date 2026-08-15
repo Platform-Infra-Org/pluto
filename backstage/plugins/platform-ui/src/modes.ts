@@ -21,7 +21,17 @@
  * third and fourth green would leave SUCCEEDED looking different depending on
  * which bottle you happen to hold.
  */
-import { BOLT, LEAF, PLANET, SAPLING, Sprite, SUN } from './sprites';
+import {
+  BLOSSOM,
+  BOLT,
+  FLOWER,
+  LEAF,
+  PLANET,
+  Sprite,
+  spriteDataUri,
+  SUN,
+  VINE,
+} from './sprites';
 
 const WHITE = '0 0% 100%';
 const INK = '240 10% 8%';
@@ -38,6 +48,30 @@ type Register = {
   primaryFg: string;
   accent: string;
   accentFg: string;
+  /** Extra tokens this register declares, beyond the shadcn set. */
+  extra?: Record<string, string>;
+};
+
+/**
+ * Ornament for a table mode.
+ *
+ * Same three placements the hand-written modes settled on — corners of a
+ * window, a band under a page title, an empty shelf — because those are the
+ * edges that frame something. Anything more and the motif becomes wallpaper,
+ * which is the mistake the Greek round made and paid for.
+ *
+ * Colours are baked because a data URI is its own document: it inherits neither
+ * currentColor nor var(--x).
+ */
+type Ornament = {
+  /** Corners and empty shelves. Must be symmetric under a quarter turn. */
+  motif: Sprite;
+  /** The band under a page title. */
+  band: Sprite;
+  bandSize: string;
+  /** Baked fills, one per register. */
+  lightFill: string;
+  darkFill: string;
 };
 
 export type ModeDef = {
@@ -47,12 +81,21 @@ export type ModeDef = {
   inner: Sprite;
   light: Register;
   dark: Register;
+  /** Optional — most table modes are a palette and their contents. */
+  ornament?: Ornament;
 };
 
 export const MODE_DEFS: ModeDef[] = [
   {
     id: 'spring',
-    inner: SAPLING,
+    inner: FLOWER,
+    ornament: {
+      motif: BLOSSOM,
+      band: VINE,
+      bandSize: '26px 16px',
+      lightFill: 'hsl(340 62% 48%)',
+      darkFill: 'hsl(340 68% 66%)',
+    },
     light: {
       bg: '100 32% 96%',
       fg: '125 32% 12%',
@@ -62,8 +105,11 @@ export const MODE_DEFS: ModeDef[] = [
       border: '130 45% 34%',
       primary: '142 68% 27%',
       primaryFg: WHITE,
-      accent: '100 32% 90%',
-      accentFg: '125 32% 18%',
+      // Blossom, not more green: spring is the one season that is two colours,
+      // and a hover state is where the second one can live without shouting.
+      accent: '340 48% 92%',
+      accentFg: '340 40% 20%',
+      extra: { blossom: '340 62% 48%' },
     },
     dark: {
       bg: '140 38% 4.5%',
@@ -74,8 +120,9 @@ export const MODE_DEFS: ModeDef[] = [
       border: '132 48% 50%',
       primary: '140 70% 58%',
       primaryFg: '140 40% 6%',
-      accent: '140 26% 15%',
-      accentFg: '100 26% 94%',
+      accent: '340 26% 15%',
+      accentFg: '340 30% 92%',
+      extra: { blossom: '340 68% 66%' },
     },
   },
   {
@@ -219,7 +266,74 @@ function block(selector: string, r: Register): string {
   --sc-ring: ${r.primary};
   --sc-accent: ${r.accent};
   --sc-accent-fg: ${r.accentFg};
-${SHARED}
+${SHARED}${extra(r)}
+}`;
+}
+
+/** A register's own tokens, beyond the shadcn set. */
+function extra(r: Register): string {
+  if (!r.extra) return '';
+  return `\n${Object.entries(r.extra)
+    .map(([k, v]) => `  --sc-${k}: ${v};`)
+    .join('\n')}`;
+}
+
+/** An ornament as a CSS url(), ready to interpolate. */
+const art = (sprite: Sprite, fill: string) =>
+  `url("${spriteDataUri(sprite, fill)}")`;
+
+/**
+ * The three placements an ornamented mode gets.
+ *
+ * Every background here is inset, never outset: a background is clipped to the
+ * border box, and styles.ts additionally sets overflow: hidden on the dialog, so
+ * anything hung outside simply never paints.
+ */
+function ornamentCss(id: string, o: Ornament): string {
+  const corners = (fill: string) =>
+    `${art(o.motif, fill)}, ${art(o.motif, fill)}, ${art(o.motif, fill)}, ${art(
+      o.motif,
+      fill,
+    )}`;
+  return `
+/* Four corners from one motif as four background layers — the sprite is
+   symmetric under a quarter turn, so the same tile is correct at every corner,
+   which is what lifts this past the two-pseudo-element ceiling. */
+:root.sc-${id} [class*="bui-DialogInner"],
+:root.sc-${id} .MuiDialog-paper {
+  background-image: ${corners(o.lightFill)};
+  background-repeat: no-repeat;
+  background-size: 9px 9px;
+  background-position:
+    left 5px top 5px, right 5px top 5px,
+    left 5px bottom 5px, right 5px bottom 5px;
+}
+:root.sc-${id}.sc-dark [class*="bui-DialogInner"],
+:root.sc-${id}.sc-dark .MuiDialog-paper {
+  background-image: ${corners(o.darkFill)};
+}
+/* The band under a page title. Read by theme.tsx through these variables,
+   because a selector naming the page-header component is dead in a production
+   build (its makeStyles class hashes to jss<n>). */
+:root.sc-${id} {
+  --sc-header-art: ${art(o.band, o.lightFill)};
+  --sc-header-art-size: ${o.bandSize};
+  --sc-header-art-repeat: repeat-x;
+  --sc-header-art-pos: left bottom;
+}
+:root.sc-${id}.sc-dark {
+  --sc-header-art: ${art(o.band, o.darkFill)};
+}
+/* An empty shelf gets the motif rather than a blank rectangle. */
+:root.sc-${id} .sc-empty {
+  background-image: ${art(o.motif, o.lightFill)};
+  background-repeat: no-repeat;
+  background-position: center 12px;
+  background-size: 28px 28px;
+  padding-top: 48px;
+}
+:root.sc-${id}.sc-dark .sc-empty {
+  background-image: ${art(o.motif, o.darkFill)};
 }`;
 }
 
@@ -235,7 +349,7 @@ ${block(`:root.sc-${m.id}.sc-dark`, m.dark)}
 :root.sc-${m.id} .sc-btn-primary,
 :root.sc-${m.id} [data-variant="primary"][class*="bui-Button"] {
   filter: drop-shadow(0 0 5px hsl(var(--sc-primary) / .45));
-}`,
+}${m.ornament ? ornamentCss(m.id, m.ornament) : ''}`,
   ).join('\n');
 
   return `
