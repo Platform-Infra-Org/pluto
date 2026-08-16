@@ -132,7 +132,7 @@ export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
 export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   default: { light: CARD_LIGHT, dark: CARD_DARK },
   greek: { light: GREEK_CARD_LIGHT, dark: GREEK_CARD_DARK },
-  foudre: { light: '0 0% 100%', dark: '153 40% 8%' },
+  foudre: { light: '0 0% 100%', dark: '153 60% 7%' },
   huddle: { light: '0 0% 100%', dark: '0 0% 9%' },
   frank: { light: '0 0% 100%', dark: '250 85% 14%' },
 };
