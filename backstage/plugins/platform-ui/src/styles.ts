@@ -3,19 +3,27 @@
 // picker can swap the accent live. Scoped under `.sc` so it never fights
 // Backstage's own MUI styles outside our pages.
 import { statusTokenCss } from './statusTokens';
+import { greekCss } from './greek';
+import { foudreCss } from './foudre';
+import { slushCss } from './slush';
+import { brandsCss } from './brands';
+import { spiderverseCss } from './spiderverse';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
-/* Self-hosted so the CSP (font-src 'self') is satisfied and the app works
-   offline. Latin subset, 12KB. SIL OFL — see public/fonts/LICENSE.txt. */
+/* The app's one typeface. Self-hosted because the CSP is font-src 'self', so a
+   CDN reference would simply not load — and the failure is silent, the page
+   falling back to something that looks nearly right. The variable file covers
+   200-700 in a single asset. ITF Free Font License, see public/fonts/LICENSE.txt.
+
+   It replaced the pixel face as the base. Differentiation now comes from
+   weight, size and case rather than from a second family: the scale below is
+   what an outline grotesque needs, where the pixel face wanted uppercase chrome
+   and a hard 12px floor to stay legible. */
 @font-face {
-  font-family: 'Pixelify Sans';
-  src: url('/fonts/pixelify-sans.woff2') format('woff2');
-  /* A variable file: one asset covers the whole range, so the font-weight
-     declarations already scattered through this sheet and theme.tsx resolve
-     to real weights now, rather than the no-ops or synthesised smear they
-     produced under the old face, which shipped only a single weight. */
-  font-weight: 400 700;
+  font-family: 'Clash Grotesk';
+  src: url('/fonts/clash-grotesk.woff2') format('woff2');
+  font-weight: 200 700;
   font-style: normal;
   font-display: swap;
 }
@@ -25,12 +33,19 @@ export const SHADCN_CSS = `
 :root {
   /* 8-bit, softened: the shadow keeps its offset and its hard edge — that is
      the pixel signature — but drops most of its weight, and corners are rounded
-     rather than square. Chunky 2px outlines stay. */
-  --sc-radius: 6px;
-  --sc-radius-sm: 4px;
+     rather than square. Chunky 2px outlines stay.
+     The house radius is the soft one the modern references converge on; the
+     border width beside it is what still separates one mode from the next. */
+  --sc-radius: 12px;
+  --sc-radius-sm: 8px;
   --sc-border-w: 2px;
   --sc-shadow: 3px 3px 0 hsl(var(--sc-fg) / .16);
-  --sc-font-pixel: 'Pixelify Sans', ui-monospace, SFMono-Regular, monospace;
+  --sc-font-ui: 'Clash Grotesk', Inter, system-ui, -apple-system, sans-serif;
+  /* Titles take the grotesque, everything else keeps the pixel face. Held as
+     its own variable so a mode can move the two independently — the pixel font
+     is still the app's voice, but a heading is where a face has room to be
+     read rather than decoded. */
+  --sc-font-title: 'Clash Grotesk', Inter, system-ui, -apple-system, sans-serif;
   --sc-unit: 4px;
   --sc-nav-w: 240px;
   --sc-bg: 240 10% 98%;
@@ -63,13 +78,18 @@ export const SHADCN_CSS = `
   --sc-accent-fg: 0 0% 98%;
 }
 ${statusTokenCss()}
+${greekCss()}
+${foudreCss()}
+${slushCss()}
+${brandsCss()}
+${spiderverseCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because
-     Pixelify Sans loses strokes at small sizes the way a bitmap face would;
-     it's an outline face and doesn't. Nobody has checked by eye whether the
+     an outline grotesque loses no strokes at small sizes the way a bitmap face
+     would. Nobody has checked by eye whether the
      floor still earns its keep at this face's proportions, so it stays. */
-  font-family: var(--sc-font-pixel);
+  font-family: var(--sc-font-ui);
   color: hsl(var(--sc-fg));
 }
 .sc, .sc * { font-size: max(12px, 1em); }
@@ -88,14 +108,162 @@ ${statusTokenCss()}
    a production build never mangles — unlike generated class names, which
    become jss<n> there. Nothing here may name one: styles.test.ts fails on it. */
 
-/* [stable: bui tokens] retarget bui's accent/link/focus to the picker. These
-   CSS variables are the primary, upgrade-safe mechanism for bui components. */
-:root {
+/* [stable: bui tokens] retarget bui's surface/text/border/radius/status tokens
+   to the picker. These CSS variables are the primary, upgrade-safe mechanism
+   for bui components, and until this block was filled in only five of canon's
+   ~140 were mapped — so every canon surface on an entity page (six kinds),
+   /notifications and the TechDocs entity card rendered as a Backstage hex.
+
+   THE SELECTOR LIST IS LOAD-BEARING, ALL THREE OF IT. Canon declares its light
+   set at ":root, [data-theme-mode='light']" and its dark set at
+   "[data-theme-mode='dark']", and the app puts data-theme-mode on <body>.
+   Custom properties inherit, so <body>'s own declaration beats anything
+   inherited from <html>: a bare :root here is DEAD in the dark register, which
+   is exactly how the five original overrides shipped broken (measured:
+   html --bui-bg-solid = ours, body --bui-bg-solid = canon's pale blue). Naming
+   both data-theme-mode values puts our declaration on the same element canon
+   declares on, where it wins. styles.test.ts pins the selector list, because
+   the failure is invisible in light — the register people check first. */
+:root,
+[data-theme-mode="light"],
+[data-theme-mode="dark"] {
+  /* grounds */
+  --bui-bg-app: hsl(var(--sc-bg));
+  --bui-bg-neutral-1: hsl(var(--sc-card));
+  --bui-bg-neutral-1-hover: hsl(var(--sc-card) / 0.92);
+  --bui-bg-neutral-1-pressed: hsl(var(--sc-card) / 0.85);
+  --bui-bg-neutral-1-disabled: hsl(var(--sc-card) / 0.5);
+  --bui-bg-neutral-2: hsl(var(--sc-muted));
+  --bui-bg-neutral-2-hover: hsl(var(--sc-muted) / 0.92);
+  --bui-bg-neutral-2-pressed: hsl(var(--sc-muted) / 0.85);
+  --bui-bg-neutral-2-disabled: hsl(var(--sc-muted) / 0.5);
+  --bui-bg-neutral-3: hsl(var(--sc-accent));
+  --bui-bg-neutral-3-hover: hsl(var(--sc-accent) / 0.92);
+  --bui-bg-neutral-3-pressed: hsl(var(--sc-accent) / 0.85);
+  --bui-bg-neutral-3-disabled: hsl(var(--sc-accent) / 0.5);
+  /* neutral-4 is the only one whose base is already translucent, so its states
+     step the alpha UP rather than down — same visible cue, right direction. */
+  --bui-bg-neutral-4: hsl(var(--sc-border) / 0.35);
+  --bui-bg-neutral-4-hover: hsl(var(--sc-border) / 0.45);
+  --bui-bg-neutral-4-pressed: hsl(var(--sc-border) / 0.5);
+  --bui-bg-neutral-4-disabled: hsl(var(--sc-border) / 0.18);
+  /* --bui-bg-inherit needs no entry: canon defines it as var(--bui-bg-app) at a
+     plain :root, so mapping bg-app carries it. */
+
+  /* the solid (primary) surface */
   --bui-bg-solid: hsl(var(--sc-primary));
   --bui-bg-solid-hover: hsl(var(--sc-primary) / 0.92);
   --bui-bg-solid-pressed: hsl(var(--sc-primary) / 0.85);
+  --bui-bg-solid-disabled: hsl(var(--sc-primary) / 0.5);
+  --bui-fg-solid: hsl(var(--sc-primary-fg));
+  --bui-fg-solid-disabled: hsl(var(--sc-primary-fg) / 0.55);
+  --bui-accent-bg: hsl(var(--sc-primary));
+  --bui-accent-bg-hover: hsl(var(--sc-primary) / 0.9);
+  --bui-accent-bg-disabled: hsl(var(--sc-primary) / 0.5);
+  --bui-accent-fg: hsl(var(--sc-primary-fg));
+  --bui-accent-fg-disabled: hsl(var(--sc-primary-fg) / 0.55);
+
+  /* ink */
+  --bui-fg-primary: hsl(var(--sc-fg));
+  --bui-fg-secondary: hsl(var(--sc-muted-fg));
+  --bui-fg-disabled: hsl(var(--sc-muted-fg) / 0.55);
   --bui-fg-link: hsl(var(--sc-primary));
-  --bui-border-focus: hsl(var(--sc-primary));
+
+  /* edges and focus */
+  --bui-border-1: hsl(var(--sc-border));
+  --bui-border-2: hsl(var(--sc-border) / 0.6);
+  --bui-border-focus: hsl(var(--sc-ring));
+  --bui-ring: hsl(var(--sc-ring));
+  --bui-shadow: var(--sc-shadow);
+
+  /* shape. --bui-radius-full is deliberately NOT mapped: it is the pill, and it
+     must stay 9999px or every canon pill becomes a rounded rectangle. */
+  --bui-radius-1: var(--sc-radius-sm);
+  --bui-radius-2: var(--sc-radius-sm);
+  --bui-radius-3: var(--sc-radius-sm);
+  --bui-radius-4: var(--sc-radius);
+  --bui-radius-5: var(--sc-radius);
+  --bui-radius-6: var(--sc-radius);
+
+  /* Status, wholesale. A half-mapped family puts one themed badge beside one
+     vanilla one on the same card, which reads as a bug rather than a palette,
+     so every member of every ramp is here or none would be.
+     The shape follows the badges (.sc-badge-*): a translucent fill of the
+     status hue, with the measured on-* ink over it. --sc-on-* clears 5:1
+     against both the card and the dither cell in both registers
+     (statusTokens.ts), so it clears any tint between them too. There is no
+     --sc-info / --sc-announcement token: canon's informational ramp is the
+     accent, so it takes --sc-primary. */
+  --bui-fg-positive: hsl(var(--sc-on-success));
+  --bui-fg-negative: hsl(var(--sc-on-destructive));
+  --bui-fg-warning: hsl(var(--sc-on-warning));
+  --bui-fg-announcement: hsl(var(--sc-primary));
+  --bui-fg-success: hsl(var(--sc-on-success));
+  --bui-fg-danger: hsl(var(--sc-on-destructive));
+  --bui-fg-info: hsl(var(--sc-primary));
+  --bui-bg-success: hsl(var(--sc-success) / 0.16);
+  --bui-bg-danger: hsl(var(--sc-destructive) / 0.16);
+  --bui-bg-warning: hsl(var(--sc-warning) / 0.16);
+  --bui-bg-info: hsl(var(--sc-primary) / 0.16);
+  --bui-fg-success-on-bg: hsl(var(--sc-on-success));
+  --bui-fg-danger-on-bg: hsl(var(--sc-on-destructive));
+  --bui-fg-warning-on-bg: hsl(var(--sc-on-warning));
+  --bui-fg-info-on-bg: hsl(var(--sc-primary));
+  --bui-border-success: hsl(var(--sc-success));
+  --bui-border-danger: hsl(var(--sc-destructive));
+  --bui-border-warning: hsl(var(--sc-warning));
+  --bui-border-info: hsl(var(--sc-primary));
+
+  --bui-positive-bg: hsl(var(--sc-success) / 0.16);
+  --bui-positive-bg-hover: hsl(var(--sc-success) / 0.22);
+  --bui-positive-bg-disabled: hsl(var(--sc-success) / 0.1);
+  --bui-positive-bg-subdued: hsl(var(--sc-success) / 0.1);
+  --bui-positive-bg-subdued-hover: hsl(var(--sc-success) / 0.16);
+  --bui-positive-bg-subdued-disabled: hsl(var(--sc-success) / 0.06);
+  --bui-positive-border: hsl(var(--sc-success));
+  --bui-positive-fg: hsl(var(--sc-on-success));
+  --bui-positive-fg-disabled: hsl(var(--sc-on-success) / 0.55);
+  --bui-positive-fg-subdued: hsl(var(--sc-on-success));
+  --bui-positive-fg-subdued-disabled: hsl(var(--sc-on-success) / 0.55);
+
+  --bui-negative-bg: hsl(var(--sc-destructive) / 0.16);
+  --bui-negative-bg-hover: hsl(var(--sc-destructive) / 0.22);
+  --bui-negative-bg-disabled: hsl(var(--sc-destructive) / 0.1);
+  --bui-negative-bg-subdued: hsl(var(--sc-destructive) / 0.1);
+  --bui-negative-bg-subdued-hover: hsl(var(--sc-destructive) / 0.16);
+  --bui-negative-bg-subdued-disabled: hsl(var(--sc-destructive) / 0.06);
+  --bui-negative-border: hsl(var(--sc-destructive));
+  --bui-negative-fg: hsl(var(--sc-on-destructive));
+  --bui-negative-fg-disabled: hsl(var(--sc-on-destructive) / 0.55);
+  --bui-negative-fg-subdued: hsl(var(--sc-on-destructive));
+  --bui-negative-fg-subdued-disabled: hsl(var(--sc-on-destructive) / 0.55);
+
+  --bui-warning-bg: hsl(var(--sc-warning) / 0.16);
+  --bui-warning-bg-hover: hsl(var(--sc-warning) / 0.22);
+  --bui-warning-bg-disabled: hsl(var(--sc-warning) / 0.1);
+  --bui-warning-bg-subdued: hsl(var(--sc-warning) / 0.1);
+  --bui-warning-bg-subdued-hover: hsl(var(--sc-warning) / 0.16);
+  --bui-warning-bg-subdued-disabled: hsl(var(--sc-warning) / 0.06);
+  --bui-warning-border: hsl(var(--sc-warning));
+  --bui-warning-fg: hsl(var(--sc-on-warning));
+  --bui-warning-fg-disabled: hsl(var(--sc-on-warning) / 0.55);
+  --bui-warning-fg-subdued: hsl(var(--sc-on-warning));
+  --bui-warning-fg-subdued-disabled: hsl(var(--sc-on-warning) / 0.55);
+
+  --bui-announcement-bg: hsl(var(--sc-primary) / 0.16);
+  --bui-announcement-bg-hover: hsl(var(--sc-primary) / 0.22);
+  --bui-announcement-bg-disabled: hsl(var(--sc-primary) / 0.1);
+  --bui-announcement-bg-subdued: hsl(var(--sc-primary) / 0.1);
+  --bui-announcement-bg-subdued-hover: hsl(var(--sc-primary) / 0.16);
+  --bui-announcement-bg-subdued-disabled: hsl(var(--sc-primary) / 0.06);
+  --bui-announcement-border: hsl(var(--sc-primary));
+  --bui-announcement-fg: hsl(var(--sc-primary));
+  --bui-announcement-fg-disabled: hsl(var(--sc-primary) / 0.55);
+  --bui-announcement-fg-subdued: hsl(var(--sc-primary));
+  --bui-announcement-fg-subdued-disabled: hsl(var(--sc-primary) / 0.55);
+  /* --bui-gray-1..11 stay canon's own neutral ramp: it is raw, a mode-token
+     ladder mapped onto it can invert in one register, and no measured element
+     resolves through one. */
 }
 /* [stable: data-variant] primary bui buttons resolve their own token — the
    [data-variant] attribute is a stable hook; the class fragment is only a scope. */
@@ -106,7 +274,15 @@ body { background: hsl(var(--sc-bg)); } /* BackstageContent bg moved to theme.ts
 /* cards / surfaces */
 /* cards/surfaces via stable MUI classes. The InfoCard header is styled in the
    theme (BackstageInfoCard.styleOverrides.header). */
-.MuiCard-root, .MuiPaper-elevation1, .MuiPaper-elevation2, .MuiAccordion-root {
+/* The two elevation classes are the ONE exception to the substring form:
+   [class*="MuiPaper-elevation1"] also matches MuiPaper-elevation10 through -19
+   (MUI v4 goes to 24, and 8 is the default menu Paper), which would give every
+   menu and popover the card treatment. The generator emits key-counter, so an
+   anchored trailing dash matches every suffixed spelling and nothing else. */
+[class*="MuiCard-root"],
+.MuiPaper-elevation1, [class*="MuiPaper-elevation1-"],
+.MuiPaper-elevation2, [class*="MuiPaper-elevation2-"],
+[class*="MuiAccordion-root"] {
   background-color: hsl(var(--sc-card)) !important; color: hsl(var(--sc-fg));
   border: var(--sc-border-w) solid hsl(var(--sc-border)) !important;
   box-shadow: var(--sc-shadow) !important;
@@ -134,7 +310,7 @@ body { background: hsl(var(--sc-bg)); } /* BackstageContent bg moved to theme.ts
     0 0 0 4px hsl(var(--sc-fg) / .85),
     var(--sc-shadow) !important;
 }
-.MuiOutlinedInput-notchedOutline { border-color: hsl(var(--sc-input)) !important; }
+[class*="MuiOutlinedInput-notchedOutline"] { border-color: hsl(var(--sc-input)) !important; }
 /* [flare] Loading is a loading screen. Backstage's Progress is MUI LinearProgress,
    so this pair reaches every native page: catalog, scaffolder, search, techdocs.
    The bar is 4px cells, and MUI's own transform transition has to go or it
@@ -183,15 +359,15 @@ body { background: hsl(var(--sc-bg)); } /* BackstageContent bg moved to theme.ts
    inputs, menus, tooltips. The universal selector is deliberate: the goal is
    that no regular-font text survives anywhere in the app. */
 body, body *, input, select, textarea, button, optgroup {
-  font-family: var(--sc-font-pixel) !important;
+  font-family: var(--sc-font-ui) !important;
 }
 /* Icon fonts are glyph lookups, not text — leave them alone or every icon
    turns into a letter. */
 .material-icons, .material-icons-outlined, .MuiIcon-root, [class*="material-icons"],
-.MuiSvgIcon-root, .MuiSvgIcon-root * {
+[class*="MuiSvgIcon-root"], [class*="MuiSvgIcon-root"] * {
   font-family: 'Material Icons' !important;
 }
-.MuiSvgIcon-root { font-family: inherit !important; }
+[class*="MuiSvgIcon-root"] { font-family: inherit !important; }
 
 /* ===== Native Backstage pages wear the same 8-bit chrome =====
    Catalog, scaffolder, search and settings are built from MUI components we
@@ -202,19 +378,82 @@ body, body *, input, select, textarea, button, optgroup {
    BackstageAutocomplete-label carry the same font/text-transform, set in
    theme.tsx instead since class*= hooks on those three don't survive a
    production build. */
-.MuiButton-root, .MuiTab-root, .MuiChip-root, .MuiTableCell-head,
+[class*="MuiButton-root"], .MuiTab-root, .MuiChip-root, .MuiTableCell-head,
 .MuiTableSortLabel-root, .MuiFormLabel-root, .MuiInputLabel-root,
-.MuiTypography-h1, .MuiTypography-h2, .MuiTypography-h3,
-.MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6,
-.MuiCardHeader-title, .MuiDialogTitle-root, .MuiAlertTitle-root,
-[class*="bui-Button"], [class*="bui-HeaderTitle"], [class*="bui-HeaderBreadcrumb"] {
-  font-family: var(--sc-font-pixel) !important;
+[class*="bui-Button"] {
+  font-family: var(--sc-font-ui) !important;
   text-transform: uppercase !important;
   letter-spacing: 0 !important;
   font-weight: 400 !important;
 }
+/* A native page's title is the same object as the h1 that says "Welcome to
+   Platform", so it is set the same way: sentence case, 600, tracked in.
+   It used to sit in the rule above and came out uppercase at weight 400 —
+   a bitmap-face convention that reads as shouting in an outline grotesque,
+   and it made every native page look like a different product from ours.
+   The breadcrumb and the toolbar name are the top bar's own text and follow
+   the title rather than the chrome. */
+[class*="MuiTypography-h1"], [class*="MuiTypography-h2"], [class*="MuiTypography-h3"],
+[class*="MuiTypography-h4"], [class*="MuiTypography-h5"], [class*="MuiTypography-h6"],
+[class*="MuiCardHeader-title"], .MuiDialogTitle-root, .MuiAlertTitle-root,
+[class*="bui-HeaderTitle"], [class*="bui-HeaderBreadcrumb"],
+[class*="bui-PluginHeaderToolbarName"] {
+  font-family: var(--sc-font-title) !important;
+  text-transform: none !important;
+  letter-spacing: -0.025em !important;
+  font-weight: 600 !important;
+}
 /* The BUI page title is the biggest type on a native page. */
 [class*="bui-HeaderTitle"] { font-size: 28px !important; }
+/* The bar naming the page carries the page's name, so it is set like a title
+   rather than like chrome. */
+[class*="bui-HeaderTitle"],
+[class*="bui-PluginHeaderToolbarName"] {
+  font-weight: 700 !important;
+}
+/* The one bui surface with no rule here: PluginHeader ships its own white
+   ground and black ink, measured rgb(255,255,255) on a production build while
+   the mode's card was 42 45% 98%. Every potion is affected, so this is
+   app-wide rather than route-scoped.
+   Ground and ink only, deliberately: the substring hook matches the whole
+   PluginHeader family — Toolbar, ToolbarContent, ToolbarIcon, ToolbarName,
+   Breadcrumbs — so any edge declared here is drawn seven times over, once
+   under the icon, once under the title and once under the bar. Colour
+   inherits harmlessly down that tree; a border does not. */
+[class*="bui-PluginHeader"] {
+  background: hsl(var(--sc-card)) !important;
+  color: hsl(var(--sc-fg)) !important;
+}
+/* bui draws its own hairline under the toolbar as well. With the header now on
+   the card ground the rule separates nothing, and it read as a third stray
+   underline beneath the two above. */
+[class*="bui-PluginHeaderToolbar"] {
+  border-bottom: none !important;
+}
+/* Three canon components that read a different token from the one the map
+   fills, so mapping alone leaves them looking like Backstage on an entity
+   page. Measured on a group page with the map in place: --bui-border-1 was
+   correctly our gold and --bui-fg-link correctly our accent, and neither
+   reached the screen.
+   Card draws no border at all and takes canon's 8px, beside MUI cards at
+   var(--sc-radius) — two card shapes on one page. Link colours itself from
+   --bui-fg-primary, so every link on those pages rendered as body text.
+   No !important: these must lose to a mode sheet, which says the same thing
+   at higher specificity when it wants something else (foudre's links are
+   muted and underlined on purpose). Canon ships inside @layer, and an
+   unlayered author rule beats a layered one whatever the order. */
+[class~="bui-Card"] {
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-radius: var(--sc-radius);
+}
+/* The card's own parts must NOT take that edge. A substring hook here matches
+   bui-CardHeader and bui-CardBody as well, and the About panel then drew its
+   header's border inside the card's -- two boxes where the design has one.
+   ~= matches a whole class token, so only the card itself is named. The same
+   family trap the PluginHeader rules carry a comment about. */
+[class~="bui-Link"] {
+  color: hsl(var(--sc-primary));
+}
 /* The API explorer's title sits on a different gutter from its own table.
    Its page is <HeaderPage> + <Content>, while every other native page is
    <Header> + <Container>: the header's slots ARE bui Containers
@@ -233,16 +472,16 @@ body, body *, input, select, textarea, button, optgroup {
     max-width: none; margin-inline: 0; padding-inline: 24px; }
 }
 /* Heading scale for the pixel face.
-   Sized by measurement, not by eye: Pixelify Sans advances 'n' at 0.586em,
+   Sized by measurement, not by eye: the body face advances 'n' at ~0.55em,
    a third narrower than the old face's 0.875em, so each size below is the
    one at which a real page title occupies the same pixel width the old face
    did at the old size. Same layout, larger glyphs. Backstage's own 28-34px
    scale is still slightly too wide here, which is why these overrides remain
    at all; the smaller components no longer need one and have been dropped. */
-h1, .MuiTypography-h1 { font-size: 29px !important; line-height: 1.35 !important; }
-h2, .MuiTypography-h2 { font-size: 22px !important; line-height: 1.35 !important; }
-h3, .MuiTypography-h3, .MuiCardHeader-title { font-size: 19px !important; }
-h4, h5, h6, .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 { font-size: 14px !important; }
+h1, [class*="MuiTypography-h1"] { font-size: 29px !important; line-height: 1.35 !important; }
+h2, [class*="MuiTypography-h2"] { font-size: 22px !important; line-height: 1.35 !important; }
+h3, [class*="MuiTypography-h3"], [class*="MuiCardHeader-title"] { font-size: 19px !important; }
+h4, h5, h6, [class*="MuiTypography-h4"], [class*="MuiTypography-h5"], [class*="MuiTypography-h6"] { font-size: 14px !important; }
 /* BackstageInfoCard-header * (19px) and BackstageContentHeader-title (18px/1.35)
    are set in theme.tsx — see the comment above. */
 .MuiDialogTitle-root { font-size: 16px !important; }
@@ -253,18 +492,23 @@ h4, h5, h6, .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 { font-size:
    Element-qualified on purpose: bui renders a bui-ButtonContent span *inside*
    bui-Button, and a bare [class*="bui-Button"] matches both, drawing the border
    and shadow twice — the inner box. */
-.MuiButton-root, button[class*="bui-Button"], a[class*="bui-Button"] {
+[class*="MuiButton-root"], button[class*="bui-Button"], a[class*="bui-Button"] {
   border-radius: var(--sc-radius) !important;
   border: var(--sc-border-w) solid hsl(var(--sc-fg) / .8) !important;
   box-shadow: var(--sc-shadow) !important;
   transition: none !important;
 }
-.MuiButton-root:active:not(.Mui-disabled),
+/* Pressing highlights; it does not move anything. The arcade press-down was a
+   2px translate, which shifted the button out from under the pointer, fought
+   the filter-based glows the mode potions paint, and left anything anchored to
+   the button a frame behind. An inset wash reads as pressed without moving a
+   pixel. */
+[class*="MuiButton-root"]:active:not(.Mui-disabled),
 button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
-  transform: translate(2px, 2px);
-  box-shadow: none !important;
+  transform: none;
+  box-shadow: inset 0 0 0 2em hsl(var(--sc-fg) / .14) !important;
 }
-.MuiButton-text, .MuiButton-textPrimary, .MuiIconButton-root {
+.MuiButton-text, [class*="MuiButton-textPrimary"], [class*="MuiIconButton-root"] {
   border: none !important; box-shadow: none !important;
 }
 /* Never a border or shadow on the inner content span. */
@@ -282,27 +526,80 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   max-width: 100%;
 }
 .MuiChip-label { overflow: hidden; text-overflow: ellipsis; }
-.MuiOutlinedInput-notchedOutline { border-width: var(--sc-border-w) !important; }
+[class*="MuiOutlinedInput-notchedOutline"] { border-width: var(--sc-border-w) !important; }
 .MuiTableCell-head { color: hsl(var(--sc-muted-fg)) !important; }
+/* Three components that had no rule at all and so rendered MUI's own defaults
+   wherever a plugin uses them — visible on the TechDocs routes, which is also
+   where the class arrives counter-suffixed. */
+[class*="MuiToolbar-root"] {
+  background-color: hsl(var(--sc-card));
+  color: hsl(var(--sc-fg));
+}
+[class*="MuiDivider-root"] {
+  background-color: hsl(var(--sc-border));
+  border-color: hsl(var(--sc-border));
+}
+/* v4's slider paints rail, track and thumb from the root's own colour, so one
+   declaration covers all three rather than three slot selectors. */
+[class*="MuiSlider-root"], [class*="MuiSlider-colorPrimary"] {
+  color: hsl(var(--sc-primary));
+}
+/* The Profile card on /settings is MUI's default #bdbdbd circle. Clean class:
+   /settings is not one of the three counter-suffixed routes. */
+.MuiAvatar-root {
+  background-color: hsl(var(--sc-accent));
+  color: hsl(var(--sc-accent-fg));
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+}
 /* No table-body override: the old face needed one because dense cells hit
-   Backstage's word-break and snapped mid-word, but the native 14px in Pixelify
+   Backstage's word-break and snapped mid-word, but the native 14px in the body
    Sans measures narrower than the 12px this used to force, so the pressure the
    rule relieved is gone. */
 /* Focus is a hard offset outline everywhere, never a glow. */
-.MuiButton-root:focus-visible, .MuiTab-root:focus-visible,
-.MuiIconButton-root:focus-visible, [class*="bui-Button"]:focus-visible {
+[class*="MuiButton-root"]:focus-visible, .MuiTab-root:focus-visible,
+[class*="MuiIconButton-root"]:focus-visible, [class*="bui-Button"]:focus-visible {
   outline: var(--sc-border-w) solid hsl(var(--sc-ring)) !important;
   outline-offset: 2px;
 }
 
 /* accent — buttons, links, tabs, selection (all follow the picker) */
-.MuiButton-root { box-shadow: var(--sc-shadow) !important; }
-.MuiButton-containedPrimary { background-color: hsl(var(--sc-primary)) !important; color: hsl(var(--sc-primary-fg)) !important; }
-.MuiButton-outlinedPrimary, .MuiButton-textPrimary { color: hsl(var(--sc-primary)) !important; }
-.MuiLink-root, a.MuiTypography-colorPrimary, .MuiTypography-colorPrimary { color: hsl(var(--sc-primary)) !important; }
+[class*="MuiButton-root"] { box-shadow: var(--sc-shadow) !important; }
+[class*="MuiButton-containedPrimary"] { background-color: hsl(var(--sc-primary)) !important; color: hsl(var(--sc-primary-fg)) !important; }
+[class*="MuiButton-outlinedPrimary"], [class*="MuiButton-textPrimary"] { color: hsl(var(--sc-primary)) !important; }
+[class*="MuiLink-root"], a[class*="MuiTypography-colorPrimary"], [class*="MuiTypography-colorPrimary"] { color: hsl(var(--sc-primary)) !important; }
 .MuiTabs-indicator { background-color: hsl(var(--sc-primary)) !important; }
 .MuiTab-root { text-transform: none !important; font-weight: 600 !important; }
 .MuiTab-textColorPrimary.Mui-selected, .Mui-selected { color: hsl(var(--sc-primary)) !important; }
+/* A selected *row* is not a selected tab. The bare .Mui-selected above paints
+   the accent on anything MUI marks selected, and MUI also gives such a row its
+   own grey fill — so the catalog's picked filter ended up accent-on-grey, which
+   measured 2.75:1 in hermes dark and under 4.5 in six modes. A row states its
+   selection with the accent *surface* and takes the ink that surface is
+   measured against; contrast.test.ts pins accentFg against accent for every
+   mode, so this pairing cannot drift. */
+.MuiListItem-root.Mui-selected,
+.MuiMenuItem-root.Mui-selected {
+  background-color: hsl(var(--sc-accent)) !important;
+}
+.MuiListItem-root.Mui-selected,
+.MuiListItem-root.Mui-selected .MuiTypography-root,
+.MuiMenuItem-root.Mui-selected,
+.MuiMenuItem-root.Mui-selected .MuiTypography-root {
+  color: hsl(var(--sc-accent-fg)) !important;
+}
+/* MUI's unselected toggle label is rgba(0,0,0,.38), which is its own idea of a
+   muted ink and has no relationship to ours: on the settings page it measured
+   2.66:1 against the card in claude light and was reported as unreadable. The
+   selected one takes the accent surface for the same reason the row above
+   does. */
+.MuiToggleButton-root {
+  color: hsl(var(--sc-muted-fg)) !important;
+}
+.MuiToggleButton-root.Mui-selected,
+.MuiToggleButton-root.MuiToggleButton-selected {
+  background-color: hsl(var(--sc-accent)) !important;
+  color: hsl(var(--sc-accent-fg)) !important;
+}
 .MuiSwitch-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiCheckbox-colorPrimary.Mui-checked, .MuiRadio-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiChip-root { border-radius: var(--sc-radius) !important; }
@@ -313,17 +610,56 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    mangles to jss<n>, so they were dead in every deployed release while working
    perfectly on the dev server. */
 /* The app visualizer draws Backstage's SVG graph, which is a different feature
-   from the catalog graph and still exists. Its id is stable, so the canvas can
-   take the space colour without naming any generated class. */
-#dependency-graph { background-color: #05050c; border-radius: var(--sc-radius); }
+   from the catalog graph and still exists. Its id is stable, so it can be
+   reached without naming any generated class.
+   The tree it draws is NOT the DependencyGraph default node: the plugin passes
+   its own renderNode, which bypasses the four BackstageDependencyGraph*
+   overrides in theme.tsx and hardcodes #90caf9, #9e9e9e, #2196f3, #757575 and
+   #000000. Those are React props on "rect" and "text", so they render as SVG
+   presentation attributes — bottom of the cascade, specificity 0 — and a plain
+   author rule beats them without !important. The plugin distinguishes its two
+   node kinds only by corner radius (rx=0 an extension node, rx=20 a group), so
+   that is what these read. Scoped by the svg's own id, DEPENDENCY_GRAPH_SVG in
+   core-components: nothing else in this app carries it, and our three graphs
+   are React Flow.
+   The canvas moves off the hardcoded near-black it used to share with the
+   catalog graph: with the nodes now on the mode's card it would be the last
+   thing on the page not following the potion, and in light mode it read as
+   broken. The starfield stays where it was designed to live, on the React Flow
+   canvas below. */
+#dependency-graph {
+  background-color: hsl(var(--sc-bg));
+  border-radius: var(--sc-radius);
+}
+#dependency-graph rect[rx="0"] {
+  fill: hsl(var(--sc-card));
+  stroke: hsl(var(--sc-border));
+}
+#dependency-graph rect[rx="20"] {
+  fill: hsl(var(--sc-muted));
+  stroke: hsl(var(--sc-border));
+}
+/* The label is the rect's next sibling inside the node's own g, so this cannot
+   reach an edge label, which theme.tsx already owns. */
+#dependency-graph rect + text { fill: hsl(var(--sc-card-fg)); }
+/* The visualizer's Detailed tab keeps its own hues on purpose. getOutputColor
+   assigns a distinct colour per output type (reactElement, routePath, routeRef,
+   apiFactory, plus a rotating palette) and computes its own text contrast: that
+   is categorical data encoding, the same exception the experience bar's status
+   colours take. Flattening the chips to one token destroys the legend, so no
+   rules are added for them. */
 
 /* ===== Catalog graph (our React Flow one) ===== */
 .sc-graph-layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px;
   align-items: start; min-width: 0; }
 @media (max-width: 900px) { .sc-graph-layout { grid-template-columns: 1fr; } }
+/* The node text colour, not a page token: this sits on .sc-graph-canvas, which
+   is pinned to the starfield and is deliberately dark in BOTH registers. Read
+   through --sc-muted-fg it measured 2.96:1 in light — an AA failure that only
+   existed because a page token was used on a surface that ignores the page. */
 .sc-graph-empty { display: flex; align-items: center; justify-content: center;
   height: 100%; min-height: 320px; padding: 24px; text-align: center;
-  color: hsl(var(--sc-muted-fg)); font-size: 13px; }
+  color: #e7e7ef; font-size: 13px; }
 /* Nodes: the dark surface everywhere, the accent only on the rooted one. A
    graph where every node looks the same is a graph where re-rooting appears to
    do nothing, which is exactly how the built-in one failed. */
@@ -388,7 +724,45 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    it to the templates page, because .MuiCard-root alone is every card in the
    app. This positional cycling cannot move into theme styleOverrides — nth-child
    is not expressible there. */
-.sc-route-create .MuiCard-root > .MuiBox-root:first-child {
+/* The template's NAME, and only the name.
+   ItemCardHeader renders subtitle (the type) before title (the name), so the
+   type led every card. It gives them stable tags rather than classes —
+   subtitle is component="h3" and title is component="h4" — which is what makes
+   this orderable without naming a class a production build would discard.
+   The type is dropped outright: it repeats what the template's own copy
+   already says and it was reading as the card's headline. */
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child { display: flex; flex-direction: column; }
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > * { order: 3; }
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h4 {
+  order: 1;
+  /* The name IS the card. It arrived at the header's inherited size, which read
+     as a caption on a card whose whole job is to be picked from a grid. */
+  font-size: 22px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.02em;
+  /* The title sits directly on the header scene, and a scene is not a colour:
+     the same white ran over a night sky on one card and over the sun on the
+     next, where it measured 1.27:1. The plate is what makes the title legible
+     without touching the art — it darkens only the band the words occupy, and
+     white over it clears AA whatever is painted underneath. */
+  color: hsl(0 0% 100%) !important;
+  background-color: hsl(240 12% 6% / .72);
+  /* The PLATE shrinks, never the type: 4px 8px made a 34.39px band over a 90px
+     header scene. At 1px 6px it is 28.4px (-17%) and the descender still has
+     2.24px of clearance inside the 26.4px line box, so nothing is clipped.
+     line-height 1.2 stays; 1.05 is available if 28.4px is still too tall and
+     1.0 is the true floor. font-size is pinned at 22px by styles.test.ts and
+     the pin is correct — the title is the card's headline. */
+  padding: 1px 6px;
+  margin: 0;
+  align-self: flex-start;
+  max-width: 100%;
+  border-radius: var(--sc-radius-sm);
+}
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h3 { display: none; }
+
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child {
   /* Ancient Greek, drawn entirely with hard colour stops.
 
      The dominant motif is a meander — the Greek key — running the full width as
@@ -451,7 +825,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    is the same four rectangles in every scene, re-sized and re-placed, which is
    why this costs two rules rather than two more background stacks.
    Cards cycle 3n+1 / 3n+2 / 3n+3, the same way the supplied images cycle. */
-.sc-route-create .MuiCard-root:nth-child(3n + 2)
+.sc-route-create [class*="MuiCard-root"]:nth-child(3n + 2)
   > .MuiBox-root:first-child {
   /* The oracle flame: a taper, widest at its base. */
   background-size:
@@ -467,7 +841,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
     0 0,
     0 0 !important;
 }
-.sc-route-create .MuiCard-root:nth-child(3n + 3)
+.sc-route-create [class*="MuiCard-root"]:nth-child(3n + 3)
   > .MuiBox-root:first-child {
   /* The underworld gate: two posts under a lintel, with a step above it. */
   background-size:
@@ -486,8 +860,8 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* The title sits on art, so it needs its own contrast: a 1px outline in the
    opposite tone (dark behind light text, light behind dark) plus weight. The
    shade token flips with the scheme, alongside --sc-primary-fg. */
-.sc-route-create .MuiCard-root > .MuiBox-root:first-child,
-.sc-route-create .MuiCard-root > .MuiBox-root:first-child * {
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child,
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child * {
   font-weight: 700 !important;
   text-shadow:
     1px 0 0 hsl(var(--sc-primary-shade)),
@@ -496,12 +870,14 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
     0 -1px 0 hsl(var(--sc-primary-shade)),
     2px 2px 0 hsl(var(--sc-primary-shade) / .55);
 }
-.sc-route-create .MuiCard-root > .MuiBox-root:first-child * { color: hsl(var(--sc-primary-fg)) !important; }
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child * { color: hsl(var(--sc-primary-fg)) !important; }
 /* tables */
 .MuiTableCell-head, .MuiTableCell-root.MuiTableCell-head {
   text-transform: uppercase !important; font-size: 11px !important; font-weight: 700 !important;
   letter-spacing: .05em !important; color: hsl(var(--sc-muted-fg)) !important; }
-.MuiTableCell-root { border-color: hsl(var(--sc-border)) !important; }
+/* Same reasoning as .sc-table: the cell rule is a separator and takes a
+   quarter of the edge colour, not all of it. */
+.MuiTableCell-root { border-color: hsl(var(--sc-border) / .25) !important; }
 
 /* page + layout */
 .sc-page { padding: 28px 32px; background: hsl(var(--sc-bg)); min-height: 100%; }
@@ -533,6 +909,61 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* card */
 .sc-card { background: hsl(var(--sc-card)); color: hsl(var(--sc-card-fg));
   border: var(--sc-border-w) solid hsl(var(--sc-border)); border-radius: var(--sc-radius); overflow: hidden; }
+/* A surface holding a table keeps its corners, and clips the table to them.
+   This was square for a long time, and the reason is worth keeping: the table
+   sits 1px inside its Paper and used to paint an opaque header background into
+   the corner, so clipping cut the table's own corners off and not clipping let
+   that square corner cover the surface's arc. Both shipped in turn, and zero
+   was the only geometry where neither happened.
+   What changed is the header: it no longer paints its own opaque ground, so
+   there is nothing square left to fight the arc, and clipping simply follows
+   it. Re-checked in the running app in both registers before this went back.
+   Keep the two together — a radius without the clip brings the old bug back. */
+.sc-card:has(table),
+[class*="MuiCard-root"]:has(table),
+.MuiPaper-root:has(table) {
+  overflow: hidden !important;
+  border-radius: var(--sc-radius) !important;
+}
+/* The template filter's search arrived as MUI's underline input: a rule under
+   the text and nothing else, which is the one control on that page that looks
+   like it belongs to a different app. It takes the same box every other field
+   here has — ground, edge, radius, and a ring when it is focused — and the
+   underline pseudo-elements that would otherwise draw a second line under the
+   box are turned off. */
+.sc-route-create [class*="MuiInput-root"] {
+  background: hsl(var(--sc-bg));
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-radius: var(--sc-radius);
+  padding: 3px 10px;
+}
+.sc-route-create [class*="MuiInput-underline"]::before,
+.sc-route-create [class*="MuiInput-underline"]::after {
+  display: none !important;
+}
+.sc-route-create [class*="MuiInput-root"].Mui-focused {
+  border-color: hsl(var(--sc-ring));
+  box-shadow: 0 0 0 3px hsl(var(--sc-ring) / .25);
+}
+
+/* A table's title is the heading of the thing under it, and it arrived at
+   14px — smaller than the card titles beside it and no larger than its own
+   column headers. Scoped to the toolbar so it cannot reach an h5 in prose. */
+[class*="MuiToolbar-root"] [class*="MuiTypography-h5"],
+[class*="MuiToolbar-root"] [class*="MuiTypography-h6"] {
+  font-size: 19px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+}
+/* The action that sits above a table — Create, Register, Refresh — is the one
+   control on the page most likely to be wanted, and it was set at the 400 the
+   uppercase chrome rule gives everything. */
+[class*="MuiButton-root"], [class*="bui-Button"] {
+  font-weight: 700 !important;
+}
+/* And the scroll goes on the container that owns the width, so a wide table
+   scrolls rather than being cut. */
+.MuiTableContainer-root { overflow-x: auto; max-width: 100%; }
 .sc-card-h { padding: 18px 20px 0; }
 /* Title and its optional action share a row; the action keeps to the right and
    never squeezes the title, which wraps first. */
@@ -590,10 +1021,16 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 
 /* table */
 .sc-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+/* A row rule is a separator, not an edge. At full strength it is the same
+   weight as the card's own border, and on a dark ground that reads as a bright
+   line every row -- literally white in Slush, whose border token IS 0 0% 100%,
+   and near-white in Foudre. The MUI table this sits beside already draws its
+   rules at a quarter, so matching it also stops one card's table looking
+   heavier than the next. */
 .sc-table th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600;
   text-transform: uppercase; letter-spacing: .05em; color: hsl(var(--sc-muted-fg));
-  border-bottom: 1px solid hsl(var(--sc-border)); }
-.sc-table td { padding: 12px 14px; border-bottom: 1px solid hsl(var(--sc-border)); color: hsl(var(--sc-fg)); }
+  border-bottom: 1px solid hsl(var(--sc-border) / .25); }
+.sc-table td { padding: 12px 14px; border-bottom: 1px solid hsl(var(--sc-border) / .25); color: hsl(var(--sc-fg)); }
 .sc-cell-ellip { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Horizontal scroll for tables too wide for their card (card still clips to its corners). */
 .sc-table-wrap { overflow-x: auto; max-width: 100%; }
@@ -659,7 +1096,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   background: hsl(var(--sc-muted)); }
 .sc-approvals-cell.filled { background: hsl(var(--sc-primary));
   border-color: hsl(var(--sc-primary)); }
-.sc-approvals-count { font-family: var(--sc-font-pixel); font-size: 12px;
+.sc-approvals-count { font-family: var(--sc-font-ui); font-size: 12px;
   color: hsl(var(--sc-muted-fg)); }
 
 /* [flare] Empty states are panels, not stray sentences. The bobbing sprite
@@ -678,7 +1115,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    and 2px — a visibly lopsided sprite on any non-retina screen. Keep every
    size an integer multiple of SPRITE_SIZE. */
 .sc-empty .sc-state-ic { width: 32px; height: 32px; }
-.sc-empty-title { font-family: var(--sc-font-pixel); text-transform: uppercase;
+.sc-empty-title { font-family: var(--sc-font-ui); text-transform: uppercase;
   font-size: 13px; color: hsl(var(--sc-fg)); }
 .sc-empty-hint { font-size: 12px; max-width: 32ch; }
 
@@ -719,9 +1156,9 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    on top of the element it is describing. Decided in Quickstart.tsx from the
    measured rects, because no fixed offset can cover an element that moves. */
 .sc-qs-box-top { top: 18px; bottom: auto; }
-.sc-qs-count { font-family: var(--sc-font-pixel); font-size: 11px;
+.sc-qs-count { font-family: var(--sc-font-ui); font-size: 11px;
   color: hsl(var(--sc-muted-fg)); }
-.sc-qs-title { font-family: var(--sc-font-pixel); text-transform: uppercase;
+.sc-qs-title { font-family: var(--sc-font-ui); text-transform: uppercase;
   font-size: 14px; margin: 4px 0 8px; color: hsl(var(--sc-fg)); }
 .sc-qs-body { font-size: 13px; line-height: 1.5; margin: 0 0 12px;
   color: hsl(var(--sc-muted-fg)); }
@@ -759,7 +1196,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-xp-running .sc-xp-count { color: hsl(var(--sc-on-warning)); }
 .sc-xp-failed .sc-xp-count { color: hsl(var(--sc-on-destructive)); }
 .sc-xp-done .sc-xp-count { color: hsl(var(--sc-on-success)); }
-.sc-xp-count { font-family: var(--sc-font-pixel); font-size: 12px;
+.sc-xp-count { font-family: var(--sc-font-ui); font-size: 12px;
   color: hsl(var(--sc-muted-fg)); flex: 0 0 auto; }
 /* The creatures live inside the fill, so their run is bounded by real
    progress rather than by the width of the card. */
@@ -770,7 +1207,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-creep-b { display: none; }
 .sc-xp-dots { display: inline-block; width: 1.6em; text-align: left; }
 .sc-xp-banner { position: absolute; right: 0; top: -18px;
-  font-family: var(--sc-font-pixel); font-size: 12px;
+  font-family: var(--sc-font-ui); font-size: 12px;
   color: hsl(var(--sc-primary)); }
 .sc-xp-gameover .sc-xp-banner { color: hsl(var(--sc-destructive)); }
 .sc-xp-levelup .sc-xp-banner { color: hsl(var(--sc-success)); }
@@ -840,7 +1277,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-login-card .sc-btn { width: 100%; }
 /* [flare] PRESS START, in pixel type and blinking. The button below it still
    says what it does. */
-.sc-press-start { font-family: var(--sc-font-pixel); text-transform: uppercase;
+.sc-press-start { font-family: var(--sc-font-ui); text-transform: uppercase;
   letter-spacing: .06em; color: hsl(var(--sc-primary)); }
 .sc-login-pick { margin-top: 20px; padding-top: 18px; border-top: 1px solid hsl(var(--sc-border)); width: 100%;
   display: flex; justify-content: center; }
@@ -848,6 +1285,20 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-table tr:last-child td { border-bottom: none; }
 /* Hover is a dither too, so the selected row reads as a filled cell block
    rather than a soft tint. Row text is --sc-fg, so contrast is unaffected. */
+/* Rows sit on the card, not on the page. The catalog's table shipped its rows
+   at the page background — rgb(15,14,21) inside a card of rgb(20,18,26) —
+   which reads as a foreign band laid inside the panel rather than as part of
+   it. The stripe stays, because it is what lets the eye track a wide row, but
+   it is a hair of the muted token over the card instead of a different colour
+   altogether. */
+[class*="MuiTableRow-root"],
+[class*="MuiTableBody-root"] [class*="MuiTableRow-root"] {
+  background-color: transparent !important;
+}
+.sc-table tbody tr:nth-child(even),
+[class*="MuiTableBody-root"] [class*="MuiTableRow-root"]:nth-child(even) {
+  background-color: hsl(var(--sc-muted) / .3) !important;
+}
 .sc-table tbody tr:hover {
   background-image: repeating-conic-gradient(
     hsl(var(--sc-primary) / .16) 0% 25%, transparent 0% 50%);
@@ -864,7 +1315,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .MuiTableBody-root .MuiTableRow-root:focus-within .MuiTableCell-root:first-child::before {
   content: '\\25B6' / '';
   position: absolute; left: 7px; top: 50%; transform: translateY(-50%);
-  font-family: var(--sc-font-pixel); font-size: 10px;
+  font-family: var(--sc-font-ui); font-size: 10px;
   color: hsl(var(--sc-primary));
 }
 
@@ -881,6 +1332,13 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-link:hover { text-decoration: underline; }
 .sc-muted { color: hsl(var(--sc-muted-fg)); }
 .sc-row { display: flex; align-items: center; gap: 8px; }
+/* The graph filters put a bare <input type="checkbox"> in a .sc-row, which
+   renders the OS's own blue tick beside nine themed potions. accent-color is
+   the whole fix — repainting the box by hand costs an appearance: none and a
+   hand-drawn tick, and the native control is already the right shape.
+   ponytail: the sibling <select> needs nothing — GraphDirection already gives
+   it .sc-select, which is the token ground/border/radius this would add. */
+.sc-row input[type="checkbox"] { accent-color: hsl(var(--sc-primary)); }
 .sc-kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 16px; font-size: 14px; }
 .sc-kv dt { color: hsl(var(--sc-muted-fg)); }
 /* min-width:0 so a long value scrolls inside its own cell. A grid item defaults
@@ -903,7 +1361,12 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   background: hsl(var(--sc-card)); border-right: var(--sc-border-w) solid hsl(var(--sc-border));
   display: flex; flex-direction: column; padding: 12px 12px 16px; overflow-x: hidden;
   transition: width .16s ease; }
-.sc-nav-top { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 14px; }
+/* The brand mark and every row icon share one left edge. A row insets its
+   content by 2px of transparent border plus 10px of padding, so the brand gets
+   the same 12px and the row's own side padding goes to zero rather than being
+   added on top of it. Before this the mark sat at 18px and the icons at 24px. */
+.sc-nav-top { display: flex; align-items: center; justify-content: space-between; padding: 4px 0 14px; }
+.sc-nav-brand { padding-left: 12px; }
 .sc-nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; min-width: 0; }
 .sc-nav-mark { width: 26px; height: 26px; border-radius: var(--sc-radius); flex: 0 0 auto;
   display: flex; align-items: center; justify-content: center;
@@ -911,10 +1374,14 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   box-shadow: var(--sc-shadow); }
 .sc-nav-mark svg, .sc-nav-mark img { width: 17px; height: 17px; color: hsl(var(--sc-primary-fg)); object-fit: contain; }
 .sc-nav-word { font-weight: 700; font-size: 17px; letter-spacing: -0.02em; color: hsl(var(--sc-fg)); white-space: nowrap; }
-.sc-nav-toggle { flex: 0 0 auto; width: 26px; height: 26px; border-radius: var(--sc-radius); border: var(--sc-border-w) solid hsl(var(--sc-border));
+/* The picker's own controls are the same object as the sidebar's toggle — one
+   26px square, same rule, so the two never drift apart. Only placement below. */
+.sc-nav-toggle, .sc-picker-toggle { flex: 0 0 auto; width: 26px; height: 26px; border-radius: var(--sc-radius); border: var(--sc-border-w) solid hsl(var(--sc-border));
   background: transparent; color: hsl(var(--sc-muted-fg)); cursor: pointer; font-size: 13px; line-height: 1;
   display: flex; align-items: center; justify-content: center; }
-.sc-nav-toggle:hover { background: hsl(var(--sc-accent)); color: hsl(var(--sc-fg)); }
+.sc-nav-toggle:hover, .sc-picker-toggle:hover { background: hsl(var(--sc-accent)); color: hsl(var(--sc-fg)); }
+.sc-nav-toggle:focus-visible, .sc-picker-toggle:focus-visible {
+  outline: var(--sc-border-w) solid hsl(var(--sc-ring)); outline-offset: 2px; }
 .sc-nav-list { display: flex; flex-direction: column; gap: 2px; }
 .sc-nav-item { position: relative; display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: var(--sc-radius);
   text-decoration: none; font-size: 14px; font-weight: 500; transition: background .12s, color .12s; white-space: nowrap; }
@@ -931,8 +1398,37 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   border-radius: var(--sc-radius); background: hsl(var(--sc-primary)); }
 /* collapsed: icons only */
 .sc-nav.collapsed .sc-nav-word, .sc-nav.collapsed .sc-nav-tx { display: none; }
-.sc-nav.collapsed .sc-nav-item { justify-content: center; padding: 9px; }
-.sc-nav.collapsed .sc-nav-top { justify-content: center; }
+.sc-nav.collapsed .sc-nav-item { justify-content: center; padding: 9px 0; }
+/* Collapsed, the brand mark and every nav icon sit in the SAME 26px box,
+   centred on the rail — so they share one vertical axis by construction rather
+   than by two independent padding sums happening to agree. They did not agree:
+   the row kept .sc-nav-top's side padding while the items kept their own, and
+   the icons ended up off the logo's centre line. */
+.sc-nav.collapsed .sc-nav-brand,
+.sc-nav.collapsed .sc-nav-ic {
+  width: 26px;
+  justify-content: center;
+}
+/* Collapsed, the row's 2px left border and the 12px brand inset would each
+   shift one of the two off the rail's centre line, and the cursor would take
+   12px of a 44px rail. All three go. The active row is still marked by the
+   ::before bar. */
+.sc-nav.collapsed .sc-nav-brand { padding-left: 0; }
+.sc-nav.collapsed .sc-nav-item { border-left-width: 0; }
+.sc-nav.collapsed .sc-nav-cursor { display: none; }
+/* Collapsed, the brand mark and the toggle stack instead of sitting side by
+   side. The arithmetic is why: the rail is 68px, less .sc-nav's 24px of padding
+   and .sc-nav-top's 12px leaves a 32px row — and it was being asked to hold a
+   26px mark AND a 26px toggle, both flex: 0 0 auto. 52px into 32px overran the
+   box and overflow-x: hidden clipped the result, so the two controls appeared
+   to sit on top of each other. In a column each is 26px against 44px of width
+   and neither has to shrink. */
+.sc-nav.collapsed .sc-nav-top {
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 0 14px;
+}
 /* Force the content gutter to match the nav width (hashed SidebarPage class). */
 /* Content offset for the fixed nav, and its mobile override, both live in the
    theme (BackstageSidebarPage.styleOverrides.root). */
@@ -985,8 +1481,14 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    be a second identical picker on the same screen. */
 :root.sc-signed-out .sc-picker-float { display: none; }
 
-/* Each bottle sits in its own slot on the shelf. */
-.sc-potion { width: 26px; height: 26px; padding: 0; cursor: pointer;
+/* Shut, the shelf carries one bottle and its two controls, and must never fold
+   that to a second row. There is no transition on the collapse: it swaps one
+   child for eleven rather than animating a width, so the correct amount of
+   motion is none. */
+
+/* Each bottle sits in its own slot on the shelf. Positioned, so the sparkles
+   on the equipped one have something to anchor to. */
+.sc-potion { position: relative; width: 26px; height: 26px; padding: 0; cursor: pointer;
   background: none; border: none; line-height: 0;
   color: hsl(var(--sc-fg) / .85); }
 /* The sprite is decoration inside the button, and an svg child will otherwise
@@ -1003,6 +1505,67 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 }
 .sc-potion:focus-visible { outline: var(--sc-border-w) solid hsl(var(--sc-ring));
   outline-offset: 2px; }
+/* [flare] The equipped bottle sparkles while the shelf is shut — the same
+   PixelStar sprite the tour button bursts with, not a second technique.
+   Written after the two .sc-potion svg rules above and at matching specificity
+   on purpose: those size every sprite in the button to fill it and hand the
+   chosen one a drop-shadow, and a 6px star wants neither. */
+.sc-potion .sc-potion-stars { position: absolute; inset: -5px; pointer-events: none; }
+.sc-potion .sc-potion-stars svg { position: absolute; display: block;
+  width: 6px; height: 6px; filter: none;
+  color: hsl(var(--sc-primary));
+  /* Lit is the static default. Motion may take the star away and put it back;
+     it may not be what makes it appear. */
+  opacity: 1; }
+.sc-potion-star-0 { top: 0; left: -2px; }
+.sc-potion-star-1 { top: 32%; right: -2px; }
+.sc-potion-star-2 { bottom: 1px; left: 24%; }
+
+/* The inventory: every equippable potion as a named row with its own action.
+   Eleven modes plus the accents outgrew a two-row strip of unlabelled bottles,
+   so this is the way to browse them; the strip stays as the quick shelf. It
+   hangs above the box rather than inside it, and takes the same command-window
+   frame the box has. */
+.sc-picker-inv { position: absolute; left: 0; bottom: calc(100% + 10px);
+  width: 214px; max-height: 56vh; overflow-y: auto; padding: 8px; cursor: default;
+  background: hsl(var(--sc-card)); color: hsl(var(--sc-fg));
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-bottom: 5px solid hsl(var(--sc-fg) / .8);
+  border-radius: var(--sc-radius);
+  box-shadow:
+    0 0 0 2px hsl(var(--sc-card)),
+    0 0 0 4px hsl(var(--sc-fg) / .85),
+    var(--sc-shadow); }
+/* A tray of bottles. The row used to be a swatch, a name and an Equip button
+   all saying the same thing; the bottle is the control now and the name lives
+   on it, where a pointer and a screen reader both already look. */
+.sc-inv-list { list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.sc-inv-row { display: block; }
+.sc-inv-potion { position: relative; display: block; width: 100%; padding: 5px 2px;
+  cursor: pointer; line-height: 0; border-radius: var(--sc-radius-sm);
+  border: var(--sc-border-w) solid transparent; background: none;
+  color: hsl(var(--sc-fg) / .85); }
+.sc-inv-potion svg { width: 24px; height: 24px; display: block; margin: 0 auto;
+  pointer-events: none; }
+.sc-inv-potion:hover { background: hsl(var(--sc-accent));
+  border-color: hsl(var(--sc-border)); color: hsl(var(--sc-fg)); }
+/* The equipped bottle keeps a filled slot AND aria-pressed, so the state is
+   never carried by the fill alone. */
+.sc-inv-potion[aria-pressed="true"] { background: hsl(var(--sc-primary) / .18);
+  border-color: hsl(var(--sc-primary)); color: hsl(var(--sc-fg)); }
+.sc-inv-potion:focus-visible { outline: var(--sc-border-w) solid hsl(var(--sc-ring));
+  outline-offset: 2px; }
+/* The cast. Stars around the bottle that was just taken off the tray, drawn
+   lit by default so the reduced-motion path — which skips the wait entirely
+   and equips at once — never shows a half-finished effect. */
+.sc-cast-stars { position: absolute; inset: -2px; pointer-events: none; }
+.sc-cast-stars svg { position: absolute; display: block;
+  width: 7px; height: 7px; color: hsl(var(--sc-primary)); }
+.sc-cast-star-0 { top: 0; left: 8%; }
+.sc-cast-star-1 { top: 12%; right: 6%; }
+.sc-cast-star-2 { bottom: 6%; left: 4%; }
+.sc-cast-star-3 { bottom: 0; right: 12%; }
 /* [flare] Scrollbars are furniture, and the OS default is the most modern
    object left on the page. Square thumb, hard edge, accent fill. The Firefox
    pair cannot express the border, so it degrades to a plain accent bar. */
@@ -1016,6 +1579,130 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 }
 ::-webkit-scrollbar-thumb:hover { background: hsl(var(--sc-primary) / .82); }
 ::-webkit-scrollbar-corner { background: hsl(var(--sc-muted)); }
+
+/* ===== Register an existing component =====
+   The one flow built almost entirely from raw MUI — a stepper, a bare form,
+   plain Typography — so it arrived with none of the design layer while every
+   other page inherited it.
+   This route mounts its own JSS class-name generator, and it is the only one
+   that does: measured on a production build, 83 of its 90 MUI classes arrive
+   counter-suffixed (MuiStepLabel-label-234, MuiBox-root-27) against 0 of ~90
+   on /catalog. A CSS class selector matches whole tokens, so .MuiStepLabel-label
+   cannot match class="MuiStepLabel-label-234" and every exact-class rule here
+   was dead. The attribute-substring form matches both spellings, so it is
+   correct on the dev server and in the image alike.
+   The exact-class rules were rewritten in place rather than duplicated: these
+   are route-scoped, so they cover nothing else and a second spelling would be
+   dead weight. The GLOBAL Mui rules further down are a different matter and
+   stay as they are.
+   Note [class*="MuiStepLabel-label"] also matches MuiStepLabel-labelContainer.
+   That is harmless — the container is a bare wrapper span and the label
+   inherits the same declarations anyway. */
+.sc-route-import [class*="MuiStepper-root"] {
+  background: transparent !important;
+  padding: 8px 0 16px !important;
+}
+.sc-route-import [class*="MuiStepLabel-label"] {
+  font-family: var(--sc-font-ui) !important;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  font-size: 13px !important;
+  color: hsl(var(--sc-muted-fg)) !important;
+}
+/* The compound .MuiStepLabel-label.Mui-active cannot survive here: the suffix
+   breaks both halves of it, so the state class is matched on its own. */
+.sc-route-import [class*="MuiStepLabel-active"],
+.sc-route-import [class*="MuiStepLabel-completed"] {
+  color: hsl(var(--sc-fg)) !important;
+  font-weight: 600 !important;
+}
+/* The step bubbles take the accent and the hard edge the rest of the app uses,
+   rather than MUI's default flat circles. */
+.sc-route-import [class*="MuiStepIcon-root"] {
+  color: hsl(var(--sc-muted)) !important;
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-radius: 50%;
+}
+.sc-route-import [class*="MuiStepIcon-active"],
+.sc-route-import [class*="MuiStepIcon-completed"] {
+  color: hsl(var(--sc-primary)) !important;
+  border-color: hsl(var(--sc-primary));
+}
+/* The number is painted on the disc, not on the page, so it follows whichever
+   fill the disc is carrying. A single primary-fg for both states put a white
+   numeral on the muted disc of every step that was not the current one —
+   1.1:1 in slush light, and wrong in all nine modes at both ends. */
+.sc-route-import [class*="MuiStepIcon-text"] {
+  fill: hsl(var(--sc-muted-fg)) !important;
+}
+.sc-route-import [class*="MuiStepIcon-active"] [class*="MuiStepIcon-text"],
+.sc-route-import [class*="MuiStepIcon-completed"] [class*="MuiStepIcon-text"] {
+  fill: hsl(var(--sc-primary-fg)) !important;
+}
+.sc-route-import [class*="MuiStepConnector-line"] {
+  border-color: hsl(var(--sc-border)) !important;
+}
+/* The analysis result and the form sit in bare Papers. */
+.sc-route-import [class*="MuiPaper-root"] {
+  background: hsl(var(--sc-card)) !important;
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-radius: var(--sc-radius);
+  box-shadow: var(--sc-shadow);
+}
+.sc-route-import [class*="MuiTypography-h6"],
+.sc-route-import [class*="MuiFormLabel-root"],
+.sc-route-import [class*="MuiInputLabel-root"] {
+  font-family: var(--sc-font-ui) !important;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  color: hsl(var(--sc-fg)) !important;
+}
+.sc-route-import [class*="MuiTypography-body1"],
+.sc-route-import [class*="MuiTypography-body2"] {
+  color: hsl(var(--sc-fg));
+}
+/* The link rule that used to sit here is gone: the global one it duplicated is
+   now [class*="MuiLink-root"] / [class*="MuiTypography-colorPrimary"] and
+   reaches this route on its own — along with the two TechDocs routes, which
+   have no route class and could never have been covered from here.
+   The rest of this block stays: the stepper rules above have no global
+   counterpart at all, and the surface/label/input/list/progress rules below
+   carry declarations the global sheet does not. */
+/* The repository-URL field is the page's one real input; it arrives bare. */
+.sc-route-import [class*="MuiOutlinedInput-root"] {
+  background: hsl(var(--sc-bg));
+  border-radius: var(--sc-radius);
+}
+.sc-route-import [class*="MuiListItem-root"] {
+  border-bottom: var(--sc-border-w) solid hsl(var(--sc-border) / .6);
+}
+.sc-route-import [class*="MuiLinearProgress-root"] {
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-radius: var(--sc-radius);
+}
+
+/* Every title, one face. The h1 that says "Welcome to Platform" and a card's
+   own title are the same kind of object and were drifting apart by which
+   stylesheet reached them first.
+   Bare h1-h6 are in the list because Backstage's own page header renders a
+   heading with NO class at all — verified in the running app — so neither a
+   Mui* selector nor the typed BackstageHeader override can reach it. The
+   element itself is the only stable hook. */
+h1, h2, h3, h4, h5, h6,
+.sc-h1,
+.sc-card-title,
+.sc-empty-title,
+.sc-qs-title,
+.sc-login-title,
+[class*="MuiTypography-h1"],
+[class*="MuiTypography-h2"],
+[class*="MuiTypography-h3"],
+[class*="MuiTypography-h4"],
+[class*="MuiTypography-h5"],
+[class*="MuiTypography-h6"] {
+  font-family: var(--sc-font-title) !important;
+  letter-spacing: -0.01em;
+}
 
 /* [flare] The konami code. Flips to a fixed NES-hardware accent and sends a
    block walking along the footer. Stored nowhere and announced nowhere: it
@@ -1154,6 +1841,39 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   .sc-tour:hover .sc-tour-star, .sc-tour:focus-visible .sc-tour-star {
     animation: sc-twinkle .6s steps(1) infinite;
   }
+  /* The equipped bottle's sparkles. Two frames, so they flick rather than
+     fade, and staggered by class the way the tour's six are — PixelStar takes
+     no style prop, and a per-star delay in CSS needs no component change.
+     0%/100% is opacity 1, which is exactly the static rule outside this query:
+     with motion off the stars are simply drawn, and the equipped bottle is
+     still marked by aria-pressed, by its label, and by being the only one
+     left on the shelf. */
+  @keyframes sc-sparkle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .3; }
+  }
+  .sc-potion .sc-potion-stars svg { animation: sc-sparkle 1.2s steps(2) infinite; }
+  .sc-potion-star-1 { animation-delay: -.4s; }
+  .sc-potion-star-2 { animation-delay: -.8s; }
+  /* The cast: 360ms, and SchemeRoot.tsx applies the pick when it ends — the
+     two durations are one number and must move together. Stepped like
+     everything else here; the bottle lifts a little and the stars pop in
+     around it. */
+  @keyframes sc-cast {
+    0% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-3px) scale(1.12); }
+    100% { transform: translateY(0) scale(1); }
+  }
+  @keyframes sc-cast-pop {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .sc-inv-casting svg { animation: sc-cast .36s steps(3) 1; }
+  .sc-inv-casting .sc-cast-stars svg { animation: sc-cast-pop .36s steps(2) 1; }
+  .sc-cast-star-1 { animation-delay: .06s; }
+  .sc-cast-star-2 { animation-delay: .12s; }
+  .sc-cast-star-3 { animation-delay: .18s; }
+
   .sc-tour-star-1 { animation-delay: -.1s; }
   .sc-tour-star-2 { animation-delay: -.25s; }
   .sc-tour-star-3 { animation-delay: -.35s; }
@@ -1219,7 +1939,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
      matters too — bui also renders a HeaderTitleStack wrapper, which would
      otherwise draw a second caret.
      (No backticks in this file: the whole stylesheet is one template literal.) */
-  content: '\\2588' / '';
+  content: '\\258C' / '';
   margin-left: 4px;
   color: hsl(var(--sc-primary));
 }
@@ -1240,28 +1960,45 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
     hsl(var(--sc-fg) / .03) 0 1px, transparent 1px 3px);
 }
 
-/* ===== 8-bit chrome =====
-   This block sets text-transform on headings, nav, buttons, badges and
-   counters — but pixel type itself is not chrome-only: the "full arcade"
-   rule (.sc, .sc * above) puts the pixel face on body copy, table cells,
-   JSON values and log output too. Uppercase here is a deliberate treatment
-   for chrome, not a fix for uneven lowercase — Pixelify Sans has true
-   lowercase, so there's nothing to hide. The 12px floor (.sc, .sc * above)
-   is a legibility choice, not a defence against dropped strokes: Pixelify
-   Sans is an outline face, not the bitmap face the floor was first written
-   for. */
+/* ===== The type scale =====
+   One family, differentiated by weight, size and case rather than by a second
+   face. This block replaced an arcade treatment written for a pixel font:
+   uppercase on every piece of chrome and a hard 12px floor. Both were right for
+   a bitmap-derived face and wrong for an outline grotesque, where uppercase at
+   13px reads as shouting and the floor is unnecessary.
+
+   Uppercase survives in exactly one place — the micro-label — where it is a
+   wayfinding convention rather than a texture, and it gets the positive
+   tracking that uppercase always needs. Everything else is sentence case with
+   slight negative tracking, which is how this family is drawn to be set. */
 .sc-h1, .sc-card-title, .sc-btn, .sc-badge, .sc-nav-word, .sc-nav-tx,
 .sc-dialog-h, .sc-login-title, .sc-label {
-  font-family: var(--sc-font-pixel);
-  letter-spacing: 0;
-  text-transform: uppercase;
-  font-weight: 400;
-  font-size: max(12px, 1em);
+  font-family: var(--sc-font-ui);
+  text-transform: none;
+  letter-spacing: -0.01em;
 }
-.sc-h1 { font-size: 24px; }
-.sc-login-title { font-size: 20px; }
-.sc-card-title, .sc-dialog-h { font-size: 14px; }
-.sc-btn, .sc-badge, .sc-nav-tx, .sc-nav-word, .sc-label { font-size: 13px; }
+.sc-h1 { font-size: 30px; font-weight: 600; line-height: 1.15; letter-spacing: -0.025em; }
+.sc-login-title { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.sc-dialog-h { font-size: 16px; font-weight: 600; line-height: 1.3; }
+.sc-card-title { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.sc-nav-word { font-size: 16px; font-weight: 700; }
+.sc-btn { font-size: 13px; font-weight: 500; letter-spacing: 0; }
+.sc-nav-tx { font-size: 13px; font-weight: 500; }
+.sc-badge { font-size: 12px; font-weight: 500; letter-spacing: 0; }
+/* The one uppercase left standing, and the only one with positive tracking. */
+.sc-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+/* Table headers are labels by another name. */
+.MuiTableCell-head, .sc-table th {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
 
 /* The press IS the shadow collapsing: the button moves into the space its
    shadow occupied, which is how a 2-frame sprite button reads. */
@@ -1270,7 +2007,11 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   box-shadow: var(--sc-shadow);
   transition: none;
 }
-.sc-btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: none; }
+/* Same rule for our own buttons: highlight, never displace. */
+.sc-btn:active:not(:disabled) {
+  transform: none;
+  box-shadow: inset 0 0 0 2em hsl(var(--sc-fg) / .14);
+}
 .sc-btn:focus-visible,
 .sc-input:focus-visible, .sc-select:focus-visible {
   outline: var(--sc-border-w) solid hsl(var(--sc-ring));
@@ -1311,13 +2052,13 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .MuiStepIcon-root.Mui-completed { color: hsl(var(--sc-primary)) !important; }
 .MuiStepLabel-label.MuiStepLabel-active,
 .MuiStepLabel-label.Mui-active { color: hsl(var(--sc-fg)) !important; }
-.MuiTypography-colorPrimary { color: hsl(var(--sc-primary)) !important; }
+[class*="MuiTypography-colorPrimary"] { color: hsl(var(--sc-primary)) !important; }
 /* Focus rings and underlines. */
 .MuiFormLabel-root.Mui-focused { color: hsl(var(--sc-primary)) !important; }
 .MuiInput-underline:after,
 .MuiFilledInput-underline:after { border-bottom-color: hsl(var(--sc-primary)) !important; }
-.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
-.MuiAutocomplete-inputFocused ~ .MuiOutlinedInput-notchedOutline {
+.MuiOutlinedInput-root.Mui-focused [class*="MuiOutlinedInput-notchedOutline"],
+.MuiAutocomplete-inputFocused ~ [class*="MuiOutlinedInput-notchedOutline"] {
   border-color: hsl(var(--sc-primary)) !important; }
 /* Selection controls. MUI v4 defaults Checkbox/Radio/Switch to the SECONDARY
    palette, not the primary one — an audit of a live template form found
@@ -1343,9 +2084,9 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .MuiSvgIcon-colorSecondary { color: hsl(var(--sc-primary)) !important; }
 
 /* Buttons and progress. */
-.MuiButton-containedPrimary { background-color: hsl(var(--sc-primary)) !important;
+[class*="MuiButton-containedPrimary"] { background-color: hsl(var(--sc-primary)) !important;
   color: hsl(var(--sc-primary-fg)) !important; }
-.MuiButton-textPrimary, .MuiButton-outlinedPrimary { color: hsl(var(--sc-primary)) !important; }
+[class*="MuiButton-textPrimary"], [class*="MuiButton-outlinedPrimary"] { color: hsl(var(--sc-primary)) !important; }
 .MuiChip-colorPrimary { background-color: hsl(var(--sc-primary)) !important;
   color: hsl(var(--sc-primary-fg)) !important; }
 
@@ -1368,8 +2109,8 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 }
 
 /* Sidebar: the active row is marked by a cursor, the way a menu selection is. */
-.sc-nav-cursor { font-family: var(--sc-font-pixel); font-size: 11px; width: 12px;
-  flex: 0 0 auto; color: hsl(var(--sc-primary)); }
+.sc-nav-cursor { font-family: var(--sc-font-ui); font-size: 11px; width: 12px;
+  flex: 0 0 auto; color: hsl(var(--sc-primary)); margin-left: auto; text-align: right; }
 .sc-nav-item { border-radius: var(--sc-radius); border-left: var(--sc-border-w) solid transparent; }
 .sc-nav-item.active { border-left-color: hsl(var(--sc-primary)); }
 .sc-nav-mark { border-radius: var(--sc-radius); border: var(--sc-border-w) solid hsl(var(--sc-fg) / .8);
@@ -1377,6 +2118,6 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 
 /* The JSON tree is pixel throughout now; keys keep their weight so the
    structure still reads at a glance. */
-.sc-json-key, .sc-json-toggle { font-family: var(--sc-font-pixel); font-size: 12px; }
-.sc-json-body { font-family: var(--sc-font-pixel); font-size: 12px; }
+.sc-json-key, .sc-json-toggle { font-family: var(--sc-font-ui); font-size: 12px; }
+.sc-json-body { font-family: var(--sc-font-ui); font-size: 12px; }
 `;

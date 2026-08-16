@@ -25,7 +25,11 @@ const PRIMARY_DARK = '#818cf8';
 const ACCENT = '#8b5cf6';
 // Full arcade: the MUI theme's base face is the pixel one, so native Backstage
 // components inherit it rather than falling back to Inter.
-const FONT = "'Pixelify Sans', ui-monospace, SFMono-Regular, monospace";
+// Read through a variable so a mode potion can change the face. MUI freezes
+// typography at theme construction, so a static string here would leave every
+// native Backstage surface in the pixel font while our own pages changed.
+const FONT =
+  "var(--sc-font-ui, 'Pixelify Sans', ui-monospace, SFMono-Regular, monospace)";
 
 type Tone = {
   primary: string;
@@ -49,14 +53,73 @@ const DARK: Tone = {
   navBg: '#17151f',
 };
 
-const pageThemes = {
-  home: genPageTheme({ colors: [PRIMARY, ACCENT], shape: shapes.wave }),
-  documentation: genPageTheme({ colors: [PRIMARY, ACCENT], shape: shapes.wave2 }),
-  tool: genPageTheme({ colors: [PRIMARY, ACCENT], shape: shapes.round }),
-  service: genPageTheme({ colors: [PRIMARY, ACCENT], shape: shapes.wave }),
-  other: genPageTheme({ colors: [PRIMARY, ACCENT], shape: shapes.wave }),
-  app: genPageTheme({ colors: [PRIMARY, ACCENT], shape: shapes.wave }),
-  apis: genPageTheme({ colors: [PRIMARY, ACCENT], shape: shapes.wave }),
+/**
+ * A page theme whose gradient follows the picker.
+ *
+ * genPageTheme joins its `colors` into a literal `linear-gradient(90deg, …)` at
+ * theme construction, so the ownership tiles on /catalog/default/group/* and
+ * /user/* wore a baked indigo→violet in all nine modes and both registers —
+ * the loudest element on those pages, and not reachable as a token from CSS.
+ * The returned object is plain, so the gradient half is rewritten to read a
+ * variable, exactly as GRAPH_OVERRIDES and --sc-header-art do. The shape URI
+ * is taken from what genPageTheme itself produced rather than transcribed.
+ *
+ * Exported so a test can assert on it; the built theme is not introspectable.
+ */
+function pageThemeOf(shape: string) {
+  const base = genPageTheme({ colors: [PRIMARY, ACCENT], shape });
+  return {
+    ...base,
+    backgroundImage: `${shape},  linear-gradient(90deg, hsl(var(--sc-primary)), hsl(var(--sc-primary) / .65))`,
+  };
+}
+
+export const pageThemes = {
+  home: pageThemeOf(shapes.wave),
+  documentation: pageThemeOf(shapes.wave2),
+  tool: pageThemeOf(shapes.round),
+  service: pageThemeOf(shapes.wave),
+  other: pageThemeOf(shapes.wave),
+  app: pageThemeOf(shapes.wave),
+  apis: pageThemeOf(shapes.wave),
+};
+
+/**
+ * The app visualizer's four override keys.
+ *
+ * Every value reads a token rather than a literal. The hex that used to sit
+ * here was picked for one dark palette, so the graph stayed that colour in
+ * every mode and in light mode — a dark canvas with pale nodes on a parchment
+ * page. MUI freezes these at theme construction, so a CSS variable is the only
+ * way they can follow the live theme, which is the same reason the header art
+ * is reached through one.
+ *
+ * Exported so a test can assert on the object; the built theme is not
+ * introspectable.
+ */
+export const GRAPH_OVERRIDES = {
+    BackstageDependencyGraphNode: {
+      styleOverrides: {
+        node: { fill: 'hsl(var(--sc-card))', stroke: 'hsl(var(--sc-border))' },
+      },
+    },
+    BackstageDependencyGraphDefaultNode: {
+      styleOverrides: {
+        node: {
+          fill: 'hsl(var(--sc-card))',
+          stroke: 'hsl(var(--sc-border))',
+          rx: 8,
+          ry: 8,
+        },
+        text: { fill: 'hsl(var(--sc-fg))' },
+      },
+    },
+    BackstageDependencyGraphDefaultLabel: {
+      styleOverrides: { text: { fill: 'hsl(var(--sc-fg))' } },
+    },
+    BackstageDependencyGraphEdge: {
+      styleOverrides: { path: { stroke: 'hsl(var(--sc-border) / .55)' } },
+    },
 };
 
 function makeTheme(mode: 'light' | 'dark', t: Tone) {
@@ -79,25 +142,21 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
     // keep it on the platform's palette. They were deleted with the catalog
     // graph's overrides and left the visualizer unstyled: a transparent canvas
     // with default light-blue nodes on a dark page.
-    BackstageDependencyGraphNode: {
-      styleOverrides: { node: { fill: '#17171f', stroke: '#32303e' } },
-    },
-    BackstageDependencyGraphDefaultNode: {
-      styleOverrides: {
-        node: { fill: '#17171f', stroke: '#32303e', rx: 8, ry: 8 },
-        text: { fill: '#e7e7ef' },
-      },
-    },
-    BackstageDependencyGraphDefaultLabel: {
-      styleOverrides: { text: { fill: '#e7e7ef' } },
-    },
-    BackstageDependencyGraphEdge: {
-      styleOverrides: { path: { stroke: 'rgba(255,255,255,.24)' } },
-    },
+    ...GRAPH_OVERRIDES,
     BackstageHeader: {
         styleOverrides: {
           header: {
-            backgroundImage: 'none',
+            // The hook a mode potion fills; `none` keeps every other scheme
+            // byte-identical. A CSS selector cannot reach this element —
+            // BackstageHeader-* becomes jss<n> in a production build.
+            backgroundImage: 'var(--sc-header-art, none)',
+            // The band needs more than an image to be a band: a repeating
+            // ornament has to be sized, tiled on one axis and pinned to an
+            // edge. Four hooks rather than one, each inert by default so every
+            // other scheme renders exactly as it did before.
+            backgroundSize: 'var(--sc-header-art-size, auto)',
+            backgroundRepeat: 'var(--sc-header-art-repeat, repeat)',
+            backgroundPosition: 'var(--sc-header-art-pos, 0 0)',
             backgroundColor: 'hsl(var(--sc-card))',
             boxShadow: 'none',
             borderBottom: '1px solid hsl(var(--sc-border))',
@@ -107,7 +166,7 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
           },
           title: {
             color: 'hsl(var(--sc-fg))',
-            fontFamily: "'Pixelify Sans', ui-monospace, monospace",
+            fontFamily: 'var(--sc-font-title) !important',
             textTransform: 'uppercase',
             fontWeight: 400,
             // 18px/1.35 was a separate class*="BackstageContentHeader-title"
@@ -119,7 +178,7 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
             // selectors this can't share, since a hashed class fragment
             // doesn't survive a production build).
             '&::after': {
-              content: "'\\2588' / ''",
+              content: "'\\258C' / ''",
               marginLeft: 4,
               color: 'hsl(var(--sc-primary))',
             },
@@ -144,7 +203,7 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
       BackstageContentHeader: {
         styleOverrides: {
           title: {
-            fontFamily: 'var(--sc-font-pixel) !important',
+            fontFamily: 'var(--sc-font-ui) !important',
             textTransform: 'uppercase !important',
             letterSpacing: '0 !important',
             fontWeight: '400 !important',
@@ -168,7 +227,7 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
           // pixel-art background gradient stays in styles.ts (CSS is simpler
           // than a style object for that part), keyed off a stable class.
           root: {
-            fontFamily: 'var(--sc-font-pixel) !important',
+            fontFamily: 'var(--sc-font-ui) !important',
             textTransform: 'uppercase !important',
             letterSpacing: '0 !important',
             fontWeight: '400 !important',
@@ -181,7 +240,7 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
       BackstageAutocomplete: {
         styleOverrides: {
           label: {
-            fontFamily: 'var(--sc-font-pixel) !important',
+            fontFamily: 'var(--sc-font-ui) !important',
             textTransform: 'uppercase !important',
             letterSpacing: '0 !important',
             fontWeight: '400 !important',

@@ -101,16 +101,73 @@ that is what choosing means.
 ## Where colour deliberately ignores the picker
 
 The experience bar is yellow while a workflow runs, green when it lands, red
-when it does not — regardless of the picked scheme. Status has to mean the same
-thing in every theme; a bar that is violet on Tuesday and amber on Wednesday
-says nothing at a glance.
+when it does not — regardless of the picked *accent*. Status has to mean the
+same thing across a working session; a bar that is violet on Tuesday and amber
+on Wednesday says nothing at a glance.
+
+The rule is about the accent, and there is exactly one exception: a **mode**
+potion may redefine status hue, and Ancient Greek does — laurel-gold, Styx
+cyan, ember. What makes that admissible rather than a hole in the rule is that
+it is wholesale and measured:
+
+- A mode redefines **every** status token or none of them. A partial override
+  puts a default colour on a surface it was never measured against, which is
+  why `contrast.test.ts` checks that each mode covers the same token names.
+- The text label is untouched. `SUCCEEDED` is still the word on the badge, so
+  no meaning rests on hue alone and the change costs consistency, not access.
+- Every pair is re-measured against **that mode's** card colours. The suite
+  enforces WCAG AA, 4.5:1; the literals themselves are chosen at the lowest
+  lightness clearing 5.0:1, so there is headroom above the line rather than a
+  value sitting exactly on it.
+
+The cost is real and worth naming: Greek's gold success sits near the amber
+that means *running* elsewhere. Success is pushed to 60° rather than a straight
+gold, 22° from the amber text hue and 25° from the amber badge fill it sits on,
+and running moves to a cold 188° cyan that no other scheme uses.
+
+## Mode potions
+
+Six of the seven bottles are one accent hue. The seventh, Ancient Greek, is a
+*mode*: it carries a whole palette and its own chrome, hung off a single
+`sc-greek` class on the root element.
+
+That works on specificity alone. The injected accent sheet writes `:root`,
+which is (0,1,0); `:root.sc-greek` is (0,2,0) and wins whatever the injection
+order, and `:root.sc-greek.sc-dark` is (0,3,0) and settles the dark register
+over both. `sc-konami` has always worked this way — the mode potion is the same
+mechanism, persisted instead of thrown away on reload.
+
+Its CSS lives in `greek.ts`, not `styles.ts`. That is not tidiness: `styles.ts`
+is a single template literal that a stray backtick has silently truncated
+twice, and a second complete art direction inline makes a known hazard worse.
+`greek.test.ts` carries a parity check that every colour token the default
+`:root` declares is declared in both Greek registers — a half-declared mode
+inherits a colour from the wrong register and degrades into unreadable text
+rather than an obvious break.
 
 ## Motion
 
 Every animation uses `steps()`, never `ease`. Smooth interpolation is what
 makes a pixel interface look like a modern interface wearing a costume, so the
-rule is absolute — including for third-party motion: React Flow's animated
-graph edges are stepped here too.
+rule holds for the default theme and for third-party motion alike: React Flow's
+animated graph edges are stepped here too.
+
+There is one exception, and it is the same shape as the status-hue one: a
+**mode** potion may redefine the easing vocabulary. A mode exists to render
+another design system in this app's furniture, and for some of them the timing
+*is* the design — Agence Foudre transitions nearly a thousand elements on
+`cubic-bezier(.23, 1, .32, 1)`, and reproducing its colours over stepped timing
+would be that design wearing this one's clock. Three conditions make it an
+exception rather than a hole:
+
+- **Wholesale.** A mode declares its own curves as tokens and uses them
+  consistently. Mixing smooth and stepped inside one theme is the failure this
+  rule exists to prevent, and it looks worse than either alone.
+- **The reduced-motion contract is unchanged.** Everything timed still sits
+  inside the query, and the still frame is still designed.
+- **Nothing conveys state through motion alone**, which was never negotiable.
+
+The default theme and Ancient Greek keep `steps()`.
 
 Everything timed sits inside `@media (prefers-reduced-motion: no-preference)`,
 and the reduced case is designed rather than merely disabled: the tour's
@@ -126,11 +183,20 @@ Nothing conveys state through motion alone.
 - Contrast is measured, not eyeballed. The dither pass found every badge
   variant already below WCAG AA — the worst at 1.84:1 — and fixed them; the
   check samples the rendered pixel against its text in all six schemes.
-- The pixel font is used at 12px minimum and never for long-form documentation.
-  It renders true lowercase, not the all-caps-shaped-as-lowercase of the
-  earlier pixel face; chrome (titles, buttons, badges, nav, labels, table
-  headers) is still uppercase, but that's a deliberate style choice, not the
-  font compensating for missing lowercase forms.
+- **One typeface.** Clash Grotesk is the app's only family, self-hosted because
+  the CSP is `font-src 'self'` — a CDN reference fails silently, the page
+  falling back to something that looks nearly right. Differentiation comes from
+  weight, size and case rather than from a second family, which is also what
+  lets a mode change the whole voice by moving one variable.
+
+  It replaced a pixel face, and the type scale changed with it. The arcade
+  treatment uppercased every piece of chrome and held a hard 12px floor: both
+  were right for a bitmap-derived face and wrong for an outline grotesque, where
+  uppercase at 13px reads as shouting. Uppercase now survives in exactly one
+  place — the micro-label and its sibling the table header — where it is a
+  wayfinding convention rather than a texture, and it carries the positive
+  tracking uppercase always needs. Everything else is sentence case with slight
+  negative tracking, which is how this family is drawn to be set.
 - Progress bars carry their numbers (`2/3 STEPS`), which is both the NES
   convention and the readable one.
 

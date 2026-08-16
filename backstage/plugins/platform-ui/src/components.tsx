@@ -58,9 +58,11 @@ export function PixelSprite({
 export function PixelPotion({
   liquid,
   className,
+  sprite = POTION,
 }: {
   liquid: string;
   className?: string;
+  sprite?: Sprite;
 }) {
   return (
     <svg
@@ -71,12 +73,12 @@ export function PixelPotion({
       focusable="false"
     >
       <g fill={liquid}>
-        {spriteRects(POTION, '~').map(r => (
+        {spriteRects(sprite, '~').map(r => (
           <rect key={`l-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
         ))}
       </g>
       <g fill="currentColor">
-        {spriteRects(POTION, '#').map(r => (
+        {spriteRects(sprite, '#').map(r => (
           <rect key={`g-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
         ))}
       </g>

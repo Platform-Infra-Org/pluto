@@ -1,4 +1,9 @@
-Pixelify Sans, licensed under the SIL Open Font License 1.1.
-Copyright 2021 The Pixelify Sans Project Authors
-https://github.com/eifetx/Pixelify-Sans
-https://scripts.sil.org/OFL
+clash-grotesk.woff2 — Clash Grotesk, by Indian Type Foundry.
+Licensed under the ITF Free Font License (FFL): free for personal and
+commercial use, redistributable as part of a larger work, not for sale on
+its own. https://www.fontshare.com/fonts/clash-grotesk
+Variable file, weight axis 200-700, so one asset covers the whole range.
+
+This is the app's only typeface. Pixelify Sans (SIL OFL) and Anton (SIL OFL)
+were both served here previously and were removed when the type consolidated
+onto one family; neither file ships any more.

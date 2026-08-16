@@ -1,4 +1,4 @@
-import { SCHEMES } from './SchemeRoot';
+import { SCHEMES, applyScheme } from './SchemeRoot';
 
 /** WCAG relative luminance for an "H S% L%" triplet. */
 function luminance(hsl: string): number {
@@ -27,14 +27,42 @@ describe('colour schemes', () => {
     }
   });
 
-  it('keeps six schemes with stable ids', () => {
-    expect(SCHEMES.map(s => s.id)).toEqual([
-      'violet',
-      'blue',
-      'green',
-      'rose',
-      'amber',
-      'slate',
-    ]);
+  it('keeps one potion per design system, with stable ids', () => {
+    // An id is the key a browser has already persisted; a label is only what
+    // someone reads. A pick that no longer exists degrades to the first bottle
+    // rather than throwing.
+    expect(SCHEMES.map(s => s.id)).toEqual(['greek', 'foudre', 'slush', 'spiderverse', 'newform', 'hermes', 'papers', 'discord', 'claude', 'dairy', 'obsidian']);
+  });
+
+  it('gives each mode to exactly one potion', () => {
+    const modes = SCHEMES.filter(s => s.mode).map(s => s.mode);
+    expect([...modes].sort()).toEqual(['claude', 'dairy', 'discord', 'foudre', 'greek', 'hermes', 'newform', 'obsidian', 'papers', 'slush', 'spiderverse']);
+    expect(new Set(modes).size).toBe(modes.length);
+  });
+
+  it('toggles the mode class on the root element when a mode is picked', () => {
+    applyScheme('greek');
+    expect(document.documentElement.classList.contains('sc-greek')).toBe(true);
+    applyScheme('foudre');
+    expect(document.documentElement.classList.contains('sc-greek')).toBe(false);
+    expect(document.documentElement.classList.contains('sc-foudre')).toBe(true);
+  });
+
+  it('never leaves two modes applied at once', () => {
+    // The failure this guards is silent and total: a mode class left behind is
+    // a second complete palette still matching, and which one wins is then
+    // decided by stylesheet order rather than by what was clicked. Every mode
+    // must be cleared on every pick, not only the one being replaced.
+    const ALL = ['sc-greek', 'sc-foudre', 'sc-slush', 'sc-spiderverse', 'sc-newform', 'sc-hermes', 'sc-papers', 'sc-discord', 'sc-claude', 'sc-dairy', 'sc-obsidian'];
+    const classesFor = (id: string) => {
+      applyScheme(id);
+      return ALL.filter(c => document.documentElement.classList.contains(c));
+    };
+    // Walk the whole shelf: every pick must leave exactly one mode standing.
+    for (const s of SCHEMES) {
+      expect(`${s.id}:${classesFor(s.id).join(',')}`).toBe(
+        `${s.id}:sc-${s.mode}`,
+      );
+    }
   });
 });

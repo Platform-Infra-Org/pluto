@@ -4,6 +4,7 @@ import {
   TEMPLE,
   SPRITE_SIZE,
   AMPHORA,
+  AMPHORA_VESSEL,
   KEY,
   LAUREL,
   HELM,
@@ -132,5 +133,17 @@ describe('sprite data', () => {
   it('gives the run cycle two distinct frames', () => {
     // Identical frames animate into a static smudge.
     expect(CREEP_A.join('')).not.toBe(CREEP_B.join(''));
+  });
+
+  it('gives the amphora vessel both layers, like the potion', () => {
+    // The picker paints '~' in the scheme colour and '#' in currentColor. A
+    // grid with no '~' renders as an outline with nothing inside it.
+    expect(spriteRects(AMPHORA_VESSEL, '~').length).toBeGreaterThan(0);
+    expect(spriteRects(AMPHORA_VESSEL, '#').length).toBeGreaterThan(0);
+  });
+
+  it('keeps the amphora vessel on the 16x16 grid', () => {
+    expect(AMPHORA_VESSEL).toHaveLength(SPRITE_SIZE);
+    for (const row of AMPHORA_VESSEL) expect(row).toHaveLength(SPRITE_SIZE);
   });
 });

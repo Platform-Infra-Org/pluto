@@ -1,6 +1,13 @@
+import { BRAND_DEFS } from './brands';
+import { foudreCss } from './foudre';
+import { greekCss } from './greek';
+import { spiderverseCss } from './spiderverse';
 import {
   CARD_DARK,
   CARD_LIGHT,
+  GREEK_STATUS_TOKENS,
+  MODE_CARDS,
+  MODE_TOKENS,
   STATUS_TOKENS,
   statusTokenCss,
 } from './statusTokens';
@@ -58,6 +65,19 @@ const contrastOver = (text: string, cell: string, alpha: number, bg: string) =>
 
 const AA = 4.5;
 
+/** Every `--sc-*` triplet declared inside one selector block of `css`. */
+function registerOf(css: string, selector: string): Record<string, string> {
+  const start = css.indexOf(`${selector} {`);
+  expect(start).toBeGreaterThan(-1);
+  const body = css.slice(start, css.indexOf('}', start));
+  return Object.fromEntries(
+    Array.from(
+      body.matchAll(/--(sc-[a-z-]+):\s*([\d.]+\s+[\d.]+%\s+[\d.]+%)\s*;/g),
+      m => [m[1], m[2]],
+    ),
+  );
+}
+
 describe('status text colours', () => {
   it('clears AA on the plain card in both modes', () => {
     for (const t of STATUS_TOKENS) {
@@ -88,5 +108,139 @@ describe('status text colours', () => {
     }
     // The dark half must be scoped, or it would win in light mode too.
     expect(css).toContain(':root.sc-dark');
+  });
+});
+
+describe('greek status text colours', () => {
+  it('clears AA on the plain card in every mode', () => {
+    for (const [mode, tokens] of Object.entries(MODE_TOKENS)) {
+      const cards = MODE_CARDS[mode as keyof typeof MODE_CARDS];
+      for (const t of tokens) {
+        const light = contrast(t.light, cards.light);
+        const dark = contrast(t.dark, cards.dark);
+        expect(`${mode}/${t.name} light:${light >= AA}`).toBe(
+          `${mode}/${t.name} light:true`,
+        );
+        expect(`${mode}/${t.name} dark:${dark >= AA}`).toBe(
+          `${mode}/${t.name} dark:true`,
+        );
+      }
+    }
+  });
+
+  it('clears AA on the dithered fill in every mode', () => {
+    for (const [mode, tokens] of Object.entries(MODE_TOKENS)) {
+      const cards = MODE_CARDS[mode as keyof typeof MODE_CARDS];
+      for (const t of tokens) {
+        const light = contrastOver(t.light, t.cell, t.cellAlpha, cards.light);
+        const dark = contrastOver(t.dark, t.cell, t.cellAlpha, cards.dark);
+        expect(`${mode}/${t.name} light:${light >= AA}`).toBe(
+          `${mode}/${t.name} light:true`,
+        );
+        expect(`${mode}/${t.name} dark:${dark >= AA}`).toBe(
+          `${mode}/${t.name} dark:true`,
+        );
+      }
+    }
+  });
+
+  it('covers the same token names in every mode', () => {
+    // A mode that forgets a token inherits the default colour on a surface it
+    // was never measured against, which is exactly the failure this file exists
+    // to catch.
+    const names = STATUS_TOKENS.map(t => t.name).sort();
+    for (const tokens of Object.values(MODE_TOKENS)) {
+      expect(tokens.map(t => t.name).sort()).toEqual(names);
+    }
+  });
+
+  it('emits the greek blocks after the default dark block', () => {
+    // `:root.sc-dark` and `:root.sc-greek` are both specificity (0,2,0), so the
+    // tie is broken by source order alone. Emit greek first and a greek page in
+    // dark mode silently keeps the default dark status colours.
+    const css = statusTokenCss();
+    expect(css.indexOf(':root.sc-greek')).toBeGreaterThan(
+      css.indexOf(':root.sc-dark'),
+    );
+    expect(css.indexOf(':root.sc-greek.sc-dark')).toBeGreaterThan(
+      css.indexOf(':root.sc-greek {'),
+    );
+  });
+
+  it('emits a light and dark value for every greek token', () => {
+    const css = statusTokenCss();
+    for (const t of GREEK_STATUS_TOKENS) {
+      expect(css).toContain(`--sc-${t.name}: ${t.light}`);
+      expect(css).toContain(`--sc-${t.name}: ${t.dark}`);
+    }
+  });
+});
+
+describe('greek palette contrast', () => {
+  // greek.ts's header comment claims these; this measures them. The pairs are
+  // the ones a user actually reads text on, plus the gold rule against its card.
+  const PAIRS: ReadonlyArray<readonly [string, string, number]> = [
+    ['sc-fg', 'sc-bg', AA],
+    ['sc-fg', 'sc-card', AA],
+    ['sc-muted-fg', 'sc-card', AA],
+    ['sc-primary-fg', 'sc-primary', AA],
+    ['sc-accent-fg', 'sc-accent', AA],
+    // Known limitation: --sc-border on --sc-bg measures 2.89 in the light
+    // register, under the 3:1 UI-component guideline, so it is deliberately
+    // not asserted. (The repo's own default light border is 1.27 against its
+    // card, so Greek is not setting a new low.) Fix by darkening --sc-border
+    // in the light register if this ever needs to clear 3:1 on the page body.
+    // The card pair below clears at 3.02 — almost no margin, so a slightly
+    // darker card or lighter gold will trip this assertion.
+    ['sc-border', 'sc-card', 3.0],
+  ];
+
+  for (const selector of [':root.sc-greek', ':root.sc-greek.sc-dark']) {
+    it(`clears its contrast targets in ${selector}`, () => {
+      const tokens = registerOf(greekCss(), selector);
+      expect(Object.keys(tokens).length).toBeGreaterThan(8); // the regex matched
+      for (const [fg, bg, min] of PAIRS) {
+        const measured = contrast(tokens[fg], tokens[bg]);
+        expect(`${fg} on ${bg}: ${measured >= min}`).toBe(`${fg} on ${bg}: true`);
+      }
+    });
+  }
+});
+
+describe('dark rules', () => {
+  it('is never a second helping of the accent', () => {
+    // Every dark register cleared the numeric contrast bar and still read as
+    // one colour, because `border` shared hue AND saturation with `primary`:
+    // every rule, focus ring, input outline and divider then glows in the
+    // brand colour. `papers` shipped the two literally identical
+    // (57 88% 58%). A rule is allowed to keep the accent's hue only if it
+    // drops to a low saturation, or to keep saturation only if it moves hue.
+    //
+    // greek and slush are deliberately absent: greek's gold rule is pinned by
+    // greek.test.ts and feeds its sprite fills, and slush's rule is a pure
+    // white cut edge.
+    const registers: Array<[string, Record<string, string>]> = [
+      ...BRAND_DEFS.map(
+        b =>
+          [b.id, { 'sc-border': b.dark.border, 'sc-primary': b.dark.primary }] as [
+            string,
+            Record<string, string>,
+          ],
+      ),
+      ['foudre', registerOf(foudreCss(), ':root.sc-foudre.sc-dark')],
+      [
+        'spiderverse',
+        registerOf(spiderverseCss(), ':root.sc-spiderverse.sc-dark'),
+      ],
+    ];
+
+    for (const [mode, tokens] of registers) {
+      const [bh, bs] = tokens['sc-border'].split(' ').map(parseFloat);
+      const [ph] = tokens['sc-primary'].split(' ').map(parseFloat);
+      const raw = Math.abs(bh - ph) % 360;
+      const hueGap = Math.min(raw, 360 - raw);
+      const ok = hueGap >= 20 || bs <= 25;
+      expect(`${mode} rule separated: ${ok}`).toBe(`${mode} rule separated: true`);
+    }
   });
 });

@@ -7,8 +7,9 @@ import {
 } from 'react';
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
-import { SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
-import { PixelPotion } from './components';
+import { BRAND_DEFS } from './brands';
+import { AMPHORA_VESSEL, SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
+import { PixelPotion, PixelStar } from './components';
 import { templateHeaderCss } from './templateHeaders';
 import { listenForKonami } from './konami';
 import { useCurrentPath } from './CustomNav';
@@ -39,22 +40,108 @@ import { resolveHeaderImages } from './headerImages';
  */
 const DRAG_THRESHOLD = 4;
 
+/**
+ * How long the cast runs before the pick is applied.
+ *
+ * Must match the sc-cast keyframes in styles.ts: the scheme changing is what
+ * ends the animation, so a shorter value here cuts it off mid-frame.
+ */
+const CAST_MS = 360;
+
 /** The two foreground tones a scheme can use, and each other's shade. */
 const WHITE = '0 0% 100%';
 const INK = '240 10% 8%';
+
+/**
+ * A picker entry. `mode` marks the one that carries a whole palette rather than
+ * an accent — see greek.ts. Declared explicitly rather than inferred, so that
+ * `s.mode` is readable on every element instead of only the one that sets it.
+ */
+type Scheme = {
+  id: string;
+  label: string;
+  hsl: string;
+  fg: string;
+  mode?: Mode;
+};
+
+/**
+ * The modes a potion can carry, and the source of the `sc-<mode>` root classes.
+ *
+ * Listed rather than inferred so `applyScheme` can clear every one of them on
+ * each pick: a mode class left behind is a second palette still applying, and
+ * which one wins is then decided by stylesheet order rather than by the click.
+ */
+const MODES = [
+  'greek',
+  'foudre',
+  'slush',
+  'spiderverse',
+  'newform',
+  'hermes',
+  'papers',
+  'discord',
+  'claude',
+  'dairy',
+  'obsidian',
+] as const;
+type Mode = (typeof MODES)[number];
 
 // Saturated toward NES-era values. `fg` is the text colour that sits on the
 // accent: white where it clears 4.5:1, near-black where it doesn't. Green and
 // amber are the reason this field exists — darkening them enough for white text
 // would have turned them to mud. Ratios are measured, see SchemeRoot.test.ts.
-export const SCHEMES = [
-  { id: 'violet', label: 'Violet', hsl: '250 75% 60%', fg: WHITE }, // 5.60
-  { id: 'blue', label: 'Blue', hsl: '217 85% 52%', fg: WHITE }, // 4.74
-  { id: 'green', label: 'Green', hsl: '145 75% 42%', fg: INK }, // 7.41
-  { id: 'rose', label: 'Rose', hsl: '345 80% 49%', fg: WHITE }, // 4.73
-  { id: 'amber', label: 'Amber', hsl: '38 90% 52%', fg: INK }, // 8.85
-  { id: 'slate', label: 'Slate', hsl: '215 30% 45%', fg: WHITE }, // 5.29
+export const SCHEMES: Scheme[] = [
+  // Two design systems, each rendered in this app's furniture. Ids are the key
+  // a browser has already persisted and never change once published.
+  {
+    id: 'greek',
+    label: 'Ancient Greek',
+    hsl: '10 68% 34%',
+    fg: WHITE, // 7.94
+    mode: 'greek',
+  },
+  {
+    id: 'foudre',
+    label: 'Agence Foudre',
+    hsl: '330 68% 38%',
+    fg: WHITE, // 6.80
+    mode: 'foudre',
+  },
+  {
+    id: 'slush',
+    label: 'Slush',
+    hsl: '213 100% 43%',
+    fg: WHITE, // 4.62
+    mode: 'slush',
+  },
+  {
+    id: 'spiderverse',
+    label: 'Spider-Verse',
+    hsl: '355 82% 42%',
+    fg: WHITE, // 7.05
+    mode: 'spiderverse',
+  },
+  // The table-driven brand modes, from brands.ts.
+  ...BRAND_DEFS.map(b => ({
+    id: b.id,
+    label: b.label,
+    hsl: b.bottle,
+    fg: b.bottleFg,
+    mode: b.id as Mode,
+  })),
 ];
+
+/**
+ * What a browser with nothing stored gets.
+ *
+ * Resolved through the shelf rather than used raw, so removing or renaming a
+ * scheme degrades to the first bottle instead of leaving every new visitor on
+ * an id that no longer exists.
+ */
+const DEFAULT_SCHEME_ID = 'obsidian';
+const defaultScheme = (): Scheme =>
+  SCHEMES.find(s => s.id === DEFAULT_SCHEME_ID) ?? SCHEMES[0];
 
 /**
  * Branding from `app.branding`, handed over once by {@link SchemeRoot}.
@@ -251,8 +338,19 @@ export function applyScheme(scheme?: string) {
     typeof localStorage !== 'undefined'
       ? localStorage.getItem('platform-scheme')
       : null;
-  const id = scheme || stored || 'violet';
-  const s = SCHEMES.find(x => x.id === id) ?? SCHEMES[0];
+  // Falls back through the shelf, not to a hard-coded id: a scheme removed
+  // from it must not leave a persisted pick pointing at nothing.
+  const id = scheme || stored || defaultScheme().id;
+  const s = SCHEMES.find(x => x.id === id) ?? defaultScheme();
+  // A mode potion carries a whole palette rather than an accent. Everything it
+  // changes hangs off one class — see greek.ts for why specificity makes that
+  // enough, and sc-konami for the same mechanism used as an easter egg.
+  // Every mode is toggled on every pick, not just the chosen one: setting the
+  // new class without clearing the old leaves two whole palettes fighting, and
+  // the loser is decided by source order rather than by what was clicked.
+  for (const m of MODES) {
+    document.documentElement.classList.toggle(`sc-${m}`, s.mode === m);
+  }
   ensureStyle(
     'sc-accent',
     // --sc-primary-shade is the opposite of the foreground: it is what text on
@@ -279,7 +377,15 @@ export function applyScheme(scheme?: string) {
       position: branding.headerPosition,
     }),
   );
-  updateFavicon(s.hsl, s.fg);
+  // The record's own hsl is not necessarily what is painted: a mode potion
+  // sets --sc-primary from CSS, which wins on specificity. Reading the
+  // computed value is what keeps the tab icon in step with the page — the
+  // same reason cardHsl() reads computed style rather than a constant.
+  const root = getComputedStyle(document.documentElement);
+  updateFavicon(
+    root.getPropertyValue('--sc-primary').trim() || s.hsl,
+    root.getPropertyValue('--sc-primary-fg').trim() || s.fg,
+  );
 }
 
 // Theme the login gate immediately, before React mounts anything.
@@ -302,8 +408,29 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
     () =>
       (typeof localStorage !== 'undefined' &&
         localStorage.getItem('platform-scheme')) ||
-      'violet',
+      defaultScheme().id,
   );
+  // Closed, the shelf shows only the bottle that is actually equipped. Same
+  // shape as the sidebar's collapse (CustomNav.tsx): lazy read on mount, and a
+  // write-back effect. Unlike the nav there is no root-level data attribute —
+  // the collapse never leaves this component's own subtree, so a class on its
+  // root div is the whole mechanism.
+  // Expanded is the default: the shelf is what exists today, and the closed
+  // state is an opt-in.
+  // The floating shelf holds exactly one bottle: the equipped one, which is
+  // also the control that opens the inventory. There is no expand button and
+  // no collapsed state to remember — a shelf of eleven unlabelled 26px bottles
+  // was the thing the inventory replaced.
+  // The id mid-cast, if any. A pick is applied when its little animation ends
+  // rather than on the press, so the bottle is seen to be taken off the shelf.
+  const [casting, setCasting] = useState<string | null>(null);
+  const castTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // The inventory popover. Deliberately not persisted: it is a menu, and a menu
+  // that reopens itself on every page load is a bug, not a preference.
+  // ponytail: closed by its own button or by Escape only — no outside-click
+  // listener. Add one if it starts getting left open behind other chrome.
+  const [inv, setInv] = useState(false);
+  const invBtn = useRef<HTMLButtonElement>(null);
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<PickerPos | undefined>(() => {
     if (typeof localStorage === 'undefined') return undefined;
@@ -342,6 +469,30 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       /* ignore */
     }
   }, [scheme]);
+
+  useEffect(
+    () => () => {
+      if (castTimer.current) clearTimeout(castTimer.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    // Escape closes the inventory and hands focus back to the button that
+    // opened it, rather than dropping it at the top of the document. Bound to
+    // the window rather than to the panel: the panel is a plain grouping div,
+    // so a key listener on it would only ever fire while focus was already
+    // inside — and Escape is expected to work from wherever the pointer left
+    // you.
+    if (!inv) return undefined;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setInv(false);
+      invBtn.current?.focus();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [inv]);
 
   useEffect(() => {
     if (!floating || !pos) return;
@@ -402,16 +553,17 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       dy: e.clientY - r.top,
       moved: false,
     };
-    // Switch to inline positioning BEFORE anything moves. The corner anchors
-    // are dropped by a CSS attribute written imperatively, while the inline
-    // left/top arrive in React's next commit — so flipping them mid-drag left
-    // one frame with neither, and the box snapped to static flow and back.
-    // Seeding with the current rect is a visual no-op: it is exactly where the
-    // box already is.
-    if (!pos) {
-      setPos({ x: r.left, y: r.top });
-      document.documentElement.dataset.pickerMoved = 'true';
-    }
+    // Nothing is committed here on purpose. Seeding the position on the press
+    // meant the very first press on an untouched shelf ran a state update
+    // between pointerdown and click, and the re-render swallowed that click:
+    // the first thing a user clicked after every reload did nothing, and only
+    // the second worked. Measured in the browser — jsdom fires click without a
+    // preceding pointer sequence, so the suite never saw it.
+    // Deferring costs nothing. onPointerMove sets the position the moment a
+    // press becomes a drag, and the effect on `pos` writes data-picker-moved
+    // AFTER that commit — so the corner anchor is dropped in the frame the
+    // inline left/top already exist, which is the ordering the seeding was
+    // hand-rolling in the first place.
     // Capture is taken in onPointerMove, once this is actually a drag — NOT
     // here. While a pointer is captured, the spec retargets the following
     // `click` to the capturing element, so capturing on every press sent every
@@ -486,6 +638,39 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
     );
   };
 
+  // Floating only, guarded exactly like the drag above: packages/app's sign-in
+  // card mounts a second, non-floating picker, and there the shelf IS the whole
+  // card — every bottle is already on show, so there is nothing to open.
+  // A pick that no longer exists degrades to the first bottle rather than
+  // rendering nothing — the same rule applyScheme() uses.
+  const equipped = SCHEMES.find(s => s.id === scheme) ?? defaultScheme();
+  const shelf = floating ? [equipped] : SCHEMES;
+
+  /**
+   * Take a bottle off the shelf: play its cast, then equip.
+   *
+   * The delay is the animation and nothing else, so it is skipped outright when
+   * the reader has asked for less motion — waiting 360ms to apply a colour
+   * nobody is going to see move is a worse experience, not a gentler one.
+   */
+  const equip = (id: string) => {
+    const reduced =
+      typeof matchMedia === 'function' &&
+      matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      setScheme(id);
+      setInv(false);
+      return;
+    }
+    setCasting(id);
+    if (castTimer.current) clearTimeout(castTimer.current);
+    castTimer.current = setTimeout(() => {
+      setCasting(null);
+      setScheme(id);
+      setInv(false);
+    }, CAST_MS);
+  };
+
   return (
     <div
       ref={ref}
@@ -499,23 +684,91 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       role="group"
       aria-label="Color scheme"
     >
-      {SCHEMES.map((s, i) => (
+      {shelf.map((s, i) => (
         <button
           key={s.id}
+          ref={floating ? invBtn : undefined}
           type="button"
           className="sc-potion"
           // Staggers the rattle so the bottles move out of phase. In unison
           // they read as the shelf vibrating rather than as loose objects.
           style={{ ['--sc-i' as string]: i } as CSSProperties}
           aria-pressed={s.id === scheme}
+          // On the shelf this bottle is the way into the inventory, so it says
+          // so; in the sign-in card it is still just a swatch that picks.
+          {...(floating
+            ? { 'aria-expanded': inv, 'aria-controls': 'sc-picker-inv' }
+            : {})}
           // The sprite is decorative, so the button carries the name itself.
-          aria-label={s.label}
-          title={s.label}
-          onClick={() => setScheme(s.id)}
+          aria-label={
+            floating ? `${s.label} — open potion inventory` : s.label
+          }
+          title={floating ? `${s.label} — open potion inventory` : s.label}
+          onClick={() => (floating ? setInv(v => !v) : setScheme(s.id))}
         >
-          <PixelPotion liquid={`hsl(${s.hsl})`} />
+          <PixelPotion
+            liquid={`hsl(${s.hsl})`}
+            sprite={s.mode === 'greek' ? AMPHORA_VESSEL : undefined}
+          />
+          {/* Sparkles on the equipped bottle. Decoration and nothing else: what
+              is equipped is carried by aria-pressed, by the label, and by being
+              the only bottle on the shelf. Drawn at full opacity by default, so
+              under reduced motion they simply sit there instead of blinking. */}
+          {floating && (
+            <span className="sc-potion-stars" aria-hidden="true">
+              {[0, 1, 2].map(n => (
+                <PixelStar
+                  key={n}
+                  className={`sc-potion-star sc-potion-star-${n}`}
+                />
+              ))}
+            </span>
+          )}
         </button>
       ))}
+      {floating && inv && (
+        <div
+          id="sc-picker-inv"
+          className="sc-picker-inv"
+          role="group"
+          aria-label="Potion inventory"
+        >
+          <ul className="sc-inv-list">
+            {SCHEMES.map(s => (
+              <li key={s.id} className="sc-inv-row">
+                {/* The bottle IS the control. No second equip button beside it:
+                    the row was a swatch, a name and a button all saying the
+                    same thing, and the name is on the button already. */}
+                <button
+                  type="button"
+                  className={`sc-inv-potion${
+                    casting === s.id ? ' sc-inv-casting' : ''
+                  }`}
+                  aria-pressed={s.id === scheme}
+                  aria-label={s.label}
+                  title={s.label}
+                  onClick={() => equip(s.id)}
+                >
+                  <PixelPotion
+                    liquid={`hsl(${s.hsl})`}
+                    sprite={s.mode === 'greek' ? AMPHORA_VESSEL : undefined}
+                  />
+                  {casting === s.id && (
+                    <span className="sc-cast-stars" aria-hidden="true">
+                      {[0, 1, 2, 3].map(n => (
+                        <PixelStar
+                          key={n}
+                          className={`sc-cast-star sc-cast-star-${n}`}
+                        />
+                      ))}
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

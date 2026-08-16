@@ -153,12 +153,16 @@ function CustomNav({ navItems }: { navItems: any }) {
         title={label}
         className={`sc-nav-item${active ? ' active' : ''}`}
       >
+        {/* Icon first, so every row's icon starts on the same left edge as the
+            brand mark above them. The cursor trails the label instead of
+            leading it — as the first child it inset every icon by its own 12px
+            plus the row gap, which is what knocked them off the logo's line. */}
+        <span className="sc-nav-ic">{item.icon}</span>
+        <span className="sc-nav-tx">{label}</span>
         {/* Non-breaking space when inactive so rows never shift horizontally. */}
         <span className="sc-nav-cursor" aria-hidden="true">
           {active ? '\u25B6' : '\u00A0'}
         </span>
-        <span className="sc-nav-ic">{item.icon}</span>
-        <span className="sc-nav-tx">{label}</span>
       </Link>
     );
   });
