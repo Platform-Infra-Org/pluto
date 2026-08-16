@@ -162,20 +162,24 @@ export function foudreCss(): string {
    65.8px), which is what makes a headline read as a block rather than a line.
    Display sizes only: at body size that leading clips descenders. */
 :root.sc-foudre .sc-h1 {
+  /* !important on the metrics, not just the face: the base sheet sets .sc-h1's
+     size three times and the last one lands late in the cascade. Verified in
+     the browser — without this the heading rendered at 29px/1.35 while the
+     sheet said 38px/0.70, and the 0.70 IS the reference's display setting. */
   font-family: var(--sc-font-display) !important;
-  font-weight: 400;
-  font-size: 38px;
-  line-height: .70;
+  font-weight: 400 !important;
+  font-size: 38px !important;
+  line-height: .70 !important;
   letter-spacing: -0.02em;
   text-transform: uppercase;
   color: hsl(var(--sc-display));
 }
 :root.sc-foudre .sc-card-title {
   font-family: var(--sc-font-display) !important;
-  font-weight: 400;
+  font-weight: 400 !important;
   letter-spacing: -0.01em;
   text-transform: uppercase;
-  font-size: 18px;
+  font-size: 18px !important;
 }
 :root.sc-foudre .sc-btn,
 :root.sc-foudre .sc-badge,
