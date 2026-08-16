@@ -1183,7 +1183,12 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 
 /* Every title, one face. The h1 that says "Welcome to Platform" and a card's
    own title are the same kind of object and were drifting apart by which
-   stylesheet reached them first. */
+   stylesheet reached them first.
+   Bare h1-h6 are in the list because Backstage's own page header renders a
+   heading with NO class at all — verified in the running app — so neither a
+   Mui* selector nor the typed BackstageHeader override can reach it. The
+   element itself is the only stable hook. */
+h1, h2, h3, h4, h5, h6,
 .sc-h1,
 .sc-card-title,
 .sc-empty-title,

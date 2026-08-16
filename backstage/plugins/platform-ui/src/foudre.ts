@@ -119,6 +119,7 @@ export function foudreCss(): string {
    square is the only geometry where neither happens. */
 :root.sc-foudre .MuiCard-root:has(table),
 :root.sc-foudre .MuiPaper-elevation1:has(table),
+:root.sc-foudre .MuiPaper-elevation2:has(table),
 :root.sc-foudre .sc-card:has(table) {
   border-radius: 0 !important;
 }
