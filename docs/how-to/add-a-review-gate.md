@@ -144,9 +144,24 @@ templates:
     suspend: {}
 ```
 
-The annotation goes on the template, not on the step that calls it and not in
-`arguments`. Three states, and the middle one is what you get by writing
-nothing:
+The annotation goes on the template — specifically, on **the template that
+holds the `suspend: {}`**. Two variations look reasonable and neither works:
+
+- **On the `steps:` entry that calls it.** Argo rejects the manifest outright:
+  `json: unknown field "metadata"`. A `WorkflowStep` has no metadata.
+- **On a wrapper template whose inner template suspends.** This one is worse,
+  because it is accepted and then does nothing. The waiting node's
+  `templateName` is the *inner* template, so that is where the annotation is
+  looked for; a wrapper's annotation is never read and the gate quietly falls
+  back to the owning team. Verified against a live argo-server: a workflow
+  wrapping an unannotated `gate` inside an annotated `approve-cost` suspends on
+  `templateName: gate`, and the platform sees no group at all.
+
+A consequence of the same rule: a template carries one group, so calling the
+same suspend template twice gives both gates the same team. Two teams means two
+templates — which is what `team-gates.yaml` does.
+
+Three states, and the middle one is what you get by writing nothing:
 
 | the suspend template | who may resume it |
 |---|---|
