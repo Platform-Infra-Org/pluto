@@ -144,9 +144,14 @@ describe('the patterns that make it Foudre', () => {
     expect(css).not.toMatch(/\bBeni\b|\bAnton\b/i);
   });
 
-  it('never rounds a surface holding a table', () => {
+  it('clips a table to the corners of the surface holding it', () => {
+    // Stated per mode rather than inherited, because each sets its own card
+    // radius and would otherwise round the corner without clipping the table
+    // into it -- which is the failure the base sheet's comment describes.
     expect(foudreCss()).toMatch(/:has\(table\)/);
-    expect(stripComments(foudreCss())).not.toMatch(/overflow:\s*hidden/);
+    expect(stripComments(foudreCss())).not.toMatch(
+      /:has\(table\)[^{]*\{[^}]*border-radius:\s*0/,
+    );
   });
 });
 

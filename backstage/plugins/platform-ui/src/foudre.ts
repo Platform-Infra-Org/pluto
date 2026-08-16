@@ -131,13 +131,14 @@ export function foudreCss(): string {
   border-color: hsl(var(--sc-border)) !important;
   box-shadow: none !important;
 }
-/* A surface holding a table takes no radius at all — clipped cuts the table,
-   rounded lets its square corner cover the arc. See the base sheet. */
+/* A surface holding a table keeps its corners and clips the table to them, the
+   same as the base sheet — the header no longer paints an opaque square into
+   the arc, so there is nothing left to fight it. */
 :root.sc-foudre [class*="MuiCard-root"]:has(table),
 :root.sc-foudre .MuiPaper-elevation1:has(table), :root.sc-foudre [class*="MuiPaper-elevation1-"]:has(table),
 :root.sc-foudre .MuiPaper-elevation2:has(table), :root.sc-foudre [class*="MuiPaper-elevation2-"]:has(table),
 :root.sc-foudre .sc-card:has(table) {
-  border-radius: 0 !important;
+  overflow: hidden !important;
 }
 
 /* Buttons take the 10px box; an icon-only control becomes a disc, which is the

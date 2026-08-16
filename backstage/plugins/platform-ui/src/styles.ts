@@ -405,6 +405,12 @@ body, body *, input, select, textarea, button, optgroup {
 }
 /* The BUI page title is the biggest type on a native page. */
 [class*="bui-HeaderTitle"] { font-size: 28px !important; }
+/* The bar naming the page carries the page's name, so it is set like a title
+   rather than like chrome. */
+[class*="bui-HeaderTitle"],
+[class*="bui-PluginHeaderToolbarName"] {
+  font-weight: 700 !important;
+}
 /* The one bui surface with no rule here: PluginHeader ships its own white
    ground and black ink, measured rgb(255,255,255) on a production build while
    the mode's card was 42 45% 98%. Every potion is affected, so this is
@@ -903,22 +909,57 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* card */
 .sc-card { background: hsl(var(--sc-card)); color: hsl(var(--sc-card-fg));
   border: var(--sc-border-w) solid hsl(var(--sc-border)); border-radius: var(--sc-radius); overflow: hidden; }
-/* A surface holding a table has NO corner radius. Diagnosed against the running
-   app rather than guessed: the wrapper is a MuiPaper the table sits 1px inside,
-   and the table's header paints an opaque background right into the corner.
-   That leaves exactly two failure modes and no third option —
-     overflow: hidden  → the surface clips the table's own corners off;
-     overflow: visible → the table's opaque square corner paints over the
-                         surface's arc, so its border reads as broken at each
-                         corner.
-   Both were shipped in turn. Square meeting square is the only geometry where
-   neither happens, so the radius goes to zero and nothing is clipped. Mode
-   sheets set the same zero for their own table surfaces. */
+/* A surface holding a table keeps its corners, and clips the table to them.
+   This was square for a long time, and the reason is worth keeping: the table
+   sits 1px inside its Paper and used to paint an opaque header background into
+   the corner, so clipping cut the table's own corners off and not clipping let
+   that square corner cover the surface's arc. Both shipped in turn, and zero
+   was the only geometry where neither happened.
+   What changed is the header: it no longer paints its own opaque ground, so
+   there is nothing square left to fight the arc, and clipping simply follows
+   it. Re-checked in the running app in both registers before this went back.
+   Keep the two together — a radius without the clip brings the old bug back. */
 .sc-card:has(table),
 [class*="MuiCard-root"]:has(table),
 .MuiPaper-root:has(table) {
-  overflow: visible !important;
-  border-radius: 0 !important;
+  overflow: hidden !important;
+  border-radius: var(--sc-radius) !important;
+}
+/* The template filter's search arrived as MUI's underline input: a rule under
+   the text and nothing else, which is the one control on that page that looks
+   like it belongs to a different app. It takes the same box every other field
+   here has — ground, edge, radius, and a ring when it is focused — and the
+   underline pseudo-elements that would otherwise draw a second line under the
+   box are turned off. */
+.sc-route-create [class*="MuiInput-root"] {
+  background: hsl(var(--sc-bg));
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-radius: var(--sc-radius);
+  padding: 3px 10px;
+}
+.sc-route-create [class*="MuiInput-underline"]::before,
+.sc-route-create [class*="MuiInput-underline"]::after {
+  display: none !important;
+}
+.sc-route-create [class*="MuiInput-root"].Mui-focused {
+  border-color: hsl(var(--sc-ring));
+  box-shadow: 0 0 0 3px hsl(var(--sc-ring) / .25);
+}
+
+/* A table's title is the heading of the thing under it, and it arrived at
+   14px — smaller than the card titles beside it and no larger than its own
+   column headers. Scoped to the toolbar so it cannot reach an h5 in prose. */
+[class*="MuiToolbar-root"] [class*="MuiTypography-h5"],
+[class*="MuiToolbar-root"] [class*="MuiTypography-h6"] {
+  font-size: 19px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+}
+/* The action that sits above a table — Create, Register, Refresh — is the one
+   control on the page most likely to be wanted, and it was set at the 400 the
+   uppercase chrome rule gives everything. */
+[class*="MuiButton-root"], [class*="bui-Button"] {
+  font-weight: 700 !important;
 }
 /* And the scroll goes on the container that owns the width, so a wide table
    scrolls rather than being cut. */
@@ -1244,6 +1285,20 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-table tr:last-child td { border-bottom: none; }
 /* Hover is a dither too, so the selected row reads as a filled cell block
    rather than a soft tint. Row text is --sc-fg, so contrast is unaffected. */
+/* Rows sit on the card, not on the page. The catalog's table shipped its rows
+   at the page background — rgb(15,14,21) inside a card of rgb(20,18,26) —
+   which reads as a foreign band laid inside the panel rather than as part of
+   it. The stripe stays, because it is what lets the eye track a wide row, but
+   it is a hair of the muted token over the card instead of a different colour
+   altogether. */
+[class*="MuiTableRow-root"],
+[class*="MuiTableBody-root"] [class*="MuiTableRow-root"] {
+  background-color: transparent !important;
+}
+.sc-table tbody tr:nth-child(even),
+[class*="MuiTableBody-root"] [class*="MuiTableRow-root"]:nth-child(even) {
+  background-color: hsl(var(--sc-muted) / .3) !important;
+}
 .sc-table tbody tr:hover {
   background-image: repeating-conic-gradient(
     hsl(var(--sc-primary) / .16) 0% 25%, transparent 0% 50%);

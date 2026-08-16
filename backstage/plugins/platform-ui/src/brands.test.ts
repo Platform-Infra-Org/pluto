@@ -111,12 +111,16 @@ describe('brandsCss', () => {
     expect(bad).toEqual([]);
   });
 
-  it('never rounds a surface holding a table', () => {
+  it('clips a table to the corners of the surface holding it', () => {
+    // Every mode states this for its own surfaces rather than inheriting it,
+    // because each one sets its own card radius and would otherwise round the
+    // corner without clipping the table into it — which is the failure the base
+    // sheet's comment describes.
     const css = brandsCss();
     for (const b of BRAND_DEFS) {
       expect(`${b.id}:${css.includes(`:root.sc-${b.id} .sc-card:has(table)`)}`).toBe(`${b.id}:true`);
     }
-    expect(stripComments(css)).not.toMatch(/overflow:\s*hidden/);
+    expect(stripComments(css)).not.toMatch(/:has\(table\)[^{]*\{[^}]*border-radius:\s*0/);
   });
 });
 

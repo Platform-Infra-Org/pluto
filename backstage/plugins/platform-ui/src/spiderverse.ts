@@ -115,14 +115,14 @@ export function spiderverseCss(): string {
     hsl(var(--sc-halftone) / .07) 1px, transparent 1px);
   background-size: 6px 6px;
 }
-/* A surface holding a table takes no radius at all — clipped cuts the table,
-   rounded lets its square corner cover the arc. Already square here, stated
-   for the same reason every mode states it. */
+/* A surface holding a table keeps its corners and clips the table to them, the
+   same as the base sheet — the header no longer paints an opaque square into
+   the arc, so there is nothing left to fight it. */
 :root.sc-spiderverse [class*="MuiCard-root"]:has(table),
 :root.sc-spiderverse .MuiPaper-elevation1:has(table), :root.sc-spiderverse [class*="MuiPaper-elevation1-"]:has(table),
 :root.sc-spiderverse .MuiPaper-elevation2:has(table), :root.sc-spiderverse [class*="MuiPaper-elevation2-"]:has(table),
 :root.sc-spiderverse .sc-card:has(table) {
-  border-radius: 0 !important;
+  overflow: hidden !important;
 }
 
 :root.sc-spiderverse [class*="MuiButton-root"],

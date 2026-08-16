@@ -29,7 +29,6 @@ import {
   COLUMN,
   MEANDER,
   PALMETTE,
-  POMEGRANATE,
   ROSETTE,
   Sprite,
   spriteDataUri,
@@ -242,18 +241,10 @@ export function greekCss(): string {
    outside the border box, where a background is never painted. The mark keeps
    its accent tile; the ornament goes around it, not on it. */
 
-/* The sign-in card is the threshold, so it carries the pomegranate — the fruit
-   Persephone ate below, and the reason she has to come back. Set low in the
-   corner as a watermark: the card is a form first. */
-:root.sc-greek .sc-login-card {
-  background-image: ${art(POMEGRANATE, BRONZE)};
-  background-repeat: no-repeat;
-  background-size: 28px 28px;
-  background-position: right 14px bottom 14px;
-}
-:root.sc-greek.sc-dark .sc-login-card {
-  background-image: ${art(POMEGRANATE, GOLD)};
-}
+/* The sign-in card carries no watermark. The pomegranate sat in its corner and
+   read as a stray dot on a form rather than as the fruit it is — at 28px there
+   is not enough of it left to be recognisable, and the columns flanking the
+   card already say Greek. The sprite stays in sprites.ts, unreferenced. */
 
 /* The tour box carries no ornament: it is a coach mark that sits over live
    content, and the owl that used to perch in its corner competed with the

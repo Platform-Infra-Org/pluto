@@ -173,20 +173,21 @@ describe('SHADCN_CSS', () => {
     }
   });
 
-  it('gives a surface holding a table no corner radius at all', () => {
-    // Diagnosed against the running app, not guessed. The table sits 1px inside
-    // its Paper and paints an opaque header into the corner, which leaves only
-    // two outcomes and no third:
-    //   overflow: hidden  -> the surface clips the table's own corners off
-    //   overflow: visible -> the table's square corner covers the surface's arc
-    // Both shipped in turn. Square meeting square is the only geometry where
-    // neither happens, so BOTH halves are pinned here: visible AND zero radius.
-    expect(SHADCN_CSS).toMatch(
-      /\.MuiPaper-root:has\(table\)\s*\{[^}]*overflow:\s*visible/,
+  it('clips a table to the corners of the surface holding it', () => {
+    // The radius and the clip are one decision and are pinned together. The
+    // surface was square for a long time because the table paints into the
+    // corner: `hidden` cut the table's corners off and `visible` let its square
+    // corner cover the arc, so zero was the only geometry where neither
+    // happened. The header no longer paints its own opaque ground, which is
+    // what makes the clip safe -- but a radius WITHOUT the clip brings the
+    // second failure straight back, so neither half may be set alone.
+    const block = SHADCN_CSS.match(
+      /\.MuiPaper-root:has\(table\)\s*\{([^}]*)\}/,
     );
-    expect(SHADCN_CSS).toMatch(
-      /\.MuiPaper-root:has\(table\)\s*\{[^}]*border-radius:\s*0/,
-    );
+    expect(block).toBeTruthy();
+    expect(block![1]).toMatch(/overflow:\s*hidden/);
+    expect(block![1]).toMatch(/border-radius:\s*var\(--sc-radius\)/);
+    expect(block![1]).not.toMatch(/overflow:\s*visible/);
   });
 
   it('serves exactly one typeface', () => {

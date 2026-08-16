@@ -30,6 +30,10 @@ describe('SchemePicker', () => {
 
   const potions = (c: HTMLElement) =>
     Array.from(c.querySelectorAll('.sc-potion')) as HTMLElement[];
+  /* What a browser with nothing stored equips. Looked up rather than assumed to
+     be SCHEMES[0]: the default is a named id, and the shelf order is free to
+     change without these tests going red for the wrong reason. */
+  const fallback = SCHEMES.find(s => s.id === 'obsidian') ?? SCHEMES[0];
 
   it('does not capture the pointer on a press that never moves', () => {
     const { container } = render(<SchemePicker floating />);
@@ -154,7 +158,7 @@ describe('SchemePicker', () => {
       // Which one it is, is the point: the equipped one, said in attributes
       // rather than in a glow.
       expect(shelf[0].getAttribute('aria-pressed')).toBe('true');
-      expect(shelf[0].getAttribute('aria-label')).toContain(SCHEMES[0].label);
+      expect(shelf[0].getAttribute('aria-label')).toContain(fallback.label);
       expect(shelf[0].getAttribute('aria-expanded')).toBe('false');
       expect(container.querySelector('.sc-picker-inv')).toBeNull();
 
@@ -205,7 +209,7 @@ describe('SchemePicker', () => {
 
       const [bottle] = potions(container);
       expect(bottle.getAttribute('aria-pressed')).toBe('true');
-      expect(bottle.getAttribute('aria-label')).toContain(SCHEMES[0].label);
+      expect(bottle.getAttribute('aria-label')).toContain(fallback.label);
 
       const stars = Array.from(container.querySelectorAll('.sc-potion-star'));
       expect(stars.length).toBeGreaterThan(0);

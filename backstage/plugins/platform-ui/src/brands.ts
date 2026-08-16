@@ -318,13 +318,14 @@ ${block(`:root.sc-${b.id}.sc-dark`, b.dark)}
   border-width: ${b.borderW} !important;
   box-shadow: ${shadow} !important;
 }
-/* A surface holding a table takes no radius at all — clipped cuts the table,
-   rounded lets its square corner cover the arc. See the base sheet. */
+/* A surface holding a table keeps its corners and clips the table to them, the
+   same as the base sheet — the header no longer paints an opaque square into
+   the arc, so there is nothing left to fight it. */
 :root.sc-${b.id} [class*="MuiCard-root"]:has(table),
 :root.sc-${b.id} .MuiPaper-elevation1:has(table), :root.sc-${b.id} [class*="MuiPaper-elevation1-"]:has(table),
 :root.sc-${b.id} .MuiPaper-elevation2:has(table), :root.sc-${b.id} [class*="MuiPaper-elevation2-"]:has(table),
 :root.sc-${b.id} .sc-card:has(table) {
-  border-radius: 0 !important;
+  overflow: hidden !important;
 }
 :root.sc-${b.id} [class*="MuiButton-root"],
 :root.sc-${b.id} .sc-btn,

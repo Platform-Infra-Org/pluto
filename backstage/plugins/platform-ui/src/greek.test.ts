@@ -9,7 +9,6 @@ import {
   COLUMN,
   MEANDER,
   PALMETTE,
-  POMEGRANATE,
   ROSETTE,
   spriteDataUri,
 } from './sprites';
@@ -303,7 +302,6 @@ describe('greek ornament is drawn from sprites', () => {
       PALMETTE,
       COLUMN,
       ROSETTE,
-      POMEGRANATE,
     })) {
       const light = spriteDataUri(sprite, 'hsl(40 55% 46%)');
       const dark = spriteDataUri(sprite, 'hsl(43 62% 46%)');

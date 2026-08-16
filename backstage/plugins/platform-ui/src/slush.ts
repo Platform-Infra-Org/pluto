@@ -121,7 +121,7 @@ export function slushCss(): string {
 :root.sc-slush .MuiPaper-elevation1:has(table), :root.sc-slush [class*="MuiPaper-elevation1-"]:has(table),
 :root.sc-slush .MuiPaper-elevation2:has(table), :root.sc-slush [class*="MuiPaper-elevation2-"]:has(table),
 :root.sc-slush .sc-card:has(table) {
-  border-radius: 0 !important;
+  overflow: hidden !important;
 }
 
 /* Buttons and tags are pills with the same cut edge. */

@@ -133,6 +133,17 @@ export const SCHEMES: Scheme[] = [
 ];
 
 /**
+ * What a browser with nothing stored gets.
+ *
+ * Resolved through the shelf rather than used raw, so removing or renaming a
+ * scheme degrades to the first bottle instead of leaving every new visitor on
+ * an id that no longer exists.
+ */
+const DEFAULT_SCHEME_ID = 'obsidian';
+const defaultScheme = (): Scheme =>
+  SCHEMES.find(s => s.id === DEFAULT_SCHEME_ID) ?? SCHEMES[0];
+
+/**
  * Branding from `app.branding`, handed over once by {@link SchemeRoot}.
  * `applyScheme` runs at module load — before React, so before configApi exists —
  * hence this module-level relay rather than a prop.
@@ -327,10 +338,10 @@ export function applyScheme(scheme?: string) {
     typeof localStorage !== 'undefined'
       ? localStorage.getItem('platform-scheme')
       : null;
-  // Falls back to the first bottle, not a hard-coded id: a scheme removed
-  // from the shelf must not leave a persisted pick pointing at nothing.
-  const id = scheme || stored || SCHEMES[0].id;
-  const s = SCHEMES.find(x => x.id === id) ?? SCHEMES[0];
+  // Falls back through the shelf, not to a hard-coded id: a scheme removed
+  // from it must not leave a persisted pick pointing at nothing.
+  const id = scheme || stored || defaultScheme().id;
+  const s = SCHEMES.find(x => x.id === id) ?? defaultScheme();
   // A mode potion carries a whole palette rather than an accent. Everything it
   // changes hangs off one class — see greek.ts for why specificity makes that
   // enough, and sc-konami for the same mechanism used as an easter egg.
@@ -397,7 +408,7 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
     () =>
       (typeof localStorage !== 'undefined' &&
         localStorage.getItem('platform-scheme')) ||
-      SCHEMES[0].id,
+      defaultScheme().id,
   );
   // Closed, the shelf shows only the bottle that is actually equipped. Same
   // shape as the sidebar's collapse (CustomNav.tsx): lazy read on mount, and a
@@ -632,7 +643,7 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
   // card — every bottle is already on show, so there is nothing to open.
   // A pick that no longer exists degrades to the first bottle rather than
   // rendering nothing — the same rule applyScheme() uses.
-  const equipped = SCHEMES.find(s => s.id === scheme) ?? SCHEMES[0];
+  const equipped = SCHEMES.find(s => s.id === scheme) ?? defaultScheme();
   const shelf = floating ? [equipped] : SCHEMES;
 
   /**
