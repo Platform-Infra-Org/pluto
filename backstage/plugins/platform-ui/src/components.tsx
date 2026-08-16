@@ -59,21 +59,10 @@ export function PixelPotion({
   liquid,
   className,
   sprite = POTION,
-  inner,
 }: {
   liquid: string;
   className?: string;
   sprite?: Sprite;
-  /**
-   * A small sprite suspended in the liquid — the winter bottle's snowflake.
-   *
-   * Drawn last so it sits above the fill, and wrapped in two groups: the outer
-   * one places and scales it, the inner one carries the class CSS animates.
-   * They cannot be the same group, because a CSS transform would replace the
-   * placement transform rather than compose with it, and the flake would jump
-   * to the bottle's top-left corner the moment it started moving.
-   */
-  inner?: Sprite;
 }) {
   return (
     <svg
@@ -93,29 +82,6 @@ export function PixelPotion({
           <rect key={`g-${r.x}-${r.y}`} x={r.x} y={r.y} width={r.w} height={1} />
         ))}
       </g>
-      {/*
-        Placement is arithmetic, not taste. The bottle's liquid runs y 7-13 and
-        x 4-12 (x 5-11 on its narrowed top and bottom rows), so an 8px sprite at
-        this scale spans x 5.92-10.16 and y 7.2-11.36 — and the drift animation
-        adds its own offset *inside* this scale, making the real extent
-        y 7.2-12.4. An earlier scale(0.72) at y 8 reached y 15.2 and poured the
-        contents out through the base of the glass.
-      */}
-      {inner && (
-        <g transform="translate(5.92 7.2) scale(0.52)">
-          <g className="sc-potion-inner">
-            {spriteRects(inner, '#').map(r => (
-              <rect
-                key={`i-${r.x}-${r.y}`}
-                x={r.x}
-                y={r.y}
-                width={r.w}
-                height={1}
-              />
-            ))}
-          </g>
-        </g>
-      )}
     </svg>
   );
 }

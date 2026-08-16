@@ -65,22 +65,19 @@ export const STATUS_TOKENS: StatusToken[] = [
 export type SchemeMode =
   | 'default'
   | 'greek'
-  | 'winter'
-  | 'spring'
-  | 'summer'
-  | 'autumn'
-  | 'space'
-  | 'zeus'
   | 'anthropic'
-  | 'gsap';
+  | 'gsap'
+  | 'gic'
+  | 'tiger'
+  | 'raycast'
+  | 'portal'
+  | 'franky'
+  | 'slush';
 
 /** `--sc-card` in the Greek registers, from greek.ts. */
 export const GREEK_CARD_LIGHT = '42 45% 98%';
 export const GREEK_CARD_DARK = '265 26% 10%';
 
-/** `--sc-card` in the winter registers, from winter.ts. */
-export const WINTER_CARD_LIGHT = '200 50% 99%';
-export const WINTER_CARD_DARK = '215 42% 8.5%';
 
 /**
  * Ancient Greek status colours: laurel-gold, Styx cyan, ember.
@@ -133,33 +130,31 @@ export const GREEK_STATUS_TOKENS: StatusToken[] = [
 export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   default: STATUS_TOKENS,
   greek: GREEK_STATUS_TOKENS,
-  // Winter keeps the default status colours on purpose — the design system
-  // allows a mode to redefine status hue, and Greek already spends that
-  // exception. What winter DOES change is the card underneath, so the same ink
-  // has to be re-measured against new paper.
-  winter: STATUS_TOKENS,
-  spring: STATUS_TOKENS,
-  summer: STATUS_TOKENS,
-  autumn: STATUS_TOKENS,
-  space: STATUS_TOKENS,
-  zeus: STATUS_TOKENS,
+  // These keep the default status colours on purpose — the design system allows
+  // a mode to redefine status hue, and Greek already spends that exception.
+  // What they DO change is the card underneath, so the same ink has to be
+  // re-measured against new paper.
   anthropic: STATUS_TOKENS,
   gsap: STATUS_TOKENS,
+  gic: STATUS_TOKENS,
+  tiger: STATUS_TOKENS,
+  raycast: STATUS_TOKENS,
+  portal: STATUS_TOKENS,
+  franky: STATUS_TOKENS,
+  slush: STATUS_TOKENS,
 };
 
 export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   default: { light: CARD_LIGHT, dark: CARD_DARK },
   greek: { light: GREEK_CARD_LIGHT, dark: GREEK_CARD_DARK },
-  winter: { light: WINTER_CARD_LIGHT, dark: WINTER_CARD_DARK },
-  // The table-driven modes, from modes.ts. Every one of them moves the card, so
-  // every one has to have the default status ink re-measured against it.
-  spring: { light: '100 42% 99%', dark: '140 32% 8%' },
-  summer: { light: '40 52% 99%', dark: '5 36% 8.5%' },
-  autumn: { light: '36 46% 99%', dark: '20 42% 8%' },
-  space: { light: '265 46% 99%', dark: '265 46% 7%' },
-  zeus: { light: '220 26% 99%', dark: '220 34% 8%' },
   anthropic: { light: '48 33% 97%', dark: '60 3% 8%' },
   gsap: { light: '55 100% 97%', dark: '0 0% 9.8%' },
+  gic: { light: '0 0% 100%', dark: '240 16% 10%' },
+  tiger: { light: '36 70% 98%', dark: '20 58% 8%' },
+  raycast: { light: '0 0% 97%', dark: '220 17% 5%' },
+  portal: { light: '0 0% 100%', dark: '220 16% 9%' },
+  franky: { light: '14 50% 95%', dark: '0 0% 8.5%' },
+  slush: { light: '0 0% 100%', dark: '0 0% 8%' },
 };
 
 /** The `:root` declarations for every mode, for interpolation into SHADCN_CSS. */

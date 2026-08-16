@@ -106,17 +106,15 @@ export function anthropicCss(): string {
   box-shadow: none !important;
 }
 
-/* A 24px corner only looks like a corner if what is inside it is clipped.
-   A table is a rectangle with its own filled header, so at this radius its
-   square corners pushed out through the card's curve and the rounding appeared
-   to break. Clipping the card is what fixes it — and it is safe here because
-   MUI renders menus, popovers and tooltips into portals on <body>, so nothing
-   that needs to escape the card is actually inside it.
-   The tables themselves keep square corners: rounding a cell as well would put
-   a second curve inside the first. */
-:root.sc-anthropic .MuiCard-root,
-:root.sc-anthropic .sc-card {
-  overflow: hidden;
+/* Clipping the card was the wrong fix: it rounded the corner by cutting the
+   content's edge off, which is worse than the poke-through it replaced. The
+   real conflict is only ever between a 24px curve and a table's square filled
+   header, so the card carrying a table takes a smaller radius instead and
+   nothing is clipped at all. :has() is what lets the card know. */
+:root.sc-anthropic .MuiCard-root:has(table),
+:root.sc-anthropic .MuiPaper-elevation1:has(table),
+:root.sc-anthropic .sc-card:has(table) {
+  border-radius: 10px !important;
 }
 :root.sc-anthropic .MuiTable-root,
 :root.sc-anthropic .sc-table {

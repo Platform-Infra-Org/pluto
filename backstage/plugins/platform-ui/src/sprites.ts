@@ -595,30 +595,7 @@ export const OWL: Sprite = [
   '..##..####..##..',
 ];
 
-/* ===== Winter ornament =====
-   The ice register's vocabulary. Same pixel grid, same data-URI route into CSS
-   as the Greek set. */
-
 /** A snow crystal: four arms with branches, symmetric under a quarter turn. */
-export const SNOWFLAKE: Sprite = [
-  '.......##.......',
-  '.#.....##.....#.',
-  '..#....##....#..',
-  '...#...##...#...',
-  '....##.##.##....',
-  '.....#.##.#.....',
-  '......####......',
-  '################',
-  '################',
-  '......####......',
-  '.....#.##.#.....',
-  '....##.##.##....',
-  '...#...##...#...',
-  '..#....##....#..',
-  '.#.....##.....#.',
-  '.......##.......',
-];
-
 /**
  * The small flake that drifts inside the winter bottle, on the 8px grid.
  *
@@ -626,72 +603,19 @@ export const SNOWFLAKE: Sprite = [
  * crystal's single-pixel branches fall below one device pixel and dissolve into
  * grey mush, which is the usual way pixel art dies when it is merely resized.
  */
-export const FLAKE: Sprite = [
-  '#..##..#',
-  '.#.##.#.',
-  '..####..',
-  '########',
-  '########',
-  '..####..',
-  '.#.##.#.',
-  '#..##..#',
-];
-
 /**
  * An icicle fringe, 16x10, tiling horizontally under a rail.
  *
  * Teeth of three different lengths: an even comb reads as a machine part, and
  * ice does not grow evenly.
  */
-export const ICICLES: Sprite = [
-  '################',
-  '################',
-  '###..####..#####',
-  '###..####..#####',
-  '.##..###....###.',
-  '.##...##....##..',
-  '..#...##.....#..',
-  '..#....#.....#..',
-  '.......#........',
-  '................',
-];
-
-/* ===== What lives in each bottle =====
-   One 8px sprite per mode potion, suspended in the liquid. Small on purpose:
-   at roughly six user units a silhouette has about twenty legible pixels, so
-   each of these is a single idea — a tree, a sun, a bolt — and never a scene.
-   FLAKE above belongs to this set; it sits with the winter ornament because
-   the big crystal is authored beside it. */
-
 /**
  * Spring: a flower rather than a tree — petals, a centre, a stem and one leaf.
  *
  * The gap between the petals is what makes it a bloom instead of a blob at this
  * size; a solid disc on a stalk reads as a lollipop.
  */
-export const FLOWER: Sprite = [
-  '..#..#..',
-  '.######.',
-  '##.##.##',
-  '.######.',
-  '..####..',
-  '...##...',
-  '..###...',
-  '...##...',
-];
-
 /** Summer: the sun at its height, four rays and a full disc. */
-export const SUN: Sprite = [
-  '...##...',
-  '#.####.#',
-  '.######.',
-  '.######.',
-  '.######.',
-  '.######.',
-  '#.####.#',
-  '...##...',
-];
-
 /**
  * Autumn: a fallen leaf, tilted, on its stem.
  *
@@ -699,76 +623,8 @@ export const SUN: Sprite = [
  * where a carved face does not — two eyes and a mouth need holes, and holes
  * that small close up the moment the sprite is scaled into a bottle.
  */
-export const LEAF: Sprite = [
-  '....##..',
-  '...####.',
-  '..######',
-  '.#######',
-  '.######.',
-  '..####..',
-  '..##....',
-  '.##.....',
-];
-
 /** Space: a world with a ring through it. */
-export const PLANET: Sprite = [
-  '........',
-  '..####..',
-  '.######.',
-  '########',
-  '.######.',
-  '.######.',
-  '..####..',
-  '........',
-];
-
 /** Zeus: the bolt itself, the one object in the set that is pure motion. */
-export const BOLT: Sprite = [
-  '....##..',
-  '...##...',
-  '..##....',
-  '.#####..',
-  '...##...',
-  '..##....',
-  '.##.....',
-  '#.......',
-];
-
-/* ===== Spring ornament =====
-   Blossom rather than architecture. Same restraint as the ice: petals land on
-   the edges that frame something and nowhere else. */
-
-/**
- * A four-petal blossom for corners and empty shelves.
- *
- * Symmetric under a quarter turn, which is what lets one sprite serve all four
- * corners of a window as four background layers.
- */
-export const BLOSSOM: Sprite = [
-  '.##..##.',
-  '########',
-  '##.##.##',
-  '.######.',
-  '.######.',
-  '##.##.##',
-  '########',
-  '.##..##.',
-];
-
-/** A vine in flower, 16x10, tiling along a rail under a page title. */
-export const VINE: Sprite = [
-  '..##........##..',
-  '.####......####.',
-  '.####......####.',
-  '..##........##..',
-  '...##......##...',
-  '....########....',
-  '................',
-  '################',
-  '################',
-  '................',
-];
-
 export const STATE_SPRITES: Record<RequestState, Sprite> = {
   PENDING_APPROVAL: HOURGLASS,
   /* Was SCROLL, which meant nothing in particular and is now free for what it

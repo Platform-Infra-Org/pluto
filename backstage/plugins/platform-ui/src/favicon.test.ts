@@ -54,7 +54,7 @@ describe('generated tab icon', () => {
   afterEach(() => jest.restoreAllMocks());
 
   it('updates every icon link, not just the first', () => {
-    applyScheme('violet');
+    applyScheme('greek');
     const hrefs = hrefsOf('link[rel~="icon"]');
     // icon x3 + shortcut icon. Fails on the old querySelector: the two sized
     // links keep pointing at Backstage's stock PNGs, and a browser prefers
@@ -63,7 +63,7 @@ describe('generated tab icon', () => {
   });
 
   it('leaves the non-tab icons alone', () => {
-    applyScheme('violet');
+    applyScheme('greek');
     // `rel~="icon"` must not match these single-token rels: apple-touch-icon
     // is the home-screen icon and mask-icon is monochrome Safari pinning, so
     // a PNG data URL in either is wrong.
@@ -84,18 +84,18 @@ describe('generated tab icon', () => {
     // Same two stops as `.sc-nav-mark`'s linear-gradient(135deg, primary,
     // primary / .6) in styles.ts. A flat fill here is what made the tab read
     // as a different object from the sidebar tile.
-    applyScheme('blue');
-    const blue = SCHEMES.find(s => s.id === 'blue')!.hsl;
+    applyScheme('raycast');
+    const blue = SCHEMES.find(s => s.id === 'raycast')!.hsl;
     expect(stops).toEqual([`hsl(${blue})`, `hsl(${blue} / .6)`]);
   });
 
   it('repaints the tile when the scheme changes', () => {
-    applyScheme('blue');
+    applyScheme('raycast');
     const first = [...stops];
     stops = [];
-    applyScheme('amber');
+    applyScheme('portal');
     expect(stops).not.toEqual(first);
-    expect(stops[0]).toBe(`hsl(${SCHEMES.find(s => s.id === 'amber')!.hsl})`);
+    expect(stops[0]).toBe(`hsl(${SCHEMES.find(s => s.id === 'portal')!.hsl})`);
   });
 
   it('draws the tile from the computed accent, not the record literal', () => {

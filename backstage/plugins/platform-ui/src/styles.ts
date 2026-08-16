@@ -4,10 +4,9 @@
 // Backstage's own MUI styles outside our pages.
 import { statusTokenCss } from './statusTokens';
 import { greekCss } from './greek';
-import { winterCss } from './winter';
-import { modesCss } from './modes';
 import { anthropicCss } from './anthropic';
 import { gsapCss } from './gsap';
+import { brandsCss } from './brands';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
@@ -69,10 +68,9 @@ export const SHADCN_CSS = `
 }
 ${statusTokenCss()}
 ${greekCss()}
-${winterCss()}
-${modesCss()}
 ${anthropicCss()}
 ${gsapCss()}
+${brandsCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because
@@ -918,7 +916,12 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   background: hsl(var(--sc-card)); border-right: var(--sc-border-w) solid hsl(var(--sc-border));
   display: flex; flex-direction: column; padding: 12px 12px 16px; overflow-x: hidden;
   transition: width .16s ease; }
-.sc-nav-top { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px 14px; }
+/* The brand mark and every row icon share one left edge. A row insets its
+   content by 2px of transparent border plus 10px of padding, so the brand gets
+   the same 12px and the row's own side padding goes to zero rather than being
+   added on top of it. Before this the mark sat at 18px and the icons at 24px. */
+.sc-nav-top { display: flex; align-items: center; justify-content: space-between; padding: 4px 0 14px; }
+.sc-nav-brand { padding-left: 12px; }
 .sc-nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; min-width: 0; }
 .sc-nav-mark { width: 26px; height: 26px; border-radius: var(--sc-radius); flex: 0 0 auto;
   display: flex; align-items: center; justify-content: center;
@@ -957,6 +960,13 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   width: 26px;
   justify-content: center;
 }
+/* Collapsed, the row's 2px left border and the 12px brand inset would each
+   shift one of the two off the rail's centre line, and the cursor would take
+   12px of a 44px rail. All three go. The active row is still marked by the
+   ::before bar. */
+.sc-nav.collapsed .sc-nav-brand { padding-left: 0; }
+.sc-nav.collapsed .sc-nav-item { border-left-width: 0; }
+.sc-nav.collapsed .sc-nav-cursor { display: none; }
 /* Collapsed, the brand mark and the toggle stack instead of sitting side by
    side. The arithmetic is why: the rail is 68px, less .sc-nav's 24px of padding
    and .sc-nav-top's 12px leaves a 32px row — and it was being asked to hold a
@@ -1410,7 +1420,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 
 /* Sidebar: the active row is marked by a cursor, the way a menu selection is. */
 .sc-nav-cursor { font-family: var(--sc-font-pixel); font-size: 11px; width: 12px;
-  flex: 0 0 auto; color: hsl(var(--sc-primary)); }
+  flex: 0 0 auto; color: hsl(var(--sc-primary)); margin-left: auto; text-align: right; }
 .sc-nav-item { border-radius: var(--sc-radius); border-left: var(--sc-border-w) solid transparent; }
 .sc-nav-item.active { border-left-color: hsl(var(--sc-primary)); }
 .sc-nav-mark { border-radius: var(--sc-radius); border: var(--sc-border-w) solid hsl(var(--sc-fg) / .8);
