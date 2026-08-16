@@ -73,19 +73,19 @@ export function foudreCss(): string {
 }
 /* ===== dark register: forest ===== */
 :root.sc-foudre.sc-dark {
-  --sc-bg: 153 100% 4%;
+  --sc-bg: 153 70% 4%;
   --sc-fg: 13 100% 98%;
-  --sc-card: 153 60% 7%;
+  --sc-card: 153 45% 8%;
   --sc-card-fg: 13 100% 98%;
-  --sc-muted: 153 40% 20%;
-  --sc-muted-fg: 12 60% 84%;
+  --sc-muted: 153 30% 20%;
+  --sc-muted-fg: 12 50% 84%;
   --sc-border: 246 28% 70%;
   --sc-input: 246 28% 70%;
   --sc-primary: 338 76% 78%;
   --sc-primary-fg: 153 100% 10%;
   --sc-primary-shade: 0 0% 100%;
   --sc-ring: 338 76% 78%;
-  --sc-accent: 153 45% 16%;
+  --sc-accent: 153 32% 17%;
   --sc-accent-fg: 13 100% 98%;
   --sc-success: 152 42% 40%;
   --sc-warning: 35 68% 47%;

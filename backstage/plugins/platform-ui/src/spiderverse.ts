@@ -57,19 +57,19 @@ export function spiderverseCss(): string {
 }
 /* ===== dark register: the night city ===== */
 :root.sc-spiderverse.sc-dark {
-  --sc-bg: 260 45% 6%;
+  --sc-bg: 260 30% 6%;
   --sc-fg: 45 42% 96%;
-  --sc-card: 260 40% 10%;
+  --sc-card: 260 25% 11%;
   --sc-card-fg: 45 42% 96%;
-  --sc-muted: 260 30% 22%;
+  --sc-muted: 260 20% 22%;
   --sc-muted-fg: 45 20% 76%;
-  --sc-border: 320 90% 62%;
-  --sc-input: 320 90% 62%;
+  --sc-border: 260 15% 44%;
+  --sc-input: 260 15% 44%;
   --sc-primary: 355 90% 64%;
   --sc-primary-fg: 260 45% 8%;
   --sc-primary-shade: 0 0% 100%;
   --sc-ring: 355 90% 64%;
-  --sc-accent: 260 35% 18%;
+  --sc-accent: 260 22% 18%;
   --sc-accent-fg: 45 42% 96%;
   --sc-success: 152 42% 40%;
   --sc-warning: 35 68% 47%;

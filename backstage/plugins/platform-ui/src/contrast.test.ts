@@ -1,4 +1,7 @@
+import { BRAND_DEFS } from './brands';
+import { foudreCss } from './foudre';
 import { greekCss } from './greek';
+import { spiderverseCss } from './spiderverse';
 import {
   CARD_DARK,
   CARD_LIGHT,
@@ -61,6 +64,19 @@ const contrastOver = (text: string, cell: string, alpha: number, bg: string) =>
   );
 
 const AA = 4.5;
+
+/** Every `--sc-*` triplet declared inside one selector block of `css`. */
+function registerOf(css: string, selector: string): Record<string, string> {
+  const start = css.indexOf(`${selector} {`);
+  expect(start).toBeGreaterThan(-1);
+  const body = css.slice(start, css.indexOf('}', start));
+  return Object.fromEntries(
+    Array.from(
+      body.matchAll(/--(sc-[a-z-]+):\s*([\d.]+\s+[\d.]+%\s+[\d.]+%)\s*;/g),
+      m => [m[1], m[2]],
+    ),
+  );
+}
 
 describe('status text colours', () => {
   it('clears AA on the plain card in both modes', () => {
@@ -161,20 +177,6 @@ describe('greek status text colours', () => {
 });
 
 describe('greek palette contrast', () => {
-  /** Every `--sc-*` triplet declared inside one selector block of greekCss. */
-  function registerOf(selector: string): Record<string, string> {
-    const css = greekCss();
-    const start = css.indexOf(`${selector} {`);
-    expect(start).toBeGreaterThan(-1);
-    const body = css.slice(start, css.indexOf('}', start));
-    return Object.fromEntries(
-      Array.from(
-        body.matchAll(/--(sc-[a-z-]+):\s*([\d.]+\s+[\d.]+%\s+[\d.]+%)\s*;/g),
-        m => [m[1], m[2]],
-      ),
-    );
-  }
-
   // greek.ts's header comment claims these; this measures them. The pairs are
   // the ones a user actually reads text on, plus the gold rule against its card.
   const PAIRS: ReadonlyArray<readonly [string, string, number]> = [
@@ -195,7 +197,7 @@ describe('greek palette contrast', () => {
 
   for (const selector of [':root.sc-greek', ':root.sc-greek.sc-dark']) {
     it(`clears its contrast targets in ${selector}`, () => {
-      const tokens = registerOf(selector);
+      const tokens = registerOf(greekCss(), selector);
       expect(Object.keys(tokens).length).toBeGreaterThan(8); // the regex matched
       for (const [fg, bg, min] of PAIRS) {
         const measured = contrast(tokens[fg], tokens[bg]);
@@ -203,4 +205,42 @@ describe('greek palette contrast', () => {
       }
     });
   }
+});
+
+describe('dark rules', () => {
+  it('is never a second helping of the accent', () => {
+    // Every dark register cleared the numeric contrast bar and still read as
+    // one colour, because `border` shared hue AND saturation with `primary`:
+    // every rule, focus ring, input outline and divider then glows in the
+    // brand colour. `papers` shipped the two literally identical
+    // (57 88% 58%). A rule is allowed to keep the accent's hue only if it
+    // drops to a low saturation, or to keep saturation only if it moves hue.
+    //
+    // greek and slush are deliberately absent: greek's gold rule is pinned by
+    // greek.test.ts and feeds its sprite fills, and slush's rule is a pure
+    // white cut edge.
+    const registers: Array<[string, Record<string, string>]> = [
+      ...BRAND_DEFS.map(
+        b =>
+          [b.id, { 'sc-border': b.dark.border, 'sc-primary': b.dark.primary }] as [
+            string,
+            Record<string, string>,
+          ],
+      ),
+      ['foudre', registerOf(foudreCss(), ':root.sc-foudre.sc-dark')],
+      [
+        'spiderverse',
+        registerOf(spiderverseCss(), ':root.sc-spiderverse.sc-dark'),
+      ],
+    ];
+
+    for (const [mode, tokens] of registers) {
+      const [bh, bs] = tokens['sc-border'].split(' ').map(parseFloat);
+      const [ph] = tokens['sc-primary'].split(' ').map(parseFloat);
+      const raw = Math.abs(bh - ph) % 360;
+      const hueGap = Math.min(raw, 360 - raw);
+      const ok = hueGap >= 20 || bs <= 25;
+      expect(`${mode} rule separated: ${ok}`).toBe(`${mode} rule separated: true`);
+    }
+  });
 });

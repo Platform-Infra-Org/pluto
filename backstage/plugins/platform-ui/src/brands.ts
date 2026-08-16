@@ -19,6 +19,13 @@
  * for the button and keep the published value for badges and marks. The figure
  * is recorded on the row.
  *
+ * The dark rule is neutral where the accent is loud. A `border` that shares hue
+ * AND saturation with `primary` makes every rule, focus ring, input outline and
+ * divider glow in the brand colour, and the page then reads as one colour
+ * rather than as a palette — `papers` shipped the two literally identical
+ * (`57 88% 58%` for both). The published accent stays on `--sc-primary`, which
+ * is where it belongs; contrast.test.ts pins the separation.
+ *
  * Typeface is never set here. Clash Grotesk is the app's only family and these
  * modes differentiate by weight, size and case.
  */
@@ -58,9 +65,9 @@ export const BRAND_DEFS: BrandDef[] = [
     light: { bg:'120 12% 98%', fg:'135 10% 8%', card:'0 0% 100%', muted:'120 20% 95%',
       mutedFg:'135 9% 28%', border:'135 9% 42%', primary:'129 60% 30%', primaryFg:WHITE,
       accent:'129 60% 92%', accentFg:'135 10% 12%' },
-    dark: { bg:'135 10% 5%', fg:'120 12% 97%', card:'135 10% 9%', muted:'135 8% 20%',
-      mutedFg:'120 10% 72%', border:'129 40% 50%', primary:'129 85% 55%', primaryFg:'135 10% 6%',
-      accent:'135 12% 15%', accentFg:'120 12% 97%' },
+    dark: { bg:'135 10% 5%', fg:'120 12% 97%', card:'135 9% 10%', muted:'135 8% 20%',
+      mutedFg:'120 10% 72%', border:'135 8% 42%', primary:'129 85% 55%', primaryFg:'135 10% 6%',
+      accent:'135 10% 16%', accentFg:'120 12% 97%' },
     radius: { base:'10px', card:'10px', button:'8px' },
     borderW: '1px',
     glow: '1px 8px 20px hsl(129 71% 22% / .45)',
@@ -77,9 +84,9 @@ export const BRAND_DEFS: BrandDef[] = [
     light: { bg:'36 60% 96%', fg:'20 58% 12%', card:'38 70% 99%', muted:'36 45% 90%',
       mutedFg:'20 45% 24%', border:'20 58% 34%', primary:'20 74% 28%', primaryFg:'38 95% 92%',
       accent:'36 55% 90%', accentFg:'20 58% 14%' },
-    dark: { bg:'20 58% 6%', fg:'38 95% 59%', card:'20 55% 8%', muted:'20 45% 24%',
-      mutedFg:'38 60% 76%', border:'38 95% 55%', primary:'38 95% 59%', primaryFg:'20 58% 10%',
-      accent:'20 50% 18%', accentFg:'38 95% 88%' },
+    dark: { bg:'20 45% 6%', fg:'38 95% 59%', card:'20 40% 9%', muted:'20 28% 22%',
+      mutedFg:'38 45% 78%', border:'20 20% 44%', primary:'38 95% 59%', primaryFg:'20 58% 10%',
+      accent:'20 28% 17%', accentFg:'38 30% 90%' },
     // 100% radius on 94 elements — this reference is built out of circles.
     radius: { base:'6px', card:'6px', button:'9999px' },
     borderW: '1px',
@@ -95,9 +102,9 @@ export const BRAND_DEFS: BrandDef[] = [
     light: { bg:'0 0% 96%', fg:'0 0% 0%', card:'0 0% 100%', muted:'0 0% 92%',
       mutedFg:'0 0% 30%', border:'240 100% 47%', primary:'240 100% 40%', primaryFg:WHITE,
       accent:'240 100% 95%', accentFg:'240 100% 20%' },
-    dark: { bg:'0 0% 4%', fg:'0 0% 96%', card:'0 0% 8%', muted:'0 0% 18%',
-      mutedFg:'0 0% 72%', border:'240 100% 66%', primary:'240 100% 72%', primaryFg:'0 0% 4%',
-      accent:'240 60% 18%', accentFg:'0 0% 96%' },
+    dark: { bg:'0 0% 4%', fg:'0 0% 96%', card:'0 0% 10%', muted:'0 0% 18%',
+      mutedFg:'0 0% 72%', border:'0 0% 40%', primary:'240 100% 72%', primaryFg:'0 0% 4%',
+      accent:'240 25% 15%', accentFg:'0 0% 96%' },
     // 4px on one element and nothing else: this reference is square.
     radius: { base:'2px', card:'2px', button:'2px' },
     borderW: '1px',
@@ -113,8 +120,8 @@ export const BRAND_DEFS: BrandDef[] = [
     light: { bg:'27 33% 96%', fg:'0 0% 10%', card:'0 0% 100%', muted:'241 26% 90%',
       mutedFg:'0 0% 26%', border:'0 0% 10%', primary:'241 27% 45%', primaryFg:WHITE,
       accent:'57 88% 88%', accentFg:'0 0% 10%' },
-    dark: { bg:'0 0% 5%', fg:'27 33% 96%', card:'0 0% 8%', muted:'241 20% 22%',
-      mutedFg:'27 20% 76%', border:'57 88% 58%', primary:'57 88% 58%', primaryFg:'0 0% 8%',
+    dark: { bg:'0 0% 5%', fg:'27 33% 96%', card:'0 0% 9%', muted:'241 20% 22%',
+      mutedFg:'27 20% 76%', border:'0 0% 40%', primary:'57 88% 58%', primaryFg:'0 0% 8%',
       accent:'241 26% 24%', accentFg:'27 33% 96%' },
     radius: { base:'6px', card:'6px', button:'100px' },
     // 3px black rules on 32 elements — the heaviest thing on the page.
@@ -130,9 +137,9 @@ export const BRAND_DEFS: BrandDef[] = [
     light: { bg:'0 0% 100%', fg:'0 0% 0%', card:'0 0% 100%', muted:'235 60% 96%',
       mutedFg:'0 0% 28%', border:'0 0% 42%', primary:'235 60% 50%', primaryFg:WHITE,
       accent:'235 60% 95%', accentFg:'235 50% 18%' },
-    dark: { bg:'228 10% 7%', fg:'0 0% 98%', card:'227 9% 10%', muted:'228 6% 26%',
-      mutedFg:'220 8% 74%', border:'235 86% 70%', primary:'235 86% 72%', primaryFg:'228 8% 10%',
-      accent:'235 30% 26%', accentFg:'0 0% 98%' },
+    dark: { bg:'228 10% 7%', fg:'0 0% 98%', card:'227 9% 11%', muted:'228 6% 26%',
+      mutedFg:'220 8% 74%', border:'228 8% 42%', primary:'235 86% 72%', primaryFg:'228 8% 10%',
+      accent:'235 18% 24%', accentFg:'0 0% 98%' },
     // 16px on 76 elements is the shape of this product.
     radius: { base:'16px', card:'16px', button:'40px' },
     borderW: '1px',

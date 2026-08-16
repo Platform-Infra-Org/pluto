@@ -149,14 +149,14 @@ export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
 export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   default: { light: CARD_LIGHT, dark: CARD_DARK },
   greek: { light: GREEK_CARD_LIGHT, dark: GREEK_CARD_DARK },
-  foudre: { light: '0 0% 100%', dark: '153 60% 7%' },
+  foudre: { light: '0 0% 100%', dark: '153 45% 8%' },
   slush: { light: '0 0% 100%', dark: '0 0% 8%' },
-  spiderverse: { light: '45 60% 98%', dark: '260 40% 10%' },
-  newform: { light: '0 0% 100%', dark: '135 10% 9%' },
-  tiger: { light: '38 70% 99%', dark: '20 55% 8%' },
-  hermes: { light: '0 0% 100%', dark: '0 0% 8%' },
-  papers: { light: '0 0% 100%', dark: '0 0% 8%' },
-  discord: { light: '0 0% 100%', dark: '227 9% 10%' },
+  spiderverse: { light: '45 60% 98%', dark: '260 25% 11%' },
+  newform: { light: '0 0% 100%', dark: '135 9% 10%' },
+  tiger: { light: '38 70% 99%', dark: '20 40% 9%' },
+  hermes: { light: '0 0% 100%', dark: '0 0% 10%' },
+  papers: { light: '0 0% 100%', dark: '0 0% 9%' },
+  discord: { light: '0 0% 100%', dark: '227 9% 11%' },
   claude: { light: '48 33% 97%', dark: '60 3% 8%' },
 };
 
