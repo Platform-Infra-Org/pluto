@@ -539,16 +539,17 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       dy: e.clientY - r.top,
       moved: false,
     };
-    // Switch to inline positioning BEFORE anything moves. The corner anchors
-    // are dropped by a CSS attribute written imperatively, while the inline
-    // left/top arrive in React's next commit — so flipping them mid-drag left
-    // one frame with neither, and the box snapped to static flow and back.
-    // Seeding with the current rect is a visual no-op: it is exactly where the
-    // box already is.
-    if (!pos) {
-      setPos({ x: r.left, y: r.top });
-      document.documentElement.dataset.pickerMoved = 'true';
-    }
+    // Nothing is committed here on purpose. Seeding the position on the press
+    // meant the very first press on an untouched shelf ran a state update
+    // between pointerdown and click, and the re-render swallowed that click:
+    // the first thing a user clicked after every reload did nothing, and only
+    // the second worked. Measured in the browser — jsdom fires click without a
+    // preceding pointer sequence, so the suite never saw it.
+    // Deferring costs nothing. onPointerMove sets the position the moment a
+    // press becomes a drag, and the effect on `pos` writes data-picker-moved
+    // AFTER that commit — so the corner anchor is dropped in the frame the
+    // inline left/top already exist, which is the ordering the seeding was
+    // hand-rolling in the first place.
     // Capture is taken in onPointerMove, once this is actually a drag — NOT
     // here. While a pointer is captured, the spec retargets the following
     // `click` to the capturing element, so capturing on every press sent every

@@ -77,29 +77,46 @@ describe('SchemePicker', () => {
     expect((shelf as HTMLElement).style.left).toBe('');
   });
 
-  it('is inline-positioned before the first move, so it cannot snap', () => {
-    // The corner anchors are dropped by a CSS attribute written imperatively,
-    // while the inline left/top arrive in React's next commit. Flipping them
-    // when the drag threshold was crossed left one frame with neither, and the
-    // box snapped to static flow and back. Both must land together, on press.
+  it('never drops the corner anchor without an inline position to replace it', () => {
+    // The invariant, not the mechanism. The corner anchors are dropped by a CSS
+    // attribute, and the inline left/top arrive in a React commit; a frame with
+    // the attribute set and no position left the box snapping to static flow
+    // and back. They must never be out of step in that direction.
+    //
+    // This used to be satisfied by seeding both on the press, which cost the
+    // first click after every reload — the state update landed between
+    // pointerdown and click and the re-render swallowed it. Now neither lands
+    // on a press, and both land when the press becomes a drag: setPos commits,
+    // and the effect on `pos` sets the attribute after that commit. The
+    // invariant holds at both ends, so it is asserted at both ends.
     delete document.documentElement.dataset.pickerMoved;
     const { container } = render(<SchemePicker floating />);
     const shelf = container.querySelector('.sc-picker-float') as HTMLElement;
     expect(document.documentElement.dataset.pickerMoved).toBeUndefined();
     expect(shelf.style.left).toBe('');
 
+    // A press alone is not a drag: the box stays corner-anchored, so there is
+    // nothing to snap and nothing may be captured yet.
     fireEvent.pointerDown(shelf, {
       button: 0,
       pointerId: 1,
       clientX: 50,
       clientY: 50,
     });
+    expect(document.documentElement.dataset.pickerMoved).toBeUndefined();
+    expect(shelf.style.left).toBe('');
+    expect(capture).not.toHaveBeenCalled();
 
-    expect(document.documentElement.dataset.pickerMoved).toBe('true');
+    // Crossing the threshold makes it a drag, and now both land together.
+    fireEvent.pointerMove(shelf, {
+      pointerId: 1,
+      clientX: 200,
+      clientY: 200,
+      buttons: 1,
+    });
     expect(shelf.style.left).not.toBe('');
     expect(shelf.style.top).not.toBe('');
-    // A press alone is not a drag, so nothing may be captured yet.
-    expect(capture).not.toHaveBeenCalled();
+    expect(document.documentElement.dataset.pickerMoved).toBe('true');
   });
 
   it('ignores a move with no button held, and forgets the stale press', () => {
@@ -138,6 +155,31 @@ describe('SchemePicker', () => {
       // says so in attributes rather than in a glow.
       expect(left[0].getAttribute('aria-pressed')).toBe('true');
       expect(left[0].getAttribute('aria-label')).toBe(SCHEMES[0].label);
+      expect(localStorage.getItem('platform-picker-collapsed')).toBe('1');
+    });
+
+    it('closes on the first press, not the second', () => {
+      // The real regression, and the reason it is written with a pointer
+      // sequence: a browser sends pointerdown before click, jsdom does not.
+      // Seeding the drag position on that pointerdown ran a state update
+      // between the two, and the re-render swallowed the click — so on a shelf
+      // that had never been dragged, the first thing a user clicked after every
+      // reload did nothing and only the second press worked. Every test above
+      // fires a bare click and so could not see it.
+      const { container, getByLabelText } = render(<SchemePicker floating />);
+      const shelf = container.querySelector('.sc-picker-float')!;
+      const toggle = getByLabelText('Hide potions');
+
+      fireEvent.pointerDown(shelf, {
+        button: 0,
+        pointerId: 1,
+        clientX: 10,
+        clientY: 10,
+      });
+      fireEvent.pointerUp(shelf, { pointerId: 1, clientX: 10, clientY: 10 });
+      fireEvent.click(toggle);
+
+      expect(potions(container)).toHaveLength(1);
       expect(localStorage.getItem('platform-picker-collapsed')).toBe('1');
     });
 
