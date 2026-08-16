@@ -1,6 +1,8 @@
 import { mockServices } from '@backstage/backend-test-utils';
 import {
   ArgoClient,
+  ArgoStatusNode,
+  ArgoTemplateDef,
   resolveTemplate,
   resolveMap,
   ResolveCtx,
@@ -520,5 +522,188 @@ describe('suspendedNodesOf', () => {
 
   it('is empty for a workflow with no nodes at all', () => {
     expect(suspendedNodesOf(undefined)).toEqual([]);
+  });
+
+  it('leaves approverGroup undefined when no workflow is passed', () => {
+    expect(suspendedNodesOf(nodes)[0].approverGroup).toBeUndefined();
+  });
+});
+
+/**
+ * The approver group lives on the *template*, not on the status node, and this
+ * is the trimmed body of a real workflow fetched from a live argo-server on
+ * 2026-08-16 — three suspend steps waiting at once, two of them annotated.
+ *
+ * What it pins, and what was verified rather than assumed: a step referenced
+ * from a `WorkflowTemplate` leaves `spec.templates` EMPTY and its definition
+ * turns up in `status.storedTemplates`, under a namespaced key
+ * (`namespaced/approver-probe/approve-schema`) whose value carries the bare
+ * template name that the node's `templateName` matches.
+ */
+type ProbeWorkflow = {
+  metadata?: { name?: string; namespace?: string };
+  spec?: { templates?: ArgoTemplateDef[] };
+  status: {
+    phase?: string;
+    storedTemplates?: Record<string, ArgoTemplateDef & Record<string, unknown>>;
+    nodes: Record<string, ArgoStatusNode>;
+  };
+};
+
+const OBSERVED_WORKFLOW: ProbeWorkflow = {
+  metadata: { name: 'approver-probe-rjzqk', namespace: 'argo' },
+  spec: { templates: [] },
+  status: {
+    phase: 'Running',
+    storedTemplates: {
+      'namespaced/approver-probe/approve-cost': {
+        name: 'approve-cost',
+        metadata: {
+          annotations: { 'platform.io/approver-group': 'group:default/finance' },
+        },
+        suspend: {},
+      },
+      'namespaced/approver-probe/approve-plain': {
+        name: 'approve-plain',
+        metadata: {},
+        suspend: {},
+      },
+      'namespaced/approver-probe/approve-schema': {
+        name: 'approve-schema',
+        metadata: {
+          annotations: { 'platform.io/approver-group': 'group:default/dba' },
+        },
+        outputs: {
+          parameters: [
+            {
+              name: 'decision',
+              valueFrom: { supplied: {} },
+              enum: ['apply', 'skip'],
+              description: 'Apply or skip.',
+            },
+          ],
+        },
+        suspend: {},
+      },
+    },
+    nodes: {
+      'approver-probe-rjzqk': {
+        id: 'approver-probe-rjzqk',
+        name: 'approver-probe-rjzqk',
+        displayName: 'approver-probe-rjzqk',
+        type: 'Steps',
+        templateName: 'main',
+        phase: 'Running',
+      },
+      'approver-probe-rjzqk-2643071534': {
+        id: 'approver-probe-rjzqk-2643071534',
+        name: 'approver-probe-rjzqk[0]',
+        displayName: '[0]',
+        type: 'StepGroup',
+        phase: 'Running',
+      },
+      'approver-probe-rjzqk-1913047759': {
+        id: 'approver-probe-rjzqk-1913047759',
+        name: 'approver-probe-rjzqk[0].gate-cost',
+        displayName: 'gate-cost',
+        type: 'Suspend',
+        templateName: 'approve-cost',
+        phase: 'Running',
+      },
+      'approver-probe-rjzqk-308677626': {
+        id: 'approver-probe-rjzqk-308677626',
+        name: 'approver-probe-rjzqk[0].gate-plain',
+        displayName: 'gate-plain',
+        type: 'Suspend',
+        templateName: 'approve-plain',
+        phase: 'Running',
+      },
+      'approver-probe-rjzqk-414001129': {
+        id: 'approver-probe-rjzqk-414001129',
+        name: 'approver-probe-rjzqk[0].gate-schema',
+        displayName: 'gate-schema',
+        type: 'Suspend',
+        templateName: 'approve-schema',
+        phase: 'Running',
+        outputs: {
+          parameters: [
+            {
+              name: 'decision',
+              valueFrom: { supplied: {} },
+              enum: ['apply', 'skip'],
+              description: 'Apply or skip.',
+            },
+          ],
+        },
+      },
+    },
+  },
+};
+
+describe('suspendedNodesOf: platform.io/approver-group', () => {
+  const byName = (wf: ProbeWorkflow) =>
+    Object.fromEntries(
+      suspendedNodesOf(wf.status.nodes, wf).map(n => [n.name, n.approverGroup]),
+    );
+
+  it('resolves each gate to its own group, off storedTemplates', () => {
+    // Per node, not per workflow: this one waits on two teams at once.
+    expect(byName(OBSERVED_WORKFLOW)).toEqual({
+      'gate-schema': 'group:default/dba',
+      'gate-cost': 'group:default/finance',
+      'gate-plain': undefined,
+    });
+  });
+
+  it('reads an inline template from spec.templates too', () => {
+    const inline = {
+      ...OBSERVED_WORKFLOW,
+      spec: {
+        templates: [
+          {
+            name: 'approve-plain',
+            metadata: {
+              annotations: { 'platform.io/approver-group': 'group:default/sre' },
+            },
+          },
+        ],
+      },
+      status: { ...OBSERVED_WORKFLOW.status, storedTemplates: {} },
+    };
+    expect(byName(inline)['gate-plain']).toBe('group:default/sre');
+  });
+
+  it('keeps an empty annotation empty rather than dropping it', () => {
+    // '' is admin-only and undefined is owner-may-resume, so the read path may
+    // never collapse one into the other.
+    const broken = {
+      ...OBSERVED_WORKFLOW,
+      status: {
+        ...OBSERVED_WORKFLOW.status,
+        storedTemplates: {
+          'namespaced/approver-probe/approve-plain': {
+            name: 'approve-plain',
+            metadata: { annotations: { 'platform.io/approver-group': '' } },
+          },
+        },
+      },
+    };
+    expect(byName(broken)['gate-plain']).toBe('');
+  });
+
+  it('still refuses to call a finished suspend step a waiting one', () => {
+    const done = {
+      ...OBSERVED_WORKFLOW,
+      status: {
+        ...OBSERVED_WORKFLOW.status,
+        nodes: Object.fromEntries(
+          Object.entries(OBSERVED_WORKFLOW.status.nodes).map(([k, n]) => [
+            k,
+            { ...n, phase: 'Succeeded' },
+          ]),
+        ),
+      },
+    };
+    expect(suspendedNodesOf(done.status.nodes, done)).toEqual([]);
   });
 });

@@ -9,7 +9,11 @@ import {
   Select,
   Field,
 } from '@internal/plugin-platform-ui';
-import { SuspendedNode, SuppliedOutput } from '@internal/plugin-platform-common';
+import {
+  SuspendedNode,
+  SuppliedOutput,
+  mayResumeNode,
+} from '@internal/plugin-platform-common';
 import { requestsApiRef } from '../api';
 
 /** Initial values: whatever the step declared as its defaults. */
@@ -69,22 +73,65 @@ function AnswerField({
 }
 
 /**
+ * Whose gate this is, said out loud.
+ *
+ * Three states, and they are not interchangeable — `mayResumeNode` branches on
+ * exactly the same distinction, so this reads it the same way: presence, never
+ * truthiness. An absent annotation means the request's own team answers the
+ * step as it always has; a named group answers it *instead*; an empty
+ * annotation is a broken one and falls to admins. Collapsing the last two would
+ * turn a deliberate fail-closed stall into a silently wider gate, and turn the
+ * stall itself into a mystery for whoever is waiting on it.
+ */
+function gateOwnerOf(
+  approverGroup: string | undefined,
+  ownerGroup: string | undefined,
+): string {
+  if (approverGroup === undefined) {
+    return ownerGroup
+      ? `Answered by ${ownerGroup}, the owning team`
+      : 'Answered by admins — this request names no owning team';
+  }
+  return approverGroup.trim() === ''
+    ? 'Approver group unresolved — this step names a team that could not be resolved, so only an admin can answer it'
+    : `Answered by ${approverGroup.trim()}`;
+}
+
+/**
  * The approval gate in the middle of a run.
  *
  * The first gate decides whether to start; this one decides whether to
  * continue, with the workflow's own intermediate values in front of the
  * approver — a plan, a diff, a cost estimate. Resume releases the step; Stop
  * refuses it and ends the workflow.
+ *
+ * Authorisation is decided **per node**: one request can wait on a cost gate
+ * owned by finance and a schema gate owned by DBAs at the same moment, and the
+ * viewer may answer neither, one, or both. A gate the viewer cannot answer is
+ * still rendered in full — that is how they learn whom to chase. The verdict
+ * and its wording come from `mayResumeNode`, the same function the resume route
+ * enforces, so the button and the 403 can never disagree.
+ *
+ * Stopping is still a *request*-level act — the backend gates it on the owning
+ * team, unannotated-node rules — so it sits once at the foot of the card rather
+ * than beside each step.
  */
 export function SuspendPanel({
   requestId,
   nodes,
-  canResume,
+  isAdmin,
+  groups,
+  ownerGroup,
   onResumed,
 }: {
   requestId: number;
   nodes: SuspendedNode[];
-  canResume: boolean;
+  /** Viewer is in one of `platform.rbac.adminGroups`. */
+  isAdmin: boolean;
+  /** The viewer's own group entityRefs. */
+  groups: string[];
+  /** The request's owning service team, if it has one. */
+  ownerGroup?: string;
   onResumed: () => void;
 }) {
   const api = useApi(requestsApiRef);
@@ -97,6 +144,11 @@ export function SuspendPanel({
   const [message, setMessage] = useState<string>();
 
   if (nodes.length === 0) return null;
+
+  // Stopping ends the whole workflow, so it asks the request-level question —
+  // which is exactly the gate an unannotated step poses. Same function, no
+  // approver group.
+  const stopGate = mayResumeNode({ isAdmin, groups, ownerGroup });
 
   const unanswered = (node: SuspendedNode) =>
     node.suppliedOutputs
@@ -141,6 +193,12 @@ export function SuspendPanel({
       <CardBody>
         {nodes.map(node => {
           const missing = unanswered(node);
+          const gate = mayResumeNode({
+            isAdmin,
+            groups,
+            ownerGroup,
+            approverGroup: node.approverGroup,
+          });
           return (
             <div key={node.id} className="sc-suspend">
               <div className="sc-suspend-step">
@@ -150,6 +208,9 @@ export function SuspendPanel({
                   <span className="sc-muted"> · {node.templateName}</span>
                 )}
               </div>
+              <p className="sc-muted">
+                {gateOwnerOf(node.approverGroup, ownerGroup)}
+              </p>
               {node.message && <p className="sc-suspend-msg">{node.message}</p>}
 
               {node.inputs.length > 0 && (
@@ -165,7 +226,7 @@ export function SuspendPanel({
                 </dl>
               )}
 
-              {canResume ? (
+              {gate.allowed ? (
                 <>
                   {node.suppliedOutputs.map(spec => (
                     <AnswerField
@@ -192,10 +253,6 @@ export function SuspendPanel({
                     >
                       {busy ? 'Working…' : 'Resume workflow'}
                     </Button>
-                    {/* Refusing needs no answers — that is the point of it. */}
-                    <Button variant="outline" disabled={busy} onClick={stop}>
-                      Stop workflow
-                    </Button>
                   </div>
                   {missing.length > 0 && (
                     <p className="sc-help">
@@ -204,14 +261,30 @@ export function SuspendPanel({
                   )}
                 </>
               ) : (
-                <div className="sc-muted">
-                  Only the owning service team or an admin can resume or stop
-                  this workflow.
+                // The step stays on screen and so does its control, disabled.
+                // A missing button reads as "nothing to do here"; a dead one
+                // beside a reason reads as "not yours", and names who to ask.
+                // Asking is the point — the answers are not shown, because
+                // filling them in would only earn a 403.
+                <div className="sc-row" style={{ marginTop: 10 }}>
+                  <Button disabled title={gate.reason}>
+                    Resume workflow
+                  </Button>
+                  <span className="sc-muted">{gate.reason}.</span>
                 </div>
               )}
             </div>
           );
         })}
+        {/* Refusing needs no answers — that is the point of it — and it ends
+            the run rather than any one step, so it is asked once. */}
+        {stopGate.allowed && (
+          <div className="sc-row" style={{ marginTop: 10 }}>
+            <Button variant="outline" disabled={busy} onClick={stop}>
+              {busy ? 'Working…' : 'Stop workflow'}
+            </Button>
+          </div>
+        )}
         {message && (
           <div className="sc-notice" style={{ marginTop: 10 }}>
             {message}

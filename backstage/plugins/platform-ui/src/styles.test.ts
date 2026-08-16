@@ -438,6 +438,27 @@ describe('SHADCN_CSS', () => {
     );
   });
 
+  it('gives no field the page ground, because a field lives on a card', () => {
+    // A field inherits the ground of the surface it sits on. Naming --sc-bg
+    // while sitting on a --sc-card surface is how the two drift apart: measured
+    // on the built app, light register, /create, they differed in 9 of the 11
+    // modes. slush and discord passed only because they happen to set --sc-bg
+    // and --sc-card to the same white, which is exactly why pinning one mode's
+    // colour would not have caught this — the check has to be on the rule, not
+    // on a rendered pixel.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    const FIELD =
+      /MuiInput|MuiOutlinedInput|\.sc-input|\.sc-select|\.sc-textarea|bui-(?:Input|Field|TextField|Search)/;
+    const offenders = Array.from(
+      rules.matchAll(/([^{}]+)\{([^{}]*)\}/g),
+      m => [m[1].trim(), m[2]] as const,
+    )
+      .filter(([sel]) => FIELD.test(sel))
+      .filter(([, body]) => /background(?:-color)?:[^;]*--sc-bg\b/.test(body))
+      .map(([sel]) => sel);
+    expect(offenders).toEqual([]);
+  });
+
   it('themes the bui plugin header', () => {
     // It ships its own white ground and black ink — measured rgb(255,255,255)
     // on a production build while the mode's card was 42 45% 98%.

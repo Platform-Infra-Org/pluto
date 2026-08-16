@@ -120,6 +120,18 @@ export interface SuspendedNode {
   /** The suspend template's message, if it set one. */
   message?: string;
   /**
+   * The team this gate belongs to: the suspend template's own
+   * `platform.io/approver-group` annotation, verbatim.
+   *
+   * Absent means the template did not name one, and the request's `ownerGroup`
+   * answers the step as it always has. Present means the named group answers it
+   * *instead* — the owning team is not sufficient for this step. Present but
+   * empty is a broken annotation and leaves only admins, deliberately: see
+   * `mayResumeNode`. The distinction between absent and empty is load-bearing,
+   * so never normalise one into the other.
+   */
+  approverGroup?: string;
+  /**
    * The step's input parameters — what the workflow computed and what the
    * approver is being asked to review.
    *
@@ -298,4 +310,69 @@ export function approvalProgress(request: {
     granted: request.approvals.filter(a => a.decision === 'approve').length,
     required: request.policy.mode === 'SINGLE' ? 1 : request.policy.n,
   };
+}
+
+/**
+ * May this principal release *this* suspend step? Pure — no I/O.
+ *
+ * Authorisation is per node, not per request: one workflow can wait on a cost
+ * gate owned by finance and a schema gate owned by DBAs at the same time, and
+ * each is answered by its own team. The router and the UI both read their
+ * verdict here so they cannot drift.
+ *
+ * | node                          | who may resume it                        |
+ * |-------------------------------|------------------------------------------|
+ * | no `approverGroup`            | admin or `ownerGroup` (unchanged)        |
+ * | `approverGroup` names a group | admin or that group — **not** the owner  |
+ * | `approverGroup` empty/unknown | admin only                               |
+ *
+ * The owner approves the request at the start; a step that names a team belongs
+ * to that team. An unresolvable group falls to admin-only rather than widening
+ * back to the owner — a typo then stalls visibly and someone escalates, which
+ * is the same instinct as `applyDecision`'s absent-ownerGroup rule. Nothing
+ * here can resolve a group ref, and it does not need to: a group nobody is a
+ * member of denies everyone but an admin by the same code path.
+ */
+export function mayResumeNode(opts: {
+  isAdmin: boolean;
+  /** The principal's group entityRefs. */
+  groups: string[];
+  /** The request's owning service team, if it has one. */
+  ownerGroup?: string;
+  /** The step's `platform.io/approver-group`; undefined = not annotated. */
+  approverGroup?: string;
+}): { allowed: boolean; reason: string } {
+  if (opts.isAdmin) return { allowed: true, reason: 'admin' };
+
+  // `undefined` (no annotation) and `''` (a broken one) mean different things,
+  // so this tests for presence and never for truthiness.
+  if (opts.approverGroup !== undefined) {
+    const named = opts.approverGroup.trim();
+    if (named === '') {
+      return {
+        allowed: false,
+        reason:
+          'This step names an approver group that could not be resolved, so only an admin can resume it',
+      };
+    }
+    return opts.groups.includes(named)
+      ? { allowed: true, reason: `member of ${named}` }
+      : {
+          allowed: false,
+          reason: `Only ${named} or an admin can resume this step`,
+        };
+  }
+
+  if (!opts.ownerGroup) {
+    return {
+      allowed: false,
+      reason: 'This request has no owning team, so only an admin can resume it',
+    };
+  }
+  return opts.groups.includes(opts.ownerGroup)
+    ? { allowed: true, reason: `member of ${opts.ownerGroup}` }
+    : {
+        allowed: false,
+        reason: `Only ${opts.ownerGroup} or an admin can resume this step`,
+      };
 }

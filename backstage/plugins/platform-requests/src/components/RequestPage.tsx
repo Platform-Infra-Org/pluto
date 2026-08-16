@@ -244,9 +244,9 @@ export function RequestPage() {
     request.workflowName,
   );
   // Only an admin, or a member of the owning service team, may decide it.
+  const isAdmin = myGroups.some(g => adminGroups.includes(g));
   const canApprove =
-    myGroups.some(g => adminGroups.includes(g)) ||
-    (!!request.ownerGroup && myGroups.includes(request.ownerGroup));
+    isAdmin || (!!request.ownerGroup && myGroups.includes(request.ownerGroup));
 
   return (
     <Page>
@@ -445,10 +445,14 @@ export function RequestPage() {
         {request.state === 'AWAITING_INPUT' &&
           (request.suspendedNodes?.length ?? 0) > 0 && (
             <div style={{ gridColumn: '1 / -1' }}>
+              {/* Not `canApprove`: a suspend step may name its own approving
+                  team, so the panel decides node by node. */}
               <SuspendPanel
                 requestId={request.id}
                 nodes={request.suspendedNodes ?? []}
-                canResume={canApprove}
+                isAdmin={isAdmin}
+                groups={myGroups}
+                ownerGroup={request.ownerGroup}
                 onResumed={load}
               />
             </div>

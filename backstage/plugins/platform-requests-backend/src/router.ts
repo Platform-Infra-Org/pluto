@@ -23,7 +23,7 @@ import {
 // Type-only: plugin.ts imports createRouter from here, and a type import is
 // erased at compile time, so the cycle never exists at runtime.
 import type { ReconcileOutcome } from './plugin';
-import { applyDecision } from './stateMachine';
+import { applyDecision, mayResumeNode } from './stateMachine';
 import { RequestsStore } from './store';
 import { Cipher } from './crypto';
 import { filterSuppliedOutputs } from './suspend';
@@ -407,9 +407,14 @@ export async function createRouter(
   /**
    * Release a suspend step the workflow is waiting on.
    *
-   * Same gate as approving the request itself: whoever may approve may resume.
+   * The gate is per *step*, not per request (`mayResumeNode`): a suspend
+   * template that annotates `platform.io/approver-group` belongs to that team,
+   * and the request's owning team is then not sufficient for it. Unannotated
+   * steps keep the original rule — whoever may approve the request may resume.
+   *
    * The request is re-read from Argo first — the stored list is a cache, and two
-   * approvers on the same page is the normal case, not the edge one.
+   * approvers on the same page is the normal case, not the edge one. The group
+   * is read off that live node for the same reason.
    */
   router.post('/requests/:id/resume', async (req, res) => {
     const parsed = resumeSchema.safeParse(req.body ?? {});
@@ -428,16 +433,6 @@ export async function createRouter(
     if (!request) throw new NotFoundError(`No request ${req.params.id}`);
     if (!request.workflowName) {
       throw new InputError(`Request ${request.id} has no workflow`);
-    }
-
-    // The owning-team gate, the same one applyDecision enforces for approvals.
-    const { isAdmin, groups } = await principalResolver(credentials);
-    const allowed =
-      isAdmin || (!!request.ownerGroup && groups.includes(request.ownerGroup));
-    if (!allowed) {
-      throw new NotAllowedError(
-        'Only the owning service team or an admin can resume this workflow',
-      );
     }
 
     if (!options.resumeNode || !options.suspendedNodesFor) {
@@ -463,6 +458,18 @@ export async function createRouter(
       });
       return;
     }
+
+    // The gate, decided against the LIVE node and not the stored cache: the
+    // approver group is a property of the step, and a template edit must not be
+    // raceable by holding a stale page open.
+    const { isAdmin, groups } = await principalResolver(credentials);
+    const gate = mayResumeNode({
+      isAdmin,
+      groups,
+      ownerGroup: request.ownerGroup,
+      approverGroup: node.approverGroup,
+    });
+    if (!gate.allowed) throw new NotAllowedError(gate.reason);
 
     const { accepted, rejected, missing, invalid } = filterSuppliedOutputs(
       node,

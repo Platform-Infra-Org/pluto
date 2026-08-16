@@ -24,6 +24,18 @@ export function policySatisfied(
 }
 
 /**
+ * Re-exported, not defined here.
+ *
+ * The router decides a resume and the suspend panel decides whether to offer
+ * one, and if those two ever disagree a user is handed a control the API then
+ * refuses. A frontend plugin cannot import a backend plugin — that would pull
+ * express and knex into the browser bundle — so the one copy of the rule lives
+ * in the package both already depend on, and this file keeps its own callers'
+ * import path unchanged.
+ */
+export { mayResumeNode } from '@internal/plugin-platform-common';
+
+/**
  * Apply an approve/reject decision to a PENDING_APPROVAL request. Pure: returns
  * the next state and the approval to record; callers persist them.
  */

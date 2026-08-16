@@ -928,11 +928,14 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* The template filter's search arrived as MUI's underline input: a rule under
    the text and nothing else, which is the one control on that page that looks
    like it belongs to a different app. It takes the same box every other field
-   here has — ground, edge, radius, and a ring when it is focused — and the
-   underline pseudo-elements that would otherwise draw a second line under the
-   box are turned off. */
+   here has — edge, radius, and a ring when it is focused — and the underline
+   pseudo-elements that would otherwise draw a second line under the box are
+   turned off.
+   The ground is inherited, not named: this field sits on a card, and it used
+   to declare --sc-bg, which mismatched the card in 9 of the 11 modes. See the
+   note on .sc-input below. */
 .sc-route-create [class*="MuiInput-root"] {
-  background: hsl(var(--sc-bg));
+  background: transparent;
   border: var(--sc-border-w) solid hsl(var(--sc-border));
   border-radius: var(--sc-radius);
   padding: 3px 10px;
@@ -1319,10 +1322,18 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   color: hsl(var(--sc-primary));
 }
 
-/* input */
+/* input.
+   A field takes the ground of whatever it is sitting on, so it names no ground
+   token at all. These declared --sc-bg while every one of them is mounted on a
+   card or a toolbar, which is --sc-card: measured on the built app, the two
+   differed in 9 of the 11 modes, and the two that agreed did so only because
+   they happen to set both tokens to the same white. Transparent is correct in
+   every mode by construction — there is no second token left to disagree — and
+   it is what the catalog and search fields already do. The edge, the radius
+   and the focus ring are what make it read as a field. */
 .sc-input, .sc-select { height: 36px; width: 100%; padding: 0 10px; font-size: 14px;
   border-radius: var(--sc-radius); border: 1px solid hsl(var(--sc-input));
-  background: hsl(var(--sc-bg)); color: hsl(var(--sc-fg)); outline: none; font-family: inherit; }
+  background: transparent; color: hsl(var(--sc-fg)); outline: none; font-family: inherit; }
 .sc-input:focus, .sc-select:focus { border-color: hsl(var(--sc-ring)); outline: var(--sc-border-w) solid hsl(var(--sc-ring)); outline-offset: 2px; box-shadow: none; }
 .sc-textarea { height: auto; min-height: 92px; padding: 8px 10px; line-height: 1.45;
   font-family: var(--sc-font-mono, ui-monospace, monospace); resize: vertical; }
@@ -1668,9 +1679,11 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    The rest of this block stays: the stepper rules above have no global
    counterpart at all, and the surface/label/input/list/progress rules below
    carry declarations the global sheet does not. */
-/* The repository-URL field is the page's one real input; it arrives bare. */
+/* The repository-URL field is the page's one real input; it arrives bare. It
+   sits in the Paper above, which is --sc-card, so it inherits that ground
+   rather than naming --sc-bg — see the note on .sc-input. */
 .sc-route-import [class*="MuiOutlinedInput-root"] {
-  background: hsl(var(--sc-bg));
+  background: transparent;
   border-radius: var(--sc-radius);
 }
 .sc-route-import [class*="MuiListItem-root"] {

@@ -5,7 +5,10 @@ import {
   TestDatabases,
 } from '@backstage/backend-test-utils';
 import { AuthorizeResult } from '@backstage/plugin-permission-common';
-import { Request as PlatformRequest } from '@internal/plugin-platform-common';
+import {
+  Request as PlatformRequest,
+  SuspendedNode,
+} from '@internal/plugin-platform-common';
 import express from 'express';
 import request from 'supertest';
 import { createRouter, PrincipalResolver } from './router';
@@ -34,6 +37,8 @@ describe('createRouter', () => {
     cipher?: Cipher;
     secretsEnabled?: boolean;
     reconcileRequest?: jest.Mock<Promise<ReconcileOutcome>, [PlatformRequest]>;
+    suspendedNodesFor?: (name: string, ns?: string) => Promise<SuspendedNode[]>;
+    resumeNode?: jest.Mock<Promise<void>, [string, string, object]>;
   }) {
     const knex = await databases.init('SQLITE_3');
     const store = await RequestsStore.create(mockServices.database({ knex }));
@@ -47,6 +52,8 @@ describe('createRouter', () => {
       cipher: opts.cipher,
       secretsEnabled: opts.secretsEnabled,
       reconcileRequest: opts.reconcileRequest,
+      suspendedNodesFor: opts.suspendedNodesFor,
+      resumeNode: opts.resumeNode,
     });
     const app = express();
     app.use(router);
@@ -661,6 +668,162 @@ describe('createRouter', () => {
       expect(urls.every(u => !u.includes('/retry') && !u.includes('/resubmit'))).toBe(
         true,
       );
+    });
+  });
+
+  /**
+   * Who may release a suspend step, decided per node.
+   *
+   * The owning team answers an unannotated gate as it always has; a gate that
+   * names a team belongs to that team and to admins, and to nobody else — not
+   * even the owner. A group that resolves to nothing leaves only admins, which
+   * is a deliberate stall and not an accident.
+   */
+  describe('POST /requests/:id/resume', () => {
+    const OWNER = 'group:default/team-a';
+    const DBA = 'group:default/dba';
+    const FINANCE = 'group:default/finance';
+
+    const gate = (name: string, approverGroup?: string): SuspendedNode => ({
+      id: `node-${name}`,
+      name,
+      templateName: name,
+      inputs: [],
+      suppliedOutputs: [],
+      // Absent, not undefined-valued: the two are the same over HTTP but the
+      // fixture should look like what Argo produced.
+      ...(approverGroup === undefined ? {} : { approverGroup }),
+    });
+
+    async function seedSuspended(
+      nodes: SuspendedNode[],
+      principal: { isAdmin: boolean; groups: string[] },
+    ) {
+      const resumeNode = jest.fn(
+        async (_wf: string, _nodeId: string, _opts: object) => {},
+      );
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        ownerResolver: async () => OWNER,
+        principalResolver: async () => principal,
+        suspendedNodesFor: async () => nodes,
+        resumeNode,
+      });
+      const created = await request(app).post('/requests').send(NEW_REQUEST);
+      expect(created.status).toBe(201);
+      expect(created.body.ownerGroup).toBe(OWNER);
+      const id = created.body.id as number;
+      await store.setWorkflow(id, {
+        name: 'wf-1',
+        namespace: 'argo',
+        suspendedNodes: nodes,
+      });
+      await store.setState(id, 'AWAITING_INPUT');
+      return { app, id, resumeNode };
+    }
+
+    const resume = (app: express.Express, id: number, nodeId: string) =>
+      request(app).post(`/requests/${id}/resume`).send({ nodeId });
+
+    it('lets the owning team resume a step that names no group', async () => {
+      const { app, id, resumeNode } = await seedSuspended([gate('plain')], {
+        isAdmin: false,
+        groups: [OWNER],
+      });
+      const res = await resume(app, id, 'node-plain');
+      expect(res.status).toBe(200);
+      expect(res.body.resumed).toBe(true);
+      expect(resumeNode).toHaveBeenCalledWith('wf-1', 'node-plain', expect.anything());
+    });
+
+    it('DENIES the owning team a step that names another team', async () => {
+      const { app, id, resumeNode } = await seedSuspended([gate('schema', DBA)], {
+        isAdmin: false,
+        groups: [OWNER],
+      });
+      const res = await resume(app, id, 'node-schema');
+      expect(res.status).toBe(403);
+      // The stall has to name the team to chase, or it is a mystery.
+      expect(res.body.error.message).toContain(DBA);
+      expect(resumeNode).not.toHaveBeenCalled();
+    });
+
+    it('lets a member of the named group resume it', async () => {
+      const { app, id, resumeNode } = await seedSuspended([gate('schema', DBA)], {
+        isAdmin: false,
+        groups: [DBA],
+      });
+      expect((await resume(app, id, 'node-schema')).status).toBe(200);
+      expect(resumeNode).toHaveBeenCalled();
+    });
+
+    it('lets an admin resume it', async () => {
+      const { app, id } = await seedSuspended([gate('schema', DBA)], {
+        isAdmin: true,
+        groups: [],
+      });
+      expect((await resume(app, id, 'node-schema')).status).toBe(200);
+    });
+
+    it('leaves only admins when the group does not resolve', async () => {
+      for (const group of ['', 'group:default/typo']) {
+        const denied = await seedSuspended([gate('broken', group)], {
+          isAdmin: false,
+          groups: [OWNER, DBA, FINANCE],
+        });
+        expect((await resume(denied.app, denied.id, 'node-broken')).status).toBe(403);
+        expect(denied.resumeNode).not.toHaveBeenCalled();
+
+        const admin = await seedSuspended([gate('broken', group)], {
+          isAdmin: true,
+          groups: [],
+        });
+        expect((await resume(admin.app, admin.id, 'node-broken')).status).toBe(200);
+      }
+    });
+
+    // The reason this is per node and not per request.
+    it('answers two waiting gates by their own teams, on one request', async () => {
+      const nodes = [gate('cost', FINANCE), gate('schema', DBA)];
+
+      const finance = await seedSuspended(nodes, {
+        isAdmin: false,
+        groups: [FINANCE],
+      });
+      expect((await resume(finance.app, finance.id, 'node-cost')).status).toBe(200);
+      expect((await resume(finance.app, finance.id, 'node-schema')).status).toBe(403);
+
+      const dba = await seedSuspended(nodes, { isAdmin: false, groups: [DBA] });
+      expect((await resume(dba.app, dba.id, 'node-schema')).status).toBe(200);
+      expect((await resume(dba.app, dba.id, 'node-cost')).status).toBe(403);
+    });
+
+    // The stored list is a cache; a template edit must not be raceable by
+    // holding a stale page open.
+    it('gates on the live node, not the cached one', async () => {
+      const resumeNode = jest.fn(
+        async (_wf: string, _nodeId: string, _opts: object) => {},
+      );
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        ownerResolver: async () => OWNER,
+        principalResolver: async () => ({ isAdmin: false, groups: [OWNER] }),
+        // Live Argo now says the step belongs to the DBAs...
+        suspendedNodesFor: async () => [gate('schema', DBA)],
+        resumeNode,
+      });
+      const created = await request(app).post('/requests').send(NEW_REQUEST);
+      const id = created.body.id as number;
+      // ...while the cache still has it unannotated, i.e. the owner's to answer.
+      await store.setWorkflow(id, {
+        name: 'wf-1',
+        namespace: 'argo',
+        suspendedNodes: [gate('schema')],
+      });
+      await store.setState(id, 'AWAITING_INPUT');
+
+      expect((await resume(app, id, 'node-schema')).status).toBe(403);
+      expect(resumeNode).not.toHaveBeenCalled();
     });
   });
 });
