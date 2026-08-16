@@ -63,7 +63,7 @@ type Scheme = {
  * each pick: a mode class left behind is a second palette still applying, and
  * which one wins is then decided by stylesheet order rather than by the click.
  */
-const MODES = ['greek', 'foudre', 'huddle', 'frank'] as const;
+const MODES = ['greek', 'foudre', 'slush'] as const;
 type Mode = (typeof MODES)[number];
 
 // Saturated toward NES-era values. `fg` is the text colour that sits on the
@@ -88,18 +88,11 @@ export const SCHEMES: Scheme[] = [
     mode: 'foudre',
   },
   {
-    id: 'huddle',
-    label: 'Huddle',
-    hsl: '257 24% 30%',
-    fg: WHITE, // 10.38
-    mode: 'huddle',
-  },
-  {
-    id: 'frank',
-    label: 'Handsome Frank',
-    hsl: '225 62% 39%',
-    fg: WHITE, // 8.61
-    mode: 'frank',
+    id: 'slush',
+    label: 'Slush',
+    hsl: '213 100% 43%',
+    fg: WHITE, // 4.62
+    mode: 'slush',
   },
 ];
 

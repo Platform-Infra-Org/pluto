@@ -131,11 +131,11 @@ describe('the patterns that make it Foudre', () => {
     expect(parseFloat(`0.${lh![1].replace('0.', '')}`)).toBeLessThan(1);
   });
 
-  it('names only fonts it is allowed to serve', () => {
+  it('uses the app typeface rather than a second family', () => {
     const css = stripComments(foudreCss());
     expect(css).not.toMatch(/@font-face/);
     expect(css).not.toMatch(/url\(/);
-    expect(css).not.toMatch(/\bBeni\b|Clash Grotesk/i);
+    expect(css).not.toMatch(/\bBeni\b|\bAnton\b/i);
   });
 
   it('never rounds a surface holding a table', () => {

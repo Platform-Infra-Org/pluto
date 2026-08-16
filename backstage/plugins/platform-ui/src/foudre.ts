@@ -38,9 +38,11 @@
  *    `--sc-hairline` keeps the original for dividers, which is its job on the
  *    site too.
  *
- * The display face is Anton, self-hosted. The site sets its headlines in Beni
- * Black, which has no free licence; Anton is the closest licensable match in
- * proportion and is not the same typeface.
+ * The display voice is Clash Grotesk at 700, not a second family. The site sets
+ * its headlines in Beni Black, which has no free licence, and the app has since
+ * consolidated onto one typeface — so the display job is done by weight, size,
+ * case and a 0.70 line-height instead. That ratio is the part of the reference's
+ * setting that actually carries, and it survives the substitution.
  */
 
 export function foudreCss(): string {
@@ -101,7 +103,6 @@ export function foudreCss(): string {
   --sc-radius: 10px;
   --sc-radius-sm: 10px;
   --sc-border-w: 1px;
-  --sc-font-display: Anton, 'Archivo Narrow', Impact, sans-serif;
   /* The easing vocabulary, declared once so every rule below uses the same
      curves. Taken from the site: the first is on ~950 of its elements, the
      second overshoots and is reserved for arrivals. */
@@ -158,26 +159,26 @@ export function foudreCss(): string {
 }
 
 /* ===== Type =====
-   Anton at a 0.70 line-height, the ratio the site sets Beni at (94px over
-   65.8px), which is what makes a headline read as a block rather than a line.
+   The app face at 700, set to the ratio the site gives Beni — 94px over 65.8px,
+   or 0.70 — which is what makes a headline read as a block rather than a line.
    Display sizes only: at body size that leading clips descenders. */
 :root.sc-foudre .sc-h1 {
   /* !important on the metrics, not just the face: the base sheet sets .sc-h1's
      size three times and the last one lands late in the cascade. Verified in
      the browser — without this the heading rendered at 29px/1.35 while the
      sheet said 38px/0.70, and the 0.70 IS the reference's display setting. */
-  font-family: var(--sc-font-display) !important;
-  font-weight: 400 !important;
+  font-family: var(--sc-font-ui) !important;
+  font-weight: 700 !important;
   font-size: 38px !important;
   line-height: .70 !important;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   text-transform: uppercase;
   color: hsl(var(--sc-display));
 }
 :root.sc-foudre .sc-card-title {
-  font-family: var(--sc-font-display) !important;
-  font-weight: 400 !important;
-  letter-spacing: -0.01em;
+  font-family: var(--sc-font-ui) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
   font-size: 18px !important;
 }

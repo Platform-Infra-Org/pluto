@@ -62,7 +62,7 @@ export const STATUS_TOKENS: StatusToken[] = [
 ];
 
 /** Which palette a scheme drives. `default` is the six accent-only potions. */
-export type SchemeMode = 'default' | 'greek' | 'foudre' | 'huddle' | 'frank';
+export type SchemeMode = 'default' | 'greek' | 'foudre' | 'slush';
 
 /** `--sc-card` in the Greek registers, from greek.ts. */
 export const GREEK_CARD_LIGHT = '42 45% 98%';
@@ -125,16 +125,14 @@ export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   // exception. What Foudre DOES change is the card underneath, so the same ink
   // has to be re-measured against new paper.
   foudre: STATUS_TOKENS,
-  huddle: STATUS_TOKENS,
-  frank: STATUS_TOKENS,
+  slush: STATUS_TOKENS,
 };
 
 export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   default: { light: CARD_LIGHT, dark: CARD_DARK },
   greek: { light: GREEK_CARD_LIGHT, dark: GREEK_CARD_DARK },
   foudre: { light: '0 0% 100%', dark: '153 60% 7%' },
-  huddle: { light: '0 0% 100%', dark: '0 0% 9%' },
-  frank: { light: '0 0% 100%', dark: '250 85% 14%' },
+  slush: { light: '0 0% 100%', dark: '0 0% 8%' },
 };
 
 /** The `:root` declarations for every mode, for interpolation into SHADCN_CSS. */

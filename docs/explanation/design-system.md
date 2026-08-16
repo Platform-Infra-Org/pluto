@@ -183,11 +183,20 @@ Nothing conveys state through motion alone.
 - Contrast is measured, not eyeballed. The dither pass found every badge
   variant already below WCAG AA — the worst at 1.84:1 — and fixed them; the
   check samples the rendered pixel against its text in all six schemes.
-- The pixel font is used at 12px minimum and never for long-form documentation.
-  It renders true lowercase, not the all-caps-shaped-as-lowercase of the
-  earlier pixel face; chrome (titles, buttons, badges, nav, labels, table
-  headers) is still uppercase, but that's a deliberate style choice, not the
-  font compensating for missing lowercase forms.
+- **One typeface.** Clash Grotesk is the app's only family, self-hosted because
+  the CSP is `font-src 'self'` — a CDN reference fails silently, the page
+  falling back to something that looks nearly right. Differentiation comes from
+  weight, size and case rather than from a second family, which is also what
+  lets a mode change the whole voice by moving one variable.
+
+  It replaced a pixel face, and the type scale changed with it. The arcade
+  treatment uppercased every piece of chrome and held a hard 12px floor: both
+  were right for a bitmap-derived face and wrong for an outline grotesque, where
+  uppercase at 13px reads as shouting. Uppercase now survives in exactly one
+  place — the micro-label and its sibling the table header — where it is a
+  wayfinding convention rather than a texture, and it carries the positive
+  tracking uppercase always needs. Everything else is sentence case with slight
+  negative tracking, which is how this family is drawn to be set.
 - Progress bars carry their numbers (`2/3 STEPS`), which is both the NES
   convention and the readable one.
 

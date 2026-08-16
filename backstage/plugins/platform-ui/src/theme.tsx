@@ -29,7 +29,7 @@ const ACCENT = '#8b5cf6';
 // typography at theme construction, so a static string here would leave every
 // native Backstage surface in the pixel font while our own pages changed.
 const FONT =
-  "var(--sc-font-pixel, 'Pixelify Sans', ui-monospace, SFMono-Regular, monospace)";
+  "var(--sc-font-ui, 'Pixelify Sans', ui-monospace, SFMono-Regular, monospace)";
 
 type Tone = {
   primary: string;
@@ -158,7 +158,7 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
       BackstageContentHeader: {
         styleOverrides: {
           title: {
-            fontFamily: 'var(--sc-font-pixel) !important',
+            fontFamily: 'var(--sc-font-ui) !important',
             textTransform: 'uppercase !important',
             letterSpacing: '0 !important',
             fontWeight: '400 !important',
@@ -182,7 +182,7 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
           // pixel-art background gradient stays in styles.ts (CSS is simpler
           // than a style object for that part), keyed off a stable class.
           root: {
-            fontFamily: 'var(--sc-font-pixel) !important',
+            fontFamily: 'var(--sc-font-ui) !important',
             textTransform: 'uppercase !important',
             letterSpacing: '0 !important',
             fontWeight: '400 !important',
@@ -195,7 +195,7 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
       BackstageAutocomplete: {
         styleOverrides: {
           label: {
-            fontFamily: 'var(--sc-font-pixel) !important',
+            fontFamily: 'var(--sc-font-ui) !important',
             textTransform: 'uppercase !important',
             letterSpacing: '0 !important',
             fontWeight: '400 !important',

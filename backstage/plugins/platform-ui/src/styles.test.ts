@@ -16,7 +16,7 @@ describe('SHADCN_CSS', () => {
   it('still carries the rules the app depends on', () => {
     for (const marker of [
       '@font-face',
-      '--sc-font-pixel',
+      '--sc-font-ui',
       '--sc-radius',
       '.sc-nav',
       'prefers-reduced-motion',
@@ -159,9 +159,10 @@ describe('SHADCN_CSS', () => {
     // The CSP is font-src 'self'. A CDN url in an @font-face would simply not
     // load, and the failure is silent — the page falls back and looks nearly
     // right. Both faces are files this app serves.
-    // Every face, not a fixed count — the number grows and the rule does not.
+    // Every face, whatever the count. The app is down to one family; the rule
+    // is that whatever it serves, it serves itself.
     const faces = Array.from(SHADCN_CSS.matchAll(/@font-face\s*\{([^}]*)\}/g), m => m[1]);
-    expect(faces.length).toBeGreaterThanOrEqual(2);
+    expect(faces.length).toBeGreaterThanOrEqual(1);
     for (const face of faces) {
       const url = /url\('([^']+)'\)/.exec(face);
       expect(url).not.toBeNull();
@@ -182,6 +183,24 @@ describe('SHADCN_CSS', () => {
     );
     expect(SHADCN_CSS).toMatch(
       /\.MuiPaper-root:has\(table\)\s*\{[^}]*border-radius:\s*0/,
+    );
+  });
+
+  it('serves exactly one typeface', () => {
+    // One family, differentiated by weight, size and case. A second @font-face
+    // would mean the consolidation had quietly come undone.
+    const faces = Array.from(SHADCN_CSS.matchAll(/@font-face\s*\{([^}]*)\}/g), m => m[1]);
+    expect(faces.length).toBe(1);
+    expect(faces[0]).toMatch(/Clash Grotesk/);
+    expect(SHADCN_CSS).not.toMatch(/Pixelify Sans|Anton/);
+  });
+
+  it('leaves uppercase to the micro-label alone', () => {
+    // The arcade treatment uppercased every piece of chrome, which is right for
+    // a bitmap-derived face and shouting in an outline grotesque. The label
+    // keeps it, with the positive tracking uppercase always needs.
+    expect(SHADCN_CSS).toMatch(
+      /\.sc-label\s*\{[^}]*text-transform:\s*uppercase[^}]*letter-spacing:\s*0\.04em/,
     );
   });
 

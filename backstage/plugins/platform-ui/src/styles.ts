@@ -5,43 +5,23 @@
 import { statusTokenCss } from './statusTokens';
 import { greekCss } from './greek';
 import { foudreCss } from './foudre';
-import { huddleCss } from './huddle';
-import { frankCss } from './frank';
+import { slushCss } from './slush';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
-/* Self-hosted so the CSP (font-src 'self') is satisfied and the app works
-   offline. Latin subset, 12KB. SIL OFL — see public/fonts/LICENSE.txt. */
+/* The app's one typeface. Self-hosted because the CSP is font-src 'self', so a
+   CDN reference would simply not load — and the failure is silent, the page
+   falling back to something that looks nearly right. The variable file covers
+   200-700 in a single asset. ITF Free Font License, see public/fonts/LICENSE.txt.
+
+   It replaced the pixel face as the base. Differentiation now comes from
+   weight, size and case rather than from a second family: the scale below is
+   what an outline grotesque needs, where the pixel face wanted uppercase chrome
+   and a hard 12px floor to stay legible. */
 @font-face {
-  /* Anton, the display face. It stands in for Beni Black — the face
-     agencefoudre.com sets its headlines in — which has no free licence. Anton is
-     the closest licensable match in proportion; it is not the same typeface, and
-     saying so beats implying the type is exact. SIL OFL 1.1, latin subset. */
-  font-family: 'Anton';
-  src: url('/fonts/anton.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  /* Clash Grotesk, self-hosted for the same reason as the pixel face: the CSP
-     is font-src 'self', so a CDN reference would simply not load. The variable
-     file covers 200-700 in one asset. ITF Free Font License — see
-     public/fonts/LICENSE.txt. */
   font-family: 'Clash Grotesk';
   src: url('/fonts/clash-grotesk.woff2') format('woff2');
   font-weight: 200 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Pixelify Sans';
-  src: url('/fonts/pixelify-sans.woff2') format('woff2');
-  /* A variable file: one asset covers the whole range, so the font-weight
-     declarations already scattered through this sheet and theme.tsx resolve
-     to real weights now, rather than the no-ops or synthesised smear they
-     produced under the old face, which shipped only a single weight. */
-  font-weight: 400 700;
   font-style: normal;
   font-display: swap;
 }
@@ -56,7 +36,7 @@ export const SHADCN_CSS = `
   --sc-radius-sm: 4px;
   --sc-border-w: 2px;
   --sc-shadow: 3px 3px 0 hsl(var(--sc-fg) / .16);
-  --sc-font-pixel: 'Pixelify Sans', ui-monospace, SFMono-Regular, monospace;
+  --sc-font-ui: 'Clash Grotesk', Inter, system-ui, -apple-system, sans-serif;
   /* Titles take the grotesque, everything else keeps the pixel face. Held as
      its own variable so a mode can move the two independently — the pixel font
      is still the app's voice, but a heading is where a face has room to be
@@ -96,15 +76,14 @@ export const SHADCN_CSS = `
 ${statusTokenCss()}
 ${greekCss()}
 ${foudreCss()}
-${huddleCss()}
-${frankCss()}
+${slushCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because
-     Pixelify Sans loses strokes at small sizes the way a bitmap face would;
-     it's an outline face and doesn't. Nobody has checked by eye whether the
+     an outline grotesque loses no strokes at small sizes the way a bitmap face
+     would. Nobody has checked by eye whether the
      floor still earns its keep at this face's proportions, so it stays. */
-  font-family: var(--sc-font-pixel);
+  font-family: var(--sc-font-ui);
   color: hsl(var(--sc-fg));
 }
 .sc, .sc * { font-size: max(12px, 1em); }
@@ -218,7 +197,7 @@ body { background: hsl(var(--sc-bg)); } /* BackstageContent bg moved to theme.ts
    inputs, menus, tooltips. The universal selector is deliberate: the goal is
    that no regular-font text survives anywhere in the app. */
 body, body *, input, select, textarea, button, optgroup {
-  font-family: var(--sc-font-pixel) !important;
+  font-family: var(--sc-font-ui) !important;
 }
 /* Icon fonts are glyph lookups, not text — leave them alone or every icon
    turns into a letter. */
@@ -243,7 +222,7 @@ body, body *, input, select, textarea, button, optgroup {
 .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6,
 .MuiCardHeader-title, .MuiDialogTitle-root, .MuiAlertTitle-root,
 [class*="bui-Button"], [class*="bui-HeaderTitle"], [class*="bui-HeaderBreadcrumb"] {
-  font-family: var(--sc-font-pixel) !important;
+  font-family: var(--sc-font-ui) !important;
   text-transform: uppercase !important;
   letter-spacing: 0 !important;
   font-weight: 400 !important;
@@ -268,7 +247,7 @@ body, body *, input, select, textarea, button, optgroup {
     max-width: none; margin-inline: 0; padding-inline: 24px; }
 }
 /* Heading scale for the pixel face.
-   Sized by measurement, not by eye: Pixelify Sans advances 'n' at 0.586em,
+   Sized by measurement, not by eye: the body face advances 'n' at ~0.55em,
    a third narrower than the old face's 0.875em, so each size below is the
    one at which a real page title occupies the same pixel width the old face
    did at the old size. Same layout, larger glyphs. Backstage's own 28-34px
@@ -325,7 +304,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .MuiOutlinedInput-notchedOutline { border-width: var(--sc-border-w) !important; }
 .MuiTableCell-head { color: hsl(var(--sc-muted-fg)) !important; }
 /* No table-body override: the old face needed one because dense cells hit
-   Backstage's word-break and snapped mid-word, but the native 14px in Pixelify
+   Backstage's word-break and snapped mid-word, but the native 14px in the body
    Sans measures narrower than the 12px this used to force, so the pressure the
    rule relieved is gone. */
 /* Focus is a hard offset outline everywhere, never a glow. */
@@ -731,7 +710,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   background: hsl(var(--sc-muted)); }
 .sc-approvals-cell.filled { background: hsl(var(--sc-primary));
   border-color: hsl(var(--sc-primary)); }
-.sc-approvals-count { font-family: var(--sc-font-pixel); font-size: 12px;
+.sc-approvals-count { font-family: var(--sc-font-ui); font-size: 12px;
   color: hsl(var(--sc-muted-fg)); }
 
 /* [flare] Empty states are panels, not stray sentences. The bobbing sprite
@@ -750,7 +729,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    and 2px — a visibly lopsided sprite on any non-retina screen. Keep every
    size an integer multiple of SPRITE_SIZE. */
 .sc-empty .sc-state-ic { width: 32px; height: 32px; }
-.sc-empty-title { font-family: var(--sc-font-pixel); text-transform: uppercase;
+.sc-empty-title { font-family: var(--sc-font-ui); text-transform: uppercase;
   font-size: 13px; color: hsl(var(--sc-fg)); }
 .sc-empty-hint { font-size: 12px; max-width: 32ch; }
 
@@ -791,9 +770,9 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    on top of the element it is describing. Decided in Quickstart.tsx from the
    measured rects, because no fixed offset can cover an element that moves. */
 .sc-qs-box-top { top: 18px; bottom: auto; }
-.sc-qs-count { font-family: var(--sc-font-pixel); font-size: 11px;
+.sc-qs-count { font-family: var(--sc-font-ui); font-size: 11px;
   color: hsl(var(--sc-muted-fg)); }
-.sc-qs-title { font-family: var(--sc-font-pixel); text-transform: uppercase;
+.sc-qs-title { font-family: var(--sc-font-ui); text-transform: uppercase;
   font-size: 14px; margin: 4px 0 8px; color: hsl(var(--sc-fg)); }
 .sc-qs-body { font-size: 13px; line-height: 1.5; margin: 0 0 12px;
   color: hsl(var(--sc-muted-fg)); }
@@ -831,7 +810,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-xp-running .sc-xp-count { color: hsl(var(--sc-on-warning)); }
 .sc-xp-failed .sc-xp-count { color: hsl(var(--sc-on-destructive)); }
 .sc-xp-done .sc-xp-count { color: hsl(var(--sc-on-success)); }
-.sc-xp-count { font-family: var(--sc-font-pixel); font-size: 12px;
+.sc-xp-count { font-family: var(--sc-font-ui); font-size: 12px;
   color: hsl(var(--sc-muted-fg)); flex: 0 0 auto; }
 /* The creatures live inside the fill, so their run is bounded by real
    progress rather than by the width of the card. */
@@ -842,7 +821,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-creep-b { display: none; }
 .sc-xp-dots { display: inline-block; width: 1.6em; text-align: left; }
 .sc-xp-banner { position: absolute; right: 0; top: -18px;
-  font-family: var(--sc-font-pixel); font-size: 12px;
+  font-family: var(--sc-font-ui); font-size: 12px;
   color: hsl(var(--sc-primary)); }
 .sc-xp-gameover .sc-xp-banner { color: hsl(var(--sc-destructive)); }
 .sc-xp-levelup .sc-xp-banner { color: hsl(var(--sc-success)); }
@@ -912,7 +891,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-login-card .sc-btn { width: 100%; }
 /* [flare] PRESS START, in pixel type and blinking. The button below it still
    says what it does. */
-.sc-press-start { font-family: var(--sc-font-pixel); text-transform: uppercase;
+.sc-press-start { font-family: var(--sc-font-ui); text-transform: uppercase;
   letter-spacing: .06em; color: hsl(var(--sc-primary)); }
 .sc-login-pick { margin-top: 20px; padding-top: 18px; border-top: 1px solid hsl(var(--sc-border)); width: 100%;
   display: flex; justify-content: center; }
@@ -936,7 +915,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .MuiTableBody-root .MuiTableRow-root:focus-within .MuiTableCell-root:first-child::before {
   content: '\\25B6' / '';
   position: absolute; left: 7px; top: 50%; transform: translateY(-50%);
-  font-family: var(--sc-font-pixel); font-size: 10px;
+  font-family: var(--sc-font-ui); font-size: 10px;
   color: hsl(var(--sc-primary));
 }
 
@@ -1133,7 +1112,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   padding: 8px 0 16px !important;
 }
 .sc-route-import .MuiStepLabel-label {
-  font-family: var(--sc-font-pixel) !important;
+  font-family: var(--sc-font-ui) !important;
   text-transform: uppercase;
   letter-spacing: 0;
   font-size: 13px !important;
@@ -1170,7 +1149,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-route-import .MuiTypography-h6,
 .sc-route-import .MuiFormLabel-root,
 .sc-route-import .MuiInputLabel-root {
-  font-family: var(--sc-font-pixel) !important;
+  font-family: var(--sc-font-ui) !important;
   text-transform: uppercase;
   letter-spacing: 0;
   color: hsl(var(--sc-fg)) !important;
@@ -1438,28 +1417,45 @@ h1, h2, h3, h4, h5, h6,
     hsl(var(--sc-fg) / .03) 0 1px, transparent 1px 3px);
 }
 
-/* ===== 8-bit chrome =====
-   This block sets text-transform on headings, nav, buttons, badges and
-   counters — but pixel type itself is not chrome-only: the "full arcade"
-   rule (.sc, .sc * above) puts the pixel face on body copy, table cells,
-   JSON values and log output too. Uppercase here is a deliberate treatment
-   for chrome, not a fix for uneven lowercase — Pixelify Sans has true
-   lowercase, so there's nothing to hide. The 12px floor (.sc, .sc * above)
-   is a legibility choice, not a defence against dropped strokes: Pixelify
-   Sans is an outline face, not the bitmap face the floor was first written
-   for. */
+/* ===== The type scale =====
+   One family, differentiated by weight, size and case rather than by a second
+   face. This block replaced an arcade treatment written for a pixel font:
+   uppercase on every piece of chrome and a hard 12px floor. Both were right for
+   a bitmap-derived face and wrong for an outline grotesque, where uppercase at
+   13px reads as shouting and the floor is unnecessary.
+
+   Uppercase survives in exactly one place — the micro-label — where it is a
+   wayfinding convention rather than a texture, and it gets the positive
+   tracking that uppercase always needs. Everything else is sentence case with
+   slight negative tracking, which is how this family is drawn to be set. */
 .sc-h1, .sc-card-title, .sc-btn, .sc-badge, .sc-nav-word, .sc-nav-tx,
 .sc-dialog-h, .sc-login-title, .sc-label {
-  font-family: var(--sc-font-pixel);
-  letter-spacing: 0;
-  text-transform: uppercase;
-  font-weight: 400;
-  font-size: max(12px, 1em);
+  font-family: var(--sc-font-ui);
+  text-transform: none;
+  letter-spacing: -0.01em;
 }
-.sc-h1 { font-size: 24px; }
-.sc-login-title { font-size: 20px; }
-.sc-card-title, .sc-dialog-h { font-size: 14px; }
-.sc-btn, .sc-badge, .sc-nav-tx, .sc-nav-word, .sc-label { font-size: 13px; }
+.sc-h1 { font-size: 30px; font-weight: 600; line-height: 1.15; letter-spacing: -0.025em; }
+.sc-login-title { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.sc-dialog-h { font-size: 16px; font-weight: 600; line-height: 1.3; }
+.sc-card-title { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.sc-nav-word { font-size: 16px; font-weight: 700; }
+.sc-btn { font-size: 13px; font-weight: 500; letter-spacing: 0; }
+.sc-nav-tx { font-size: 13px; font-weight: 500; }
+.sc-badge { font-size: 12px; font-weight: 500; letter-spacing: 0; }
+/* The one uppercase left standing, and the only one with positive tracking. */
+.sc-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+/* Table headers are labels by another name. */
+.MuiTableCell-head, .sc-table th {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
 
 /* The press IS the shadow collapsing: the button moves into the space its
    shadow occupied, which is how a 2-frame sprite button reads. */
@@ -1570,7 +1566,7 @@ h1, h2, h3, h4, h5, h6,
 }
 
 /* Sidebar: the active row is marked by a cursor, the way a menu selection is. */
-.sc-nav-cursor { font-family: var(--sc-font-pixel); font-size: 11px; width: 12px;
+.sc-nav-cursor { font-family: var(--sc-font-ui); font-size: 11px; width: 12px;
   flex: 0 0 auto; color: hsl(var(--sc-primary)); margin-left: auto; text-align: right; }
 .sc-nav-item { border-radius: var(--sc-radius); border-left: var(--sc-border-w) solid transparent; }
 .sc-nav-item.active { border-left-color: hsl(var(--sc-primary)); }
@@ -1579,6 +1575,6 @@ h1, h2, h3, h4, h5, h6,
 
 /* The JSON tree is pixel throughout now; keys keep their weight so the
    structure still reads at a glance. */
-.sc-json-key, .sc-json-toggle { font-family: var(--sc-font-pixel); font-size: 12px; }
-.sc-json-body { font-family: var(--sc-font-pixel); font-size: 12px; }
+.sc-json-key, .sc-json-toggle { font-family: var(--sc-font-ui); font-size: 12px; }
+.sc-json-body { font-family: var(--sc-font-ui); font-size: 12px; }
 `;
