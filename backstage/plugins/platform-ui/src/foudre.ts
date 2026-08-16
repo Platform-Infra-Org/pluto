@@ -113,14 +113,14 @@ export function foudreCss(): string {
   border-color: hsl(var(--sc-hairline)) !important;
   box-shadow: none !important;
 }
-/* A card carrying a table takes a smaller radius: a table is a rectangle with
-   its own filled header, and past about 12px its square corners show through
-   the curve. Reducing the radius fixes that without clipping the content —
-   clipping would cut the table's own edge off instead. */
+/* A surface holding a table takes no radius at all. Clipping it cuts the
+   table's own corners off; leaving it rounded lets the table's opaque square
+   corner paint over the arc, so the border reads as broken. Square meeting
+   square is the only geometry where neither happens. */
 :root.sc-foudre .MuiCard-root:has(table),
 :root.sc-foudre .MuiPaper-elevation1:has(table),
 :root.sc-foudre .sc-card:has(table) {
-  border-radius: 10px !important;
+  border-radius: 0 !important;
 }
 
 /* The display voice. Beni is set at line-height 0.70 — tight enough that the

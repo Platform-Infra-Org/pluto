@@ -110,6 +110,15 @@ export function huddleCss(): string {
   box-shadow: none !important;
 }
 
+/* A surface holding a table takes no radius at all — see the note in the base
+   sheet: clipped cuts the table, rounded lets its square corner cover the arc. */
+:root.sc-huddle .MuiCard-root:has(table),
+:root.sc-huddle .MuiPaper-elevation1:has(table),
+:root.sc-huddle .MuiPaper-elevation2:has(table),
+:root.sc-huddle .sc-card:has(table) {
+  border-radius: 0 !important;
+}
+
 /* The radius vocabulary. A pill beside a near-square card is how the reference
    separates a secondary action from a surface, so the jump matters more than
    any single value. */

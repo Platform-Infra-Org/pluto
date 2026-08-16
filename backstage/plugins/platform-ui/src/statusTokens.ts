@@ -62,7 +62,7 @@ export const STATUS_TOKENS: StatusToken[] = [
 ];
 
 /** Which palette a scheme drives. `default` is the six accent-only potions. */
-export type SchemeMode = 'default' | 'greek' | 'foudre' | 'huddle';
+export type SchemeMode = 'default' | 'greek' | 'foudre' | 'huddle' | 'frank';
 
 /** `--sc-card` in the Greek registers, from greek.ts. */
 export const GREEK_CARD_LIGHT = '42 45% 98%';
@@ -126,6 +126,7 @@ export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   // has to be re-measured against new paper.
   foudre: STATUS_TOKENS,
   huddle: STATUS_TOKENS,
+  frank: STATUS_TOKENS,
 };
 
 export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
@@ -133,6 +134,7 @@ export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   greek: { light: GREEK_CARD_LIGHT, dark: GREEK_CARD_DARK },
   foudre: { light: '0 0% 100%', dark: '153 40% 8%' },
   huddle: { light: '0 0% 100%', dark: '0 0% 9%' },
+  frank: { light: '0 0% 100%', dark: '250 85% 14%' },
 };
 
 /** The `:root` declarations for every mode, for interpolation into SHADCN_CSS. */

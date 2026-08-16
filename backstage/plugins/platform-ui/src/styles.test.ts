@@ -168,16 +168,29 @@ describe('SHADCN_CSS', () => {
     }
   });
 
-  it('lets a surface holding a table scroll rather than clip its edge', () => {
-    // A rounded surface clips its corners, and a table is almost always wider
-    // than the surface holding it — so the clip cut the last column off. The
-    // fix has to be BOTH halves: stop clipping, and drop the radius so the
-    // table's square corner does not then show through.
+  it('gives a surface holding a table no corner radius at all', () => {
+    // Diagnosed against the running app, not guessed. The table sits 1px inside
+    // its Paper and paints an opaque header into the corner, which leaves only
+    // two outcomes and no third:
+    //   overflow: hidden  -> the surface clips the table's own corners off
+    //   overflow: visible -> the table's square corner covers the surface's arc
+    // Both shipped in turn. Square meeting square is the only geometry where
+    // neither happens, so BOTH halves are pinned here: visible AND zero radius.
     expect(SHADCN_CSS).toMatch(
       /\.MuiPaper-root:has\(table\)\s*\{[^}]*overflow:\s*visible/,
     );
     expect(SHADCN_CSS).toMatch(
-      /\.MuiPaper-root:has\(table\)\s*\{[^}]*border-radius:\s*var\(--sc-radius-sm\)/,
+      /\.MuiPaper-root:has\(table\)\s*\{[^}]*border-radius:\s*0/,
+    );
+  });
+
+  it('gives every title one face', () => {
+    // The h1 that says "Welcome to Platform" and a card's own title are the
+    // same kind of object; they were drifting apart by which stylesheet reached
+    // them first.
+    expect(SHADCN_CSS).toMatch(/--sc-font-title:/);
+    expect(SHADCN_CSS).toMatch(
+      /\.sc-card-title,[\s\S]{0,400}font-family:\s*var\(--sc-font-title\)/,
     );
   });
 

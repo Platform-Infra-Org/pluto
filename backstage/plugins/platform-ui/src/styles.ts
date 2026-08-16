@@ -6,6 +6,7 @@ import { statusTokenCss } from './statusTokens';
 import { greekCss } from './greek';
 import { foudreCss } from './foudre';
 import { huddleCss } from './huddle';
+import { frankCss } from './frank';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
@@ -45,6 +46,11 @@ export const SHADCN_CSS = `
   --sc-border-w: 2px;
   --sc-shadow: 3px 3px 0 hsl(var(--sc-fg) / .16);
   --sc-font-pixel: 'Pixelify Sans', ui-monospace, SFMono-Regular, monospace;
+  /* Titles take the grotesque, everything else keeps the pixel face. Held as
+     its own variable so a mode can move the two independently — the pixel font
+     is still the app's voice, but a heading is where a face has room to be
+     read rather than decoded. */
+  --sc-font-title: 'Clash Grotesk', Inter, system-ui, -apple-system, sans-serif;
   --sc-unit: 4px;
   --sc-nav-w: 240px;
   --sc-bg: 240 10% 98%;
@@ -80,6 +86,7 @@ ${statusTokenCss()}
 ${greekCss()}
 ${foudreCss()}
 ${huddleCss()}
+${frankCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because
@@ -567,17 +574,22 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* card */
 .sc-card { background: hsl(var(--sc-card)); color: hsl(var(--sc-card-fg));
   border: var(--sc-border-w) solid hsl(var(--sc-border)); border-radius: var(--sc-radius); overflow: hidden; }
-/* A rounded surface clips its corners, and a table is almost always wider than
-   the surface holding it — so the clip cut the last column and the outer rows'
-   edges off. Any surface carrying a table stops clipping and takes the small
-   radius instead, which is tight enough that the table's square corner inside
-   it is not visible. This is the general form of a fix the mode sheets each
-   used to carry alone. */
+/* A surface holding a table has NO corner radius. Diagnosed against the running
+   app rather than guessed: the wrapper is a MuiPaper the table sits 1px inside,
+   and the table's header paints an opaque background right into the corner.
+   That leaves exactly two failure modes and no third option —
+     overflow: hidden  → the surface clips the table's own corners off;
+     overflow: visible → the table's opaque square corner paints over the
+                         surface's arc, so its border reads as broken at each
+                         corner.
+   Both were shipped in turn. Square meeting square is the only geometry where
+   neither happens, so the radius goes to zero and nothing is clipped. Mode
+   sheets set the same zero for their own table surfaces. */
 .sc-card:has(table),
 .MuiCard-root:has(table),
 .MuiPaper-root:has(table) {
   overflow: visible !important;
-  border-radius: var(--sc-radius-sm) !important;
+  border-radius: 0 !important;
 }
 /* And the scroll goes on the container that owns the width, so a wide table
    scrolls rather than being cut. */
@@ -1167,6 +1179,24 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-route-import .MuiLinearProgress-root {
   border: var(--sc-border-w) solid hsl(var(--sc-border));
   border-radius: var(--sc-radius);
+}
+
+/* Every title, one face. The h1 that says "Welcome to Platform" and a card's
+   own title are the same kind of object and were drifting apart by which
+   stylesheet reached them first. */
+.sc-h1,
+.sc-card-title,
+.sc-empty-title,
+.sc-qs-title,
+.sc-login-title,
+.MuiTypography-h1,
+.MuiTypography-h2,
+.MuiTypography-h3,
+.MuiTypography-h4,
+.MuiTypography-h5,
+.MuiTypography-h6 {
+  font-family: var(--sc-font-title) !important;
+  letter-spacing: -0.01em;
 }
 
 /* [flare] The konami code. Flips to a fixed NES-hardware accent and sends a

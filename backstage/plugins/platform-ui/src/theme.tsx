@@ -121,7 +121,7 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
           },
           title: {
             color: 'hsl(var(--sc-fg))',
-            fontFamily: FONT,
+            fontFamily: 'var(--sc-font-title) !important',
             textTransform: 'uppercase',
             fontWeight: 400,
             // 18px/1.35 was a separate class*="BackstageContentHeader-title"
