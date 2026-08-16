@@ -31,21 +31,21 @@ describe('colour schemes', () => {
     // An id is the key a browser has already persisted; a label is only what
     // someone reads. A pick that no longer exists degrades to the first bottle
     // rather than throwing.
-    expect(SCHEMES.map(s => s.id)).toEqual(['greek', 'anthropic', 'gsap', 'gic', 'tiger', 'raycast', 'portal', 'franky', 'slush']);
+    expect(SCHEMES.map(s => s.id)).toEqual(['greek', 'foudre']);
   });
 
   it('gives each mode to exactly one potion', () => {
     const modes = SCHEMES.filter(s => s.mode).map(s => s.mode);
-    expect([...modes].sort()).toEqual(['anthropic', 'franky', 'gic', 'greek', 'gsap', 'portal', 'raycast', 'slush', 'tiger']);
+    expect([...modes].sort()).toEqual(['foudre', 'greek']);
     expect(new Set(modes).size).toBe(modes.length);
   });
 
   it('toggles the mode class on the root element when a mode is picked', () => {
     applyScheme('greek');
     expect(document.documentElement.classList.contains('sc-greek')).toBe(true);
-    applyScheme('raycast');
+    applyScheme('foudre');
     expect(document.documentElement.classList.contains('sc-greek')).toBe(false);
-    expect(document.documentElement.classList.contains('sc-raycast')).toBe(true);
+    expect(document.documentElement.classList.contains('sc-foudre')).toBe(true);
   });
 
   it('never leaves two modes applied at once', () => {
@@ -53,7 +53,7 @@ describe('colour schemes', () => {
     // a second complete palette still matching, and which one wins is then
     // decided by stylesheet order rather than by what was clicked. Every mode
     // must be cleared on every pick, not only the one being replaced.
-    const ALL = ['sc-greek', 'sc-anthropic', 'sc-gsap', 'sc-gic', 'sc-tiger', 'sc-raycast', 'sc-portal', 'sc-franky', 'sc-slush'];
+    const ALL = ['sc-greek', 'sc-foudre'];
     const classesFor = (id: string) => {
       applyScheme(id);
       return ALL.filter(c => document.documentElement.classList.contains(c));

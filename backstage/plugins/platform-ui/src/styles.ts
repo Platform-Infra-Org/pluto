@@ -4,9 +4,7 @@
 // Backstage's own MUI styles outside our pages.
 import { statusTokenCss } from './statusTokens';
 import { greekCss } from './greek';
-import { anthropicCss } from './anthropic';
-import { gsapCss } from './gsap';
-import { brandsCss } from './brands';
+import { foudreCss } from './foudre';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
@@ -68,9 +66,7 @@ export const SHADCN_CSS = `
 }
 ${statusTokenCss()}
 ${greekCss()}
-${anthropicCss()}
-${gsapCss()}
-${brandsCss()}
+${foudreCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because
@@ -401,6 +397,17 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    it to the templates page, because .MuiCard-root alone is every card in the
    app. This positional cycling cannot move into theme styleOverrides — nth-child
    is not expressible there. */
+/* The template's NAME first, its type under it.
+   ItemCardHeader renders subtitle (the type) before title (the name), so the
+   type led every card. It gives them stable tags rather than classes —
+   subtitle is component="h3" and title is component="h4" — which is what makes
+   this orderable without naming a class a production build would discard.
+   Everything else in the header (the card's own children) is pushed last. */
+.sc-route-create .MuiCard-root > .MuiBox-root:first-child { display: flex; flex-direction: column; }
+.sc-route-create .MuiCard-root > .MuiBox-root:first-child > * { order: 3; }
+.sc-route-create .MuiCard-root > .MuiBox-root:first-child > h4 { order: 1; }
+.sc-route-create .MuiCard-root > .MuiBox-root:first-child > h3 { order: 2; opacity: .85; }
+
 .sc-route-create .MuiCard-root > .MuiBox-root:first-child {
   /* Ancient Greek, drawn entirely with hard colour stops.
 

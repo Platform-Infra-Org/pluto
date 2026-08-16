@@ -62,17 +62,7 @@ export const STATUS_TOKENS: StatusToken[] = [
 ];
 
 /** Which palette a scheme drives. `default` is the six accent-only potions. */
-export type SchemeMode =
-  | 'default'
-  | 'greek'
-  | 'anthropic'
-  | 'gsap'
-  | 'gic'
-  | 'tiger'
-  | 'raycast'
-  | 'portal'
-  | 'franky'
-  | 'slush';
+export type SchemeMode = 'default' | 'greek' | 'foudre';
 
 /** `--sc-card` in the Greek registers, from greek.ts. */
 export const GREEK_CARD_LIGHT = '42 45% 98%';
@@ -130,31 +120,17 @@ export const GREEK_STATUS_TOKENS: StatusToken[] = [
 export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   default: STATUS_TOKENS,
   greek: GREEK_STATUS_TOKENS,
-  // These keep the default status colours on purpose — the design system allows
-  // a mode to redefine status hue, and Greek already spends that exception.
-  // What they DO change is the card underneath, so the same ink has to be
-  // re-measured against new paper.
-  anthropic: STATUS_TOKENS,
-  gsap: STATUS_TOKENS,
-  gic: STATUS_TOKENS,
-  tiger: STATUS_TOKENS,
-  raycast: STATUS_TOKENS,
-  portal: STATUS_TOKENS,
-  franky: STATUS_TOKENS,
-  slush: STATUS_TOKENS,
+  // Foudre keeps the default status colours on purpose — the design system
+  // allows a mode to redefine status hue, and Greek already spends that
+  // exception. What Foudre DOES change is the card underneath, so the same ink
+  // has to be re-measured against new paper.
+  foudre: STATUS_TOKENS,
 };
 
 export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   default: { light: CARD_LIGHT, dark: CARD_DARK },
   greek: { light: GREEK_CARD_LIGHT, dark: GREEK_CARD_DARK },
-  anthropic: { light: '48 33% 97%', dark: '60 3% 8%' },
-  gsap: { light: '55 100% 97%', dark: '0 0% 9.8%' },
-  gic: { light: '0 0% 100%', dark: '240 16% 10%' },
-  tiger: { light: '36 70% 98%', dark: '20 58% 8%' },
-  raycast: { light: '0 0% 97%', dark: '220 17% 5%' },
-  portal: { light: '0 0% 100%', dark: '220 16% 9%' },
-  franky: { light: '14 50% 95%', dark: '0 0% 8.5%' },
-  slush: { light: '0 0% 100%', dark: '0 0% 8%' },
+  foudre: { light: '0 0% 100%', dark: '153 40% 8%' },
 };
 
 /** The `:root` declarations for every mode, for interpolation into SHADCN_CSS. */

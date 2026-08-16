@@ -84,18 +84,18 @@ describe('generated tab icon', () => {
     // Same two stops as `.sc-nav-mark`'s linear-gradient(135deg, primary,
     // primary / .6) in styles.ts. A flat fill here is what made the tab read
     // as a different object from the sidebar tile.
-    applyScheme('raycast');
-    const blue = SCHEMES.find(s => s.id === 'raycast')!.hsl;
+    applyScheme('foudre');
+    const blue = SCHEMES.find(s => s.id === 'foudre')!.hsl;
     expect(stops).toEqual([`hsl(${blue})`, `hsl(${blue} / .6)`]);
   });
 
   it('repaints the tile when the scheme changes', () => {
-    applyScheme('raycast');
+    applyScheme('foudre');
     const first = [...stops];
     stops = [];
-    applyScheme('portal');
+    applyScheme('greek');
     expect(stops).not.toEqual(first);
-    expect(stops[0]).toBe(`hsl(${SCHEMES.find(s => s.id === 'portal')!.hsl})`);
+    expect(stops[0]).toBe(`hsl(${SCHEMES.find(s => s.id === 'greek')!.hsl})`);
   });
 
   it('draws the tile from the computed accent, not the record literal', () => {

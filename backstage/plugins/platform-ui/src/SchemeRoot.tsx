@@ -7,7 +7,6 @@ import {
 } from 'react';
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
-import { BRAND_DEFS } from './brands';
 import { AMPHORA_VESSEL, SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
 import { PixelPotion } from './components';
 import { templateHeaderCss } from './templateHeaders';
@@ -64,17 +63,7 @@ type Scheme = {
  * each pick: a mode class left behind is a second palette still applying, and
  * which one wins is then decided by stylesheet order rather than by the click.
  */
-const MODES = [
-  'greek',
-  'anthropic',
-  'gsap',
-  'gic',
-  'tiger',
-  'raycast',
-  'portal',
-  'franky',
-  'slush',
-] as const;
+const MODES = ['greek', 'foudre'] as const;
 type Mode = (typeof MODES)[number];
 
 // Saturated toward NES-era values. `fg` is the text colour that sits on the
@@ -82,8 +71,8 @@ type Mode = (typeof MODES)[number];
 // amber are the reason this field exists — darkening them enough for white text
 // would have turned them to mud. Ratios are measured, see SchemeRoot.test.ts.
 export const SCHEMES: Scheme[] = [
-  // Every potion is a design system rendered in this app's furniture. Ids are
-  // the persisted key and never change once published.
+  // Two design systems, each rendered in this app's furniture. Ids are the key
+  // a browser has already persisted and never change once published.
   {
     id: 'greek',
     label: 'Ancient Greek',
@@ -91,16 +80,13 @@ export const SCHEMES: Scheme[] = [
     fg: WHITE, // 7.94
     mode: 'greek',
   },
-  { id: 'anthropic', label: 'Anthropic', hsl: '15 63% 60%', fg: INK, mode: 'anthropic' }, // 5.94
-  { id: 'gsap', label: 'GSAP', hsl: '140 92% 26%', fg: WHITE, mode: 'gsap' }, // 4.96
-  // The table-driven brand modes, from brands.ts.
-  ...BRAND_DEFS.map(b => ({
-    id: b.id,
-    label: b.label,
-    hsl: b.bottle,
-    fg: b.bottleFg,
-    mode: b.id as Mode,
-  })),
+  {
+    id: 'foudre',
+    label: 'Agence Foudre',
+    hsl: '330 68% 38%',
+    fg: WHITE, // 6.80
+    mode: 'foudre',
+  },
 ];
 
 /**
