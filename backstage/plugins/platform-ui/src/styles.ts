@@ -38,6 +38,10 @@ export const SHADCN_CSS = `
      border width beside it is what still separates one mode from the next. */
   --sc-radius: 12px;
   --sc-radius-sm: 8px;
+  /* The horizontal inset of a field's own text. The label that names it reads
+     the same variable, so the two cannot drift: MUI positions a standard-variant
+     label at left:0 because that variant has no box, and we give it one. */
+  --sc-field-x: 10px;
   --sc-border-w: 2px;
   --sc-shadow: 3px 3px 0 hsl(var(--sc-fg) / .16);
   --sc-font-ui: 'Clash Grotesk', Inter, system-ui, -apple-system, sans-serif;
@@ -938,7 +942,24 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   background: transparent;
   border: var(--sc-border-w) solid hsl(var(--sc-border));
   border-radius: var(--sc-radius);
-  padding: 3px 10px;
+  padding: 3px var(--sc-field-x);
+}
+/* The scaffolder's fields are MUI's *standard* variant, whose label is absolutely
+   positioned at left: 0 — correct for a bare underline, wrong the moment the
+   field has a box and a corner. Unfixed, the label sat on the rounded corner
+   while the value it named was inset 10px, so the two read as belonging to
+   different fields. Measured at inset 0 against a padding of 10 on every label
+   of every scaffolder form; no other page in the app has a boxed standard field.
+   Both states move together: at rest the label sits in the box beside the value,
+   and shrunk it floats above the border on the same left edge. */
+.sc-route-create [class*="MuiInputLabel-root"],
+.sc-route-create [class*="MuiFormLabel-root"] {
+  left: var(--sc-field-x);
+}
+/* MUI shrinks by scaling about the top-left, so a shrunk label keeps that same
+   left edge and needs only clearance from the border it now sits on. */
+.sc-route-create [class*="MuiInputLabel-shrink"] {
+  padding-inline-end: 4px;
 }
 .sc-route-create [class*="MuiInput-underline"]::before,
 .sc-route-create [class*="MuiInput-underline"]::after {
