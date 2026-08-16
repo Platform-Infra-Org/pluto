@@ -35,6 +35,7 @@ import { titleOf, useResourceTitles } from '../useResourceTitles';
 import { parseResultRefs } from '../resultRefs';
 import { argoWorkflowUrl } from '../argoUrl';
 import { WorkflowGraph } from './WorkflowGraph';
+import { StopWorkflowButton } from './StopWorkflowButton';
 import { SuspendPanel } from './SuspendPanel';
 import { ExperienceBar } from './ExperienceBar';
 import { stateBadge, formatTs } from './RequestsPage';
@@ -485,11 +486,31 @@ export function RequestPage() {
                 }
                 description={request.workflowPhase ?? undefined}
                 action={
-                  <GraphDirectionPicker
-                    value={workflowDirection}
-                    onChange={setWorkflowDirection}
-                    id="workflow-dir"
-                  />
+                  // Beside the direction picker, and present for as long as the
+                  // run is: stopping used to live in the suspend panel, so it
+                  // existed only while something happened to be waiting on a
+                  // human. A workflow is worth abandoning whenever it is still
+                  // going. Gone once the state is terminal — there is nothing
+                  // left to stop, and the backend would record a rejection
+                  // against a request that already has an outcome.
+                  <div className="sc-row">
+                    <GraphDirectionPicker
+                      value={workflowDirection}
+                      onChange={setWorkflowDirection}
+                      id="workflow-dir"
+                    />
+                    {!isTerminal(request.state) && (
+                      <StopWorkflowButton
+                        requestId={request.id}
+                        isAdmin={isAdmin}
+                        groups={myGroups}
+                        actor={me}
+                        requester={request.requester}
+                        ownerGroup={request.ownerGroup}
+                        onStopped={load}
+                      />
+                    )}
+                  </div>
                 }
               />
               <CardBody>

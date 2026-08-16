@@ -5,7 +5,6 @@ import {
   CardHeader,
   CardBody,
   Button,
-  Dialog,
   Input,
   Select,
   Field,
@@ -14,7 +13,6 @@ import {
   SuspendedNode,
   SuppliedOutput,
   mayResumeNode,
-  mayStopWorkflow,
 } from '@internal/plugin-platform-common';
 import { requestsApiRef } from '../api';
 
@@ -114,24 +112,20 @@ function gateOwnerOf(
  * and its wording come from `mayResumeNode`, the same function the resume route
  * enforces, so the button and the 403 can never disagree.
  *
- * Stopping appears twice, because it answers two different questions with one
- * Argo call (`/stop` ends the run; there is no way to stop a single node):
+ * Refusing a gate lives here, beside the step it refuses, and asks that step's
+ * own question: whoever may release it may refuse it, so a team locked out of a
+ * gate is locked out of refusing it too. It takes no confirmation — the team
+ * clicking it is the team that was asked.
  *
- * - **Beside a step** it means "refuse this gate", and the step's own team
- *   decides — the same verdict that governs releasing it. A team locked out of
- *   a gate cannot refuse it either, which is the point.
- * - **At the foot of the card** it means "abandon this request", and the
- *   request-level gate decides: the owning team, an admin, or whoever filed it.
- *   That one is behind a confirmation, because it throws away a run that may
- *   have already provisioned something.
+ * Abandoning the whole request is a different question and lives elsewhere, in
+ * StopWorkflowButton beside the workflow graph, where it is offered for as long
+ * as the run lasts rather than only while a step happens to be waiting.
  */
 export function SuspendPanel({
   requestId,
   nodes,
   isAdmin,
   groups,
-  actor,
-  requester,
   ownerGroup,
   onResumed,
 }: {
@@ -141,10 +135,6 @@ export function SuspendPanel({
   isAdmin: boolean;
   /** The viewer's own group entityRefs. */
   groups: string[];
-  /** The viewer's own user entityRef. */
-  actor: string;
-  /** Who filed the request. */
-  requester: string;
   /** The request's owning service team, if it has one. */
   ownerGroup?: string;
   onResumed: () => void;
@@ -157,19 +147,8 @@ export function SuspendPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [message, setMessage] = useState<string>();
-  const [confirmStop, setConfirmStop] = useState(false);
 
   if (nodes.length === 0) return null;
-
-  // Abandoning the request, not refusing a gate: wider on purpose, so whoever
-  // asked for this can withdraw it without finding an approver.
-  const stopGate = mayStopWorkflow({
-    isAdmin,
-    groups,
-    actor,
-    ownerGroup,
-    requester,
-  });
 
   const unanswered = (node: SuspendedNode) =>
     node.suppliedOutputs
@@ -312,60 +291,6 @@ export function SuspendPanel({
             </div>
           );
         })}
-        {/* Abandoning the whole request. Separate from the per-step refusals
-            above, and gated differently: the owning team, an admin, or whoever
-            filed it. Behind a confirmation because it throws away a run that
-            may already have provisioned something, and because the person most
-            likely to click it is the one who cannot undo it. */}
-        {stopGate.allowed && (
-          <div
-            className="sc-row"
-            style={{ marginTop: 14, borderTop: '1px solid hsl(var(--sc-border) / .25)', paddingTop: 12 }}
-          >
-            <Button
-              variant="outline"
-              disabled={busy}
-              onClick={() => setConfirmStop(true)}
-            >
-              Stop the whole workflow
-            </Button>
-          </div>
-        )}
-        <Dialog
-          open={confirmStop}
-          onClose={() => setConfirmStop(false)}
-          title="Stop this workflow?"
-          footer={
-            <>
-              <Button variant="outline" onClick={() => setConfirmStop(false)}>
-                Cancel
-              </Button>
-              <Button
-                disabled={busy}
-                onClick={() => {
-                  setConfirmStop(false);
-                  stop();
-                }}
-              >
-                {busy ? 'Working…' : 'Stop workflow'}
-              </Button>
-            </>
-          }
-        >
-          <p>
-            This ends the run rather than any one step. The workflow's own exit
-            handlers still run, so what it already created is cleaned up, and
-            the request lands in FAILED.
-          </p>
-          {/* The reason sits where an approval note sits, and reaches the same
-              audit trail: stopping is recorded as a rejection, because that is
-              what refusing a request is. */}
-          <Input
-            placeholder="Reason (optional)"
-            value={note}
-            onChange={e => setNote(e.target.value)}
-          />
-        </Dialog>
         {message && (
           <div className="sc-notice" style={{ marginTop: 10 }}>
             {message}

@@ -1011,6 +1011,18 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-btn-ghost:hover:not(:disabled) { background: hsl(var(--sc-accent)); }
 .sc-btn-destructive { background: transparent; color: hsl(var(--sc-destructive)); border-color: transparent; }
 .sc-btn-destructive:hover:not(:disabled) { background: hsl(var(--sc-destructive) / .1); }
+/* Neutral at rest, red under the pointer. A control that ends a running
+   workflow sits in a toolbar beside ordinary ones, and a permanently red button
+   there reads as an error the page is reporting rather than an action offered.
+   The colour arrives on the reach, which is when the warning is useful.
+   Layered on a variant rather than replacing one, so it keeps that variant's
+   geometry: .sc-btn-outline .sc-btn-danger is an outline button that turns. */
+.sc-btn-danger:hover:not(:disabled),
+.sc-btn-danger:focus-visible:not(:disabled) {
+  background: hsl(var(--sc-destructive) / .12);
+  border-color: hsl(var(--sc-destructive));
+  color: hsl(var(--sc-destructive));
+}
 .sc-btn-sm { height: 30px; padding: 0 10px; font-size: 12.5px; }
 
 /* badge */
