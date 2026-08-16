@@ -9,3 +9,10 @@ commercial use, redistributable as part of a larger work, not for sale on
 its own. https://www.fontshare.com/fonts/clash-grotesk
 Variable file, weight axis 200-700, so one asset covers the whole range.
 
+anton.woff2 — Anton, by the Anton Project Authors.
+Copyright 2020, licensed under the SIL Open Font License 1.1.
+https://github.com/googlefonts/AntonFont
+Latin subset. Stands in for Beni Black, the display face on
+agencefoudre.com, which has no free licence — Anton is the closest
+licensable match in proportion, not the same typeface.
+

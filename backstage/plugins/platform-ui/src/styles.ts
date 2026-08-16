@@ -13,6 +13,17 @@ export const SHADCN_CSS = `
 /* Self-hosted so the CSP (font-src 'self') is satisfied and the app works
    offline. Latin subset, 12KB. SIL OFL — see public/fonts/LICENSE.txt. */
 @font-face {
+  /* Anton, the display face. It stands in for Beni Black — the face
+     agencefoudre.com sets its headlines in — which has no free licence. Anton is
+     the closest licensable match in proportion; it is not the same typeface, and
+     saying so beats implying the type is exact. SIL OFL 1.1, latin subset. */
+  font-family: 'Anton';
+  src: url('/fonts/anton.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
   /* Clash Grotesk, self-hosted for the same reason as the pixel face: the CSP
      is font-src 'self', so a CDN reference would simply not load. The variable
      file covers 200-700 in one asset. ITF Free Font License — see

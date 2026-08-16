@@ -159,8 +159,9 @@ describe('SHADCN_CSS', () => {
     // The CSP is font-src 'self'. A CDN url in an @font-face would simply not
     // load, and the failure is silent — the page falls back and looks nearly
     // right. Both faces are files this app serves.
+    // Every face, not a fixed count — the number grows and the rule does not.
     const faces = Array.from(SHADCN_CSS.matchAll(/@font-face\s*\{([^}]*)\}/g), m => m[1]);
-    expect(faces.length).toBe(2);
+    expect(faces.length).toBeGreaterThanOrEqual(2);
     for (const face of faces) {
       const url = /url\('([^']+)'\)/.exec(face);
       expect(url).not.toBeNull();
