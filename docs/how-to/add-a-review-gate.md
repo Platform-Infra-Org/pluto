@@ -103,9 +103,61 @@ the approvals card with the step's inputs, its questions, and two actions:
 - **Stop** — ends the run (Argo `/stop`, so the workflow's `onExit` handlers
   still run and clean up what it created). The request lands in `FAILED`.
 
-Both are recorded in the same audit trail as the first approval, and both are
-gated the same way: **an admin or a member of the owning team**. The requester
-cannot wave their own request through unless they are also an approver.
+Both are recorded in the same audit trail as the first approval. By default both
+are gated the same way: **an admin or a member of the owning team**. The
+requester cannot wave their own request through unless they are also an
+approver.
+
+A step may override that for itself — see **[Handing a gate to another
+team](#handing-a-gate-to-another-team)** below. Stop is not overridable: it ends
+the whole run rather than any one step, so it keeps asking the request-level
+question.
+
+## Handing a gate to another team
+
+A gate does not have to belong to the team that owns the request. Put
+`platform.io/approver-group` on the **suspend template** and that step is
+answered by the group you name:
+
+```yaml
+templates:
+  - name: approve-cost
+    metadata:
+      annotations:
+        platform.io/approver-group: group:default/payments
+    suspend: {}
+```
+
+The annotation goes on the template, not on the step that calls it and not in
+`arguments`. Three states, and the middle one is what you get by writing
+nothing:
+
+| the suspend template | who may resume it |
+|---|---|
+| names a group that has members | an admin, or that group |
+| carries no annotation | an admin, or the request's owning team |
+| names a group nobody is in, or is empty | an admin, and nobody else |
+
+Two things about the first row are worth saying plainly, because both surprise
+people:
+
+- **It replaces the owner, it does not add to them.** The owning team approved
+  the request at the start; a cost gate means little if the team spending the
+  money can release it. A request its own owner filed can therefore reach a gate
+  its owner cannot answer — the step stays visible on the request page, naming
+  the team, so they know whom to chase.
+- **The decision is per step, not per request.** Two gates in the same step
+  group suspend at the same time and are answered independently by two different
+  teams, in either order.
+
+The last row is deliberate. An unresolvable group narrows to admins rather than
+falling back to the owner, so a typo stalls in the open instead of quietly
+widening the gate. The request page names the group it could not resolve.
+
+A worked example with all three states in one run lives in
+`deploy/dev/argo/team-gates.yaml`, wired to the **Provision With Team Gates**
+template: checkout owns the request, payments answers the cost gate, search
+answers the schema gate, and a third unannotated gate returns to checkout.
 
 ## Things worth knowing
 

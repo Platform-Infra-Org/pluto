@@ -1,0 +1,192 @@
+# A provisioning workflow whose gates belong to different teams.
+#
+# `review-gate.yaml` shows a single mid-run gate answered by the team that owns
+# the request. This one shows the other shape: a step may name the team that
+# answers *it*, with `platform.io/approver-group` on the suspend template.
+#
+#   templates:
+#     - name: approve-cost
+#       metadata:
+#         annotations:
+#           platform.io/approver-group: group:default/payments
+#       suspend: {}
+#
+# The annotation goes on the **template**, not on the step that calls it, and
+# not in `arguments`. The platform reads it off the workflow's stored template
+# definition and hands it to the request page beside the step it guards.
+#
+# Three states, and this template demonstrates all three in one run:
+#
+#   | the suspend template                 | who may resume it                  |
+#   |--------------------------------------|------------------------------------|
+#   | names a group that has members       | an admin, or that group            |
+#   | carries no annotation                | an admin, or the request's owner   |
+#   | names a group nobody is in, or empty | an admin, and nobody else          |
+#
+# The middle row is today's behaviour and is what you get by writing nothing.
+# The first row **excludes the owning team** — the owner approved the request at
+# the start, and a cost gate means little if the team spending the money can
+# wave it through. The last row is deliberate: an unresolvable group narrows to
+# admins rather than falling back to the owner, so a typo stalls in the open
+# instead of quietly widening the gate.
+#
+# `approve-cost` and `approve-schema` sit in the **same step group**, so both
+# suspend at once and the request waits on two gates owned by two teams
+# simultaneously. Each is answered by its own team, independently, in either
+# order — payments cannot release the schema gate and search cannot release the
+# cost one. That is the point of deciding per node rather than per request.
+#
+# Group refs must be the entity refs the identity actually carries. The three
+# used here exist in the dev catalog; `group:default/finance` would not, and
+# would land in the third row above.
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: team-gates
+  namespace: argo
+spec:
+  entrypoint: main
+  ttlStrategy:
+    secondsAfterCompletion: 600
+    secondsAfterSuccess: 600
+    secondsAfterFailure: 3600
+  arguments:
+    parameters:
+      - { name: region, value: "eu-west-1" }
+  templates:
+    - name: main
+      inputs:
+        parameters:
+          - { name: region }
+      steps:
+        - - name: plan
+            template: plan
+            arguments:
+              parameters:
+                - { name: region, value: "{{inputs.parameters.region}}" }
+        # Both gates in one step group: they suspend together, and the request
+        # shows two waiting steps with two different teams named.
+        - - name: approve-cost
+            template: approve-cost
+            arguments:
+              parameters:
+                - name: cost
+                  value: "{{steps.plan.outputs.parameters.cost}}"
+          - name: approve-schema
+            template: approve-schema
+            arguments:
+              parameters:
+                - name: diff
+                  value: "{{steps.plan.outputs.parameters.diff}}"
+        # And one last gate with no annotation, so the same run also shows the
+        # unchanged behaviour: this one goes back to the request's owner.
+        - - name: sign-off
+            template: sign-off
+        - - name: apply
+            template: apply
+            arguments:
+              parameters:
+                - name: budget
+                  value: "{{steps.approve-cost.outputs.parameters.budget}}"
+                - name: migration
+                  value: "{{steps.approve-schema.outputs.parameters.migration}}"
+
+    # Produces the values each team is asked to review.
+    - name: plan
+      inputs:
+        parameters:
+          - { name: region }
+      container:
+        image: alpine:3.20
+        command: [sh, -c]
+        args:
+          - |
+            set -eu
+            echo "planning for region: {{inputs.parameters.region}}"
+            printf '$118.40/month, up from $41.20' > /tmp/cost
+            printf 'ALTER TABLE orders ADD COLUMN settled_at timestamptz' > /tmp/diff
+      outputs:
+        parameters:
+          - name: cost
+            valueFrom: { path: /tmp/cost }
+          - name: diff
+            valueFrom: { path: /tmp/diff }
+
+    # Gate one: the team that owns the budget, not the team spending it.
+    - name: approve-cost
+      metadata:
+        annotations:
+          platform.io/approver-group: group:default/payments
+      inputs:
+        parameters:
+          - { name: cost }
+      suspend: {}
+      outputs:
+        parameters:
+          - name: budget
+            description: Approve this spend, or hold it for the next cycle.
+            enum:
+              - approved
+              - deferred
+            valueFrom:
+              supplied: {}
+
+    # Gate two: the team that owns the schema. Waits at the same time as the
+    # cost gate, and is answered by different people.
+    - name: approve-schema
+      metadata:
+        annotations:
+          platform.io/approver-group: group:default/search
+      inputs:
+        parameters:
+          - { name: diff }
+      suspend: {}
+      outputs:
+        parameters:
+          - name: migration
+            description: Run the migration now, or ship the column unused.
+            enum:
+              - run
+              - skip
+            valueFrom:
+              supplied: {}
+
+    # Gate three: no annotation, so this is the behaviour every existing
+    # workflow already has — an admin, or the team that owns the request.
+    - name: sign-off
+      suspend: {}
+      outputs:
+        parameters:
+          - name: note
+            description: Anything to record against this release.
+            default: none
+            valueFrom:
+              supplied: {}
+
+    # Proves both answers arrived: if either gate resumed without its answer,
+    # this fails rather than quietly succeeding.
+    - name: apply
+      inputs:
+        parameters:
+          - { name: budget }
+          - { name: migration }
+      container:
+        image: alpine:3.20
+        command: [sh, -c]
+        args:
+          - |
+            set -eu
+            BUDGET='{{inputs.parameters.budget}}'
+            MIGRATION='{{inputs.parameters.migration}}'
+            echo "payments said: ${BUDGET}"
+            echo "search said:   ${MIGRATION}"
+            if [ -z "${BUDGET}" ] || [ -z "${MIGRATION}" ]; then
+              echo "ERROR: resumed without one of the answers" >&2
+              exit 1
+            fi
+            printf 'team-gates/%s/%s' "${BUDGET}" "${MIGRATION}" > /tmp/result
+      outputs:
+        parameters:
+          - name: result
+            valueFrom: { path: /tmp/result }
+            globalName: result
