@@ -1287,10 +1287,14 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   box-shadow: var(--sc-shadow); }
 .sc-nav-mark svg, .sc-nav-mark img { width: 17px; height: 17px; color: hsl(var(--sc-primary-fg)); object-fit: contain; }
 .sc-nav-word { font-weight: 700; font-size: 17px; letter-spacing: -0.02em; color: hsl(var(--sc-fg)); white-space: nowrap; }
-.sc-nav-toggle { flex: 0 0 auto; width: 26px; height: 26px; border-radius: var(--sc-radius); border: var(--sc-border-w) solid hsl(var(--sc-border));
+/* The picker's own controls are the same object as the sidebar's toggle — one
+   26px square, same rule, so the two never drift apart. Only placement below. */
+.sc-nav-toggle, .sc-picker-toggle { flex: 0 0 auto; width: 26px; height: 26px; border-radius: var(--sc-radius); border: var(--sc-border-w) solid hsl(var(--sc-border));
   background: transparent; color: hsl(var(--sc-muted-fg)); cursor: pointer; font-size: 13px; line-height: 1;
   display: flex; align-items: center; justify-content: center; }
-.sc-nav-toggle:hover { background: hsl(var(--sc-accent)); color: hsl(var(--sc-fg)); }
+.sc-nav-toggle:hover, .sc-picker-toggle:hover { background: hsl(var(--sc-accent)); color: hsl(var(--sc-fg)); }
+.sc-nav-toggle:focus-visible, .sc-picker-toggle:focus-visible {
+  outline: var(--sc-border-w) solid hsl(var(--sc-ring)); outline-offset: 2px; }
 .sc-nav-list { display: flex; flex-direction: column; gap: 2px; }
 .sc-nav-item { position: relative; display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: var(--sc-radius);
   text-decoration: none; font-size: 14px; font-weight: 500; transition: background .12s, color .12s; white-space: nowrap; }
@@ -1390,8 +1394,17 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    be a second identical picker on the same screen. */
 :root.sc-signed-out .sc-picker-float { display: none; }
 
-/* Each bottle sits in its own slot on the shelf. */
-.sc-potion { width: 26px; height: 26px; padding: 0; cursor: pointer;
+/* Shut, the shelf carries one bottle and its two controls, and must never fold
+   that to a second row. There is no transition on the collapse: it swaps one
+   child for eleven rather than animating a width, so the correct amount of
+   motion is none. */
+.sc-picker-collapsed { flex-wrap: nowrap; }
+/* The bottles stand on the shelf floor; the controls sit on its centre line. */
+.sc-picker-toggle { align-self: center; margin-left: 4px; }
+
+/* Each bottle sits in its own slot on the shelf. Positioned, so the sparkles
+   on the equipped one have something to anchor to. */
+.sc-potion { position: relative; width: 26px; height: 26px; padding: 0; cursor: pointer;
   background: none; border: none; line-height: 0;
   color: hsl(var(--sc-fg) / .85); }
 /* The sprite is decoration inside the button, and an svg child will otherwise
@@ -1407,6 +1420,56 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   filter: drop-shadow(0 0 3px hsl(var(--sc-primary)));
 }
 .sc-potion:focus-visible { outline: var(--sc-border-w) solid hsl(var(--sc-ring));
+  outline-offset: 2px; }
+/* [flare] The equipped bottle sparkles while the shelf is shut — the same
+   PixelStar sprite the tour button bursts with, not a second technique.
+   Written after the two .sc-potion svg rules above and at matching specificity
+   on purpose: those size every sprite in the button to fill it and hand the
+   chosen one a drop-shadow, and a 6px star wants neither. */
+.sc-potion .sc-potion-stars { position: absolute; inset: -5px; pointer-events: none; }
+.sc-potion .sc-potion-stars svg { position: absolute; display: block;
+  width: 6px; height: 6px; filter: none;
+  color: hsl(var(--sc-primary));
+  /* Lit is the static default. Motion may take the star away and put it back;
+     it may not be what makes it appear. */
+  opacity: 1; }
+.sc-potion-star-0 { top: 0; left: -2px; }
+.sc-potion-star-1 { top: 32%; right: -2px; }
+.sc-potion-star-2 { bottom: 1px; left: 24%; }
+
+/* The inventory: every equippable potion as a named row with its own action.
+   Eleven modes plus the accents outgrew a two-row strip of unlabelled bottles,
+   so this is the way to browse them; the strip stays as the quick shelf. It
+   hangs above the box rather than inside it, and takes the same command-window
+   frame the box has. */
+.sc-picker-inv { position: absolute; left: 0; bottom: calc(100% + 10px);
+  width: 214px; max-height: 56vh; overflow-y: auto; padding: 8px; cursor: default;
+  background: hsl(var(--sc-card)); color: hsl(var(--sc-fg));
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-bottom: 5px solid hsl(var(--sc-fg) / .8);
+  border-radius: var(--sc-radius);
+  box-shadow:
+    0 0 0 2px hsl(var(--sc-card)),
+    0 0 0 4px hsl(var(--sc-fg) / .85),
+    var(--sc-shadow); }
+.sc-inv-title { margin: 0 0 6px; padding: 0 2px 5px; font-size: 11px; font-weight: 700;
+  letter-spacing: .08em; text-transform: uppercase; color: hsl(var(--sc-muted-fg));
+  border-bottom: var(--sc-border-w) solid hsl(var(--sc-border)); }
+.sc-inv-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.sc-inv-row { display: flex; align-items: center; gap: 8px; padding: 3px 2px; }
+.sc-inv-ic { flex: 0 0 auto; display: block; width: 20px; height: 20px; color: hsl(var(--sc-fg) / .85); }
+.sc-inv-name { flex: 1 1 auto; min-width: 0; font-size: 12px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-inv-equip { flex: 0 0 auto; padding: 3px 7px; font: inherit; font-size: 11px; font-weight: 600;
+  cursor: pointer; border-radius: var(--sc-radius-sm);
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  background: hsl(var(--sc-muted)); color: hsl(var(--sc-fg)); }
+.sc-inv-equip:hover { background: hsl(var(--sc-accent)); }
+/* The equipped row is filled, and its button also says so in words — the
+   colour is the second signal, never the only one. */
+.sc-inv-equip[aria-pressed="true"] { background: hsl(var(--sc-primary));
+  color: hsl(var(--sc-primary-fg)); border-color: hsl(var(--sc-primary)); }
+.sc-inv-equip:focus-visible { outline: var(--sc-border-w) solid hsl(var(--sc-ring));
   outline-offset: 2px; }
 /* [flare] Scrollbars are furniture, and the OS default is the most modern
    object left on the page. Square thumb, hard edge, accent fill. The Firefox
@@ -1683,6 +1746,21 @@ h1, h2, h3, h4, h5, h6,
   .sc-tour:hover .sc-tour-star, .sc-tour:focus-visible .sc-tour-star {
     animation: sc-twinkle .6s steps(1) infinite;
   }
+  /* The equipped bottle's sparkles. Two frames, so they flick rather than
+     fade, and staggered by class the way the tour's six are — PixelStar takes
+     no style prop, and a per-star delay in CSS needs no component change.
+     0%/100% is opacity 1, which is exactly the static rule outside this query:
+     with motion off the stars are simply drawn, and the equipped bottle is
+     still marked by aria-pressed, by its label, and by being the only one
+     left on the shelf. */
+  @keyframes sc-sparkle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: .3; }
+  }
+  .sc-potion .sc-potion-stars svg { animation: sc-sparkle 1.2s steps(2) infinite; }
+  .sc-potion-star-1 { animation-delay: -.4s; }
+  .sc-potion-star-2 { animation-delay: -.8s; }
+
   .sc-tour-star-1 { animation-delay: -.1s; }
   .sc-tour-star-2 { animation-delay: -.25s; }
   .sc-tour-star-3 { animation-delay: -.35s; }

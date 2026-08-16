@@ -525,4 +525,40 @@ describe('SHADCN_CSS', () => {
     ).filter(n => !survives(n) && !KNOWN_DEAD.includes(n));
     expect([...new Set(dead)]).toEqual([]);
   });
+
+  it('steps the potion sparkle, behind the motion query, lit by default', () => {
+    // Same shape as greek.test.ts's ember guard. Three separate claims:
+    // the keyframes exist only inside the no-preference block, the timing is
+    // stepped rather than eased, and the 0%/100% frame is fully opaque — so
+    // the still frame is the designed one and the sparkle can only ever be
+    // decoration on top of it, never the thing that marks the equipped bottle.
+    const guarded = SHADCN_CSS.slice(
+      SHADCN_CSS.indexOf('@media (prefers-reduced-motion: no-preference)'),
+    );
+    expect(SHADCN_CSS).toContain('@keyframes sc-sparkle');
+    expect(guarded).toContain('@keyframes sc-sparkle');
+    expect(guarded).toMatch(
+      /@keyframes sc-sparkle \{\s*0%, 100% \{ opacity: 1; \}/,
+    );
+    expect(guarded).toMatch(/animation: sc-sparkle [^;]*steps\(/);
+    // And the static rule outside the query paints them at that same opacity.
+    expect(SHADCN_CSS).toMatch(
+      /\.sc-potion \.sc-potion-stars svg \{[^}]*opacity: 1;/,
+    );
+  });
+
+  it('gives the collapse and its controls no transition at all', () => {
+    // The nav's `transition: width .16s ease` is a documented pre-existing
+    // exception, not a pattern. Closing the shelf swaps one child for eleven
+    // rather than animating a width, so there is nothing to ease.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const sel of ['.sc-picker-collapsed', '.sc-picker-toggle', '.sc-picker-inv']) {
+      const blocks = Array.from(
+        rules.matchAll(new RegExp(`\\${sel}[^{}]*\\{([^}]*)\\}`, 'g')),
+        m => m[1],
+      );
+      expect(`${sel}:${blocks.length > 0}`).toBe(`${sel}:true`);
+      expect(blocks.filter(b => /transition/.test(b))).toEqual([]);
+    }
+  });
 });

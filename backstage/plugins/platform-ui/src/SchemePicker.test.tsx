@@ -1,5 +1,5 @@
 import { fireEvent, render } from '@testing-library/react';
-import { SchemePicker } from './SchemeRoot';
+import { SchemePicker, SCHEMES } from './SchemeRoot';
 
 /**
  * The picker is a row of buttons that is also draggable, and those two jobs
@@ -123,5 +123,117 @@ describe('SchemePicker', () => {
     // And the press is forgotten, so a second hover cannot move it either.
     fireEvent.pointerMove(shelf, { pointerId: 1, clientX: 700, clientY: 700, buttons: 0 });
     expect(shelf.style.left).toBe(seeded);
+  });
+
+  describe('collapsing the shelf', () => {
+    it('closes down to the one bottle that is equipped', () => {
+      const { container, getByLabelText } = render(<SchemePicker floating />);
+      expect(potions(container)).toHaveLength(SCHEMES.length);
+
+      fireEvent.click(getByLabelText('Hide potions'));
+
+      const left = potions(container);
+      expect(left).toHaveLength(1);
+      // Which one survived is the whole point: it is the equipped one, and it
+      // says so in attributes rather than in a glow.
+      expect(left[0].getAttribute('aria-pressed')).toBe('true');
+      expect(left[0].getAttribute('aria-label')).toBe(SCHEMES[0].label);
+      expect(localStorage.getItem('platform-picker-collapsed')).toBe('1');
+    });
+
+    it('comes back closed', () => {
+      localStorage.setItem('platform-picker-collapsed', '1');
+      const { container } = render(<SchemePicker floating />);
+
+      expect(potions(container)).toHaveLength(1);
+      expect(
+        container.querySelector('.sc-picker')!.classList.contains('sc-picker-collapsed'),
+      ).toBe(true);
+    });
+
+    it('keeps the sign-in card free of both controls', () => {
+      // packages/app/src/modules/auth.tsx mounts a second, non-floating picker
+      // inside the card. Neither the fold nor the inventory belongs there, and
+      // a persisted collapse must not reach it either.
+      localStorage.setItem('platform-picker-collapsed', '1');
+      const { container } = render(<SchemePicker />);
+
+      expect(container.querySelector('.sc-picker-toggle')).toBeNull();
+      expect(container.querySelector('.sc-picker-inv')).toBeNull();
+      expect(potions(container)).toHaveLength(SCHEMES.length);
+    });
+
+    it('says which potion is equipped without any motion', () => {
+      // The sparkles are decoration. Turn every animation off and the closed
+      // shelf still answers the question, from aria-pressed, from the label,
+      // and from being one bottle — and the stars themselves are hidden from
+      // assistive technology entirely.
+      const { container, getByLabelText } = render(<SchemePicker floating />);
+      fireEvent.click(getByLabelText('Hide potions'));
+
+      const [bottle] = potions(container);
+      expect(bottle.getAttribute('aria-pressed')).toBe('true');
+      expect(bottle.getAttribute('aria-label')).toBe(SCHEMES[0].label);
+
+      const stars = Array.from(container.querySelectorAll('.sc-potion-star'));
+      expect(stars.length).toBeGreaterThan(0);
+      expect(stars.map(s => s.getAttribute('aria-hidden'))).toEqual(
+        stars.map(() => 'true'),
+      );
+      expect(
+        container.querySelector('.sc-potion-stars')!.getAttribute('aria-hidden'),
+      ).toBe('true');
+    });
+  });
+
+  describe('the inventory', () => {
+    const open = () => {
+      const view = render(<SchemePicker floating />);
+      fireEvent.click(view.getByLabelText('Potion inventory'));
+      return view;
+    };
+
+    it('lists every equippable potion, each with its own action', () => {
+      const { container } = open();
+      const rows = Array.from(container.querySelectorAll('.sc-inv-row'));
+
+      expect(rows).toHaveLength(SCHEMES.length);
+      expect(rows.map(r => r.querySelector('.sc-inv-name')!.textContent)).toEqual(
+        SCHEMES.map(s => s.label),
+      );
+      expect(rows.filter(r => r.querySelector('.sc-inv-equip'))).toHaveLength(
+        SCHEMES.length,
+      );
+    });
+
+    it('equips the potion whose row was actioned', () => {
+      const { container } = open();
+      const row = Array.from(container.querySelectorAll('.sc-inv-row'))[3];
+      const equip = row.querySelector('.sc-inv-equip') as HTMLElement;
+      expect(equip.textContent).toBe('Equip');
+
+      fireEvent.click(equip);
+
+      expect(localStorage.getItem('platform-scheme')).toBe(SCHEMES[3].id);
+      // Readable as words, not only as a fill colour.
+      expect(equip.textContent).toBe('Equipped');
+      expect(equip.getAttribute('aria-pressed')).toBe('true');
+      const pressed = potions(container).filter(
+        p => p.getAttribute('aria-pressed') === 'true',
+      );
+      expect(pressed.map(p => p.getAttribute('aria-label'))).toEqual([
+        SCHEMES[3].label,
+      ]);
+    });
+
+    it('closes on Escape and hands focus back to the control that opened it', () => {
+      const { container, getByLabelText } = open();
+      const panel = container.querySelector('.sc-picker-inv')!;
+
+      fireEvent.keyDown(panel, { key: 'Escape' });
+
+      expect(container.querySelector('.sc-picker-inv')).toBeNull();
+      expect(document.activeElement).toBe(getByLabelText('Potion inventory'));
+    });
   });
 });

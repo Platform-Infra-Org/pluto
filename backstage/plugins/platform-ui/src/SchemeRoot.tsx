@@ -9,7 +9,7 @@ import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api
 import { SHADCN_CSS } from './styles';
 import { BRAND_DEFS } from './brands';
 import { AMPHORA_VESSEL, SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
-import { PixelPotion } from './components';
+import { PixelPotion, PixelStar } from './components';
 import { templateHeaderCss } from './templateHeaders';
 import { listenForKonami } from './konami';
 import { useCurrentPath } from './CustomNav';
@@ -39,6 +39,9 @@ import { resolveHeaderImages } from './headerImages';
  * which is worse than the occlusion this feature exists to fix.
  */
 const DRAG_THRESHOLD = 4;
+
+/** Whether the shelf is closed down to the equipped bottle alone. */
+const PICKER_COLLAPSED_KEY = 'platform-picker-collapsed';
 
 /** The two foreground tones a scheme can use, and each other's shade. */
 const WHITE = '0 0% 100%';
@@ -391,6 +394,24 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
         localStorage.getItem('platform-scheme')) ||
       SCHEMES[0].id,
   );
+  // Closed, the shelf shows only the bottle that is actually equipped. Same
+  // shape as the sidebar's collapse (CustomNav.tsx): lazy read on mount, and a
+  // write-back effect. Unlike the nav there is no root-level data attribute —
+  // the collapse never leaves this component's own subtree, so a class on its
+  // root div is the whole mechanism.
+  // Expanded is the default: the shelf is what exists today, and the closed
+  // state is an opt-in.
+  const [collapsed, setCollapsed] = useState(
+    () =>
+      typeof localStorage !== 'undefined' &&
+      localStorage.getItem(PICKER_COLLAPSED_KEY) === '1',
+  );
+  // The inventory popover. Deliberately not persisted: it is a menu, and a menu
+  // that reopens itself on every page load is a bug, not a preference.
+  // ponytail: closed by its own button or by Escape only — no outside-click
+  // listener. Add one if it starts getting left open behind other chrome.
+  const [inv, setInv] = useState(false);
+  const invBtn = useRef<HTMLButtonElement>(null);
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<PickerPos | undefined>(() => {
     if (typeof localStorage === 'undefined') return undefined;
@@ -429,6 +450,35 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       /* ignore */
     }
   }, [scheme]);
+
+  useEffect(() => {
+    // Floating only. The sign-in card's picker has neither control, so it has
+    // no state worth remembering — and writing from it would let the card
+    // dictate what the app's shelf looks like on the next load.
+    if (!floating) return;
+    try {
+      localStorage.setItem(PICKER_COLLAPSED_KEY, collapsed ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }, [floating, collapsed]);
+
+  useEffect(() => {
+    // Escape closes the inventory and hands focus back to the button that
+    // opened it, rather than dropping it at the top of the document. Bound to
+    // the window rather than to the panel: the panel is a plain grouping div,
+    // so a key listener on it would only ever fire while focus was already
+    // inside — and Escape is expected to work from wherever the pointer left
+    // you.
+    if (!inv) return undefined;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      setInv(false);
+      invBtn.current?.focus();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [inv]);
 
   useEffect(() => {
     if (!floating || !pos) return;
@@ -573,10 +623,22 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
     );
   };
 
+  // The two controls are floating-only, guarded exactly like the drag above:
+  // packages/app/src/modules/auth.tsx mounts a second, non-floating picker
+  // inside the sign-in card, and a collapse control there would be a control
+  // over a shelf that is already the whole card's width.
+  const shut = floating && collapsed;
+  // A pick that no longer exists degrades to the first bottle rather than
+  // rendering nothing — the same rule applyScheme() uses.
+  const equipped = SCHEMES.find(s => s.id === scheme) ?? SCHEMES[0];
+  const shelf = shut ? [equipped] : SCHEMES;
+
   return (
     <div
       ref={ref}
-      className={`sc sc-picker${floating ? ' sc-picker-float' : ''}`}
+      className={`sc sc-picker${floating ? ' sc-picker-float' : ''}${
+        shut ? ' sc-picker-collapsed' : ''
+      }`}
       style={pos ? { left: pos.x, top: pos.y } : undefined}
       data-dragging={dragging ? 'true' : undefined}
       onPointerDown={onPointerDown}
@@ -586,7 +648,7 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       role="group"
       aria-label="Color scheme"
     >
-      {SCHEMES.map((s, i) => (
+      {shelf.map((s, i) => (
         <button
           key={s.id}
           type="button"
@@ -604,8 +666,82 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
             liquid={`hsl(${s.hsl})`}
             sprite={s.mode === 'greek' ? AMPHORA_VESSEL : undefined}
           />
+          {/* Sparkles on the equipped bottle, and only while the shelf is shut
+              — with ten others on screen they would be noise rather than a
+              mark. Decoration and nothing else: what is equipped is carried by
+              aria-pressed, by the label, and by being the only bottle left.
+              Drawn at full opacity by default, so under reduced motion they
+              simply sit there instead of blinking. */}
+          {shut && (
+            <span className="sc-potion-stars" aria-hidden="true">
+              {[0, 1, 2].map(n => (
+                <PixelStar
+                  key={n}
+                  className={`sc-potion-star sc-potion-star-${n}`}
+                />
+              ))}
+            </span>
+          )}
         </button>
       ))}
+      {floating && (
+        <button
+          type="button"
+          className="sc-picker-toggle"
+          aria-expanded={!collapsed}
+          aria-label={collapsed ? 'Show all potions' : 'Hide potions'}
+          title={collapsed ? 'Show all potions' : 'Hide potions'}
+          onClick={() => setCollapsed(c => !c)}
+        >
+          {collapsed ? '»' : '«'}
+        </button>
+      )}
+      {floating && (
+        <button
+          ref={invBtn}
+          type="button"
+          className="sc-picker-toggle sc-picker-bag"
+          aria-expanded={inv}
+          aria-controls="sc-picker-inv"
+          aria-label="Potion inventory"
+          title="Potion inventory"
+          onClick={() => setInv(v => !v)}
+        >
+          ▤
+        </button>
+      )}
+      {floating && inv && (
+        <div
+          id="sc-picker-inv"
+          className="sc-picker-inv"
+          role="group"
+          aria-label="Potion inventory"
+        >
+          <p className="sc-inv-title">Inventory</p>
+          <ul className="sc-inv-list">
+            {SCHEMES.map(s => (
+              <li key={s.id} className="sc-inv-row">
+                <PixelPotion
+                  className="sc-inv-ic"
+                  liquid={`hsl(${s.hsl})`}
+                  sprite={s.mode === 'greek' ? AMPHORA_VESSEL : undefined}
+                />
+                <span className="sc-inv-name">{s.label}</span>
+                {/* The word, not only the pressed state: what is equipped has
+                    to be readable with no styling and no motion at all. */}
+                <button
+                  type="button"
+                  className="sc-inv-equip"
+                  aria-pressed={s.id === scheme}
+                  onClick={() => setScheme(s.id)}
+                >
+                  {s.id === scheme ? 'Equipped' : 'Equip'}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }

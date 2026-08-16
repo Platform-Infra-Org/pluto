@@ -115,9 +115,16 @@ export function foudreCss(): string {
 }
 
 /* Cards: 20px, a lilac rule, flat. */
-:root.sc-foudre .MuiCard-root,
-:root.sc-foudre .MuiPaper-elevation1,
-:root.sc-foudre .MuiPaper-elevation2,
+/* Substring form, so these reach the routes that render under a nested MUI
+   ThemeProvider: there the generator emits MuiCard-root-186 and the counter
+   moves between visits, so a class selector matches nothing. The two elevation
+   classes keep their clean spelling beside an ANCHORED suffix match, because
+   [class*="MuiPaper-elevation1"] also matches elevation10 through 19. Same
+   form as the global rules in styles.ts; styles.test.ts explains it at length.
+   No backticks in this comment: it lives inside a template literal. */
+:root.sc-foudre [class*="MuiCard-root"],
+:root.sc-foudre .MuiPaper-elevation1, :root.sc-foudre [class*="MuiPaper-elevation1-"],
+:root.sc-foudre .MuiPaper-elevation2, :root.sc-foudre [class*="MuiPaper-elevation2-"],
 :root.sc-foudre .sc-card {
   border-radius: 20px !important;
   border-width: 1px !important;
@@ -126,9 +133,9 @@ export function foudreCss(): string {
 }
 /* A surface holding a table takes no radius at all — clipped cuts the table,
    rounded lets its square corner cover the arc. See the base sheet. */
-:root.sc-foudre .MuiCard-root:has(table),
-:root.sc-foudre .MuiPaper-elevation1:has(table),
-:root.sc-foudre .MuiPaper-elevation2:has(table),
+:root.sc-foudre [class*="MuiCard-root"]:has(table),
+:root.sc-foudre .MuiPaper-elevation1:has(table), :root.sc-foudre [class*="MuiPaper-elevation1-"]:has(table),
+:root.sc-foudre .MuiPaper-elevation2:has(table), :root.sc-foudre [class*="MuiPaper-elevation2-"]:has(table),
 :root.sc-foudre .sc-card:has(table) {
   border-radius: 0 !important;
 }
@@ -137,7 +144,7 @@ export function foudreCss(): string {
    shape the site gives every one of its actions. A text button keeps the box
    deliberately — a label does not fit in a circle, and truncating one to honour
    a motif would be the motif costing the app its function. */
-:root.sc-foudre .MuiButton-root,
+:root.sc-foudre [class*="MuiButton-root"],
 :root.sc-foudre .sc-btn,
 :root.sc-foudre button[class*="bui-Button"],
 :root.sc-foudre a[class*="bui-Button"] {
@@ -146,7 +153,7 @@ export function foudreCss(): string {
   text-transform: none;
   letter-spacing: 0;
 }
-:root.sc-foudre .MuiIconButton-root,
+:root.sc-foudre [class*="MuiIconButton-root"],
 :root.sc-foudre .sc-nav-toggle {
   border-radius: 50% !important;
 }
@@ -193,14 +200,14 @@ export function foudreCss(): string {
 :root.sc-foudre .sc-nav-tx,
 :root.sc-foudre .sc-nav-word,
 :root.sc-foudre .sc-label,
-:root.sc-foudre .MuiTableCell-head {
+:root.sc-foudre [class*="MuiTableCell-head"] {
   text-transform: none;
   letter-spacing: 0;
 }
 
 /* Tags are fully round; links carry the forest ink and stay underlined. */
 :root.sc-foudre .sc-badge,
-:root.sc-foudre .MuiChip-root {
+:root.sc-foudre [class*="MuiChip-root"] {
   border-radius: 9999px !important;
   background: hsl(var(--sc-accent)) !important;
 }
@@ -210,8 +217,8 @@ export function foudreCss(): string {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-:root.sc-foudre .MuiDivider-root,
-:root.sc-foudre .MuiTableCell-root {
+:root.sc-foudre [class*="MuiDivider-root"],
+:root.sc-foudre [class*="MuiTableCell-root"] {
   border-color: hsl(var(--sc-hairline)) !important;
 }
 
@@ -228,10 +235,10 @@ export function foudreCss(): string {
 @media (prefers-reduced-motion: no-preference) {
   :root.sc-foudre .sc-nav-item,
   :root.sc-foudre .sc-btn,
-  :root.sc-foudre .MuiButton-root,
-  :root.sc-foudre .MuiChip-root,
+  :root.sc-foudre [class*="MuiButton-root"],
+  :root.sc-foudre [class*="MuiChip-root"],
   :root.sc-foudre .sc-card,
-  :root.sc-foudre .MuiCard-root {
+  :root.sc-foudre [class*="MuiCard-root"] {
     transition:
       transform var(--sc-dur) var(--sc-ease),
       background-color var(--sc-dur) var(--sc-ease),
@@ -246,7 +253,7 @@ export function foudreCss(): string {
   /* Buttons lift on hover and settle on press. The overshoot curve is what
      makes the lift read as a response rather than a move. */
   :root.sc-foudre .sc-btn:hover:not(:disabled),
-  :root.sc-foudre .MuiButton-root:hover:not(.Mui-disabled) {
+  :root.sc-foudre [class*="MuiButton-root"]:hover:not(.Mui-disabled) {
     transform: translateY(-2px);
     transition-timing-function: var(--sc-ease-back);
   }
@@ -255,13 +262,13 @@ export function foudreCss(): string {
      glitch that rule was written for. A scale keeps the press legible without
      the control moving anywhere. */
   :root.sc-foudre .sc-btn:active:not(:disabled),
-  :root.sc-foudre .MuiButton-root:active:not(.Mui-disabled) {
+  :root.sc-foudre [class*="MuiButton-root"]:active:not(.Mui-disabled) {
     transform: scale(.98);
   }
   /* Cards rise slightly on hover, at the slow duration so a grid of them does
      not feel twitchy as the pointer crosses it. */
   :root.sc-foudre .sc-card:hover,
-  :root.sc-foudre .MuiCard-root:hover {
+  :root.sc-foudre [class*="MuiCard-root"]:hover {
     transform: translateY(-3px);
     transition-duration: var(--sc-dur-slow);
   }
@@ -271,7 +278,7 @@ export function foudreCss(): string {
     to   { transform: translateY(0) scale(1); opacity: 1; }
   }
   :root.sc-foudre [class*="bui-DialogInner"],
-  :root.sc-foudre .MuiDialog-paper {
+  :root.sc-foudre [class*="MuiDialog-paper"] {
     animation: sc-foudre-arrive var(--sc-dur) var(--sc-ease-back) both;
   }
   /* The mark flickers on hover, echoing the site's own flicker keyframe. The

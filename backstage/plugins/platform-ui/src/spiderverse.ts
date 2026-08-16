@@ -95,9 +95,16 @@ export function spiderverseCss(): string {
 /* A card is a panel: square, heavy-ruled, with the hard offset a comic drop
    shadow has. This is the one mode that keeps a shadow, because a printed
    panel really does throw one. */
-:root.sc-spiderverse .MuiCard-root,
-:root.sc-spiderverse .MuiPaper-elevation1,
-:root.sc-spiderverse .MuiPaper-elevation2,
+/* Substring form, so these reach the routes that render under a nested MUI
+   ThemeProvider: there the generator emits MuiCard-root-186 and the counter
+   moves between visits, so a class selector matches nothing. The two elevation
+   classes keep their clean spelling beside an ANCHORED suffix match, because
+   [class*="MuiPaper-elevation1"] also matches elevation10 through 19. Same
+   form as the global rules in styles.ts; styles.test.ts explains it at length.
+   No backticks in this comment: it lives inside a template literal. */
+:root.sc-spiderverse [class*="MuiCard-root"],
+:root.sc-spiderverse .MuiPaper-elevation1, :root.sc-spiderverse [class*="MuiPaper-elevation1-"],
+:root.sc-spiderverse .MuiPaper-elevation2, :root.sc-spiderverse [class*="MuiPaper-elevation2-"],
 :root.sc-spiderverse .sc-card {
   border-radius: var(--sc-radius) !important;
   border: 3px solid hsl(var(--sc-fg)) !important;
@@ -111,14 +118,14 @@ export function spiderverseCss(): string {
 /* A surface holding a table takes no radius at all — clipped cuts the table,
    rounded lets its square corner cover the arc. Already square here, stated
    for the same reason every mode states it. */
-:root.sc-spiderverse .MuiCard-root:has(table),
-:root.sc-spiderverse .MuiPaper-elevation1:has(table),
-:root.sc-spiderverse .MuiPaper-elevation2:has(table),
+:root.sc-spiderverse [class*="MuiCard-root"]:has(table),
+:root.sc-spiderverse .MuiPaper-elevation1:has(table), :root.sc-spiderverse [class*="MuiPaper-elevation1-"]:has(table),
+:root.sc-spiderverse .MuiPaper-elevation2:has(table), :root.sc-spiderverse [class*="MuiPaper-elevation2-"]:has(table),
 :root.sc-spiderverse .sc-card:has(table) {
   border-radius: 0 !important;
 }
 
-:root.sc-spiderverse .MuiButton-root,
+:root.sc-spiderverse [class*="MuiButton-root"],
 :root.sc-spiderverse .sc-btn,
 :root.sc-spiderverse button[class*="bui-Button"],
 :root.sc-spiderverse a[class*="bui-Button"] {
@@ -131,7 +138,7 @@ export function spiderverseCss(): string {
 }
 /* A badge is a caption box. */
 :root.sc-spiderverse .sc-badge,
-:root.sc-spiderverse .MuiChip-root {
+:root.sc-spiderverse [class*="MuiChip-root"] {
   border-radius: var(--sc-radius-sm) !important;
   border: 2px solid hsl(var(--sc-fg)) !important;
   background: hsl(var(--sc-caption)) !important;
@@ -165,8 +172,8 @@ export function spiderverseCss(): string {
   line-height: 1.05;
 }
 
-:root.sc-spiderverse .MuiDivider-root,
-:root.sc-spiderverse .MuiTableCell-root {
+:root.sc-spiderverse [class*="MuiDivider-root"],
+:root.sc-spiderverse [class*="MuiTableCell-root"] {
   border-color: hsl(var(--sc-fg) / .35) !important;
 }
 
@@ -182,14 +189,14 @@ export function spiderverseCss(): string {
     100% { transform: translate(0, 0) rotate(0); opacity: 1; }
   }
   :root.sc-spiderverse [class*="bui-DialogInner"],
-  :root.sc-spiderverse .MuiDialog-paper {
+  :root.sc-spiderverse [class*="MuiDialog-paper"] {
     animation: sc-sv-snap .12s steps(2) both;
   }
   /* The press collapses into its own shadow, which is how a printed button
      would move if it moved at all. No translate: sliding a control out from
      under the pointer is banned app-wide. */
   :root.sc-spiderverse .sc-btn:active:not(:disabled),
-  :root.sc-spiderverse .MuiButton-root:active:not(.Mui-disabled) {
+  :root.sc-spiderverse [class*="MuiButton-root"]:active:not(.Mui-disabled) {
     box-shadow: 0 0 0 hsl(var(--sc-fg)) !important;
   }
   /* The plates jitter apart on hover, one step, like a frame held too long. */

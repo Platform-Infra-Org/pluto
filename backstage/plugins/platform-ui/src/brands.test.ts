@@ -1,6 +1,10 @@
 import { BRAND_DEFS, brandsCss } from './brands';
 import { SHADCN_CSS } from './styles';
 import { MODE_CARDS } from './statusTokens';
+import { foudreCss } from './foudre';
+import { slushCss } from './slush';
+import { spiderverseCss } from './spiderverse';
+import { greekCss } from './greek';
 
 const stripComments = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 
@@ -181,6 +185,53 @@ describe('brand character', () => {
     for (const b of BRAND_DEFS) {
       expect(`${b.id}:${css.includes(`border-radius: ${b.radius.card} !important`)}`).toBe(`${b.id}:true`);
       expect(`${b.id}:${css.includes(`border-radius: ${b.radius.button} !important`)}`).toBe(`${b.id}:true`);
+    }
+  });
+});
+
+// Lives here rather than in one mode's own file because it holds for all of
+// them, and a copy per sheet is a copy that goes stale in four places.
+describe('every mode sheet reaches the nested-ThemeProvider routes', () => {
+  // /catalog-import and the two TechDocs routes render under a NESTED MUI
+  // ThemeProvider, where the generator appends a counter to every class it
+  // makes: MuiCard-root arrives as MuiCard-root-186, and the counter is not
+  // stable between visits (measured MuiButton-root-316, then -685). A class
+  // selector cannot match a moving name, so a bare .Mui rule in a mode sheet
+  // is decoration that silently never paints on those three routes — which is
+  // exactly how they shipped, themed base chrome over vanilla cards, after
+  // styles.ts was converted and these sheets were not.
+  const sheets: Array<[string, string]> = [
+    ['foudre', foudreCss()],
+    ['slush', slushCss()],
+    ['spiderverse', spiderverseCss()],
+    ['greek', greekCss()],
+    ['brands', brandsCss()],
+  ];
+
+  it.each(sheets)('%s names no bare generated Mui class', (id, css) => {
+    // MUI's global STATE classes (.Mui-disabled, .Mui-selected) are literal
+    // strings, not generated names, so they are not in this net: the pattern
+    // requires a component segment before the dash. The elevation pair is the
+    // one deliberate bare spelling — see the next test for why.
+    const bare = Array.from(
+      stripComments(css).matchAll(/\.(Mui[A-Za-z]+-[A-Za-z][\w-]*)/g),
+      m => m[1],
+    ).filter(n => !/^MuiPaper-elevation[12]$/.test(n));
+    expect(`${id}: ${bare.join(', ')}`).toBe(`${id}: `);
+  });
+
+  it.each(sheets)('%s anchors the numbered elevation classes', (id, css) => {
+    const rules = stripComments(css);
+    for (const n of [1, 2]) {
+      // [class*="MuiPaper-elevation1"] would also match elevation10 through 19
+      // (v4 goes to 24, and 8 is the default menu Paper), which would hand
+      // every menu and popover the card treatment. The clean class beside a
+      // trailing-dash match covers every spelling and nothing else.
+      expect(`${id}/${n} suffixed:${rules.includes(`[class*="MuiPaper-elevation${n}-"]`)}`)
+        .toBe(`${id}/${n} suffixed:true`);
+      expect(`${id}/${n} clean:${rules.includes(`.MuiPaper-elevation${n},`)}`)
+        .toBe(`${id}/${n} clean:true`);
+      expect(rules).not.toContain(`[class*="MuiPaper-elevation${n}"]`);
     }
   });
 });

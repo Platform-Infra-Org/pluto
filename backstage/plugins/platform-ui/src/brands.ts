@@ -274,10 +274,10 @@ export function brandsCss(): string {
       ? `
 @media (prefers-reduced-motion: no-preference) {
   :root.sc-${b.id} .sc-btn,
-  :root.sc-${b.id} .MuiButton-root,
+  :root.sc-${b.id} [class*="MuiButton-root"],
   :root.sc-${b.id} .sc-nav-item,
   :root.sc-${b.id} .sc-card,
-  :root.sc-${b.id} .MuiCard-root {
+  :root.sc-${b.id} [class*="MuiCard-root"] {
     transition:
       transform ${d.transform} ${b.ease},
       background-color ${d.colour} ${b.ease},
@@ -287,7 +287,7 @@ export function brandsCss(): string {
   /* Press settles rather than displaces — a translate on :active slides the
      control out from under the pointer, which the base sheet bans app-wide. */
   :root.sc-${b.id} .sc-btn:active:not(:disabled),
-  :root.sc-${b.id} .MuiButton-root:active:not(.Mui-disabled) {
+  :root.sc-${b.id} [class*="MuiButton-root"]:active:not(.Mui-disabled) {
     transform: scale(.98);
   }
   :root.sc-${b.id} .sc-nav-item:hover {
@@ -303,9 +303,16 @@ ${block(`:root.sc-${b.id}.sc-dark`, b.dark)}
   --sc-border-w: ${b.borderW};
   --sc-shadow: ${shadow};
 }
-:root.sc-${b.id} .MuiCard-root,
-:root.sc-${b.id} .MuiPaper-elevation1,
-:root.sc-${b.id} .MuiPaper-elevation2,
+/* Substring form, so these reach the routes that render under a nested MUI
+   ThemeProvider: there the generator emits MuiCard-root-186 and the counter
+   moves between visits, so a class selector matches nothing. The two elevation
+   classes keep their clean spelling beside an ANCHORED suffix match, because
+   [class*="MuiPaper-elevation1"] also matches elevation10 through 19. Same
+   form as the global rules in styles.ts; styles.test.ts explains it at length.
+   No backticks in this comment: it lives inside a template literal. */
+:root.sc-${b.id} [class*="MuiCard-root"],
+:root.sc-${b.id} .MuiPaper-elevation1, :root.sc-${b.id} [class*="MuiPaper-elevation1-"],
+:root.sc-${b.id} .MuiPaper-elevation2, :root.sc-${b.id} [class*="MuiPaper-elevation2-"],
 :root.sc-${b.id} .sc-card {
   border-radius: ${b.radius.card} !important;
   border-width: ${b.borderW} !important;
@@ -313,13 +320,13 @@ ${block(`:root.sc-${b.id}.sc-dark`, b.dark)}
 }
 /* A surface holding a table takes no radius at all — clipped cuts the table,
    rounded lets its square corner cover the arc. See the base sheet. */
-:root.sc-${b.id} .MuiCard-root:has(table),
-:root.sc-${b.id} .MuiPaper-elevation1:has(table),
-:root.sc-${b.id} .MuiPaper-elevation2:has(table),
+:root.sc-${b.id} [class*="MuiCard-root"]:has(table),
+:root.sc-${b.id} .MuiPaper-elevation1:has(table), :root.sc-${b.id} [class*="MuiPaper-elevation1-"]:has(table),
+:root.sc-${b.id} .MuiPaper-elevation2:has(table), :root.sc-${b.id} [class*="MuiPaper-elevation2-"]:has(table),
 :root.sc-${b.id} .sc-card:has(table) {
   border-radius: 0 !important;
 }
-:root.sc-${b.id} .MuiButton-root,
+:root.sc-${b.id} [class*="MuiButton-root"],
 :root.sc-${b.id} .sc-btn,
 :root.sc-${b.id} button[class*="bui-Button"],
 :root.sc-${b.id} a[class*="bui-Button"] {
@@ -327,7 +334,7 @@ ${block(`:root.sc-${b.id}.sc-dark`, b.dark)}
   box-shadow: none !important;
 }
 :root.sc-${b.id} .sc-badge,
-:root.sc-${b.id} .MuiChip-root {
+:root.sc-${b.id} [class*="MuiChip-root"] {
   border-radius: ${b.radius.button} !important;
 }
 :root.sc-${b.id} .sc-nav-mark,

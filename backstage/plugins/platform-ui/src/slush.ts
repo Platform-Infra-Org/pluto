@@ -99,9 +99,16 @@ export function slushCss(): string {
 }
 
 /* Cards are cut out: 30px and the heavy rule, flat. */
-:root.sc-slush .MuiCard-root,
-:root.sc-slush .MuiPaper-elevation1,
-:root.sc-slush .MuiPaper-elevation2,
+/* Substring form, so these reach the routes that render under a nested MUI
+   ThemeProvider: there the generator emits MuiCard-root-186 and the counter
+   moves between visits, so a class selector matches nothing. The two elevation
+   classes keep their clean spelling beside an ANCHORED suffix match, because
+   [class*="MuiPaper-elevation1"] also matches elevation10 through 19. Same
+   form as the global rules in styles.ts; styles.test.ts explains it at length.
+   No backticks in this comment: it lives inside a template literal. */
+:root.sc-slush [class*="MuiCard-root"],
+:root.sc-slush .MuiPaper-elevation1, :root.sc-slush [class*="MuiPaper-elevation1-"],
+:root.sc-slush .MuiPaper-elevation2, :root.sc-slush [class*="MuiPaper-elevation2-"],
 :root.sc-slush .sc-card {
   border-radius: 30px !important;
   border: 4px solid hsl(var(--sc-border)) !important;
@@ -110,15 +117,15 @@ export function slushCss(): string {
 /* A surface holding a table takes no radius at all — clipped cuts the table,
    rounded lets its square corner cover the arc. See the base sheet. A 4px rule
    makes both failures more obvious here, not less. */
-:root.sc-slush .MuiCard-root:has(table),
-:root.sc-slush .MuiPaper-elevation1:has(table),
-:root.sc-slush .MuiPaper-elevation2:has(table),
+:root.sc-slush [class*="MuiCard-root"]:has(table),
+:root.sc-slush .MuiPaper-elevation1:has(table), :root.sc-slush [class*="MuiPaper-elevation1-"]:has(table),
+:root.sc-slush .MuiPaper-elevation2:has(table), :root.sc-slush [class*="MuiPaper-elevation2-"]:has(table),
 :root.sc-slush .sc-card:has(table) {
   border-radius: 0 !important;
 }
 
 /* Buttons and tags are pills with the same cut edge. */
-:root.sc-slush .MuiButton-root,
+:root.sc-slush [class*="MuiButton-root"],
 :root.sc-slush .sc-btn,
 :root.sc-slush button[class*="bui-Button"],
 :root.sc-slush a[class*="bui-Button"] {
@@ -128,7 +135,7 @@ export function slushCss(): string {
   font-weight: 600;
 }
 :root.sc-slush .sc-badge,
-:root.sc-slush .MuiChip-root {
+:root.sc-slush [class*="MuiChip-root"] {
   border-radius: 9999px !important;
   border: 2px solid hsl(var(--sc-border)) !important;
   background: hsl(var(--sc-sticker)) !important;
@@ -148,7 +155,7 @@ export function slushCss(): string {
   border-radius: 9999px;
 }
 :root.sc-slush .sc-input,
-:root.sc-slush .MuiOutlinedInput-root {
+:root.sc-slush [class*="MuiOutlinedInput-root"] {
   border-radius: 12px !important;
 }
 
@@ -164,8 +171,8 @@ export function slushCss(): string {
 }
 
 /* Dividers keep the rule rather than fading it — this system has no hairlines. */
-:root.sc-slush .MuiDivider-root,
-:root.sc-slush .MuiTableCell-root {
+:root.sc-slush [class*="MuiDivider-root"],
+:root.sc-slush [class*="MuiTableCell-root"] {
   border-color: hsl(var(--sc-border) / .25) !important;
 }
 
@@ -176,12 +183,12 @@ export function slushCss(): string {
    query, and nothing is the only signal for a state. */
 @media (prefers-reduced-motion: no-preference) {
   :root.sc-slush .sc-btn,
-  :root.sc-slush .MuiButton-root,
+  :root.sc-slush [class*="MuiButton-root"],
   :root.sc-slush .sc-badge,
-  :root.sc-slush .MuiChip-root,
+  :root.sc-slush [class*="MuiChip-root"],
   :root.sc-slush .sc-nav-item,
   :root.sc-slush .sc-card,
-  :root.sc-slush .MuiCard-root {
+  :root.sc-slush [class*="MuiCard-root"] {
     transition:
       transform var(--sc-dur) var(--sc-ease),
       background-color var(--sc-dur) var(--sc-ease),
@@ -189,13 +196,13 @@ export function slushCss(): string {
       border-color var(--sc-dur) var(--sc-ease) !important;
   }
   :root.sc-slush .sc-btn:hover:not(:disabled),
-  :root.sc-slush .MuiButton-root:hover:not(.Mui-disabled) {
+  :root.sc-slush [class*="MuiButton-root"]:hover:not(.Mui-disabled) {
     transform: scale(1.04);
   }
   /* Press settles rather than displaces: a translate on :active slides the
      control out from under the pointer, which the base sheet bans app-wide. */
   :root.sc-slush .sc-btn:active:not(:disabled),
-  :root.sc-slush .MuiButton-root:active:not(.Mui-disabled) {
+  :root.sc-slush [class*="MuiButton-root"]:active:not(.Mui-disabled) {
     transform: scale(.97);
   }
   :root.sc-slush .sc-nav-item:hover {
@@ -207,7 +214,7 @@ export function slushCss(): string {
     to   { transform: scale(1) rotate(0); opacity: 1; }
   }
   :root.sc-slush [class*="bui-DialogInner"],
-  :root.sc-slush .MuiDialog-paper {
+  :root.sc-slush [class*="MuiDialog-paper"] {
     animation: sc-slush-stick var(--sc-dur) var(--sc-ease) both;
   }
 }

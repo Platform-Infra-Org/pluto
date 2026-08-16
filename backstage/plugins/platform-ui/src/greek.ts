@@ -112,9 +112,15 @@ export function greekCss(): string {
    design system carries.
    No backticks in this comment: it lives inside a template literal, and one
    stray backtick truncates the whole sheet. */
-:root.sc-greek .MuiCard-root,
-:root.sc-greek .MuiPaper-elevation1,
-:root.sc-greek .MuiPaper-elevation2,
+/* Substring form, so these reach the routes that render under a nested MUI
+   ThemeProvider: there the generator emits MuiCard-root-186 and the counter
+   moves between visits, so a class selector matches nothing. The two elevation
+   classes keep their clean spelling beside an ANCHORED suffix match, because
+   [class*="MuiPaper-elevation1"] also matches elevation10 through 19. Same
+   form as the global rules in styles.ts; styles.test.ts explains it at length. */
+:root.sc-greek [class*="MuiCard-root"],
+:root.sc-greek .MuiPaper-elevation1, :root.sc-greek [class*="MuiPaper-elevation1-"],
+:root.sc-greek .MuiPaper-elevation2, :root.sc-greek [class*="MuiPaper-elevation2-"],
 :root.sc-greek .sc-card {
   border-color: hsl(var(--sc-gold)) !important;
   box-shadow:
@@ -125,7 +131,7 @@ export function greekCss(): string {
 /* The command window, in gold. Same three-shadow construction the base sheet
    already uses for dialogs, retinted, plus an ember bloom behind it. */
 :root.sc-greek [class*="bui-DialogInner"],
-:root.sc-greek .MuiDialog-paper {
+:root.sc-greek [class*="MuiDialog-paper"] {
   position: relative;
   border-color: hsl(var(--sc-gold)) !important;
   box-shadow:
@@ -144,7 +150,7 @@ export function greekCss(): string {
    header and footer edges follow the rounded corners, and that clips anything
    painted outside the padding box. */
 :root.sc-greek [class*="bui-DialogInner"],
-:root.sc-greek .MuiDialog-paper {
+:root.sc-greek [class*="MuiDialog-paper"] {
   background-image: ${art(ROSETTE, GOLD)}, ${art(ROSETTE, GOLD)},
     ${art(ROSETTE, GOLD)}, ${art(ROSETTE, GOLD)};
   background-repeat: no-repeat;
@@ -254,7 +260,7 @@ export function greekCss(): string {
    thing being pointed at. The sprite stays in sprites.ts, unreferenced. */
 
 /* Primary buttons carry the gold rule too. */
-:root.sc-greek .MuiButton-containedPrimary,
+:root.sc-greek [class*="MuiButton-containedPrimary"],
 :root.sc-greek .sc-btn-primary {
   border: var(--sc-border-w) solid hsl(var(--sc-gold)) !important;
 }
@@ -268,7 +274,7 @@ export function greekCss(): string {
    both a normal one at any specificity AND the animation origin — so a
    box-shadow glow here would never paint, animated or not. Nothing claims
    filter. */
-:root.sc-greek .MuiButton-containedPrimary,
+:root.sc-greek [class*="MuiButton-containedPrimary"],
 :root.sc-greek .sc-btn-primary,
 :root.sc-greek [data-variant="primary"][class*="bui-Button"] {
   filter: drop-shadow(0 0 5px hsl(var(--sc-primary) / .5));
@@ -278,7 +284,7 @@ export function greekCss(): string {
     0%, 100% { filter: drop-shadow(0 0 5px hsl(var(--sc-primary) / .5)); }
     50% { filter: drop-shadow(0 0 9px hsl(var(--sc-primary) / .8)); }
   }
-  :root.sc-greek .MuiButton-containedPrimary,
+  :root.sc-greek [class*="MuiButton-containedPrimary"],
   :root.sc-greek .sc-btn-primary,
   :root.sc-greek [data-variant="primary"][class*="bui-Button"] {
     animation: sc-greek-ember 1.6s steps(2) infinite;
