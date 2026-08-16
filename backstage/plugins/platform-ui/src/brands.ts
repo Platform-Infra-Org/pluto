@@ -78,38 +78,25 @@ export const BRAND_DEFS: BrandDef[] = [
     ease: 'cubic-bezier(.2, .8, .2, 1)',
   },
   {
-    id: 'tiger',
-    label: 'Hungry Tiger',
-    // Tiger gold #faae33 is the site's text colour on spice, used at 847
-    // elements. It carries white at 1.9:1, so the light register fills with
-    // spice instead and the gold reads on it.
-    bottle: '38 95% 59%',
-    bottleFg: '20 58% 10%',
-    light: { bg:'36 60% 96%', fg:'20 58% 12%', card:'38 70% 99%', muted:'36 45% 90%',
-      mutedFg:'20 45% 24%', border:'20 58% 34%', primary:'20 74% 28%', primaryFg:'38 95% 92%',
-      accent:'36 55% 90%', accentFg:'20 58% 14%' },
-    dark: { bg:'20 45% 6%', fg:'38 95% 59%', card:'20 40% 9%', muted:'20 28% 22%',
-      mutedFg:'38 45% 78%', border:'20 20% 44%', primary:'38 95% 59%', primaryFg:'20 58% 10%',
-      accent:'20 28% 17%', accentFg:'38 30% 90%' },
-    // 100% radius on 94 elements — this reference is built out of circles.
-    // Surfaces raised to the house radius; the pill button is the identity
-    // and keeps its own number.
-    radius: { base:'12px', card:'16px', button:'9999px' },
-    borderW: '1px',
-  },
-  {
     id: 'hermes',
     label: 'Hermes',
     // Pure #0000f2 carries white at 3.6:1. Both registers move it: down to 40%
-    // on light, up to 72% on dark, which is the only way a brutalist blue holds
-    // a label at either end.
+    // on light, up to 76% on dark, which is the only way a brutalist blue holds
+    // a label at either end. 76 rather than 72 because the blue also has to
+    // carry the active nav item, whose ground is the accent rather than the
+    // card — at 72% that pairing measured 4.04:1 on screen and at 74% it was
+    // still 4.43. Measured against the ground the browser actually paints,
+    // not against the token. Darkening the accent instead
+    // would have fixed the ratio and cost the state its surface: the accent
+    // sits at 15% against a 10% card, and dropping it to 11% makes the active
+    // row indistinguishable from the panel it sits on.
     bottle: '240 100% 40%',
     bottleFg: WHITE,
     light: { bg:'0 0% 96%', fg:'0 0% 0%', card:'0 0% 100%', muted:'0 0% 92%',
       mutedFg:'0 0% 30%', border:'240 100% 47%', primary:'240 100% 40%', primaryFg:WHITE,
       accent:'240 100% 95%', accentFg:'240 100% 20%' },
     dark: { bg:'0 0% 4%', fg:'0 0% 96%', card:'0 0% 10%', muted:'0 0% 18%',
-      mutedFg:'0 0% 72%', border:'0 0% 40%', primary:'240 100% 72%', primaryFg:'0 0% 4%',
+      mutedFg:'0 0% 72%', border:'0 0% 40%', primary:'240 100% 76%', primaryFg:'0 0% 4%',
       accent:'240 25% 15%', accentFg:'0 0% 96%' },
     // The reference is square — 4px on one element and nothing else — but a
     // square surface reads as unfinished beside the rest of the app, so the

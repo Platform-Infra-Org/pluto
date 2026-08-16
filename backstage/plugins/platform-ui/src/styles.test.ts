@@ -265,6 +265,39 @@ describe('SHADCN_CSS', () => {
     expect(SHADCN_CSS).toContain('.sc-route-import [class*="MuiStepIcon-root"]');
   });
 
+  it('pairs ink with the surface it actually sits on', () => {
+    // Three controls shipped ink chosen for one state and painted in another.
+    // MUI's unselected toggle label is its own rgba(0,0,0,.38) and measured
+    // 2.66:1 on the card in claude light. A selected row takes MUI's grey fill,
+    // so the bare .Mui-selected accent rule left accent-on-grey. And the step
+    // number was primary-fg on every disc, including the muted ones, which put
+    // white on light grey in all nine modes.
+    // accentFg/accent and mutedFg/muted are both pinned per mode in
+    // contrast.test.ts, so pairing against those cannot drift.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+
+    const toggle = rules.match(/\.MuiToggleButton-root\s*\{([^}]*)\}/);
+    expect(toggle).toBeTruthy();
+    expect(toggle![1]).toMatch(/color:\s*hsl\(var\(--sc-muted-fg\)\)/);
+    expect(rules).toMatch(
+      /\.MuiToggleButton-root\.Mui-selected[\s\S]{0,160}--sc-accent-fg/,
+    );
+    expect(rules).toMatch(
+      /\.MuiListItem-root\.Mui-selected[\s\S]{0,200}--sc-accent-fg/,
+    );
+
+    // The step number defaults to the muted disc and only takes primary-fg
+    // where the disc is actually primary.
+    const step = rules.match(
+      /\.sc-route-import \[class\*="MuiStepIcon-text"\]\s*\{([^}]*)\}/,
+    );
+    expect(step).toBeTruthy();
+    expect(step![1]).toMatch(/--sc-muted-fg/);
+    expect(rules).toMatch(
+      /MuiStepIcon-active"\] \[class\*="MuiStepIcon-text"\][\s\S]{0,160}--sc-primary-fg/,
+    );
+  });
+
   it('themes the bui plugin header', () => {
     // It ships its own white ground and black ink — measured rgb(255,255,255)
     // on a production build while the mode's card was 42 45% 98%.

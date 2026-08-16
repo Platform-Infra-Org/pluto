@@ -70,7 +70,6 @@ const MODES = [
   'slush',
   'spiderverse',
   'newform',
-  'tiger',
   'hermes',
   'papers',
   'discord',

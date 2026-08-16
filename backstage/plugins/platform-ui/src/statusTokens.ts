@@ -69,7 +69,6 @@ export type SchemeMode =
   | 'slush'
   | 'spiderverse'
   | 'newform'
-  | 'tiger'
   | 'hermes'
   | 'papers'
   | 'discord'
@@ -139,7 +138,6 @@ export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   slush: STATUS_TOKENS,
   spiderverse: STATUS_TOKENS,
   newform: STATUS_TOKENS,
-  tiger: STATUS_TOKENS,
   hermes: STATUS_TOKENS,
   papers: STATUS_TOKENS,
   discord: STATUS_TOKENS,
@@ -153,7 +151,6 @@ export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   slush: { light: '0 0% 100%', dark: '0 0% 8%' },
   spiderverse: { light: '45 60% 98%', dark: '260 25% 11%' },
   newform: { light: '0 0% 100%', dark: '135 9% 10%' },
-  tiger: { light: '38 70% 99%', dark: '20 40% 9%' },
   hermes: { light: '0 0% 100%', dark: '0 0% 10%' },
   papers: { light: '0 0% 100%', dark: '0 0% 9%' },
   discord: { light: '0 0% 100%', dark: '227 9% 11%' },

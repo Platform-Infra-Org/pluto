@@ -361,6 +361,36 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .MuiTabs-indicator { background-color: hsl(var(--sc-primary)) !important; }
 .MuiTab-root { text-transform: none !important; font-weight: 600 !important; }
 .MuiTab-textColorPrimary.Mui-selected, .Mui-selected { color: hsl(var(--sc-primary)) !important; }
+/* A selected *row* is not a selected tab. The bare .Mui-selected above paints
+   the accent on anything MUI marks selected, and MUI also gives such a row its
+   own grey fill — so the catalog's picked filter ended up accent-on-grey, which
+   measured 2.75:1 in hermes dark and under 4.5 in six modes. A row states its
+   selection with the accent *surface* and takes the ink that surface is
+   measured against; contrast.test.ts pins accentFg against accent for every
+   mode, so this pairing cannot drift. */
+.MuiListItem-root.Mui-selected,
+.MuiMenuItem-root.Mui-selected {
+  background-color: hsl(var(--sc-accent)) !important;
+}
+.MuiListItem-root.Mui-selected,
+.MuiListItem-root.Mui-selected .MuiTypography-root,
+.MuiMenuItem-root.Mui-selected,
+.MuiMenuItem-root.Mui-selected .MuiTypography-root {
+  color: hsl(var(--sc-accent-fg)) !important;
+}
+/* MUI's unselected toggle label is rgba(0,0,0,.38), which is its own idea of a
+   muted ink and has no relationship to ours: on the settings page it measured
+   2.66:1 against the card in claude light and was reported as unreadable. The
+   selected one takes the accent surface for the same reason the row above
+   does. */
+.MuiToggleButton-root {
+  color: hsl(var(--sc-muted-fg)) !important;
+}
+.MuiToggleButton-root.Mui-selected,
+.MuiToggleButton-root.MuiToggleButton-selected {
+  background-color: hsl(var(--sc-accent)) !important;
+  color: hsl(var(--sc-accent-fg)) !important;
+}
 .MuiSwitch-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiCheckbox-colorPrimary.Mui-checked, .MuiRadio-colorPrimary.Mui-checked { color: hsl(var(--sc-primary)) !important; }
 .MuiChip-root { border-radius: var(--sc-radius) !important; }
@@ -498,6 +528,18 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   font-weight: 600 !important;
   line-height: 1.2 !important;
   letter-spacing: -0.02em;
+  /* The title sits directly on the header scene, and a scene is not a colour:
+     the same white ran over a night sky on one card and over the sun on the
+     next, where it measured 1.27:1. The plate is what makes the title legible
+     without touching the art — it darkens only the band the words occupy, and
+     white over it clears AA whatever is painted underneath. */
+  color: hsl(0 0% 100%) !important;
+  background-color: hsl(240 12% 6% / .72);
+  padding: 4px 8px;
+  margin: 0;
+  align-self: flex-start;
+  max-width: 100%;
+  border-radius: var(--sc-radius-sm);
 }
 .sc-route-create .MuiCard-root > .MuiBox-root:first-child > h3 { display: none; }
 
@@ -1232,7 +1274,17 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   color: hsl(var(--sc-primary)) !important;
   border-color: hsl(var(--sc-primary));
 }
-.sc-route-import [class*="MuiStepIcon-text"] { fill: hsl(var(--sc-primary-fg)) !important; }
+/* The number is painted on the disc, not on the page, so it follows whichever
+   fill the disc is carrying. A single primary-fg for both states put a white
+   numeral on the muted disc of every step that was not the current one —
+   1.1:1 in slush light, and wrong in all nine modes at both ends. */
+.sc-route-import [class*="MuiStepIcon-text"] {
+  fill: hsl(var(--sc-muted-fg)) !important;
+}
+.sc-route-import [class*="MuiStepIcon-active"] [class*="MuiStepIcon-text"],
+.sc-route-import [class*="MuiStepIcon-completed"] [class*="MuiStepIcon-text"] {
+  fill: hsl(var(--sc-primary-fg)) !important;
+}
 .sc-route-import [class*="MuiStepConnector-line"] {
   border-color: hsl(var(--sc-border)) !important;
 }
