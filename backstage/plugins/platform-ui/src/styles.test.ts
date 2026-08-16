@@ -1,5 +1,5 @@
 import { SHADCN_CSS } from './styles';
-import { GRAPH_OVERRIDES } from './theme';
+import { GRAPH_OVERRIDES, pageThemes } from './theme';
 import { SPRITE_SIZE } from './sprites';
 import { STARFIELD } from './starfield';
 
@@ -70,7 +70,9 @@ describe('SHADCN_CSS', () => {
     for (const sel of [
       '.MuiStepIcon-root.MuiStepIcon-active',
       '.MuiStepIcon-root.Mui-active',
-      '.MuiButton-containedPrimary',
+      // Substring form since the suffix-tolerance pass: the same class arrives
+      // as MuiButton-containedPrimary-316 under a nested ThemeProvider.
+      '[class*="MuiButton-containedPrimary"]',
       '.MuiCheckbox-colorPrimary.Mui-checked',
       // MUI v4 defaults these to the SECONDARY palette; a primary-only
       // override left the form's checkboxes purple.
@@ -222,7 +224,7 @@ describe('SHADCN_CSS', () => {
     // like a different product from ours.
     const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
     const block = rules.match(
-      /\.MuiTypography-h1,[\s\S]*?\{([^}]*)\}/,
+      /\[class\*="MuiTypography-h1"\],[\s\S]*?\{([^}]*)\}/,
     );
     expect(block).toBeTruthy();
     expect(block![1]).toMatch(/text-transform:\s*none/);
@@ -252,6 +254,143 @@ describe('SHADCN_CSS', () => {
     expect(graph).not.toMatch(/#[0-9a-fA-F]{3,8}/);
     expect(graph).toMatch(/hsl\(var\(--sc-card\)\)/);
     expect(graph).toMatch(/hsl\(var\(--sc-fg\)\)/);
+  });
+
+  it('declares the bui tokens on both data-theme-mode registers', () => {
+    // THE most important assertion in this file, because its failure is
+    // invisible in light — the register anyone checks first.
+    // Canon declares its light set at ":root, [data-theme-mode='light']" and
+    // its dark set at "[data-theme-mode='dark']", and the app puts the
+    // attribute on <body>. Custom properties inherit, so <body>'s own
+    // declaration beats anything inherited from <html>: a bare :root here is
+    // dead in dark, which is how the first five overrides shipped broken
+    // (measured: html said our accent, body said Backstage's pale blue).
+    // Quote-agnostic — canon uses single quotes, we use double.
+    expect(SHADCN_CSS).toMatch(
+      /\[data-theme-mode=.light.\][\s\S]{0,80}\[data-theme-mode=.dark.\]\s*\{/,
+    );
+    // And the block it opens is the token map, not something else.
+    // Comments stripped: this block's prose names the one token it must NOT
+    // declare, and prose is not a declaration.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    const block = rules.match(/\[data-theme-mode=.dark.\]\s*\{([\s\S]*?)\n\}/);
+    expect(block).toBeTruthy();
+    expect(block![1]).toMatch(/--bui-bg-app:/);
+    expect(block![1]).toMatch(/--bui-fg-primary:/);
+    // The status family is wholesale or nothing: a half-mapped family puts one
+    // themed badge beside one vanilla one on the same card.
+    for (const ramp of ['positive', 'negative', 'warning', 'announcement']) {
+      for (const member of [
+        'bg',
+        'bg-hover',
+        'bg-disabled',
+        'bg-subdued',
+        'bg-subdued-hover',
+        'bg-subdued-disabled',
+        'border',
+        'fg',
+        'fg-disabled',
+        'fg-subdued',
+        'fg-subdued-disabled',
+      ]) {
+        const name = `--bui-${ramp}-${member}:`;
+        expect(`${name}${block![1].includes(name)}`).toBe(`${name}true`);
+      }
+    }
+    // The pill stays a pill. Mapping this one turns every canon pill into a
+    // rounded rectangle.
+    expect(block![1]).not.toMatch(/--bui-radius-full/);
+  });
+
+  it('matches the Mui classes that arrive counter-suffixed, both spellings', () => {
+    // Three routes render under a nested ThemeProvider, so @material-ui/styles
+    // hands back MuiLink-root-190 instead of MuiLink-root — and the counter is
+    // not stable across visits, so no numeric selector can ever work. Two of
+    // the three (/docs/... and an entity's Docs tab) match no prefix in
+    // routeClass.ts and cannot be reached by a route-scoped workaround at all,
+    // which is why the GLOBAL rules carry the substring form.
+    const SUFFIXED = [
+      'MuiCard-root',
+      'MuiAccordion-root',
+      'MuiButton-root',
+      'MuiButton-containedPrimary',
+      'MuiButton-outlinedPrimary',
+      'MuiButton-textPrimary',
+      'MuiCardHeader-title',
+      'MuiOutlinedInput-notchedOutline',
+      'MuiSvgIcon-root',
+      'MuiIconButton-root',
+      'MuiTypography-h1',
+      'MuiTypography-h2',
+      'MuiTypography-h3',
+      'MuiTypography-h4',
+      'MuiTypography-h5',
+      'MuiTypography-h6',
+      'MuiToolbar-root',
+      'MuiDivider-root',
+      'MuiSlider-root',
+      'MuiSlider-colorPrimary',
+      'MuiLink-root',
+      'MuiTypography-colorPrimary',
+    ];
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    // Selector lists only — a declaration can mention anything. Scoped
+    // selectors are exempt and deliberately so: a `.sc-route-*` or
+    // `:root.sc-<mode>` rule reaches a route or a potion that is not one of the
+    // three suffixed ones, and the mode sheets that emit them are separate
+    // files. It is the GLOBAL rules that have to carry both spellings, because
+    // two of the three routes have no route class to scope to in the first
+    // place.
+    const selectors = rules
+      .split('{')
+      .flatMap(chunk => chunk.split('}').pop()!.split(','))
+      .filter(sel => !sel.includes('.sc-'));
+    for (const cls of SUFFIXED) {
+      expect(`${cls}:${rules.includes(`[class*="${cls}"]`)}`).toBe(`${cls}:true`);
+      const bare = new RegExp(`\\.${cls}(?![A-Za-z0-9_-])`);
+      const offenders = selectors.filter(sel => bare.test(sel));
+      expect(`${cls}:${offenders.join('|')}`).toBe(`${cls}:`);
+    }
+  });
+
+  it('anchors the elevation substrings so they cannot swallow elevation10-19', () => {
+    // [class*="MuiPaper-elevation1"] also matches MuiPaper-elevation10 through
+    // -19 (MUI v4 goes to 24, and 8 is the default menu Paper), which would
+    // give every menu and popover the card treatment. The generator emits
+    // key-counter, so the trailing dash matches every suffixed spelling and
+    // nothing else. These two are the reason the plain form is not universal.
+    // Comments are stripped first: the rule's own comment quotes the unanchored
+    // spelling it exists to ban, and prose is not a selector.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const n of [1, 2]) {
+      expect(rules).toContain(`[class*="MuiPaper-elevation${n}-"]`);
+      expect(rules).toContain(`.MuiPaper-elevation${n},`);
+      expect(rules).not.toContain(`[class*="MuiPaper-elevation${n}"]`);
+    }
+  });
+
+  it('colours the empty graph against the canvas, not against the page', () => {
+    // .sc-graph-canvas is pinned to the starfield and is deliberately dark in
+    // BOTH registers, so a page token on the text it holds measured 2.96:1 in
+    // light. The canvas's own node colour is the answer.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    const block = rules.match(/\.sc-graph-empty\s*\{([^}]*)\}/);
+    expect(block).toBeTruthy();
+    expect(block![1]).not.toMatch(/--sc-muted-fg/);
+    expect(block![1]).toMatch(/color:\s*#e7e7ef/);
+  });
+
+  it('lets the ownership tile gradient follow the picker', () => {
+    // genPageTheme joins its colours into a literal linear-gradient at theme
+    // construction, so the tiles on /catalog/default/group/* and /user/* wore a
+    // baked indigo->violet in all nine modes and both registers. MUI freezes
+    // these, so a CSS variable is the only way they can follow the live theme.
+    const entries = Object.values(pageThemes);
+    expect(entries.length).toBeGreaterThan(0);
+    for (const entry of entries) {
+      expect(entry.backgroundImage).toContain('hsl(var(--sc-primary))');
+      expect(entry.backgroundImage).not.toContain('#');
+    }
   });
 
   it('reaches the JSS-suffixed classes /catalog-import mounts', () => {
@@ -344,6 +483,16 @@ describe('SHADCN_CSS', () => {
     expect(SHADCN_CSS).toMatch(
       /\.sc-route-create[^{]*> h4 \{[^}]*font-size:\s*22px/,
     );
+    // The PLATE is what shrinks, never the type. 4px of vertical padding made a
+    // 34.39px band over a 90px header scene while the line box needs only
+    // 26.4px; at 1px the descender still has 2.24px of clearance. Comments are
+    // stripped first — the rule's own comment quotes the old value.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    const block = rules.match(/\.sc-route-create[^{]*> h4 \{([^}]*)\}/);
+    expect(block).toBeTruthy();
+    const padding = /padding:\s*(\d+(?:\.\d+)?)px/.exec(block![1]);
+    expect(padding).not.toBeNull();
+    expect(parseFloat(padding![1])).toBeLessThanOrEqual(2);
   });
 
   it('uses no class name that a production build discards', () => {

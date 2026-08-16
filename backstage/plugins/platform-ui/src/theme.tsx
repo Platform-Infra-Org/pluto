@@ -53,14 +53,35 @@ const DARK: Tone = {
   navBg: '#17151f',
 };
 
-const pageThemes = {
-  home: genPageTheme({ colors: [PRIMARY, ACCENT], shape: shapes.wave }),
-  documentation: genPageTheme({ colors: [PRIMARY, ACCENT], shape: shapes.wave2 }),
-  tool: genPageTheme({ colors: [PRIMARY, ACCENT], shape: shapes.round }),
-  service: genPageTheme({ colors: [PRIMARY, ACCENT], shape: shapes.wave }),
-  other: genPageTheme({ colors: [PRIMARY, ACCENT], shape: shapes.wave }),
-  app: genPageTheme({ colors: [PRIMARY, ACCENT], shape: shapes.wave }),
-  apis: genPageTheme({ colors: [PRIMARY, ACCENT], shape: shapes.wave }),
+/**
+ * A page theme whose gradient follows the picker.
+ *
+ * genPageTheme joins its `colors` into a literal `linear-gradient(90deg, …)` at
+ * theme construction, so the ownership tiles on /catalog/default/group/* and
+ * /user/* wore a baked indigo→violet in all nine modes and both registers —
+ * the loudest element on those pages, and not reachable as a token from CSS.
+ * The returned object is plain, so the gradient half is rewritten to read a
+ * variable, exactly as GRAPH_OVERRIDES and --sc-header-art do. The shape URI
+ * is taken from what genPageTheme itself produced rather than transcribed.
+ *
+ * Exported so a test can assert on it; the built theme is not introspectable.
+ */
+function pageThemeOf(shape: string) {
+  const base = genPageTheme({ colors: [PRIMARY, ACCENT], shape });
+  return {
+    ...base,
+    backgroundImage: `${shape},  linear-gradient(90deg, hsl(var(--sc-primary)), hsl(var(--sc-primary) / .65))`,
+  };
+}
+
+export const pageThemes = {
+  home: pageThemeOf(shapes.wave),
+  documentation: pageThemeOf(shapes.wave2),
+  tool: pageThemeOf(shapes.round),
+  service: pageThemeOf(shapes.wave),
+  other: pageThemeOf(shapes.wave),
+  app: pageThemeOf(shapes.wave),
+  apis: pageThemeOf(shapes.wave),
 };
 
 /**

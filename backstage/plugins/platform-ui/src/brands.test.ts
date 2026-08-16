@@ -122,11 +122,14 @@ describe('brand character', () => {
   });
 
   it('casts a shadow only where the reference has one', () => {
-    // Of the six, only New Form casts anything — a green-tinted glow measured
-    // on its own page. Giving the others a shadow would be inventing character
-    // rather than reproducing it.
+    // Only two of the rows cast anything: New Form's green-tinted glow and
+    // Obsidian's hairline ring plus copper bloom, both measured on their own
+    // pages. Giving the others a shadow would be inventing character rather
+    // than reproducing it — Family Dairy in particular has literally zero
+    // box-shadows across its whole reference page, which is why it has none
+    // here despite being the row most tempted to lift its cards.
     const glowing = BRAND_DEFS.filter(b => b.glow);
-    expect(glowing.map(b => b.id)).toEqual(['newform']);
+    expect(glowing.map(b => b.id)).toEqual(['newform', 'obsidian']);
     const css = brandsCss();
     for (const b of BRAND_DEFS) {
       expect(`${b.id}:${valueIn(css, `:root.sc-${b.id}`, 'shadow')}`).toBe(
@@ -137,12 +140,35 @@ describe('brand character', () => {
 
   it('animates only where the reference chrome moves', () => {
     const moving = BRAND_DEFS.filter(b => b.ease).map(b => b.id);
-    expect(moving).toEqual(['newform', 'discord']);
+    expect(moving).toEqual(['newform', 'discord', 'dairy', 'obsidian']);
     const css = stripComments(brandsCss());
     const guarded = css.slice(css.indexOf('@media (prefers-reduced-motion: no-preference)'));
     const total = (css.match(/transition:/g) ?? []).length;
     const inside = (guarded.match(/transition:/g) ?? []).length;
     expect(`${inside}/${total}`).toBe(`${total}/${total}`);
+  });
+
+  it('lets a row own its speed, because a curve alone does not separate two', () => {
+    // Obsidian's easing was measured verbatim on 296 elements and comes out
+    // byte-for-byte identical to Discord's. The DURATION is the entire measured
+    // difference between the two — 75ms on colour against 180ms — so with the
+    // duration hardcoded, obsidian ships as a discord clone that happens to be
+    // a different colour. Rows that measured nothing of their own keep .18s.
+    const css = stripComments(brandsCss());
+    for (const b of BRAND_DEFS.filter(x => x.ease)) {
+      // `[^}]*` skips the radius rule, which opens on the same selector but
+      // closes before ever reaching a `transition:`.
+      const block =
+        new RegExp(`:root\\.sc-${b.id} \\.sc-btn,[^}]*transition:([^;]+);`).exec(css)?.[1] ?? '';
+      const dur = b.dur ?? { colour: '.18s', transform: '.18s' };
+      expect(`${b.id} transform:${block.includes(`transform ${dur.transform} `)}`)
+        .toBe(`${b.id} transform:true`);
+      expect(`${b.id} colour:${block.includes(`color ${dur.colour} `)}`)
+        .toBe(`${b.id} colour:true`);
+    }
+    const by = (id: string) => BRAND_DEFS.find(b => b.id === id);
+    expect(by('obsidian')?.ease).toBe(by('discord')?.ease);
+    expect(by('obsidian')?.dur).not.toEqual(by('discord')?.dur);
   });
 
   it('presses by settling, never by displacing', () => {

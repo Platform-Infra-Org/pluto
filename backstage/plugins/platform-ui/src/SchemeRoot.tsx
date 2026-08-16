@@ -74,6 +74,8 @@ const MODES = [
   'papers',
   'discord',
   'claude',
+  'dairy',
+  'obsidian',
 ] as const;
 type Mode = (typeof MODES)[number];
 

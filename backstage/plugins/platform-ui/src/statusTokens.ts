@@ -72,7 +72,9 @@ export type SchemeMode =
   | 'hermes'
   | 'papers'
   | 'discord'
-  | 'claude';
+  | 'claude'
+  | 'dairy'
+  | 'obsidian';
 
 /** `--sc-card` in the Greek registers, from greek.ts. */
 export const GREEK_CARD_LIGHT = '42 45% 98%';
@@ -142,6 +144,8 @@ export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   papers: STATUS_TOKENS,
   discord: STATUS_TOKENS,
   claude: STATUS_TOKENS,
+  dairy: STATUS_TOKENS,
+  obsidian: STATUS_TOKENS,
 };
 
 export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
@@ -155,6 +159,11 @@ export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   papers: { light: '0 0% 100%', dark: '0 0% 9%' },
   discord: { light: '0 0% 100%', dark: '227 9% 11%' },
   claude: { light: '48 33% 97%', dark: '60 3% 8%' },
+  // Dairy's dark card is 7% and not 10% for exactly this table's sake: at
+  // `168 30% 10%` all four default status inks fall to 4.34-4.48 on the
+  // dithered badge. See the row in brands.ts.
+  dairy: { light: '0 0% 100%', dark: '168 30% 7%' },
+  obsidian: { light: '0 0% 100%', dark: '228 12% 8%' },
 };
 
 /** The `:root` declarations for every mode, for interpolation into SHADCN_CSS. */

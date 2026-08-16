@@ -51,7 +51,20 @@ export type BrandDef = {
   glow?: string;
   /** Set only where the reference's own chrome moves. */
   ease?: string;
+  /**
+   * Set only where the reference's *speed* is what makes it recognisable.
+   *
+   * `obsidian` shares `discord`'s curve byte-for-byte — measured verbatim on
+   * 296 elements — so without this the two modes animate identically and the
+   * one measured difference between them is thrown away. Both members are
+   * measured values, not a single number split in two: colour, background and
+   * border move at 75-200ms while transform is firmly 200ms.
+   */
+  dur?: { colour: string; transform: string };
 };
+
+/** What every row animated at before any row measured its own. */
+const HOUSE_DUR = { colour: '.18s', transform: '.18s' };
 
 export const BRAND_DEFS: BrandDef[] = [
   {
@@ -162,6 +175,69 @@ export const BRAND_DEFS: BrandDef[] = [
     radius: { base:'12px', card:'20px', button:'8px' },
     borderW: '1px',
   },
+  {
+    id: 'dairy',
+    label: 'Family Dairy',
+    // The rare accent needing NO darkening: forest 166 93% 17% is 8.98:1 on
+    // white. The button is nudged to 19% only so the fill is not crushed
+    // near-black. Cream teal 179 67% 60% is 1.64 on white, so it is a display
+    // fill in light and becomes the DARK register's primary over near-black
+    // ink; butter 48 87% 84% is the light `accent` surface.
+    bottle: '166 93% 19%',
+    bottleFg: WHITE, // 7.83
+    light: { bg:'172 22% 97%', fg:'0 0% 20%', card:'0 0% 100%', muted:'179 40% 92%',
+      mutedFg:'172 16% 30%', border:'172 10% 44%', primary:'166 93% 19%', primaryFg:WHITE,
+      accent:'48 87% 84%', accentFg:'170 25% 14%' },
+    // LOAD-BEARING: the dark card is 7%, NOT 10%. At `168 30% 10%` all four
+    // status tokens fail the dithered-badge case (4.34-4.48 against 4.5); at 7%
+    // the worst case is 4.80. Do not lighten it without re-running
+    // contrast.test.ts's status-cell check.
+    //
+    // Also load-bearing: `border 172 10% 44%` sits 6deg from the light
+    // `primary 166 93% 19%` (7deg from the dark one), which the "dark rules"
+    // assertion allows ONLY through its `borderS <= 25` escape leg. The site's
+    // real border is a 2px full-saturation forest and would fail outright.
+    dark: { bg:'168 42% 4%', fg:'48 40% 96%', card:'168 30% 7%', muted:'168 20% 18%',
+      mutedFg:'172 14% 74%', border:'172 10% 44%', primary:'179 67% 60%', primaryFg:'168 45% 7%',
+      accent:'168 24% 15%', accentFg:'48 40% 96%' },
+    radius: { base:'12px', card:'16px', button:'20px' },
+    // 2px is the entire visual weight of the reference — there is not one
+    // box-shadow on the whole page, hence no glow.
+    borderW: '2px',
+    ease: 'cubic-bezier(.4, 0, .2, 1)',
+  },
+  {
+    id: 'obsidian',
+    label: 'Obsidian',
+    // Copper fails a light button outright — 2.70 against white — so the light
+    // register darkens it to `25 60% 33%` (6.83) and the published value stays
+    // on the bottle, the badges and the marks.
+    bottle: '25 50% 60%',
+    bottleFg: '240 20% 5%', // 6.90
+    // `border 235 8% 45%` / `230 8% 42%` is NOT the reference's own
+    // `240 3.7% 15.9%`, which measures 2.58:1 on the card. 42% is the first
+    // step clearing 3:1. The site gets away with 16% by leaning on translucent
+    // white hairlines over a photographic ground; a form-heavy app cannot.
+    // `mutedFg 230 9% 66%` likewise comes off the #9194a1 ramp rather than the
+    // site's `--muted-foreground`, which is two points short on `muted`.
+    light: { bg:'240 10% 97%', fg:'240 10% 8%', card:'0 0% 100%', muted:'240 9% 93%',
+      mutedFg:'240 6% 34%', border:'235 8% 45%', primary:'25 60% 33%', primaryFg:WHITE,
+      accent:'38 60% 91%', accentFg:'25 45% 16%' },
+    dark: { bg:'240 20% 3%', fg:'0 0% 100%', card:'228 12% 8%', muted:'240 5% 16%',
+      mutedFg:'230 9% 66%', border:'230 8% 42%', primary:'25 50% 62%', primaryFg:'240 20% 5%',
+      accent:'28 18% 15%', accentFg:'38 45% 92%' },
+    // The pill is the single most characteristic shape on the reference — 42
+    // elements of it — and the corner radius is what tells you a thing is
+    // clickable at all there.
+    radius: { base:'12px', card:'12px', button:'9999px' },
+    borderW: '1px',
+    // The hairline ring measured as rgba(255,255,255,.2), softened to .12; the
+    // copper bloom reproduces the upward gradient behind the hero chart. This
+    // is the mode's one real effect, and copper appears roughly twice a screen.
+    glow: '0 0 0 1px hsl(0 0% 100% / .12), 0 0 40px hsl(25 60% 45% / .18)',
+    ease: 'cubic-bezier(.4, 0, .2, 1)',
+    dur: { colour: '.075s', transform: '.2s' },
+  },
 ];
 
 /** Status fills stay on their default hues — see the module comment. */
@@ -193,6 +269,7 @@ ${SHARED}
 export function brandsCss(): string {
   return BRAND_DEFS.map(b => {
     const shadow = b.glow ? b.glow : 'none';
+    const d = b.dur ?? HOUSE_DUR;
     const motion = b.ease
       ? `
 @media (prefers-reduced-motion: no-preference) {
@@ -202,10 +279,10 @@ export function brandsCss(): string {
   :root.sc-${b.id} .sc-card,
   :root.sc-${b.id} .MuiCard-root {
     transition:
-      transform .18s ${b.ease},
-      background-color .18s ${b.ease},
-      border-color .18s ${b.ease},
-      color .18s ${b.ease} !important;
+      transform ${d.transform} ${b.ease},
+      background-color ${d.colour} ${b.ease},
+      border-color ${d.colour} ${b.ease},
+      color ${d.colour} ${b.ease} !important;
   }
   /* Press settles rather than displaces — a translate on :active slides the
      control out from under the pointer, which the base sheet bans app-wide. */

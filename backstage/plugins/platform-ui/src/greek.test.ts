@@ -1,10 +1,13 @@
 import { greekCss } from './greek';
 import { SHADCN_CSS } from './styles';
-import { GREEK_CARD_DARK, GREEK_CARD_LIGHT } from './statusTokens';
+import {
+  GREEK_CARD_DARK,
+  GREEK_CARD_LIGHT,
+  GREEK_STATUS_TOKENS,
+} from './statusTokens';
 import {
   COLUMN,
   MEANDER,
-  OWL,
   PALMETTE,
   POMEGRANATE,
   ROSETTE,
@@ -123,6 +126,35 @@ describe('greekCss', () => {
     };
     expect(cardIn(':root.sc-greek')).toBe(GREEK_CARD_LIGHT);
     expect(cardIn(':root.sc-greek.sc-dark')).toBe(GREEK_CARD_DARK);
+  });
+
+  it('paints the dither cells the contrast test measures ink against', () => {
+    // Same trap as the card above, one layer down and previously unguarded:
+    // --sc-success/-warning/-destructive here ARE the badge cell, and
+    // statusTokens.ts holds a second copy of each as the `cell` field the AA
+    // maths uses. Desaturate one side only and contrast.test.ts happily keeps
+    // measuring the colour nothing renders. Read-only — the pairing is the
+    // assertion, neither side is this test's to move.
+    const css = greekCss();
+    const tokenIn = (selector: string, name: string) => {
+      const start = css.indexOf(`${selector} {`);
+      const body = css.slice(start, css.indexOf('}', start));
+      return new RegExp(`--sc-${name}:\\s*([^;]+);`).exec(body)?.[1].trim();
+    };
+    const cellOf = (name: string) =>
+      GREEK_STATUS_TOKENS.find(t => t.name === name)?.cell;
+
+    for (const [token, ink] of [
+      ['success', 'on-success'],
+      ['warning', 'on-warning'],
+      ['destructive', 'on-destructive'],
+    ]) {
+      for (const register of [':root.sc-greek', ':root.sc-greek.sc-dark']) {
+        expect(`${register} --sc-${token}: ${tokenIn(register, token)}`).toBe(
+          `${register} --sc-${token}: ${cellOf(ink)}`,
+        );
+      }
+    }
   });
 });
 
@@ -272,7 +304,6 @@ describe('greek ornament is drawn from sprites', () => {
       COLUMN,
       ROSETTE,
       POMEGRANATE,
-      OWL,
     })) {
       const light = spriteDataUri(sprite, 'hsl(40 55% 46%)');
       const dark = spriteDataUri(sprite, 'hsl(43 62% 46%)');

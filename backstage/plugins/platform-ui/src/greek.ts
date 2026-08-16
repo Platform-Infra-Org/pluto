@@ -28,7 +28,6 @@
 import {
   COLUMN,
   MEANDER,
-  OWL,
   PALMETTE,
   POMEGRANATE,
   ROSETTE,
@@ -85,10 +84,15 @@ export function greekCss(): string {
   --sc-muted-fg: 40 14% 70%;
   --sc-border: 43 62% 46%;
   --sc-input: 43 62% 46%;
-  --sc-primary: 14 88% 55%;
+  /* Saturation only: 88% read as neon against the violet ground. The hue stays
+     at 14 (29deg off the gold rule's 43 — walking it warmer closes that gap),
+     and the lightness stays at 55% because --sc-primary-fg here is DARK ink, so
+     desaturating RAISES the ratio while dropping L takes it back through the
+     floor: 88% = 5.43, 58% = 5.11, but 62%/L48% = 4.13, an AA failure. */
+  --sc-primary: 14 58% 55%;
   --sc-primary-fg: 240 10% 8%;
   --sc-primary-shade: 0 0% 100%;
-  --sc-ring: 14 88% 55%;
+  --sc-ring: 14 58% 55%;
   --sc-accent: 265 20% 16%;
   --sc-accent-fg: 40 28% 92%;
   --sc-success: 58 62% 42%;
@@ -245,17 +249,9 @@ export function greekCss(): string {
   background-image: ${art(POMEGRANATE, GOLD)};
 }
 
-/* Athena's owl watches over the tour. A guide is the one place in the app where
-   wisdom-by-the-shoulder is the literal subject. */
-:root.sc-greek .sc-qs-box {
-  background-image: ${art(OWL, BRONZE)};
-  background-repeat: no-repeat;
-  background-size: 22px 22px;
-  background-position: right 12px top 12px;
-}
-:root.sc-greek.sc-dark .sc-qs-box {
-  background-image: ${art(OWL, GOLD)};
-}
+/* The tour box carries no ornament: it is a coach mark that sits over live
+   content, and the owl that used to perch in its corner competed with the
+   thing being pointed at. The sprite stays in sprites.ts, unreferenced. */
 
 /* Primary buttons carry the gold rule too. */
 :root.sc-greek .MuiButton-containedPrimary,

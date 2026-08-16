@@ -108,14 +108,162 @@ ${spiderverseCss()}
    a production build never mangles — unlike generated class names, which
    become jss<n> there. Nothing here may name one: styles.test.ts fails on it. */
 
-/* [stable: bui tokens] retarget bui's accent/link/focus to the picker. These
-   CSS variables are the primary, upgrade-safe mechanism for bui components. */
-:root {
+/* [stable: bui tokens] retarget bui's surface/text/border/radius/status tokens
+   to the picker. These CSS variables are the primary, upgrade-safe mechanism
+   for bui components, and until this block was filled in only five of canon's
+   ~140 were mapped — so every canon surface on an entity page (six kinds),
+   /notifications and the TechDocs entity card rendered as a Backstage hex.
+
+   THE SELECTOR LIST IS LOAD-BEARING, ALL THREE OF IT. Canon declares its light
+   set at ":root, [data-theme-mode='light']" and its dark set at
+   "[data-theme-mode='dark']", and the app puts data-theme-mode on <body>.
+   Custom properties inherit, so <body>'s own declaration beats anything
+   inherited from <html>: a bare :root here is DEAD in the dark register, which
+   is exactly how the five original overrides shipped broken (measured:
+   html --bui-bg-solid = ours, body --bui-bg-solid = canon's pale blue). Naming
+   both data-theme-mode values puts our declaration on the same element canon
+   declares on, where it wins. styles.test.ts pins the selector list, because
+   the failure is invisible in light — the register people check first. */
+:root,
+[data-theme-mode="light"],
+[data-theme-mode="dark"] {
+  /* grounds */
+  --bui-bg-app: hsl(var(--sc-bg));
+  --bui-bg-neutral-1: hsl(var(--sc-card));
+  --bui-bg-neutral-1-hover: hsl(var(--sc-card) / 0.92);
+  --bui-bg-neutral-1-pressed: hsl(var(--sc-card) / 0.85);
+  --bui-bg-neutral-1-disabled: hsl(var(--sc-card) / 0.5);
+  --bui-bg-neutral-2: hsl(var(--sc-muted));
+  --bui-bg-neutral-2-hover: hsl(var(--sc-muted) / 0.92);
+  --bui-bg-neutral-2-pressed: hsl(var(--sc-muted) / 0.85);
+  --bui-bg-neutral-2-disabled: hsl(var(--sc-muted) / 0.5);
+  --bui-bg-neutral-3: hsl(var(--sc-accent));
+  --bui-bg-neutral-3-hover: hsl(var(--sc-accent) / 0.92);
+  --bui-bg-neutral-3-pressed: hsl(var(--sc-accent) / 0.85);
+  --bui-bg-neutral-3-disabled: hsl(var(--sc-accent) / 0.5);
+  /* neutral-4 is the only one whose base is already translucent, so its states
+     step the alpha UP rather than down — same visible cue, right direction. */
+  --bui-bg-neutral-4: hsl(var(--sc-border) / 0.35);
+  --bui-bg-neutral-4-hover: hsl(var(--sc-border) / 0.45);
+  --bui-bg-neutral-4-pressed: hsl(var(--sc-border) / 0.5);
+  --bui-bg-neutral-4-disabled: hsl(var(--sc-border) / 0.18);
+  /* --bui-bg-inherit needs no entry: canon defines it as var(--bui-bg-app) at a
+     plain :root, so mapping bg-app carries it. */
+
+  /* the solid (primary) surface */
   --bui-bg-solid: hsl(var(--sc-primary));
   --bui-bg-solid-hover: hsl(var(--sc-primary) / 0.92);
   --bui-bg-solid-pressed: hsl(var(--sc-primary) / 0.85);
+  --bui-bg-solid-disabled: hsl(var(--sc-primary) / 0.5);
+  --bui-fg-solid: hsl(var(--sc-primary-fg));
+  --bui-fg-solid-disabled: hsl(var(--sc-primary-fg) / 0.55);
+  --bui-accent-bg: hsl(var(--sc-primary));
+  --bui-accent-bg-hover: hsl(var(--sc-primary) / 0.9);
+  --bui-accent-bg-disabled: hsl(var(--sc-primary) / 0.5);
+  --bui-accent-fg: hsl(var(--sc-primary-fg));
+  --bui-accent-fg-disabled: hsl(var(--sc-primary-fg) / 0.55);
+
+  /* ink */
+  --bui-fg-primary: hsl(var(--sc-fg));
+  --bui-fg-secondary: hsl(var(--sc-muted-fg));
+  --bui-fg-disabled: hsl(var(--sc-muted-fg) / 0.55);
   --bui-fg-link: hsl(var(--sc-primary));
-  --bui-border-focus: hsl(var(--sc-primary));
+
+  /* edges and focus */
+  --bui-border-1: hsl(var(--sc-border));
+  --bui-border-2: hsl(var(--sc-border) / 0.6);
+  --bui-border-focus: hsl(var(--sc-ring));
+  --bui-ring: hsl(var(--sc-ring));
+  --bui-shadow: var(--sc-shadow);
+
+  /* shape. --bui-radius-full is deliberately NOT mapped: it is the pill, and it
+     must stay 9999px or every canon pill becomes a rounded rectangle. */
+  --bui-radius-1: var(--sc-radius-sm);
+  --bui-radius-2: var(--sc-radius-sm);
+  --bui-radius-3: var(--sc-radius-sm);
+  --bui-radius-4: var(--sc-radius);
+  --bui-radius-5: var(--sc-radius);
+  --bui-radius-6: var(--sc-radius);
+
+  /* Status, wholesale. A half-mapped family puts one themed badge beside one
+     vanilla one on the same card, which reads as a bug rather than a palette,
+     so every member of every ramp is here or none would be.
+     The shape follows the badges (.sc-badge-*): a translucent fill of the
+     status hue, with the measured on-* ink over it. --sc-on-* clears 5:1
+     against both the card and the dither cell in both registers
+     (statusTokens.ts), so it clears any tint between them too. There is no
+     --sc-info / --sc-announcement token: canon's informational ramp is the
+     accent, so it takes --sc-primary. */
+  --bui-fg-positive: hsl(var(--sc-on-success));
+  --bui-fg-negative: hsl(var(--sc-on-destructive));
+  --bui-fg-warning: hsl(var(--sc-on-warning));
+  --bui-fg-announcement: hsl(var(--sc-primary));
+  --bui-fg-success: hsl(var(--sc-on-success));
+  --bui-fg-danger: hsl(var(--sc-on-destructive));
+  --bui-fg-info: hsl(var(--sc-primary));
+  --bui-bg-success: hsl(var(--sc-success) / 0.16);
+  --bui-bg-danger: hsl(var(--sc-destructive) / 0.16);
+  --bui-bg-warning: hsl(var(--sc-warning) / 0.16);
+  --bui-bg-info: hsl(var(--sc-primary) / 0.16);
+  --bui-fg-success-on-bg: hsl(var(--sc-on-success));
+  --bui-fg-danger-on-bg: hsl(var(--sc-on-destructive));
+  --bui-fg-warning-on-bg: hsl(var(--sc-on-warning));
+  --bui-fg-info-on-bg: hsl(var(--sc-primary));
+  --bui-border-success: hsl(var(--sc-success));
+  --bui-border-danger: hsl(var(--sc-destructive));
+  --bui-border-warning: hsl(var(--sc-warning));
+  --bui-border-info: hsl(var(--sc-primary));
+
+  --bui-positive-bg: hsl(var(--sc-success) / 0.16);
+  --bui-positive-bg-hover: hsl(var(--sc-success) / 0.22);
+  --bui-positive-bg-disabled: hsl(var(--sc-success) / 0.1);
+  --bui-positive-bg-subdued: hsl(var(--sc-success) / 0.1);
+  --bui-positive-bg-subdued-hover: hsl(var(--sc-success) / 0.16);
+  --bui-positive-bg-subdued-disabled: hsl(var(--sc-success) / 0.06);
+  --bui-positive-border: hsl(var(--sc-success));
+  --bui-positive-fg: hsl(var(--sc-on-success));
+  --bui-positive-fg-disabled: hsl(var(--sc-on-success) / 0.55);
+  --bui-positive-fg-subdued: hsl(var(--sc-on-success));
+  --bui-positive-fg-subdued-disabled: hsl(var(--sc-on-success) / 0.55);
+
+  --bui-negative-bg: hsl(var(--sc-destructive) / 0.16);
+  --bui-negative-bg-hover: hsl(var(--sc-destructive) / 0.22);
+  --bui-negative-bg-disabled: hsl(var(--sc-destructive) / 0.1);
+  --bui-negative-bg-subdued: hsl(var(--sc-destructive) / 0.1);
+  --bui-negative-bg-subdued-hover: hsl(var(--sc-destructive) / 0.16);
+  --bui-negative-bg-subdued-disabled: hsl(var(--sc-destructive) / 0.06);
+  --bui-negative-border: hsl(var(--sc-destructive));
+  --bui-negative-fg: hsl(var(--sc-on-destructive));
+  --bui-negative-fg-disabled: hsl(var(--sc-on-destructive) / 0.55);
+  --bui-negative-fg-subdued: hsl(var(--sc-on-destructive));
+  --bui-negative-fg-subdued-disabled: hsl(var(--sc-on-destructive) / 0.55);
+
+  --bui-warning-bg: hsl(var(--sc-warning) / 0.16);
+  --bui-warning-bg-hover: hsl(var(--sc-warning) / 0.22);
+  --bui-warning-bg-disabled: hsl(var(--sc-warning) / 0.1);
+  --bui-warning-bg-subdued: hsl(var(--sc-warning) / 0.1);
+  --bui-warning-bg-subdued-hover: hsl(var(--sc-warning) / 0.16);
+  --bui-warning-bg-subdued-disabled: hsl(var(--sc-warning) / 0.06);
+  --bui-warning-border: hsl(var(--sc-warning));
+  --bui-warning-fg: hsl(var(--sc-on-warning));
+  --bui-warning-fg-disabled: hsl(var(--sc-on-warning) / 0.55);
+  --bui-warning-fg-subdued: hsl(var(--sc-on-warning));
+  --bui-warning-fg-subdued-disabled: hsl(var(--sc-on-warning) / 0.55);
+
+  --bui-announcement-bg: hsl(var(--sc-primary) / 0.16);
+  --bui-announcement-bg-hover: hsl(var(--sc-primary) / 0.22);
+  --bui-announcement-bg-disabled: hsl(var(--sc-primary) / 0.1);
+  --bui-announcement-bg-subdued: hsl(var(--sc-primary) / 0.1);
+  --bui-announcement-bg-subdued-hover: hsl(var(--sc-primary) / 0.16);
+  --bui-announcement-bg-subdued-disabled: hsl(var(--sc-primary) / 0.06);
+  --bui-announcement-border: hsl(var(--sc-primary));
+  --bui-announcement-fg: hsl(var(--sc-primary));
+  --bui-announcement-fg-disabled: hsl(var(--sc-primary) / 0.55);
+  --bui-announcement-fg-subdued: hsl(var(--sc-primary));
+  --bui-announcement-fg-subdued-disabled: hsl(var(--sc-primary) / 0.55);
+  /* --bui-gray-1..11 stay canon's own neutral ramp: it is raw, a mode-token
+     ladder mapped onto it can invert in one register, and no measured element
+     resolves through one. */
 }
 /* [stable: data-variant] primary bui buttons resolve their own token — the
    [data-variant] attribute is a stable hook; the class fragment is only a scope. */
@@ -126,7 +274,15 @@ body { background: hsl(var(--sc-bg)); } /* BackstageContent bg moved to theme.ts
 /* cards / surfaces */
 /* cards/surfaces via stable MUI classes. The InfoCard header is styled in the
    theme (BackstageInfoCard.styleOverrides.header). */
-.MuiCard-root, .MuiPaper-elevation1, .MuiPaper-elevation2, .MuiAccordion-root {
+/* The two elevation classes are the ONE exception to the substring form:
+   [class*="MuiPaper-elevation1"] also matches MuiPaper-elevation10 through -19
+   (MUI v4 goes to 24, and 8 is the default menu Paper), which would give every
+   menu and popover the card treatment. The generator emits key-counter, so an
+   anchored trailing dash matches every suffixed spelling and nothing else. */
+[class*="MuiCard-root"],
+.MuiPaper-elevation1, [class*="MuiPaper-elevation1-"],
+.MuiPaper-elevation2, [class*="MuiPaper-elevation2-"],
+[class*="MuiAccordion-root"] {
   background-color: hsl(var(--sc-card)) !important; color: hsl(var(--sc-fg));
   border: var(--sc-border-w) solid hsl(var(--sc-border)) !important;
   box-shadow: var(--sc-shadow) !important;
@@ -154,7 +310,7 @@ body { background: hsl(var(--sc-bg)); } /* BackstageContent bg moved to theme.ts
     0 0 0 4px hsl(var(--sc-fg) / .85),
     var(--sc-shadow) !important;
 }
-.MuiOutlinedInput-notchedOutline { border-color: hsl(var(--sc-input)) !important; }
+[class*="MuiOutlinedInput-notchedOutline"] { border-color: hsl(var(--sc-input)) !important; }
 /* [flare] Loading is a loading screen. Backstage's Progress is MUI LinearProgress,
    so this pair reaches every native page: catalog, scaffolder, search, techdocs.
    The bar is 4px cells, and MUI's own transform transition has to go or it
@@ -208,10 +364,10 @@ body, body *, input, select, textarea, button, optgroup {
 /* Icon fonts are glyph lookups, not text — leave them alone or every icon
    turns into a letter. */
 .material-icons, .material-icons-outlined, .MuiIcon-root, [class*="material-icons"],
-.MuiSvgIcon-root, .MuiSvgIcon-root * {
+[class*="MuiSvgIcon-root"], [class*="MuiSvgIcon-root"] * {
   font-family: 'Material Icons' !important;
 }
-.MuiSvgIcon-root { font-family: inherit !important; }
+[class*="MuiSvgIcon-root"] { font-family: inherit !important; }
 
 /* ===== Native Backstage pages wear the same 8-bit chrome =====
    Catalog, scaffolder, search and settings are built from MUI components we
@@ -222,7 +378,7 @@ body, body *, input, select, textarea, button, optgroup {
    BackstageAutocomplete-label carry the same font/text-transform, set in
    theme.tsx instead since class*= hooks on those three don't survive a
    production build. */
-.MuiButton-root, .MuiTab-root, .MuiChip-root, .MuiTableCell-head,
+[class*="MuiButton-root"], .MuiTab-root, .MuiChip-root, .MuiTableCell-head,
 .MuiTableSortLabel-root, .MuiFormLabel-root, .MuiInputLabel-root,
 [class*="bui-Button"] {
   font-family: var(--sc-font-ui) !important;
@@ -237,9 +393,9 @@ body, body *, input, select, textarea, button, optgroup {
    and it made every native page look like a different product from ours.
    The breadcrumb and the toolbar name are the top bar's own text and follow
    the title rather than the chrome. */
-.MuiTypography-h1, .MuiTypography-h2, .MuiTypography-h3,
-.MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6,
-.MuiCardHeader-title, .MuiDialogTitle-root, .MuiAlertTitle-root,
+[class*="MuiTypography-h1"], [class*="MuiTypography-h2"], [class*="MuiTypography-h3"],
+[class*="MuiTypography-h4"], [class*="MuiTypography-h5"], [class*="MuiTypography-h6"],
+[class*="MuiCardHeader-title"], .MuiDialogTitle-root, .MuiAlertTitle-root,
 [class*="bui-HeaderTitle"], [class*="bui-HeaderBreadcrumb"],
 [class*="bui-PluginHeaderToolbarName"] {
   font-family: var(--sc-font-title) !important;
@@ -292,10 +448,10 @@ body, body *, input, select, textarea, button, optgroup {
    did at the old size. Same layout, larger glyphs. Backstage's own 28-34px
    scale is still slightly too wide here, which is why these overrides remain
    at all; the smaller components no longer need one and have been dropped. */
-h1, .MuiTypography-h1 { font-size: 29px !important; line-height: 1.35 !important; }
-h2, .MuiTypography-h2 { font-size: 22px !important; line-height: 1.35 !important; }
-h3, .MuiTypography-h3, .MuiCardHeader-title { font-size: 19px !important; }
-h4, h5, h6, .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 { font-size: 14px !important; }
+h1, [class*="MuiTypography-h1"] { font-size: 29px !important; line-height: 1.35 !important; }
+h2, [class*="MuiTypography-h2"] { font-size: 22px !important; line-height: 1.35 !important; }
+h3, [class*="MuiTypography-h3"], [class*="MuiCardHeader-title"] { font-size: 19px !important; }
+h4, h5, h6, [class*="MuiTypography-h4"], [class*="MuiTypography-h5"], [class*="MuiTypography-h6"] { font-size: 14px !important; }
 /* BackstageInfoCard-header * (19px) and BackstageContentHeader-title (18px/1.35)
    are set in theme.tsx — see the comment above. */
 .MuiDialogTitle-root { font-size: 16px !important; }
@@ -306,7 +462,7 @@ h4, h5, h6, .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 { font-size:
    Element-qualified on purpose: bui renders a bui-ButtonContent span *inside*
    bui-Button, and a bare [class*="bui-Button"] matches both, drawing the border
    and shadow twice — the inner box. */
-.MuiButton-root, button[class*="bui-Button"], a[class*="bui-Button"] {
+[class*="MuiButton-root"], button[class*="bui-Button"], a[class*="bui-Button"] {
   border-radius: var(--sc-radius) !important;
   border: var(--sc-border-w) solid hsl(var(--sc-fg) / .8) !important;
   box-shadow: var(--sc-shadow) !important;
@@ -317,12 +473,12 @@ h4, h5, h6, .MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6 { font-size:
    the filter-based glows the mode potions paint, and left anything anchored to
    the button a frame behind. An inset wash reads as pressed without moving a
    pixel. */
-.MuiButton-root:active:not(.Mui-disabled),
+[class*="MuiButton-root"]:active:not(.Mui-disabled),
 button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   transform: none;
   box-shadow: inset 0 0 0 2em hsl(var(--sc-fg) / .14) !important;
 }
-.MuiButton-text, .MuiButton-textPrimary, .MuiIconButton-root {
+.MuiButton-text, [class*="MuiButton-textPrimary"], [class*="MuiIconButton-root"] {
   border: none !important; box-shadow: none !important;
 }
 /* Never a border or shadow on the inner content span. */
@@ -340,24 +496,47 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   max-width: 100%;
 }
 .MuiChip-label { overflow: hidden; text-overflow: ellipsis; }
-.MuiOutlinedInput-notchedOutline { border-width: var(--sc-border-w) !important; }
+[class*="MuiOutlinedInput-notchedOutline"] { border-width: var(--sc-border-w) !important; }
 .MuiTableCell-head { color: hsl(var(--sc-muted-fg)) !important; }
+/* Three components that had no rule at all and so rendered MUI's own defaults
+   wherever a plugin uses them — visible on the TechDocs routes, which is also
+   where the class arrives counter-suffixed. */
+[class*="MuiToolbar-root"] {
+  background-color: hsl(var(--sc-card));
+  color: hsl(var(--sc-fg));
+}
+[class*="MuiDivider-root"] {
+  background-color: hsl(var(--sc-border));
+  border-color: hsl(var(--sc-border));
+}
+/* v4's slider paints rail, track and thumb from the root's own colour, so one
+   declaration covers all three rather than three slot selectors. */
+[class*="MuiSlider-root"], [class*="MuiSlider-colorPrimary"] {
+  color: hsl(var(--sc-primary));
+}
+/* The Profile card on /settings is MUI's default #bdbdbd circle. Clean class:
+   /settings is not one of the three counter-suffixed routes. */
+.MuiAvatar-root {
+  background-color: hsl(var(--sc-accent));
+  color: hsl(var(--sc-accent-fg));
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+}
 /* No table-body override: the old face needed one because dense cells hit
    Backstage's word-break and snapped mid-word, but the native 14px in the body
    Sans measures narrower than the 12px this used to force, so the pressure the
    rule relieved is gone. */
 /* Focus is a hard offset outline everywhere, never a glow. */
-.MuiButton-root:focus-visible, .MuiTab-root:focus-visible,
-.MuiIconButton-root:focus-visible, [class*="bui-Button"]:focus-visible {
+[class*="MuiButton-root"]:focus-visible, .MuiTab-root:focus-visible,
+[class*="MuiIconButton-root"]:focus-visible, [class*="bui-Button"]:focus-visible {
   outline: var(--sc-border-w) solid hsl(var(--sc-ring)) !important;
   outline-offset: 2px;
 }
 
 /* accent — buttons, links, tabs, selection (all follow the picker) */
-.MuiButton-root { box-shadow: var(--sc-shadow) !important; }
-.MuiButton-containedPrimary { background-color: hsl(var(--sc-primary)) !important; color: hsl(var(--sc-primary-fg)) !important; }
-.MuiButton-outlinedPrimary, .MuiButton-textPrimary { color: hsl(var(--sc-primary)) !important; }
-.MuiLink-root, a.MuiTypography-colorPrimary, .MuiTypography-colorPrimary { color: hsl(var(--sc-primary)) !important; }
+[class*="MuiButton-root"] { box-shadow: var(--sc-shadow) !important; }
+[class*="MuiButton-containedPrimary"] { background-color: hsl(var(--sc-primary)) !important; color: hsl(var(--sc-primary-fg)) !important; }
+[class*="MuiButton-outlinedPrimary"], [class*="MuiButton-textPrimary"] { color: hsl(var(--sc-primary)) !important; }
+[class*="MuiLink-root"], a[class*="MuiTypography-colorPrimary"], [class*="MuiTypography-colorPrimary"] { color: hsl(var(--sc-primary)) !important; }
 .MuiTabs-indicator { background-color: hsl(var(--sc-primary)) !important; }
 .MuiTab-root { text-transform: none !important; font-weight: 600 !important; }
 .MuiTab-textColorPrimary.Mui-selected, .Mui-selected { color: hsl(var(--sc-primary)) !important; }
@@ -444,9 +623,13 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-graph-layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px;
   align-items: start; min-width: 0; }
 @media (max-width: 900px) { .sc-graph-layout { grid-template-columns: 1fr; } }
+/* The node text colour, not a page token: this sits on .sc-graph-canvas, which
+   is pinned to the starfield and is deliberately dark in BOTH registers. Read
+   through --sc-muted-fg it measured 2.96:1 in light — an AA failure that only
+   existed because a page token was used on a surface that ignores the page. */
 .sc-graph-empty { display: flex; align-items: center; justify-content: center;
   height: 100%; min-height: 320px; padding: 24px; text-align: center;
-  color: hsl(var(--sc-muted-fg)); font-size: 13px; }
+  color: #e7e7ef; font-size: 13px; }
 /* Nodes: the dark surface everywhere, the accent only on the rooted one. A
    graph where every node looks the same is a graph where re-rooting appears to
    do nothing, which is exactly how the built-in one failed. */
@@ -518,9 +701,9 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    this orderable without naming a class a production build would discard.
    The type is dropped outright: it repeats what the template's own copy
    already says and it was reading as the card's headline. */
-.sc-route-create .MuiCard-root > .MuiBox-root:first-child { display: flex; flex-direction: column; }
-.sc-route-create .MuiCard-root > .MuiBox-root:first-child > * { order: 3; }
-.sc-route-create .MuiCard-root > .MuiBox-root:first-child > h4 {
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child { display: flex; flex-direction: column; }
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > * { order: 3; }
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h4 {
   order: 1;
   /* The name IS the card. It arrived at the header's inherited size, which read
      as a caption on a card whose whole job is to be picked from a grid. */
@@ -535,15 +718,21 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
      white over it clears AA whatever is painted underneath. */
   color: hsl(0 0% 100%) !important;
   background-color: hsl(240 12% 6% / .72);
-  padding: 4px 8px;
+  /* The PLATE shrinks, never the type: 4px 8px made a 34.39px band over a 90px
+     header scene. At 1px 6px it is 28.4px (-17%) and the descender still has
+     2.24px of clearance inside the 26.4px line box, so nothing is clipped.
+     line-height 1.2 stays; 1.05 is available if 28.4px is still too tall and
+     1.0 is the true floor. font-size is pinned at 22px by styles.test.ts and
+     the pin is correct — the title is the card's headline. */
+  padding: 1px 6px;
   margin: 0;
   align-self: flex-start;
   max-width: 100%;
   border-radius: var(--sc-radius-sm);
 }
-.sc-route-create .MuiCard-root > .MuiBox-root:first-child > h3 { display: none; }
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h3 { display: none; }
 
-.sc-route-create .MuiCard-root > .MuiBox-root:first-child {
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child {
   /* Ancient Greek, drawn entirely with hard colour stops.
 
      The dominant motif is a meander — the Greek key — running the full width as
@@ -606,7 +795,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    is the same four rectangles in every scene, re-sized and re-placed, which is
    why this costs two rules rather than two more background stacks.
    Cards cycle 3n+1 / 3n+2 / 3n+3, the same way the supplied images cycle. */
-.sc-route-create .MuiCard-root:nth-child(3n + 2)
+.sc-route-create [class*="MuiCard-root"]:nth-child(3n + 2)
   > .MuiBox-root:first-child {
   /* The oracle flame: a taper, widest at its base. */
   background-size:
@@ -622,7 +811,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
     0 0,
     0 0 !important;
 }
-.sc-route-create .MuiCard-root:nth-child(3n + 3)
+.sc-route-create [class*="MuiCard-root"]:nth-child(3n + 3)
   > .MuiBox-root:first-child {
   /* The underworld gate: two posts under a lintel, with a step above it. */
   background-size:
@@ -641,8 +830,8 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* The title sits on art, so it needs its own contrast: a 1px outline in the
    opposite tone (dark behind light text, light behind dark) plus weight. The
    shade token flips with the scheme, alongside --sc-primary-fg. */
-.sc-route-create .MuiCard-root > .MuiBox-root:first-child,
-.sc-route-create .MuiCard-root > .MuiBox-root:first-child * {
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child,
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child * {
   font-weight: 700 !important;
   text-shadow:
     1px 0 0 hsl(var(--sc-primary-shade)),
@@ -651,7 +840,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
     0 -1px 0 hsl(var(--sc-primary-shade)),
     2px 2px 0 hsl(var(--sc-primary-shade) / .55);
 }
-.sc-route-create .MuiCard-root > .MuiBox-root:first-child * { color: hsl(var(--sc-primary-fg)) !important; }
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child * { color: hsl(var(--sc-primary-fg)) !important; }
 /* tables */
 .MuiTableCell-head, .MuiTableCell-root.MuiTableCell-head {
   text-transform: uppercase !important; font-size: 11px !important; font-weight: 700 !important;
@@ -700,7 +889,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    neither happens, so the radius goes to zero and nothing is clipped. Mode
    sheets set the same zero for their own table surfaces. */
 .sc-card:has(table),
-.MuiCard-root:has(table),
+[class*="MuiCard-root"]:has(table),
 .MuiPaper-root:has(table) {
   overflow: visible !important;
   border-radius: 0 !important;
@@ -1056,6 +1245,13 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-link:hover { text-decoration: underline; }
 .sc-muted { color: hsl(var(--sc-muted-fg)); }
 .sc-row { display: flex; align-items: center; gap: 8px; }
+/* The graph filters put a bare <input type="checkbox"> in a .sc-row, which
+   renders the OS's own blue tick beside nine themed potions. accent-color is
+   the whole fix — repainting the box by hand costs an appearance: none and a
+   hand-drawn tick, and the native control is already the right shape.
+   ponytail: the sibling <select> needs nothing — GraphDirection already gives
+   it .sc-select, which is the token ground/border/radius this would add. */
+.sc-row input[type="checkbox"] { accent-color: hsl(var(--sc-primary)); }
 .sc-kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 16px; font-size: 14px; }
 .sc-kv dt { color: hsl(var(--sc-muted-fg)); }
 /* min-width:0 so a long value scrolls inside its own cell. A grid item defaults
@@ -1307,12 +1503,13 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-route-import [class*="MuiTypography-body2"] {
   color: hsl(var(--sc-fg));
 }
-/* The links arrive indigo for the same reason: the global .MuiLink-root rule
-   names the class exactly and misses every suffixed token on this route. */
-.sc-route-import [class*="MuiLink-root"],
-.sc-route-import [class*="MuiTypography-colorPrimary"] {
-  color: hsl(var(--sc-primary)) !important;
-}
+/* The link rule that used to sit here is gone: the global one it duplicated is
+   now [class*="MuiLink-root"] / [class*="MuiTypography-colorPrimary"] and
+   reaches this route on its own — along with the two TechDocs routes, which
+   have no route class and could never have been covered from here.
+   The rest of this block stays: the stepper rules above have no global
+   counterpart at all, and the surface/label/input/list/progress rules below
+   carry declarations the global sheet does not. */
 /* The repository-URL field is the page's one real input; it arrives bare. */
 .sc-route-import [class*="MuiOutlinedInput-root"] {
   background: hsl(var(--sc-bg));
@@ -1339,12 +1536,12 @@ h1, h2, h3, h4, h5, h6,
 .sc-empty-title,
 .sc-qs-title,
 .sc-login-title,
-.MuiTypography-h1,
-.MuiTypography-h2,
-.MuiTypography-h3,
-.MuiTypography-h4,
-.MuiTypography-h5,
-.MuiTypography-h6 {
+[class*="MuiTypography-h1"],
+[class*="MuiTypography-h2"],
+[class*="MuiTypography-h3"],
+[class*="MuiTypography-h4"],
+[class*="MuiTypography-h5"],
+[class*="MuiTypography-h6"] {
   font-family: var(--sc-font-title) !important;
   letter-spacing: -0.01em;
 }
@@ -1664,13 +1861,13 @@ h1, h2, h3, h4, h5, h6,
 .MuiStepIcon-root.Mui-completed { color: hsl(var(--sc-primary)) !important; }
 .MuiStepLabel-label.MuiStepLabel-active,
 .MuiStepLabel-label.Mui-active { color: hsl(var(--sc-fg)) !important; }
-.MuiTypography-colorPrimary { color: hsl(var(--sc-primary)) !important; }
+[class*="MuiTypography-colorPrimary"] { color: hsl(var(--sc-primary)) !important; }
 /* Focus rings and underlines. */
 .MuiFormLabel-root.Mui-focused { color: hsl(var(--sc-primary)) !important; }
 .MuiInput-underline:after,
 .MuiFilledInput-underline:after { border-bottom-color: hsl(var(--sc-primary)) !important; }
-.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline,
-.MuiAutocomplete-inputFocused ~ .MuiOutlinedInput-notchedOutline {
+.MuiOutlinedInput-root.Mui-focused [class*="MuiOutlinedInput-notchedOutline"],
+.MuiAutocomplete-inputFocused ~ [class*="MuiOutlinedInput-notchedOutline"] {
   border-color: hsl(var(--sc-primary)) !important; }
 /* Selection controls. MUI v4 defaults Checkbox/Radio/Switch to the SECONDARY
    palette, not the primary one — an audit of a live template form found
@@ -1696,9 +1893,9 @@ h1, h2, h3, h4, h5, h6,
 .MuiSvgIcon-colorSecondary { color: hsl(var(--sc-primary)) !important; }
 
 /* Buttons and progress. */
-.MuiButton-containedPrimary { background-color: hsl(var(--sc-primary)) !important;
+[class*="MuiButton-containedPrimary"] { background-color: hsl(var(--sc-primary)) !important;
   color: hsl(var(--sc-primary-fg)) !important; }
-.MuiButton-textPrimary, .MuiButton-outlinedPrimary { color: hsl(var(--sc-primary)) !important; }
+[class*="MuiButton-textPrimary"], [class*="MuiButton-outlinedPrimary"] { color: hsl(var(--sc-primary)) !important; }
 .MuiChip-colorPrimary { background-color: hsl(var(--sc-primary)) !important;
   color: hsl(var(--sc-primary-fg)) !important; }
 
