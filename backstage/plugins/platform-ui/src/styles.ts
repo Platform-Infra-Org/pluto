@@ -436,11 +436,16 @@ body, body *, input, select, textarea, button, optgroup {
    at higher specificity when it wants something else (foudre's links are
    muted and underlined on purpose). Canon ships inside @layer, and an
    unlayered author rule beats a layered one whatever the order. */
-[class*="bui-Card"] {
+[class~="bui-Card"] {
   border: var(--sc-border-w) solid hsl(var(--sc-border));
   border-radius: var(--sc-radius);
 }
-[class*="bui-Link"] {
+/* The card's own parts must NOT take that edge. A substring hook here matches
+   bui-CardHeader and bui-CardBody as well, and the About panel then drew its
+   header's border inside the card's -- two boxes where the design has one.
+   ~= matches a whole class token, so only the card itself is named. The same
+   family trap the PluginHeader rules carry a comment about. */
+[class~="bui-Link"] {
   color: hsl(var(--sc-primary));
 }
 /* The API explorer's title sits on a different gutter from its own table.
@@ -864,7 +869,9 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .MuiTableCell-head, .MuiTableCell-root.MuiTableCell-head {
   text-transform: uppercase !important; font-size: 11px !important; font-weight: 700 !important;
   letter-spacing: .05em !important; color: hsl(var(--sc-muted-fg)) !important; }
-.MuiTableCell-root { border-color: hsl(var(--sc-border)) !important; }
+/* Same reasoning as .sc-table: the cell rule is a separator and takes a
+   quarter of the edge colour, not all of it. */
+.MuiTableCell-root { border-color: hsl(var(--sc-border) / .25) !important; }
 
 /* page + layout */
 .sc-page { padding: 28px 32px; background: hsl(var(--sc-bg)); min-height: 100%; }
@@ -973,10 +980,16 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 
 /* table */
 .sc-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+/* A row rule is a separator, not an edge. At full strength it is the same
+   weight as the card's own border, and on a dark ground that reads as a bright
+   line every row -- literally white in Slush, whose border token IS 0 0% 100%,
+   and near-white in Foudre. The MUI table this sits beside already draws its
+   rules at a quarter, so matching it also stops one card's table looking
+   heavier than the next. */
 .sc-table th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600;
   text-transform: uppercase; letter-spacing: .05em; color: hsl(var(--sc-muted-fg));
-  border-bottom: 1px solid hsl(var(--sc-border)); }
-.sc-table td { padding: 12px 14px; border-bottom: 1px solid hsl(var(--sc-border)); color: hsl(var(--sc-fg)); }
+  border-bottom: 1px solid hsl(var(--sc-border) / .25); }
+.sc-table td { padding: 12px 14px; border-bottom: 1px solid hsl(var(--sc-border) / .25); color: hsl(var(--sc-fg)); }
 .sc-cell-ellip { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Horizontal scroll for tables too wide for their card (card still clips to its corners). */
 .sc-table-wrap { overflow-x: auto; max-width: 100%; }
@@ -1417,9 +1430,6 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    that to a second row. There is no transition on the collapse: it swaps one
    child for eleven rather than animating a width, so the correct amount of
    motion is none. */
-.sc-picker-collapsed { flex-wrap: nowrap; }
-/* The bottles stand on the shelf floor; the controls sit on its centre line. */
-.sc-picker-toggle { align-self: center; margin-left: 4px; }
 
 /* Each bottle sits in its own slot on the shelf. Positioned, so the sparkles
    on the equipped one have something to anchor to. */
@@ -1471,25 +1481,36 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
     0 0 0 2px hsl(var(--sc-card)),
     0 0 0 4px hsl(var(--sc-fg) / .85),
     var(--sc-shadow); }
-.sc-inv-title { margin: 0 0 6px; padding: 0 2px 5px; font-size: 11px; font-weight: 700;
-  letter-spacing: .08em; text-transform: uppercase; color: hsl(var(--sc-muted-fg));
-  border-bottom: var(--sc-border-w) solid hsl(var(--sc-border)); }
-.sc-inv-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
-.sc-inv-row { display: flex; align-items: center; gap: 8px; padding: 3px 2px; }
-.sc-inv-ic { flex: 0 0 auto; display: block; width: 20px; height: 20px; color: hsl(var(--sc-fg) / .85); }
-.sc-inv-name { flex: 1 1 auto; min-width: 0; font-size: 12px;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sc-inv-equip { flex: 0 0 auto; padding: 3px 7px; font: inherit; font-size: 11px; font-weight: 600;
-  cursor: pointer; border-radius: var(--sc-radius-sm);
-  border: var(--sc-border-w) solid hsl(var(--sc-border));
-  background: hsl(var(--sc-muted)); color: hsl(var(--sc-fg)); }
-.sc-inv-equip:hover { background: hsl(var(--sc-accent)); }
-/* The equipped row is filled, and its button also says so in words — the
-   colour is the second signal, never the only one. */
-.sc-inv-equip[aria-pressed="true"] { background: hsl(var(--sc-primary));
-  color: hsl(var(--sc-primary-fg)); border-color: hsl(var(--sc-primary)); }
-.sc-inv-equip:focus-visible { outline: var(--sc-border-w) solid hsl(var(--sc-ring));
+/* A tray of bottles. The row used to be a swatch, a name and an Equip button
+   all saying the same thing; the bottle is the control now and the name lives
+   on it, where a pointer and a screen reader both already look. */
+.sc-inv-list { list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.sc-inv-row { display: block; }
+.sc-inv-potion { position: relative; display: block; width: 100%; padding: 5px 2px;
+  cursor: pointer; line-height: 0; border-radius: var(--sc-radius-sm);
+  border: var(--sc-border-w) solid transparent; background: none;
+  color: hsl(var(--sc-fg) / .85); }
+.sc-inv-potion svg { width: 24px; height: 24px; display: block; margin: 0 auto;
+  pointer-events: none; }
+.sc-inv-potion:hover { background: hsl(var(--sc-accent));
+  border-color: hsl(var(--sc-border)); color: hsl(var(--sc-fg)); }
+/* The equipped bottle keeps a filled slot AND aria-pressed, so the state is
+   never carried by the fill alone. */
+.sc-inv-potion[aria-pressed="true"] { background: hsl(var(--sc-primary) / .18);
+  border-color: hsl(var(--sc-primary)); color: hsl(var(--sc-fg)); }
+.sc-inv-potion:focus-visible { outline: var(--sc-border-w) solid hsl(var(--sc-ring));
   outline-offset: 2px; }
+/* The cast. Stars around the bottle that was just taken off the tray, drawn
+   lit by default so the reduced-motion path — which skips the wait entirely
+   and equips at once — never shows a half-finished effect. */
+.sc-cast-stars { position: absolute; inset: -2px; pointer-events: none; }
+.sc-cast-stars svg { position: absolute; display: block;
+  width: 7px; height: 7px; color: hsl(var(--sc-primary)); }
+.sc-cast-star-0 { top: 0; left: 8%; }
+.sc-cast-star-1 { top: 12%; right: 6%; }
+.sc-cast-star-2 { bottom: 6%; left: 4%; }
+.sc-cast-star-3 { bottom: 0; right: 12%; }
 /* [flare] Scrollbars are furniture, and the OS default is the most modern
    object left on the page. Square thumb, hard edge, accent fill. The Firefox
    pair cannot express the border, so it degrades to a plain accent bar. */
@@ -1779,6 +1800,24 @@ h1, h2, h3, h4, h5, h6,
   .sc-potion .sc-potion-stars svg { animation: sc-sparkle 1.2s steps(2) infinite; }
   .sc-potion-star-1 { animation-delay: -.4s; }
   .sc-potion-star-2 { animation-delay: -.8s; }
+  /* The cast: 360ms, and SchemeRoot.tsx applies the pick when it ends — the
+     two durations are one number and must move together. Stepped like
+     everything else here; the bottle lifts a little and the stars pop in
+     around it. */
+  @keyframes sc-cast {
+    0% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-3px) scale(1.12); }
+    100% { transform: translateY(0) scale(1); }
+  }
+  @keyframes sc-cast-pop {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  .sc-inv-casting svg { animation: sc-cast .36s steps(3) 1; }
+  .sc-inv-casting .sc-cast-stars svg { animation: sc-cast-pop .36s steps(2) 1; }
+  .sc-cast-star-1 { animation-delay: .06s; }
+  .sc-cast-star-2 { animation-delay: .12s; }
+  .sc-cast-star-3 { animation-delay: .18s; }
 
   .sc-tour-star-1 { animation-delay: -.1s; }
   .sc-tour-star-2 { animation-delay: -.25s; }

@@ -547,12 +547,12 @@ describe('SHADCN_CSS', () => {
     );
   });
 
-  it('gives the collapse and its controls no transition at all', () => {
+  it('gives the tray and its bottles no transition at all', () => {
     // The nav's `transition: width .16s ease` is a documented pre-existing
-    // exception, not a pattern. Closing the shelf swaps one child for eleven
-    // rather than animating a width, so there is nothing to ease.
+    // exception, not a pattern. The tray opens and shuts by existing or not,
+    // so there is nothing to ease.
     const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
-    for (const sel of ['.sc-picker-collapsed', '.sc-picker-toggle', '.sc-picker-inv']) {
+    for (const sel of ['.sc-picker-inv', '.sc-inv-potion', '.sc-inv-list']) {
       const blocks = Array.from(
         rules.matchAll(new RegExp(`\\${sel}[^{}]*\\{([^}]*)\\}`, 'g')),
         m => m[1],
@@ -560,5 +560,39 @@ describe('SHADCN_CSS', () => {
       expect(`${sel}:${blocks.length > 0}`).toBe(`${sel}:true`);
       expect(blocks.filter(b => /transition/.test(b))).toEqual([]);
     }
+  });
+
+  it('runs the cast stepped, inside the query, and lit when it is off', () => {
+    // The pick is applied when the cast ends, so the animation is on the
+    // critical path of a state change: it has to be stepped like everything
+    // else, it has to sit inside the reduced-motion query, and the component
+    // has to skip the wait entirely when motion is off -- which is asserted in
+    // SchemePicker.test.tsx, because it is behaviour rather than style.
+    // Every keyframe and every animation: shorthand lives behind the query, and
+    // the sheet has more than one such block, so this is checked by finding the
+    // rule and looking at which block it fell in rather than by slicing at the
+    // first one.
+    const inQuery = (needle: string) => {
+      const at = SHADCN_CSS.indexOf(needle);
+      expect(`${needle}:${at >= 0}`).toBe(`${needle}:true`);
+      const opened = SHADCN_CSS.lastIndexOf(
+        '@media (prefers-reduced-motion: no-preference)',
+        at,
+      );
+      // Nothing between that @media and the rule may close it.
+      const between = SHADCN_CSS.slice(opened, at);
+      let depth = 0;
+      for (const ch of between) {
+        if (ch === '{') depth += 1;
+        else if (ch === '}') depth -= 1;
+      }
+      return opened >= 0 && depth > 0;
+    };
+    expect(inQuery('@keyframes sc-cast')).toBe(true);
+    expect(inQuery('.sc-inv-casting svg')).toBe(true);
+    expect(SHADCN_CSS).toMatch(/\.sc-inv-casting svg\s*\{[^}]*steps\(/);
+    // The stars are drawn lit by a plain rule, so the still frame is the
+    // designed one rather than a half-finished pop.
+    expect(SHADCN_CSS).toMatch(/\.sc-cast-stars svg\s*\{[^}]*color:/);
   });
 });

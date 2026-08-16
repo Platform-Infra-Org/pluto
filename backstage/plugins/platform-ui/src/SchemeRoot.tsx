@@ -40,8 +40,13 @@ import { resolveHeaderImages } from './headerImages';
  */
 const DRAG_THRESHOLD = 4;
 
-/** Whether the shelf is closed down to the equipped bottle alone. */
-const PICKER_COLLAPSED_KEY = 'platform-picker-collapsed';
+/**
+ * How long the cast runs before the pick is applied.
+ *
+ * Must match the sc-cast keyframes in styles.ts: the scheme changing is what
+ * ends the animation, so a shorter value here cuts it off mid-frame.
+ */
+const CAST_MS = 360;
 
 /** The two foreground tones a scheme can use, and each other's shade. */
 const WHITE = '0 0% 100%';
@@ -401,11 +406,14 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
   // root div is the whole mechanism.
   // Expanded is the default: the shelf is what exists today, and the closed
   // state is an opt-in.
-  const [collapsed, setCollapsed] = useState(
-    () =>
-      typeof localStorage !== 'undefined' &&
-      localStorage.getItem(PICKER_COLLAPSED_KEY) === '1',
-  );
+  // The floating shelf holds exactly one bottle: the equipped one, which is
+  // also the control that opens the inventory. There is no expand button and
+  // no collapsed state to remember — a shelf of eleven unlabelled 26px bottles
+  // was the thing the inventory replaced.
+  // The id mid-cast, if any. A pick is applied when its little animation ends
+  // rather than on the press, so the bottle is seen to be taken off the shelf.
+  const [casting, setCasting] = useState<string | null>(null);
+  const castTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // The inventory popover. Deliberately not persisted: it is a menu, and a menu
   // that reopens itself on every page load is a bug, not a preference.
   // ponytail: closed by its own button or by Escape only — no outside-click
@@ -451,17 +459,12 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
     }
   }, [scheme]);
 
-  useEffect(() => {
-    // Floating only. The sign-in card's picker has neither control, so it has
-    // no state worth remembering — and writing from it would let the card
-    // dictate what the app's shelf looks like on the next load.
-    if (!floating) return;
-    try {
-      localStorage.setItem(PICKER_COLLAPSED_KEY, collapsed ? '1' : '0');
-    } catch {
-      /* ignore */
-    }
-  }, [floating, collapsed]);
+  useEffect(
+    () => () => {
+      if (castTimer.current) clearTimeout(castTimer.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     // Escape closes the inventory and hands focus back to the button that
@@ -624,22 +627,43 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
     );
   };
 
-  // The two controls are floating-only, guarded exactly like the drag above:
-  // packages/app/src/modules/auth.tsx mounts a second, non-floating picker
-  // inside the sign-in card, and a collapse control there would be a control
-  // over a shelf that is already the whole card's width.
-  const shut = floating && collapsed;
+  // Floating only, guarded exactly like the drag above: packages/app's sign-in
+  // card mounts a second, non-floating picker, and there the shelf IS the whole
+  // card — every bottle is already on show, so there is nothing to open.
   // A pick that no longer exists degrades to the first bottle rather than
   // rendering nothing — the same rule applyScheme() uses.
   const equipped = SCHEMES.find(s => s.id === scheme) ?? SCHEMES[0];
-  const shelf = shut ? [equipped] : SCHEMES;
+  const shelf = floating ? [equipped] : SCHEMES;
+
+  /**
+   * Take a bottle off the shelf: play its cast, then equip.
+   *
+   * The delay is the animation and nothing else, so it is skipped outright when
+   * the reader has asked for less motion — waiting 360ms to apply a colour
+   * nobody is going to see move is a worse experience, not a gentler one.
+   */
+  const equip = (id: string) => {
+    const reduced =
+      typeof matchMedia === 'function' &&
+      matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) {
+      setScheme(id);
+      setInv(false);
+      return;
+    }
+    setCasting(id);
+    if (castTimer.current) clearTimeout(castTimer.current);
+    castTimer.current = setTimeout(() => {
+      setCasting(null);
+      setScheme(id);
+      setInv(false);
+    }, CAST_MS);
+  };
 
   return (
     <div
       ref={ref}
-      className={`sc sc-picker${floating ? ' sc-picker-float' : ''}${
-        shut ? ' sc-picker-collapsed' : ''
-      }`}
+      className={`sc sc-picker${floating ? ' sc-picker-float' : ''}`}
       style={pos ? { left: pos.x, top: pos.y } : undefined}
       data-dragging={dragging ? 'true' : undefined}
       onPointerDown={onPointerDown}
@@ -652,28 +676,34 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       {shelf.map((s, i) => (
         <button
           key={s.id}
+          ref={floating ? invBtn : undefined}
           type="button"
           className="sc-potion"
           // Staggers the rattle so the bottles move out of phase. In unison
           // they read as the shelf vibrating rather than as loose objects.
           style={{ ['--sc-i' as string]: i } as CSSProperties}
           aria-pressed={s.id === scheme}
+          // On the shelf this bottle is the way into the inventory, so it says
+          // so; in the sign-in card it is still just a swatch that picks.
+          {...(floating
+            ? { 'aria-expanded': inv, 'aria-controls': 'sc-picker-inv' }
+            : {})}
           // The sprite is decorative, so the button carries the name itself.
-          aria-label={s.label}
-          title={s.label}
-          onClick={() => setScheme(s.id)}
+          aria-label={
+            floating ? `${s.label} — open potion inventory` : s.label
+          }
+          title={floating ? `${s.label} — open potion inventory` : s.label}
+          onClick={() => (floating ? setInv(v => !v) : setScheme(s.id))}
         >
           <PixelPotion
             liquid={`hsl(${s.hsl})`}
             sprite={s.mode === 'greek' ? AMPHORA_VESSEL : undefined}
           />
-          {/* Sparkles on the equipped bottle, and only while the shelf is shut
-              — with ten others on screen they would be noise rather than a
-              mark. Decoration and nothing else: what is equipped is carried by
-              aria-pressed, by the label, and by being the only bottle left.
-              Drawn at full opacity by default, so under reduced motion they
-              simply sit there instead of blinking. */}
-          {shut && (
+          {/* Sparkles on the equipped bottle. Decoration and nothing else: what
+              is equipped is carried by aria-pressed, by the label, and by being
+              the only bottle on the shelf. Drawn at full opacity by default, so
+              under reduced motion they simply sit there instead of blinking. */}
+          {floating && (
             <span className="sc-potion-stars" aria-hidden="true">
               {[0, 1, 2].map(n => (
                 <PixelStar
@@ -685,32 +715,6 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
           )}
         </button>
       ))}
-      {floating && (
-        <button
-          type="button"
-          className="sc-picker-toggle"
-          aria-expanded={!collapsed}
-          aria-label={collapsed ? 'Show all potions' : 'Hide potions'}
-          title={collapsed ? 'Show all potions' : 'Hide potions'}
-          onClick={() => setCollapsed(c => !c)}
-        >
-          {collapsed ? '»' : '«'}
-        </button>
-      )}
-      {floating && (
-        <button
-          ref={invBtn}
-          type="button"
-          className="sc-picker-toggle sc-picker-bag"
-          aria-expanded={inv}
-          aria-controls="sc-picker-inv"
-          aria-label="Potion inventory"
-          title="Potion inventory"
-          onClick={() => setInv(v => !v)}
-        >
-          ▤
-        </button>
-      )}
       {floating && inv && (
         <div
           id="sc-picker-inv"
@@ -718,25 +722,36 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
           role="group"
           aria-label="Potion inventory"
         >
-          <p className="sc-inv-title">Inventory</p>
           <ul className="sc-inv-list">
             {SCHEMES.map(s => (
               <li key={s.id} className="sc-inv-row">
-                <PixelPotion
-                  className="sc-inv-ic"
-                  liquid={`hsl(${s.hsl})`}
-                  sprite={s.mode === 'greek' ? AMPHORA_VESSEL : undefined}
-                />
-                <span className="sc-inv-name">{s.label}</span>
-                {/* The word, not only the pressed state: what is equipped has
-                    to be readable with no styling and no motion at all. */}
+                {/* The bottle IS the control. No second equip button beside it:
+                    the row was a swatch, a name and a button all saying the
+                    same thing, and the name is on the button already. */}
                 <button
                   type="button"
-                  className="sc-inv-equip"
+                  className={`sc-inv-potion${
+                    casting === s.id ? ' sc-inv-casting' : ''
+                  }`}
                   aria-pressed={s.id === scheme}
-                  onClick={() => setScheme(s.id)}
+                  aria-label={s.label}
+                  title={s.label}
+                  onClick={() => equip(s.id)}
                 >
-                  {s.id === scheme ? 'Equipped' : 'Equip'}
+                  <PixelPotion
+                    liquid={`hsl(${s.hsl})`}
+                    sprite={s.mode === 'greek' ? AMPHORA_VESSEL : undefined}
+                  />
+                  {casting === s.id && (
+                    <span className="sc-cast-stars" aria-hidden="true">
+                      {[0, 1, 2, 3].map(n => (
+                        <PixelStar
+                          key={n}
+                          className={`sc-cast-star sc-cast-star-${n}`}
+                        />
+                      ))}
+                    </span>
+                  )}
                 </button>
               </li>
             ))}

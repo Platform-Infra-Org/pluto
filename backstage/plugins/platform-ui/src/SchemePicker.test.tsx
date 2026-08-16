@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 import { SchemePicker, SCHEMES } from './SchemeRoot';
 
 /**
@@ -55,7 +55,10 @@ describe('SchemePicker', () => {
   });
 
   it('changes the scheme when a potion is clicked', () => {
-    const { container } = render(<SchemePicker floating />);
+    // The sign-in card's picker, where every bottle is on show and a press is
+    // still a plain pick. On the floating shelf the one bottle is the way into
+    // the tray instead, which is covered below.
+    const { container } = render(<SchemePicker />);
     const [, second] = potions(container);
 
     fireEvent.click(second);
@@ -142,33 +145,33 @@ describe('SchemePicker', () => {
     expect(shelf.style.left).toBe(seeded);
   });
 
-  describe('collapsing the shelf', () => {
-    it('closes down to the one bottle that is equipped', () => {
-      const { container, getByLabelText } = render(<SchemePicker floating />);
-      expect(potions(container)).toHaveLength(SCHEMES.length);
+  describe('the shelf', () => {
+    it('holds only the equipped bottle, and that bottle opens the tray', () => {
+      const { container } = render(<SchemePicker floating />);
 
-      fireEvent.click(getByLabelText('Hide potions'));
+      const shelf = potions(container);
+      expect(shelf).toHaveLength(1);
+      // Which one it is, is the point: the equipped one, said in attributes
+      // rather than in a glow.
+      expect(shelf[0].getAttribute('aria-pressed')).toBe('true');
+      expect(shelf[0].getAttribute('aria-label')).toContain(SCHEMES[0].label);
+      expect(shelf[0].getAttribute('aria-expanded')).toBe('false');
+      expect(container.querySelector('.sc-picker-inv')).toBeNull();
 
-      const left = potions(container);
-      expect(left).toHaveLength(1);
-      // Which one survived is the whole point: it is the equipped one, and it
-      // says so in attributes rather than in a glow.
-      expect(left[0].getAttribute('aria-pressed')).toBe('true');
-      expect(left[0].getAttribute('aria-label')).toBe(SCHEMES[0].label);
-      expect(localStorage.getItem('platform-picker-collapsed')).toBe('1');
+      fireEvent.click(shelf[0]);
+
+      expect(container.querySelector('.sc-picker-inv')).not.toBeNull();
+      expect(potions(container)[0].getAttribute('aria-expanded')).toBe('true');
     });
 
-    it('closes on the first press, not the second', () => {
-      // The real regression, and the reason it is written with a pointer
-      // sequence: a browser sends pointerdown before click, jsdom does not.
-      // Seeding the drag position on that pointerdown ran a state update
-      // between the two, and the re-render swallowed the click — so on a shelf
-      // that had never been dragged, the first thing a user clicked after every
-      // reload did nothing and only the second press worked. Every test above
-      // fires a bare click and so could not see it.
-      const { container, getByLabelText } = render(<SchemePicker floating />);
+    it('opens on the first press, not the second', () => {
+      // Written with a pointer sequence because a browser sends pointerdown
+      // before click and jsdom does not. Seeding the drag position on that
+      // pointerdown ran a state update between the two and the re-render
+      // swallowed the click, so the first thing pressed after every reload did
+      // nothing. Every bare-click test above walked straight past it.
+      const { container } = render(<SchemePicker floating />);
       const shelf = container.querySelector('.sc-picker-float')!;
-      const toggle = getByLabelText('Hide potions');
 
       fireEvent.pointerDown(shelf, {
         button: 0,
@@ -177,49 +180,36 @@ describe('SchemePicker', () => {
         clientY: 10,
       });
       fireEvent.pointerUp(shelf, { pointerId: 1, clientX: 10, clientY: 10 });
-      fireEvent.click(toggle);
+      fireEvent.click(potions(container)[0]);
 
-      expect(potions(container)).toHaveLength(1);
-      expect(localStorage.getItem('platform-picker-collapsed')).toBe('1');
+      expect(container.querySelector('.sc-picker-inv')).not.toBeNull();
     });
 
-    it('comes back closed', () => {
-      localStorage.setItem('platform-picker-collapsed', '1');
-      const { container } = render(<SchemePicker floating />);
-
-      expect(potions(container)).toHaveLength(1);
-      expect(
-        container.querySelector('.sc-picker')!.classList.contains('sc-picker-collapsed'),
-      ).toBe(true);
-    });
-
-    it('keeps the sign-in card free of both controls', () => {
+    it('keeps the sign-in card free of the tray', () => {
       // packages/app/src/modules/auth.tsx mounts a second, non-floating picker
-      // inside the card. Neither the fold nor the inventory belongs there, and
-      // a persisted collapse must not reach it either.
-      localStorage.setItem('platform-picker-collapsed', '1');
+      // inside the card. There the shelf IS every bottle, so there is nothing
+      // to open and no control to show.
       const { container } = render(<SchemePicker />);
 
       expect(container.querySelector('.sc-picker-toggle')).toBeNull();
       expect(container.querySelector('.sc-picker-inv')).toBeNull();
       expect(potions(container)).toHaveLength(SCHEMES.length);
+      expect(potions(container)[0].getAttribute('aria-expanded')).toBeNull();
     });
 
     it('says which potion is equipped without any motion', () => {
-      // The sparkles are decoration. Turn every animation off and the closed
-      // shelf still answers the question, from aria-pressed, from the label,
-      // and from being one bottle — and the stars themselves are hidden from
-      // assistive technology entirely.
-      const { container, getByLabelText } = render(<SchemePicker floating />);
-      fireEvent.click(getByLabelText('Hide potions'));
+      // The sparkles are decoration. Turn every animation off and the shelf
+      // still answers the question, from aria-pressed, from the label, and from
+      // being one bottle — and the stars are hidden from assistive technology.
+      const { container } = render(<SchemePicker floating />);
 
       const [bottle] = potions(container);
       expect(bottle.getAttribute('aria-pressed')).toBe('true');
-      expect(bottle.getAttribute('aria-label')).toBe(SCHEMES[0].label);
+      expect(bottle.getAttribute('aria-label')).toContain(SCHEMES[0].label);
 
       const stars = Array.from(container.querySelectorAll('.sc-potion-star'));
       expect(stars.length).toBeGreaterThan(0);
-      expect(stars.map(s => s.getAttribute('aria-hidden'))).toEqual(
+      expect(stars.map(st => st.getAttribute('aria-hidden'))).toEqual(
         stars.map(() => 'true'),
       );
       expect(
@@ -231,51 +221,93 @@ describe('SchemePicker', () => {
   describe('the inventory', () => {
     const open = () => {
       const view = render(<SchemePicker floating />);
-      fireEvent.click(view.getByLabelText('Potion inventory'));
+      fireEvent.click(view.container.querySelector('.sc-potion')!);
       return view;
     };
+    const trayPotions = (c: HTMLElement) =>
+      Array.from(c.querySelectorAll('.sc-inv-potion')) as HTMLElement[];
 
-    it('lists every equippable potion, each with its own action', () => {
+    it('is a tray of bottles and nothing else', () => {
       const { container } = open();
-      const rows = Array.from(container.querySelectorAll('.sc-inv-row'));
+      const tray = trayPotions(container);
 
-      expect(rows).toHaveLength(SCHEMES.length);
-      expect(rows.map(r => r.querySelector('.sc-inv-name')!.textContent)).toEqual(
-        SCHEMES.map(s => s.label),
+      expect(tray).toHaveLength(SCHEMES.length);
+      // Each bottle carries its own name, so dropping the label and the Equip
+      // button beside it costs nothing a reader or a screen reader needed.
+      expect(tray.map(t => t.getAttribute('aria-label'))).toEqual(
+        SCHEMES.map(sc => sc.label),
       );
-      expect(rows.filter(r => r.querySelector('.sc-inv-equip'))).toHaveLength(
-        SCHEMES.length,
-      );
+      expect(container.querySelector('.sc-inv-equip')).toBeNull();
+      expect(container.querySelector('.sc-inv-name')).toBeNull();
+      // Exactly one is equipped, and it says so without relying on its fill.
+      expect(
+        tray.filter(t => t.getAttribute('aria-pressed') === 'true'),
+      ).toHaveLength(1);
     });
 
-    it('equips the potion whose row was actioned', () => {
-      const { container } = open();
-      const row = Array.from(container.querySelectorAll('.sc-inv-row'))[3];
-      const equip = row.querySelector('.sc-inv-equip') as HTMLElement;
-      expect(equip.textContent).toBe('Equip');
+    it('casts before it equips, and equips when the cast ends', () => {
+      jest.useFakeTimers();
+      try {
+        const { container } = open();
+        const target = trayPotions(container)[3];
 
-      fireEvent.click(equip);
+        fireEvent.click(target);
 
-      expect(localStorage.getItem('platform-scheme')).toBe(SCHEMES[3].id);
-      // Readable as words, not only as a fill colour.
-      expect(equip.textContent).toBe('Equipped');
-      expect(equip.getAttribute('aria-pressed')).toBe('true');
-      const pressed = potions(container).filter(
-        p => p.getAttribute('aria-pressed') === 'true',
-      );
-      expect(pressed.map(p => p.getAttribute('aria-label'))).toEqual([
-        SCHEMES[3].label,
-      ]);
+        // Mid-cast: the animation is running and nothing has been applied yet.
+        expect(
+          container.querySelector('.sc-inv-casting'),
+        ).not.toBeNull();
+        expect(container.querySelectorAll('.sc-cast-star').length).toBeGreaterThan(0);
+        expect(localStorage.getItem('platform-scheme')).not.toBe(SCHEMES[3].id);
+
+        act(() => {
+          jest.advanceTimersByTime(400);
+        });
+
+        expect(localStorage.getItem('platform-scheme')).toBe(SCHEMES[3].id);
+        expect(container.querySelector('.sc-inv-casting')).toBeNull();
+        // Picking closes the tray, and the shelf now holds the new bottle.
+        expect(container.querySelector('.sc-picker-inv')).toBeNull();
+        expect(potions(container)[0].getAttribute('aria-label')).toContain(
+          SCHEMES[3].label,
+        );
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
-    it('closes on Escape and hands focus back to the control that opened it', () => {
-      const { container, getByLabelText } = open();
-      const panel = container.querySelector('.sc-picker-inv')!;
+    it('equips at once for a reader who asked for less motion', () => {
+      // The wait exists only to let the cast play. Holding a colour back for
+      // 360ms of animation nobody will see is a worse experience, not a
+      // gentler one.
+      const mm = jest.fn().mockReturnValue({
+        matches: true,
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+      });
+      (window as unknown as { matchMedia: unknown }).matchMedia = mm;
+      jest.useFakeTimers();
+      try {
+        const { container } = open();
+        fireEvent.click(trayPotions(container)[2]);
 
-      fireEvent.keyDown(panel, { key: 'Escape' });
+        // No timer advanced: it is already applied.
+        expect(localStorage.getItem('platform-scheme')).toBe(SCHEMES[2].id);
+        expect(container.querySelector('.sc-inv-casting')).toBeNull();
+      } finally {
+        jest.useRealTimers();
+        delete (window as unknown as { matchMedia?: unknown }).matchMedia;
+      }
+    });
+
+    it('closes on Escape and hands focus back to the bottle that opened it', () => {
+      const { container } = open();
+      expect(container.querySelector('.sc-picker-inv')).not.toBeNull();
+
+      fireEvent.keyDown(window, { key: 'Escape' });
 
       expect(container.querySelector('.sc-picker-inv')).toBeNull();
-      expect(document.activeElement).toBe(getByLabelText('Potion inventory'));
+      expect(document.activeElement).toBe(potions(container)[0]);
     });
   });
 });
