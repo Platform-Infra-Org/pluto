@@ -3,7 +3,7 @@
 // the assertions read as the thing being tested — whether the control is
 // offered — instead of as a className check.
 import '@testing-library/jest-dom';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { TestApiProvider } from '@backstage/test-utils';
 import { SuspendedNode } from '@internal/plugin-platform-common';
 import { requestsApiRef } from '../api';

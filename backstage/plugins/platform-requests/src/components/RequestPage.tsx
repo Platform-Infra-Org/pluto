@@ -460,8 +460,6 @@ export function RequestPage() {
                 nodes={request.suspendedNodes ?? []}
                 isAdmin={isAdmin}
                 groups={myGroups}
-                actor={me}
-                requester={request.requester}
                 ownerGroup={request.ownerGroup}
                 onResumed={load}
               />
