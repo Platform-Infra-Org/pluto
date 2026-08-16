@@ -83,8 +83,12 @@ export function spiderverseCss(): string {
 /* ===== Shape: the panel ===== */
 :root.sc-spiderverse {
   --sc-shadow: 4px 4px 0 hsl(var(--sc-fg));
-  --sc-radius: 2px;
-  --sc-radius-sm: 2px;
+  /* A comic panel is a hard rectangle, but a 2px corner on every surface in an
+     app reads as unfinished rather than as a panel. The corners join the house
+     radius; the 3px rule and the hard offset shadow are what actually carry
+     the panel, and neither moves. */
+  --sc-radius: 12px;
+  --sc-radius-sm: 8px;
   --sc-border-w: 3px;
 }
 
@@ -95,7 +99,7 @@ export function spiderverseCss(): string {
 :root.sc-spiderverse .MuiPaper-elevation1,
 :root.sc-spiderverse .MuiPaper-elevation2,
 :root.sc-spiderverse .sc-card {
-  border-radius: 2px !important;
+  border-radius: var(--sc-radius) !important;
   border: 3px solid hsl(var(--sc-fg)) !important;
   box-shadow: 4px 4px 0 hsl(var(--sc-fg)) !important;
   /* Ben-Day dots, at the alpha that keeps type on top of them readable. The
@@ -118,7 +122,7 @@ export function spiderverseCss(): string {
 :root.sc-spiderverse .sc-btn,
 :root.sc-spiderverse button[class*="bui-Button"],
 :root.sc-spiderverse a[class*="bui-Button"] {
-  border-radius: 2px !important;
+  border-radius: var(--sc-radius-sm) !important;
   border: 3px solid hsl(var(--sc-fg)) !important;
   box-shadow: 3px 3px 0 hsl(var(--sc-fg)) !important;
   font-weight: 700;
@@ -128,7 +132,7 @@ export function spiderverseCss(): string {
 /* A badge is a caption box. */
 :root.sc-spiderverse .sc-badge,
 :root.sc-spiderverse .MuiChip-root {
-  border-radius: 2px !important;
+  border-radius: var(--sc-radius-sm) !important;
   border: 2px solid hsl(var(--sc-fg)) !important;
   background: hsl(var(--sc-caption)) !important;
   color: hsl(0 0% 6%) !important;
@@ -136,7 +140,7 @@ export function spiderverseCss(): string {
 }
 :root.sc-spiderverse .sc-nav-mark,
 :root.sc-spiderverse .sc-login-mark {
-  border-radius: 2px !important;
+  border-radius: var(--sc-radius-sm) !important;
   border: 3px solid hsl(var(--sc-fg)) !important;
   background: hsl(var(--sc-primary)) !important;
   box-shadow: 3px 3px 0 hsl(var(--sc-fg)) !important;

@@ -33,9 +33,11 @@ export const SHADCN_CSS = `
 :root {
   /* 8-bit, softened: the shadow keeps its offset and its hard edge — that is
      the pixel signature — but drops most of its weight, and corners are rounded
-     rather than square. Chunky 2px outlines stay. */
-  --sc-radius: 6px;
-  --sc-radius-sm: 4px;
+     rather than square. Chunky 2px outlines stay.
+     The house radius is the soft one the modern references converge on; the
+     border width beside it is what still separates one mode from the next. */
+  --sc-radius: 12px;
+  --sc-radius-sm: 8px;
   --sc-border-w: 2px;
   --sc-shadow: 3px 3px 0 hsl(var(--sc-fg) / .16);
   --sc-font-ui: 'Clash Grotesk', Inter, system-ui, -apple-system, sans-serif;
@@ -222,25 +224,49 @@ body, body *, input, select, textarea, button, optgroup {
    production build. */
 .MuiButton-root, .MuiTab-root, .MuiChip-root, .MuiTableCell-head,
 .MuiTableSortLabel-root, .MuiFormLabel-root, .MuiInputLabel-root,
-.MuiTypography-h1, .MuiTypography-h2, .MuiTypography-h3,
-.MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6,
-.MuiCardHeader-title, .MuiDialogTitle-root, .MuiAlertTitle-root,
-[class*="bui-Button"], [class*="bui-HeaderTitle"], [class*="bui-HeaderBreadcrumb"] {
+[class*="bui-Button"] {
   font-family: var(--sc-font-ui) !important;
   text-transform: uppercase !important;
   letter-spacing: 0 !important;
   font-weight: 400 !important;
+}
+/* A native page's title is the same object as the h1 that says "Welcome to
+   Platform", so it is set the same way: sentence case, 600, tracked in.
+   It used to sit in the rule above and came out uppercase at weight 400 —
+   a bitmap-face convention that reads as shouting in an outline grotesque,
+   and it made every native page look like a different product from ours.
+   The breadcrumb and the toolbar name are the top bar's own text and follow
+   the title rather than the chrome. */
+.MuiTypography-h1, .MuiTypography-h2, .MuiTypography-h3,
+.MuiTypography-h4, .MuiTypography-h5, .MuiTypography-h6,
+.MuiCardHeader-title, .MuiDialogTitle-root, .MuiAlertTitle-root,
+[class*="bui-HeaderTitle"], [class*="bui-HeaderBreadcrumb"],
+[class*="bui-PluginHeaderToolbarName"] {
+  font-family: var(--sc-font-title) !important;
+  text-transform: none !important;
+  letter-spacing: -0.025em !important;
+  font-weight: 600 !important;
 }
 /* The BUI page title is the biggest type on a native page. */
 [class*="bui-HeaderTitle"] { font-size: 28px !important; }
 /* The one bui surface with no rule here: PluginHeader ships its own white
    ground and black ink, measured rgb(255,255,255) on a production build while
    the mode's card was 42 45% 98%. Every potion is affected, so this is
-   app-wide rather than route-scoped. */
+   app-wide rather than route-scoped.
+   Ground and ink only, deliberately: the substring hook matches the whole
+   PluginHeader family — Toolbar, ToolbarContent, ToolbarIcon, ToolbarName,
+   Breadcrumbs — so any edge declared here is drawn seven times over, once
+   under the icon, once under the title and once under the bar. Colour
+   inherits harmlessly down that tree; a border does not. */
 [class*="bui-PluginHeader"] {
   background: hsl(var(--sc-card)) !important;
   color: hsl(var(--sc-fg)) !important;
-  border-bottom: var(--sc-border-w) solid hsl(var(--sc-border));
+}
+/* bui draws its own hairline under the toolbar as well. With the header now on
+   the card ground the rule separates nothing, and it read as a third stray
+   underline beneath the two above. */
+[class*="bui-PluginHeaderToolbar"] {
+  border-bottom: none !important;
 }
 /* The API explorer's title sits on a different gutter from its own table.
    Its page is <HeaderPage> + <Content>, while every other native page is

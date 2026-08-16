@@ -94,11 +94,17 @@ describe('the patterns that make it Foudre', () => {
   });
 
   it('draws the site radius set, in the site proportions', () => {
-    // Measured on the real DOM: 10px the default box (73 elements), 20px the
+    // Measured on the real DOM: a small default box (73 elements), 20px the
     // larger surface (40), 50% the buttons (35). A summary gave 20px as the
     // default and never mentioned the circles at all.
+    // The default box now sits at the app's house radius rather than the
+    // site's own 10px, so what is pinned here is the ordering that makes the
+    // set read as this design — box < larger surface, and the discs — not a
+    // number the house radius is free to move.
     const css = stripComments(foudreCss());
-    expect(valueIn(foudreCss(), ':root.sc-foudre', 'radius')).toBe('10px');
+    const base = valueIn(foudreCss(), ':root.sc-foudre', 'radius') ?? '';
+    expect(base).toMatch(/^\d+px$/);
+    expect(parseInt(base, 10)).toBeLessThan(20);
     expect(css).toMatch(/border-radius:\s*20px/);
     expect(css).toMatch(/border-radius:\s*50%/);
   });

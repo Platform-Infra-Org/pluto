@@ -215,6 +215,25 @@ describe('SHADCN_CSS', () => {
     );
   });
 
+  it('sets a native page title the way it sets "Welcome to Platform"', () => {
+    // A native page's title used to sit in the chrome rule and came out
+    // uppercase at weight 400 — a bitmap-face convention that reads as
+    // shouting in an outline grotesque and made every Backstage page look
+    // like a different product from ours.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    const block = rules.match(
+      /\.MuiTypography-h1,[\s\S]*?\{([^}]*)\}/,
+    );
+    expect(block).toBeTruthy();
+    expect(block![1]).toMatch(/text-transform:\s*none/);
+    expect(block![1]).toMatch(/font-family:\s*var\(--sc-font-title\)/);
+    // The micro-label keeps its uppercase: it is a wayfinding convention
+    // rather than a texture, and it is the one place the sheet still shouts.
+    expect(rules).toMatch(
+      /\.MuiTableCell-head,[\s\S]{0,300}text-transform:\s*uppercase/,
+    );
+  });
+
   it('drops the type subtitle from a template card', () => {
     // The card led with its type rather than its name; the type repeats what
     // the template's own copy already says.
@@ -252,6 +271,20 @@ describe('SHADCN_CSS', () => {
     expect(SHADCN_CSS).toMatch(
       /\[class\*="bui-PluginHeader"\]\s*\{[^}]*hsl\(var\(--sc-card\)\)/,
     );
+  });
+
+  it('declares no edge on the plugin header, which is seven elements', () => {
+    // The substring hook matches the whole PluginHeader family — Toolbar,
+    // ToolbarContent, ToolbarIcon, ToolbarName, Breadcrumbs and the bar — so a
+    // border here is drawn once under the icon, once under the title and once
+    // under the box. That shipped, and it read as three stray underlines.
+    // Ground and ink inherit down that tree harmlessly; an edge does not.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    const block = rules.match(
+      /\[class\*="bui-PluginHeader"\]\s*\{([^}]*)\}/,
+    );
+    expect(block).toBeTruthy();
+    expect(block![1]).not.toMatch(/border/);
   });
 
   it('recolours the visualizer tree, which bypasses the theme overrides', () => {

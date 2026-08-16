@@ -96,12 +96,14 @@ export function foudreCss(): string {
 }
 
 /* ===== Shape =====
-   The site's own radius set, in its own proportions: 10px the default box,
-   20px the larger surface, 50% the buttons. */
+   The site's own radius set, in its own proportions: the default box, 20px the
+   larger surface, 50% the buttons. The default box comes up to the app's house
+   radius rather than the site's 10px — the proportion between the three is what
+   reads as this design, and the hairline rule and the discs are untouched. */
 :root.sc-foudre {
   --sc-shadow: none;
-  --sc-radius: 10px;
-  --sc-radius-sm: 10px;
+  --sc-radius: 12px;
+  --sc-radius-sm: 8px;
   --sc-border-w: 1px;
   /* The easing vocabulary, declared once so every rule below uses the same
      curves. Taken from the site: the first is on ~950 of its elements, the
@@ -169,7 +171,11 @@ export function foudreCss(): string {
      sheet said 38px/0.70, and the 0.70 IS the reference's display setting. */
   font-family: var(--sc-font-ui) !important;
   font-weight: 700 !important;
-  font-size: 38px !important;
+  /* 30px, down from 38px: the reference sets its headline against a near-empty
+     page, and at 38px the same block sat on top of a dense app screen and read
+     as a banner rather than a title. The 0.70 ratio is untouched, so the
+     headline keeps the stacked-block proportion that is the point of it. */
+  font-size: 30px !important;
   line-height: .70 !important;
   letter-spacing: -0.03em;
   text-transform: uppercase;

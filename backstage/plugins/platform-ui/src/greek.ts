@@ -181,13 +181,33 @@ export function greekCss(): string {
   background-image: ${art(COLUMN, GOLD)}, ${art(COLUMN, GOLD)};
 }
 
-/* A meander rule under section headings, the same band at half height. */
+/* A meander rule under section headings, the same band at half height.
+   The band is painted on the heading's own box, so the box has to measure the
+   words. Two things were stretching it, and both had to go: an h1 is a block,
+   so it took the whole column; and the block caret is an ::after whose glyph
+   carries about 30px of side bearing, so even a shrink-wrapped box ran a full
+   caret-width past the last letter. Taking the caret out of the flow leaves
+   the frieze exactly as wide as the title — measured at 268px against 268px
+   of text — and the caret still lands where it always did, just after it. */
 :root.sc-greek .sc-h1 {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
   padding-bottom: 6px;
   background-image: ${art(MEANDER, BRONZE)};
-  background-repeat: repeat-x;
+  /* round, not repeat-x: the band is now as wide as the words, and a title is
+     rarely an exact multiple of the tile — at 268px the last 20px tile was
+     cut mid-figure and read as a stray bracket. round scales the tile by the
+     fraction needed to fit a whole number, which is what a frieze does on a
+     real wall. */
+  background-repeat: round no-repeat;
   background-size: 20px 10px;
   background-position: left bottom;
+}
+:root.sc-greek .sc-h1::after {
+  position: absolute;
+  left: 100%;
+  top: 0;
 }
 :root.sc-greek.sc-dark .sc-h1 {
   background-image: ${art(MEANDER, GOLD)};

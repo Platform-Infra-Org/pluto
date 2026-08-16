@@ -58,19 +58,23 @@ export const BRAND_DEFS: BrandDef[] = [
     id: 'newform',
     label: 'New Form',
     // Electric green #2bee4b is a display fill: it carries white at 1.8:1 and
-    // ink at 11.9:1. The button takes a darkened green; the glow keeps the
-    // published hue, which is the one effect this reference actually casts.
+    // ink at 11.9:1. The button takes a darkened green.
+    // The dark register ran the fill itself at 85% saturation, which is the
+    // site's poster value and, spread over a working screen, glowed. Down to
+    // 48% (8.08:1 on its ink) it is still unmistakably this green without
+    // lighting the room. The glow is this reference's one real effect so it
+    // stays, at roughly half its former strength and reach.
     bottle: '129 60% 30%',
     bottleFg: WHITE,
     light: { bg:'120 12% 98%', fg:'135 10% 8%', card:'0 0% 100%', muted:'120 20% 95%',
       mutedFg:'135 9% 28%', border:'135 9% 42%', primary:'129 60% 30%', primaryFg:WHITE,
       accent:'129 60% 92%', accentFg:'135 10% 12%' },
     dark: { bg:'135 10% 5%', fg:'120 12% 97%', card:'135 9% 10%', muted:'135 8% 20%',
-      mutedFg:'120 10% 72%', border:'135 8% 42%', primary:'129 85% 55%', primaryFg:'135 10% 6%',
+      mutedFg:'120 10% 72%', border:'135 8% 42%', primary:'129 48% 52%', primaryFg:'135 10% 6%',
       accent:'135 10% 16%', accentFg:'120 12% 97%' },
-    radius: { base:'10px', card:'10px', button:'8px' },
+    radius: { base:'12px', card:'16px', button:'10px' },
     borderW: '1px',
-    glow: '1px 8px 20px hsl(129 71% 22% / .45)',
+    glow: '1px 4px 14px hsl(129 45% 20% / .24)',
     ease: 'cubic-bezier(.2, .8, .2, 1)',
   },
   {
@@ -88,7 +92,9 @@ export const BRAND_DEFS: BrandDef[] = [
       mutedFg:'38 45% 78%', border:'20 20% 44%', primary:'38 95% 59%', primaryFg:'20 58% 10%',
       accent:'20 28% 17%', accentFg:'38 30% 90%' },
     // 100% radius on 94 elements — this reference is built out of circles.
-    radius: { base:'6px', card:'6px', button:'9999px' },
+    // Surfaces raised to the house radius; the pill button is the identity
+    // and keeps its own number.
+    radius: { base:'12px', card:'16px', button:'9999px' },
     borderW: '1px',
   },
   {
@@ -105,8 +111,11 @@ export const BRAND_DEFS: BrandDef[] = [
     dark: { bg:'0 0% 4%', fg:'0 0% 96%', card:'0 0% 10%', muted:'0 0% 18%',
       mutedFg:'0 0% 72%', border:'0 0% 40%', primary:'240 100% 72%', primaryFg:'0 0% 4%',
       accent:'240 25% 15%', accentFg:'0 0% 96%' },
-    // 4px on one element and nothing else: this reference is square.
-    radius: { base:'2px', card:'2px', button:'2px' },
+    // The reference is square — 4px on one element and nothing else — but a
+    // square surface reads as unfinished beside the rest of the app, so the
+    // corners come up to the house radius. What carries the brutalism here is
+    // the rule weight and the pure-blue accent, both untouched.
+    radius: { base:'12px', card:'16px', button:'10px' },
     borderW: '1px',
   },
   {
@@ -123,8 +132,9 @@ export const BRAND_DEFS: BrandDef[] = [
     dark: { bg:'0 0% 5%', fg:'27 33% 96%', card:'0 0% 9%', muted:'241 20% 22%',
       mutedFg:'27 20% 76%', border:'0 0% 40%', primary:'57 88% 58%', primaryFg:'0 0% 8%',
       accent:'241 26% 24%', accentFg:'27 33% 96%' },
-    radius: { base:'6px', card:'6px', button:'100px' },
-    // 3px black rules on 32 elements — the heaviest thing on the page.
+    radius: { base:'12px', card:'16px', button:'100px' },
+    // 3px black rules on 32 elements — the heaviest thing on the page, and the
+    // reason this mode still reads as itself at a softer corner.
     borderW: '3px',
   },
   {
