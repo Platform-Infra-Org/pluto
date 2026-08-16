@@ -1142,6 +1142,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mode-potions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mode potions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#motion" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1328,6 +1339,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#mode-potions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mode potions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#motion" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1471,14 +1493,65 @@ changing the system preference updates it live. An explicit choice always wins �
 that is what choosing means.</p>
 <h2 id="where-colour-deliberately-ignores-the-picker">Where colour deliberately ignores the picker<a class="headerlink" href="#where-colour-deliberately-ignores-the-picker" title="Permanent link">&para;</a></h2>
 <p>The experience bar is yellow while a workflow runs, green when it lands, red
-when it does not — regardless of the picked scheme. Status has to mean the same
-thing in every theme; a bar that is violet on Tuesday and amber on Wednesday
-says nothing at a glance.</p>
+when it does not — regardless of the picked <em>accent</em>. Status has to mean the
+same thing across a working session; a bar that is violet on Tuesday and amber
+on Wednesday says nothing at a glance.</p>
+<p>The rule is about the accent, and there is exactly one exception: a <strong>mode</strong>
+potion may redefine status hue, and Ancient Greek does — laurel-gold, Styx
+cyan, ember. What makes that admissible rather than a hole in the rule is that
+it is wholesale and measured:</p>
+<ul>
+<li>A mode redefines <strong>every</strong> status token or none of them. A partial override
+  puts a default colour on a surface it was never measured against, which is
+  why <code>contrast.test.ts</code> checks that each mode covers the same token names.</li>
+<li>The text label is untouched. <code>SUCCEEDED</code> is still the word on the badge, so
+  no meaning rests on hue alone and the change costs consistency, not access.</li>
+<li>Every pair is re-measured against <strong>that mode's</strong> card colours. The suite
+  enforces WCAG AA, 4.5:1; the literals themselves are chosen at the lowest
+  lightness clearing 5.0:1, so there is headroom above the line rather than a
+  value sitting exactly on it.</li>
+</ul>
+<p>The cost is real and worth naming: Greek's gold success sits near the amber
+that means <em>running</em> elsewhere. Success is pushed to 60° rather than a straight
+gold, 22° from the amber text hue and 25° from the amber badge fill it sits on,
+and running moves to a cold 188° cyan that no other scheme uses.</p>
+<h2 id="mode-potions">Mode potions<a class="headerlink" href="#mode-potions" title="Permanent link">&para;</a></h2>
+<p>Six of the seven bottles are one accent hue. The seventh, Ancient Greek, is a
+<em>mode</em>: it carries a whole palette and its own chrome, hung off a single
+<code>sc-greek</code> class on the root element.</p>
+<p>That works on specificity alone. The injected accent sheet writes <code>:root</code>,
+which is (0,1,0); <code>:root.sc-greek</code> is (0,2,0) and wins whatever the injection
+order, and <code>:root.sc-greek.sc-dark</code> is (0,3,0) and settles the dark register
+over both. <code>sc-konami</code> has always worked this way — the mode potion is the same
+mechanism, persisted instead of thrown away on reload.</p>
+<p>Its CSS lives in <code>greek.ts</code>, not <code>styles.ts</code>. That is not tidiness: <code>styles.ts</code>
+is a single template literal that a stray backtick has silently truncated
+twice, and a second complete art direction inline makes a known hazard worse.
+<code>greek.test.ts</code> carries a parity check that every colour token the default
+<code>:root</code> declares is declared in both Greek registers — a half-declared mode
+inherits a colour from the wrong register and degrades into unreadable text
+rather than an obvious break.</p>
 <h2 id="motion">Motion<a class="headerlink" href="#motion" title="Permanent link">&para;</a></h2>
 <p>Every animation uses <code>steps()</code>, never <code>ease</code>. Smooth interpolation is what
 makes a pixel interface look like a modern interface wearing a costume, so the
-rule is absolute — including for third-party motion: React Flow's animated
-graph edges are stepped here too.</p>
+rule holds for the default theme and for third-party motion alike: React Flow's
+animated graph edges are stepped here too.</p>
+<p>There is one exception, and it is the same shape as the status-hue one: a
+<strong>mode</strong> potion may redefine the easing vocabulary. A mode exists to render
+another design system in this app's furniture, and for some of them the timing
+<em>is</em> the design — Agence Foudre transitions nearly a thousand elements on
+<code>cubic-bezier(.23, 1, .32, 1)</code>, and reproducing its colours over stepped timing
+would be that design wearing this one's clock. Three conditions make it an
+exception rather than a hole:</p>
+<ul>
+<li><strong>Wholesale.</strong> A mode declares its own curves as tokens and uses them
+  consistently. Mixing smooth and stepped inside one theme is the failure this
+  rule exists to prevent, and it looks worse than either alone.</li>
+<li><strong>The reduced-motion contract is unchanged.</strong> Everything timed still sits
+  inside the query, and the still frame is still designed.</li>
+<li><strong>Nothing conveys state through motion alone</strong>, which was never negotiable.</li>
+</ul>
+<p>The default theme and Ancient Greek keep <code>steps()</code>.</p>
 <p>Everything timed sits inside <code>@media (prefers-reduced-motion: no-preference)</code>,
 and the reduced case is designed rather than merely disabled: the tour's
 sparkles simply appear instead of blinking, and the creatures on the experience
@@ -1491,13 +1564,23 @@ smudge.</p>
 <li>Contrast is measured, not eyeballed. The dither pass found every badge
   variant already below WCAG AA — the worst at 1.84:1 — and fixed them; the
   check samples the rendered pixel against its text in all six schemes.</li>
-<li>The pixel font is used at 12px minimum and never for long-form documentation.
-  It renders true lowercase, not the all-caps-shaped-as-lowercase of the
-  earlier pixel face; chrome (titles, buttons, badges, nav, labels, table
-  headers) is still uppercase, but that's a deliberate style choice, not the
-  font compensating for missing lowercase forms.</li>
-<li>Progress bars carry their numbers (<code>2/3 STEPS</code>), which is both the NES
-  convention and the readable one.</li>
+<li>
+<p><strong>One typeface.</strong> Clash Grotesk is the app's only family, self-hosted because
+  the CSP is <code>font-src 'self'</code> — a CDN reference fails silently, the page
+  falling back to something that looks nearly right. Differentiation comes from
+  weight, size and case rather than from a second family, which is also what
+  lets a mode change the whole voice by moving one variable.</p>
+<p>It replaced a pixel face, and the type scale changed with it. The arcade
+treatment uppercased every piece of chrome and held a hard 12px floor: both
+were right for a bitmap-derived face and wrong for an outline grotesque, where
+uppercase at 13px reads as shouting. Uppercase now survives in exactly one
+place — the micro-label and its sibling the table header — where it is a
+wayfinding convention rather than a texture, and it carries the positive
+tracking uppercase always needs. Everything else is sentence case with slight
+negative tracking, which is how this family is drawn to be set.
+- Progress bars carry their numbers (<code>2/3 STEPS</code>), which is both the NES
+convention and the readable one.</p>
+</li>
 </ul>
 <h2 id="why-dither-instead-of-transparency">Why dither instead of transparency<a class="headerlink" href="#why-dither-instead-of-transparency" title="Permanent link">&para;</a></h2>
 <p>The NES had no alpha channel, so a tint was a checkerboard. Badge fills, the

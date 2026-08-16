@@ -1,0 +1,1966 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Docs for the internal developer platform (Backstage plugin suite)">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>/visualizer, /catalog-import, and the dark rebalance — Plan - Platform Plugin Suite</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#visualizer-catalog-import-and-the-dark-rebalance-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Platform Plugin Suite" class="md-header__button md-logo" aria-label="Platform Plugin Suite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Platform Plugin Suite
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              /visualizer, /catalog-import, and the dark rebalance — Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Platform Plugin Suite" class="md-nav__button md-logo" aria-label="Platform Plugin Suite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Platform Plugin Suite
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/provision-a-resource/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provision your first resource
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/author-a-template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Author a software template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/configure-rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure admins & per-team approval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/set-resource-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Give a resource a data file
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/delete-resources-in-bulk/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delete resources in bulk
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/add-a-dynamic-select-field/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a live (DynamicSelect) field
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/add-a-review-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a mid-workflow review gate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/customise-the-home-page/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customise the home page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/rebrand-the-portal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Change the logo, favicon and title
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/upgrade-backstage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade Backstage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/run-the-production-image/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run the production image locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/deploy-with-helm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploy to Kubernetes with Helm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/prepare-for-production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prepare for production
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/annotations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Annotations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/tokens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Submit tokens (<< >>)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration keys
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/request-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Request model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/request-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Request lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/secrets-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Secret lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-team RBAC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/workflows-and-git/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows own Git
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/design-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The pixel design system
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/identity-and-ldap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity & LDAP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/upgrade-surface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What an upgrade can break
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-two-root-causes-stated-once" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The two root causes, stated once
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decisions-taken-before-coding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decisions taken before coding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#task-list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task list
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Task list">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#task-a-the-two-vanilla-pages-stylests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task A — the two vanilla pages (styles.ts)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-b-the-dark-rebalance-palettes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task B — the dark rebalance (palettes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-c-the-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task C — the gate
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#parallel-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parallel execution
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#risks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Risks
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="visualizer-catalog-import-and-the-dark-rebalance-plan">/visualizer, /catalog-import, and the dark rebalance — Plan<a class="headerlink" href="#visualizer-catalog-import-and-the-dark-rebalance-plan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>For agentic workers:</strong> Steps use checkbox (<code>- [ ]</code>) syntax for tracking.</p>
+</blockquote>
+<p><strong>Goal (two, unrelated):</strong></p>
+<ol>
+<li><code>/visualizer</code> and <code>/catalog-import</code> render vanilla Backstage instead of the
+   picked potion. Both have a single root cause each, and neither is the one
+   originally reported.</li>
+<li>Every dark register reads as one colour. The cause is <code>border</code> sharing hue
+   <strong>and</strong> saturation with <code>primary</code> — not a contrast failure. All ten registers
+   already clear the numeric bar.</li>
+</ol>
+<hr />
+<h2 id="the-two-root-causes-stated-once">The two root causes, stated once<a class="headerlink" href="#the-two-root-causes-stated-once" title="Permanent link">&para;</a></h2>
+<p><strong><code>/catalog-import</code> mounts its own JSS class-name generator.</strong> Measured on a
+production build: 83 of 90 MUI classes on that route arrive counter-suffixed
+(<code>MuiStepLabel-label-234</code>, <code>MuiBox-root-27</code>), against 0 of ~90 on <code>/catalog</code>,
+<code>/create</code> and <code>/visualizer</code>. A CSS class selector matches <strong>whole tokens</strong>, so
+<code>.MuiStepLabel-label</code> cannot match <code>class="MuiStepLabel-label-234"</code>. Every
+<code>.Mui*</code> rule in <code>styles.ts</code> misses on this one route. That is the stepper, the
+Papers, the Typography and the indigo links — one bug, one fix.</p>
+<p>Ruled out already, do not re-investigate: no duplicate <code>@material-ui/core</code>
+(single 4.12.4), no duplicate <code>@material-ui/styles</code>, no app-level
+<code>StylesProvider</code>/<code>generateClassName</code>. The <em>why</em> does not change the fix.</p>
+<p><strong>The earlier proposal to rename <code>Mui-active</code> → <code>MuiStepIcon-active</code> is wrong
+and must not be applied.</strong> <code>styles.ts:1518-1521</code> already carries the correct v4
+spelling with <code>!important</code> and still misses, because of the suffix.</p>
+<p><strong><code>/visualizer</code>'s tree bypasses the theme overrides.</strong> The four
+<code>BackstageDependencyGraph*</code> keys in <code>theme.tsx</code> are correct and live — edges
+measurably follow the mode. The plugin passes its own <code>renderNode</code>, which
+hardcodes <code>#90caf9</code> / <code>#9e9e9e</code> / <code>#2196f3</code> / <code>#757575</code> / <code>#000000</code> as React
+props on <code>"rect"</code> and <code>"text"</code>. Those land as <strong>SVG presentation attributes</strong>,
+which sit at the bottom of the cascade at specificity 0 — a plain author rule
+beats them with no <code>!important</code>. Node kind is distinguishable without a class:
+<code>rx="0"</code> is an extension node, <code>rx="20"</code> is a group.</p>
+<hr />
+<h2 id="decisions-taken-before-coding">Decisions taken before coding<a class="headerlink" href="#decisions-taken-before-coding" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong><code>styles.ts</code> has exactly one owner in this plan — Task A.</strong> It is one
+   template literal; two agents editing it produce a conflict whose failure mode
+   is a truncated stylesheet that <code>tsc</code> does not notice. All three CSS changes
+   (import route, <code>bui-PluginHeader</code>, visualizer tree) are therefore one task,
+   serialised inside that task. <code>styles.test.ts</code> belongs to the same owner for
+   the same reason. <strong>No other task may open either file.</strong></li>
+<li><strong>The dark rebalance has exactly one owner too — Task B.</strong> <code>brands.ts</code>,
+   <code>foudre.ts</code> and <code>spiderverse.ts</code> each carry a <code>--sc-card</code> that
+   <code>statusTokens.ts</code>'s <code>MODE_CARDS</code> mirrors, and <code>brands.test.ts</code>,
+   <code>foudre.test.ts</code> and <code>spiderverse.test.ts</code> all assert the two agree. Splitting
+   the three palette files across agents leaves every intermediate state red and
+   nothing able to verify itself. One agent, four source files, one test file.</li>
+<li><strong>A substring selector is a strict superset of the exact one it replaces.</strong>
+   <code>[class*="MuiStepIcon-root"]</code> matches <code>MuiStepIcon-root</code> and
+   <code>MuiStepIcon-root-238</code>. So inside <code>.sc-route-import</code> the exact-class rules are
+   <em>rewritten in place</em>, not duplicated — a route-scoped rule covers no other
+   route, so keeping both spellings there would be 60 dead lines. The <strong>global</strong>
+   rules at <code>styles.ts:1518-1523</code> are a different matter: they are not
+   route-scoped, they do cover other routes, and <code>styles.test.ts</code> pins them.
+   They stay untouched.</li>
+<li><strong>The visualizer rules are scoped by <code>#dependency-graph</code>, not a route class.</strong>
+   That id is <code>DEPENDENCY_GRAPH_SVG</code> in <code>@backstage/core-components</code> and is the
+   only element in this app that carries it — our catalog graph and relations
+   graph are React Flow (<code>.react-flow__node</code>), which a <code>rect[rx="0"]</code> selector
+   cannot reach. No entry is added to <code>routeClass.ts</code>; nothing would use it.</li>
+<li><strong>The Detailed tab's chips keep their hues.</strong> <code>getOutputColor</code> assigns a
+   distinct hue per output type and computes its own text contrast. That is
+   categorical data encoding — the same category as the documented "status
+   colours deliberately ignore the picked scheme". Flattening them to one token
+   destroys the legend. Theme the chrome, leave the hues, and say so in a
+   comment so the next reader does not "fix" it.</li>
+<li><strong>The dark values are copied verbatim, not re-derived.</strong> They were verified
+   independently: 0 failures across all ten modes, <code>border/card</code> ≥ 3 everywhere,
+   and <strong>worst composited status ink at 4.54 against a 4.5 bar — a 0.04 margin.</strong>
+   Every <code>card</code> lightness is load-bearing: the status dither cell composites over
+   <code>card</code>, so raising one drops the ink below AA. These values were already
+   pulled back 2-3 points for exactly that reason.</li>
+</ol>
+<hr />
+<h2 id="task-list">Task list<a class="headerlink" href="#task-list" title="Permanent link">&para;</a></h2>
+<h3 id="task-a-the-two-vanilla-pages-stylests">Task A — the two vanilla pages (<code>styles.ts</code>)<a class="headerlink" href="#task-a-the-two-vanilla-pages-stylests" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> nothing. Runs concurrently with Task B.</p>
+<p><strong>May edit ONLY:</strong>
+<code>backstage/plugins/platform-ui/src/styles.ts</code>,
+<code>backstage/plugins/platform-ui/src/styles.test.ts</code>.
+<strong>It must not edit any other file</strong> — in particular not <code>theme.tsx</code>
+(<code>GRAPH_OVERRIDES</code> is measured correct and live), not <code>routeClass.ts</code>, and not
+any palette file.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Make the <code>/catalog-import</code> rules suffix-proof.</strong> In the
+      <code>===== Register an existing component =====</code> section (<code>styles.ts</code> ~1122-1184),
+      rewrite every <code>.sc-route-import .MuiX</code> selector into
+      <code>.sc-route-import [class*="MuiX"]</code>. Declarations are unchanged. The full
+      selector list to convert:<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span></pre></div></td><td class="code"><div><pre><span></span><code>MuiStepper-root, MuiStepLabel-label, MuiStepIcon-root, MuiStepIcon-text,
+MuiStepConnector-line, MuiPaper-root, MuiTypography-h6, MuiFormLabel-root,
+MuiInputLabel-root, MuiTypography-body1, MuiTypography-body2,
+MuiOutlinedInput-root, MuiListItem-root, MuiLinearProgress-root.
+
+Two selectors change shape rather than just spelling, because
+`.MuiStepLabel-label.Mui-active` is a compound of two classes and the
+suffix breaks both halves:
+
+```css
+.sc-route-import [class*=&quot;MuiStepLabel-active&quot;],
+.sc-route-import [class*=&quot;MuiStepLabel-completed&quot;] {
+  color: hsl(var(--sc-fg)) !important;
+  font-weight: 600 !important;
+}
+.sc-route-import [class*=&quot;MuiStepIcon-active&quot;],
+.sc-route-import [class*=&quot;MuiStepIcon-completed&quot;] {
+  color: hsl(var(--sc-primary)) !important;
+  border-color: hsl(var(--sc-primary));
+}
+```
+</code></pre></div></td></tr></table></div>
+</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Add the missing link rule to the same block.</strong> The indigo links
+      are the same bug: the global rule at <code>styles.ts:325</code> names
+      <code>.MuiLink-root</code> exactly and misses here.<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code>```css
+.sc-route-import [class*=&quot;MuiLink-root&quot;],
+.sc-route-import [class*=&quot;MuiTypography-colorPrimary&quot;] {
+  color: hsl(var(--sc-primary)) !important;
+}
+```
+</code></pre></div></td></tr></table></div>
+</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Replace the section's header comment</strong> so the next reader gets
+      the census rather than the symptom. State: this route mounts its own JSS
+      counter; 83 of 90 MUI classes arrive suffixed against 0 of ~90 on
+      <code>/catalog</code>; a class selector matches whole tokens; substring form matches
+      both spellings so it is correct in dev and in the image; the exact-class
+      rules were replaced rather than duplicated because a route-scoped rule
+      covers no other route. Do not use a backtick anywhere in it.</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Theme the bui plugin header.</strong> Measured on the production build:
+      <code>background-color: rgb(255,255,255)</code>, <code>color: rgb(0,0,0)</code>, while greek's
+      <code>--sc-card</code> is <code>42 45% 98%</code>. <code>bui-*</code> survives production and zero rules
+      exist for it. This affects all ten potions, so it is app-wide, not
+      route-scoped. Put it beside the <code>[class*="bui-HeaderTitle"]</code> rule
+      (<code>styles.ts</code> ~235):<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code>```css
+/* The one bui surface with no rule here: PluginHeader ships its own white
+   ground and black ink, measured rgb(255,255,255) on a production build
+   while the mode&#39;s card was 42 45% 98%. Every potion is affected. */
+[class*=&quot;bui-PluginHeader&quot;] {
+  background: hsl(var(--sc-card)) !important;
+  color: hsl(var(--sc-fg)) !important;
+  border-bottom: var(--sc-border-w) solid hsl(var(--sc-border));
+}
+```
+</code></pre></div></td></tr></table></div>
+</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 5: Recolour the visualizer tree.</strong> At <code>styles.ts:341</code>, replace the
+      single <code>#dependency-graph</code> rule with:<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span></pre></div></td><td class="code"><div><pre><span></span><code>```css
+/* The tree the visualizer draws is NOT the DependencyGraph default node:
+   the plugin passes its own renderNode, which bypasses the four
+   BackstageDependencyGraph* overrides in theme.tsx and hardcodes #90caf9,
+   #9e9e9e, #2196f3, #757575 and #000000. They are React props on &quot;rect&quot;
+   and &quot;text&quot;, so they render as SVG presentation attributes — bottom of
+   the cascade, specificity 0 — and a plain author rule beats them without
+   !important. The plugin distinguishes its two node kinds only by corner
+   radius (rx=0 an extension node, rx=20 a group), so that is what these
+   read. Scoped by the svg&#39;s own id, DEPENDENCY_GRAPH_SVG in
+   core-components: nothing else in this app carries it, and our three
+   graphs are React Flow. */
+#dependency-graph {
+  background-color: hsl(var(--sc-bg));
+  border-radius: var(--sc-radius);
+}
+#dependency-graph rect[rx=&quot;0&quot;] {
+  fill: hsl(var(--sc-card));
+  stroke: hsl(var(--sc-border));
+}
+#dependency-graph rect[rx=&quot;20&quot;] {
+  fill: hsl(var(--sc-muted));
+  stroke: hsl(var(--sc-border));
+}
+/* The label is the rect&#39;s next sibling inside the node&#39;s own g, so this
+   cannot reach an edge label, which theme.tsx already owns. */
+#dependency-graph rect + text { fill: hsl(var(--sc-card-fg)); }
+```
+
+Note the canvas changes from the hardcoded `#05050c` to `hsl(var(--sc-bg))`.
+That is deliberate: with the nodes now on `--sc-card`, a fixed near-black
+canvas is the last thing on the page not following the potion, and in light
+mode it reads as broken. The starfield stays where it was designed to live —
+the React Flow catalog graph (`.sc-graph-canvas`), which is untouched and
+still the only consumer of `STARFIELD.bg` that `styles.test.ts` pins.
+</code></pre></div></td></tr></table></div>
+</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 6: Record why the Detailed tab keeps its hues.</strong> One comment beside
+      the visualizer rules: <code>getOutputColor</code> assigns a distinct hue per output
+      type (<code>#4caf50</code> reactElement, <code>#ffeb3b</code> routePath, <code>#9c27b0</code> routeRef,
+      <code>#2196f3</code> apiFactory, plus a rotating palette) and computes its own text
+      contrast. It is categorical data encoding, the same exception the
+      experience bar's status colours take. Do not add rules for it.</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 7: Tests, in <code>styles.test.ts</code>.</strong> Three new cases:<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code>1. *reaches the JSS-suffixed classes /catalog-import mounts* —
+   `expect(SHADCN_CSS).not.toMatch(/\.sc-route-import\s+\.Mui/)` (no exact
+   class survives inside the route block) **and**
+   `expect(SHADCN_CSS).toContain(&#39;.sc-route-import [class*=&quot;MuiStepIcon-root&quot;]&#39;)`.
+   Comment it with the 83-of-90 census — the regex is meaningless without it.
+2. *themes the bui plugin header* —
+   `expect(SHADCN_CSS).toMatch(/\[class\*=&quot;bui-PluginHeader&quot;\]\s*\{[^}]*hsl\(var\(--sc-card\)\)/)`.
+3. *recolours the visualizer tree, which bypasses the theme overrides* —
+   assert `#dependency-graph rect[rx=&quot;0&quot;]` is present, that the sheet
+   contains no `#90caf9`, and that `#dependency-graph {` carries
+   `background-color: hsl(var(--sc-bg))` rather than a hex.
+
+Do not weaken the existing guards. In particular the truncation, balanced
+brace, control-character and *uses no class name that a production build
+discards* cases stay exactly as they are — the new `[class*=&quot;Mui*&quot;]` and
+`[class*=&quot;bui-PluginHeader&quot;]` selectors already satisfy the last one, and
+the global `.MuiStepIcon-root.MuiStepIcon-active` selectors that the
+*routes MUI primary colours through the picked accent* case pins must
+still be in the file when you are done.
+</code></pre></div></td></tr></table></div>
+</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 8: Verify.</strong>
+      <code>cd backstage &amp;&amp; CI=true yarn test plugins/platform-ui/src/styles.test.ts</code>
+      then <code>CI=true yarn tsc</code>.
+      <code>CI=true</code> is <strong>required</strong> — without it backstage-cli enters watch mode and
+      never returns.</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 9: Commit.</strong> Conventional commit, e.g.
+      <code>fix(ui): reach catalog-import's suffixed MUI classes and the visualizer tree</code>.
+      Do not push.</li>
+</ul>
+<hr />
+<h3 id="task-b-the-dark-rebalance-palettes">Task B — the dark rebalance (palettes)<a class="headerlink" href="#task-b-the-dark-rebalance-palettes" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> nothing. Runs concurrently with Task A.</p>
+<p><strong>May edit ONLY:</strong>
+<code>backstage/plugins/platform-ui/src/brands.ts</code>,
+<code>backstage/plugins/platform-ui/src/foudre.ts</code>,
+<code>backstage/plugins/platform-ui/src/spiderverse.ts</code>,
+<code>backstage/plugins/platform-ui/src/statusTokens.ts</code>,
+<code>backstage/plugins/platform-ui/src/contrast.test.ts</code>.
+<strong>It must not edit any other file</strong> — in particular not <code>styles.ts</code>,
+<code>styles.test.ts</code>, <code>greek.ts</code>, <code>greek.test.ts</code> or <code>slush.ts</code>.</p>
+<p><strong>Do not modify claude, greek or slush.</strong> Their dark registers are already
+right: claude's border is a neutral warm grey, greek's is a gold against an
+ember primary — a different hue family, and pinned by <code>greek.test.ts</code> — and
+slush's is pure white, a deliberate cut edge. Touching any of them is a
+regression, not a fix.</p>
+<p><strong>Copy every triplet below character for character.</strong> Do not round, do not
+"tidy", do not re-derive. The margin on the worst composited status ink is 0.04.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: <code>brands.ts</code> — replace five <code>dark:</code> registers.</strong> Light registers,
+      radii, border widths, glow and easing are all unchanged.<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span></pre></div></td><td class="code"><div><pre><span></span><code>```ts
+// newform
+dark: { bg:&#39;135 10% 5%&#39;, fg:&#39;120 12% 97%&#39;, card:&#39;135 9% 10%&#39;, muted:&#39;135 8% 20%&#39;,
+  mutedFg:&#39;120 10% 72%&#39;, border:&#39;135 8% 42%&#39;, primary:&#39;129 85% 55%&#39;,
+  primaryFg:&#39;135 10% 6%&#39;, accent:&#39;135 10% 16%&#39;, accentFg:&#39;120 12% 97%&#39; },
+
+// tiger
+dark: { bg:&#39;20 45% 6%&#39;, fg:&#39;38 95% 59%&#39;, card:&#39;20 40% 9%&#39;, muted:&#39;20 28% 22%&#39;,
+  mutedFg:&#39;38 45% 78%&#39;, border:&#39;20 20% 44%&#39;, primary:&#39;38 95% 59%&#39;,
+  primaryFg:&#39;20 58% 10%&#39;, accent:&#39;20 28% 17%&#39;, accentFg:&#39;38 30% 90%&#39; },
+
+// hermes
+dark: { bg:&#39;0 0% 4%&#39;, fg:&#39;0 0% 96%&#39;, card:&#39;0 0% 10%&#39;, muted:&#39;0 0% 18%&#39;,
+  mutedFg:&#39;0 0% 72%&#39;, border:&#39;0 0% 40%&#39;, primary:&#39;240 100% 72%&#39;,
+  primaryFg:&#39;0 0% 4%&#39;, accent:&#39;240 25% 15%&#39;, accentFg:&#39;0 0% 96%&#39; },
+
+// papers
+dark: { bg:&#39;0 0% 5%&#39;, fg:&#39;27 33% 96%&#39;, card:&#39;0 0% 9%&#39;, muted:&#39;241 20% 22%&#39;,
+  mutedFg:&#39;27 20% 76%&#39;, border:&#39;0 0% 40%&#39;, primary:&#39;57 88% 58%&#39;,
+  primaryFg:&#39;0 0% 8%&#39;, accent:&#39;241 26% 24%&#39;, accentFg:&#39;27 33% 96%&#39; },
+
+// discord
+dark: { bg:&#39;228 10% 7%&#39;, fg:&#39;0 0% 98%&#39;, card:&#39;227 9% 11%&#39;, muted:&#39;228 6% 26%&#39;,
+  mutedFg:&#39;220 8% 74%&#39;, border:&#39;228 8% 42%&#39;, primary:&#39;235 86% 72%&#39;,
+  primaryFg:&#39;228 8% 10%&#39;, accent:&#39;235 18% 24%&#39;, accentFg:&#39;0 0% 98%&#39; },
+```
+
+Leave `claude` exactly as it is.
+</code></pre></div></td></tr></table></div>
+</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: <code>brands.ts</code> — extend the module comment.</strong> One paragraph, not an
+      essay: the dark rule is neutral where the accent is loud. A <code>border</code> that
+      shares hue and saturation with <code>primary</code> makes every rule, focus ring,
+      input outline and divider glow in the brand colour, and the page reads as
+      one colour rather than as a palette. <code>papers</code> had them <em>literally
+      identical</em> (<code>57 88% 58%</code> for both). The published accent stays on
+      <code>--sc-primary</code>, which is where it belongs.</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: <code>foudre.ts</code> — five values in <code>:root.sc-foudre.sc-dark</code> only.</strong>
+      <code>--sc-border</code>, <code>--sc-input</code>, <code>--sc-primary</code> and the light register are all
+      unchanged; foudre's lilac rule is already a different hue family from its
+      bubblegum primary. This is the uneven-ramp touch-up only (bg was 100%
+      saturation against a 60% card).<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code>```
+--sc-bg: 153 70% 4%;
+--sc-card: 153 45% 8%;
+--sc-muted: 153 30% 20%;
+--sc-muted-fg: 12 50% 84%;
+--sc-accent: 153 32% 17%;
+```
+
+`--sc-card-fg` follows `--sc-fg` and does not change.
+</code></pre></div></td></tr></table></div>
+</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: <code>spiderverse.ts</code> — six values in <code>:root.sc-spiderverse.sc-dark</code>
+      only.</strong> The magenta border sat 35° from the red primary and read as a
+      second accent rather than a rule.<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code>```
+--sc-bg: 260 30% 6%;
+--sc-card: 260 25% 11%;
+--sc-muted: 260 20% 22%;
+--sc-muted-fg: 45 20% 76%;
+--sc-border: 260 15% 44%;
+--sc-input: 260 15% 44%;
+--sc-accent: 260 22% 18%;
+```
+
+`--sc-plate-r`, `--sc-plate-c`, `--sc-caption`, `--sc-halftone`,
+`--sc-primary` and the whole light register are unchanged — the plates and
+the halftone are the mode&#39;s identity and none of them is a rule.
+</code></pre></div></td></tr></table></div>
+</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 5: <code>statusTokens.ts</code> — update <code>MODE_CARDS</code> to match.</strong> Seven dark
+      entries move; every light entry stays. <code>brands.test.ts</code>, <code>foudre.test.ts</code>
+      and <code>spiderverse.test.ts</code> each assert the emitted CSS equals this table, so
+      a miss here is a red test, not a silent drift.<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code>| mode | dark card, was | dark card, now |
+|---|---|---|
+| newform | `135 10% 9%` | `135 9% 10%` |
+| tiger | `20 55% 8%` | `20 40% 9%` |
+| hermes | `0 0% 8%` | `0 0% 10%` |
+| papers | `0 0% 8%` | `0 0% 9%` |
+| discord | `227 9% 10%` | `227 9% 11%` |
+| foudre | `153 60% 7%` | `153 45% 8%` |
+| spiderverse | `260 40% 10%` | `260 25% 11%` |
+
+`default`, `greek`, `slush` and `claude` are unchanged.
+</code></pre></div></td></tr></table></div>
+</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 6: Add the guard that would have caught this, in
+      <code>contrast.test.ts</code>.</strong> The file already has <code>srgbOf</code>, <code>luminanceOf</code>,
+      <code>contrast</code> and a <code>registerOf(selector)</code> helper scoped inside the greek
+      describe — lift <code>registerOf</code> to take the css string as an argument and
+      reuse it. One new case:<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code>*the rule is never a second helping of the accent* — for every dark
+register (the six `BRAND_DEFS`, plus `:root.sc-foudre.sc-dark` and
+`:root.sc-spiderverse.sc-dark` parsed out of their css), assert that
+`border` differs from `primary` by **either** ≥ 20° of hue (measured
+circularly) **or** by dropping to ≤ 25% saturation. Comment it with the
+reason: a rule sharing hue *and* saturation with the accent is what made
+every dark mode read as one colour, and `papers` shipped them identical.
+
+Values as written pass: newform 6°/8%, tiger 18°/20%, hermes 240°,
+papers 57°, discord 7°/8%, claude 38°, foudre 92°, spiderverse 95°.
+
+Do not add greek or slush to the loop — greek is pinned by `greek.test.ts`
+and slush&#39;s border is a deliberate pure white.
+</code></pre></div></td></tr></table></div>
+</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 7: Verify.</strong>
+      <div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code>cd backstage
+CI=true yarn test plugins/platform-ui/src/contrast.test.ts \
+                  plugins/platform-ui/src/brands.test.ts \
+                  plugins/platform-ui/src/foudre.test.ts \
+                  plugins/platform-ui/src/spiderverse.test.ts \
+                  plugins/platform-ui/src/greek.test.ts
+CI=true yarn tsc
+</code></pre></div></td></tr></table></div>
+      <code>greek.test.ts</code> is in the list on purpose: it is the tripwire proving
+      nothing leaked into the mode that must not move.<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>**If any `card` value ends up differing from the table in Step 1, 3, 4 or
+5 — for any reason — re-run
+`node $CLAUDE_JOB_DIR/tmp/run-verify2.mjs` before committing** and do not
+commit until it prints `ALL PROPOSED MODES PASS`.
+</code></pre></div></td></tr></table></div>
+</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 8: Commit.</strong> e.g.
+      <code>fix(ui): stop the dark rules sharing hue and saturation with the accent</code>.
+      Do not push.</li>
+</ul>
+<hr />
+<h3 id="task-c-the-gate">Task C — the gate<a class="headerlink" href="#task-c-the-gate" title="Permanent link">&para;</a></h3>
+<p><strong>Depends on:</strong> Task A <strong>and</strong> Task B, both committed.</p>
+<p><strong>May edit:</strong> only files needed to fix a failure the gate surfaces, and only in
+the task that owns that file — if the gate goes red in <code>styles.ts</code>, the fix
+belongs to whoever runs as Task A.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Full CI, in order.</strong>
+      <div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>cd backstage
+CI=true yarn tsc &amp;&amp; CI=true yarn lint:all &amp;&amp; CI=true yarn test &amp;&amp; CI=true yarn build:all
+</code></pre></div></td></tr></table></div>
+      <code>build:all</code> is not optional here: a backslash before digits inside
+      <code>styles.ts</code> fails the app bundle while <code>tsc</code> stays silent, and Task A adds
+      CSS containing <code>rx="0"</code> attribute selectors.</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Rebuild the image.</strong> <code>bash scripts/prod-image-up.sh</code> from the
+      repo root. Docker's disk fills after repeated rebuilds and takes Postgres
+      down with it; <code>docker image prune -f &amp;&amp; docker builder prune -f</code> is the
+      documented remedy and must <strong>never</strong> include <code>--volumes</code>.</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Look at the running app on :7007, in a dark register.</strong> The
+      production build is the only place the JSS-suffix bug is visible, which is
+      the whole reason it survived this long.
+      - <code>/catalog-import</code>: stepper bubbles on <code>--sc-primary</code>, Papers on
+        <code>--sc-card</code>, links on the accent, header no longer white.
+      - <code>/visualizer</code>: tree nodes on <code>--sc-card</code> with <code>--sc-border</code> strokes,
+        group nodes on <code>--sc-muted</code>, labels legible, canvas following the mode.
+        Switch potion and confirm it moves.
+      - Any two dark potions side by side: the rules should read as rules, not as
+        a second helping of the accent.</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Do not push.</strong> The branch stays local.</li>
+</ul>
+<hr />
+<h2 id="parallel-execution">Parallel execution<a class="headerlink" href="#parallel-execution" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Wave</th>
+<th>Tasks</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>A</strong> and <strong>B</strong> concurrently</td>
+<td>Disjoint file sets. A owns <code>styles.ts</code> + <code>styles.test.ts</code>; B owns the four palette files + <code>contrast.test.ts</code>. Neither imports a symbol the other renames.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>C</strong></td>
+<td>Needs both commits present.</td>
+</tr>
+</tbody>
+</table>
+<p>There is no third parallel task available. The obvious candidates — splitting
+the import fix from the visualizer fix, or splitting the five brand registers
+from the two hand-written ones — both land in a file another agent is already
+holding, and both would leave an intermediate state that cannot verify itself.</p>
+<hr />
+<h2 id="risks">Risks<a class="headerlink" href="#risks" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong><code>styles.ts</code> is one template literal.</strong> A stray backtick truncates the whole
+  stylesheet; a backslash before digits fails the app build while <code>tsc</code> stays
+  silent. <code>styles.test.ts</code> guards both and must not be weakened. Every comment
+  Task A writes is prose in a template literal — no backticks in it.</li>
+<li><strong>0.04 of margin.</strong> The worst composited status ink clears AA at 4.54. Any
+  <code>card</code> value that drifts from the table takes it under. This is why Task B has
+  a single owner and a named re-verify script.</li>
+<li><strong><code>[class*="MuiStepLabel-label"]</code> also matches <code>MuiStepLabel-labelContainer</code>.</strong>
+  Harmless — the container is a bare wrapper span and the label inherits the same
+  declarations anyway — but worth knowing before someone reports it as a bug.</li>
+<li><strong><code>[class*="MuiPaper-root"]</code> is broad by construction.</strong> It is route-scoped to
+  <code>/catalog-import</code>, whose only Papers are the analysis result and the form, and
+  the exact-class rule it replaces had the same reach. If a future page-level
+  Paper appears on that route it will take a card background.</li>
+<li><strong>The visualizer canvas changes colour.</strong> It moves off the hardcoded <code>#05050c</code>
+  it shared with the React Flow catalog graph. Deliberate — see Task A Step 5 —
+  but it is the one change here a reviewer might want reverted on taste, and
+  reverting it is a one-line edit that breaks nothing else.</li>
+<li><strong>Greek is the tripwire, not a target.</strong> <code>greek.test.ts</code> pins its register and
+  its status hues. If it goes red, something reached a mode this plan promised
+  not to touch.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.footer", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../search/main.js"></script>
+      
+    
+  </body>
+</html>

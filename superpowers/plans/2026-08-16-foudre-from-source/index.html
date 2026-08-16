@@ -1,0 +1,1698 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Docs for the internal developer platform (Backstage plugin suite)">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Agence Foudre, from the source — Implementation Plan - Platform Plugin Suite</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#agence-foudre-from-the-source-implementation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Platform Plugin Suite" class="md-header__button md-logo" aria-label="Platform Plugin Suite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Platform Plugin Suite
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Agence Foudre, from the source — Implementation Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Platform Plugin Suite" class="md-nav__button md-logo" aria-label="Platform Plugin Suite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Platform Plugin Suite
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/provision-a-resource/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provision your first resource
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/author-a-template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Author a software template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/configure-rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure admins & per-team approval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/set-resource-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Give a resource a data file
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/delete-resources-in-bulk/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delete resources in bulk
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/add-a-dynamic-select-field/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a live (DynamicSelect) field
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/add-a-review-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a mid-workflow review gate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/customise-the-home-page/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customise the home page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/rebrand-the-portal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Change the logo, favicon and title
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/upgrade-backstage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade Backstage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/run-the-production-image/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run the production image locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/deploy-with-helm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploy to Kubernetes with Helm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/prepare-for-production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prepare for production
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/annotations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Annotations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/tokens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Submit tokens (<< >>)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration keys
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/request-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Request model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/request-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Request lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/secrets-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Secret lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-team RBAC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/workflows-and-git/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows own Git
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/design-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The pixel design system
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/identity-and-ldap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity & LDAP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/upgrade-surface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What an upgrade can break
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-the-site-actually-uses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the site actually uses
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#two-conflicts-to-settle-before-any-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two conflicts to settle before any code
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Two conflicts to settle before any code">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-this-design-is-built-on-smooth-easing-the-design-system-forbids-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. This design is built on smooth easing; the design system forbids it
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-beni-is-licensed-and-cannot-ship" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Beni is licensed and cannot ship
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-there-is-already-a-foudre-mode-built-from-a-description" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. There is already a foudre mode built from a description
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Design
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tokens" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tokens
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#shape" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shape
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#motion-vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Motion vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tasks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tasks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tasks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#task-1-the-display-face" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 1: The display face
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-2-measure-the-palette" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 2: Measure the palette
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-3-rebuild-foudrets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 3: Rebuild foudre.ts
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-4-the-motion-vocabulary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 4: The motion vocabulary
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-5-verify-in-a-browser-not-in-the-sheet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 5: Verify in a browser, not in the sheet
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-6-full-ci-and-the-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 6: Full CI and the image
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#risks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Risks
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="agence-foudre-from-the-source-implementation-plan">Agence Foudre, from the source — Implementation Plan<a class="headerlink" href="#agence-foudre-from-the-source-implementation-plan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>For agentic workers:</strong> REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (<code>- [ ]</code>) syntax for tracking.</p>
+</blockquote>
+<p><strong>Goal:</strong> Rebuild the Foudre mode from the live site's own HTML and CSS rather than a third-party description of it, so the app carries that design's real colours, shapes, type and motion.</p>
+<p><strong>Architecture:</strong> One mode sheet (<code>foudre.ts</code>) plus a self-hosted display face and a motion vocabulary that the mode owns. Everything hangs off the existing <code>sc-foudre</code> root class; no new mechanism.</p>
+<p><strong>Tech Stack:</strong> TypeScript, Backstage frontend plugin (<code>@internal/plugin-platform-ui</code>), Jest, Playwright (for verification), Yarn 4, Node 22.</p>
+<hr />
+<h2 id="what-the-site-actually-uses">What the site actually uses<a class="headerlink" href="#what-the-site-actually-uses" title="Permanent link">&para;</a></h2>
+<p>Measured by driving <code>https://www.agencefoudre.com/</code> with Playwright and reading computed styles across its whole DOM — not from a summary. Counts are how many elements resolve to that value.</p>
+<p><strong>Colour</strong> (the palette is small and used in strict proportion):</p>
+<table>
+<thead>
+<tr>
+<th>Value</th>
+<th>Hex</th>
+<th>Where</th>
+<th>Count</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Warm chalk</td>
+<td><code>#fff8f6</code></td>
+<td>dominant text; also a ground</td>
+<td>583 text / 26 bg</td>
+</tr>
+<tr>
+<td>Black</td>
+<td><code>#000000</code></td>
+<td>body copy</td>
+<td>278</td>
+</tr>
+<tr>
+<td>Lipstick magenta</td>
+<td><code>#db3c8a</code></td>
+<td>display type <strong>and</strong> filled blocks</td>
+<td>245 text / 50 bg</td>
+</tr>
+<tr>
+<td>Forest green</td>
+<td><code>#00522d</code></td>
+<td>body text, button labels</td>
+<td>161</td>
+</tr>
+<tr>
+<td>Blush cream</td>
+<td><code>#fce5df</code></td>
+<td>soft ground</td>
+<td>27 / 36 bg</td>
+</tr>
+<tr>
+<td>Bubblegum</td>
+<td><code>#f29ebd</code></td>
+<td>button fills</td>
+<td>18 / 18 bg</td>
+</tr>
+<tr>
+<td>Lilac</td>
+<td><code>#d1cfe4</code></td>
+<td><strong>the hairline</strong> — <code>1px solid</code></td>
+<td>13 borders</td>
+</tr>
+</tbody>
+</table>
+<p>The chalk-at-40% (<code>rgba(255,248,246,.4)</code>, 25 uses) is a translucent overlay ground, not a token.</p>
+<p><strong>Shape</strong> — a small, deliberate radius set:</p>
+<table>
+<thead>
+<tr>
+<th>Radius</th>
+<th>Count</th>
+<th>Read as</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>50%</code></td>
+<td>35</td>
+<td>circles — the site's buttons are 60px discs</td>
+</tr>
+<tr>
+<td><code>10px</code></td>
+<td>73</td>
+<td>the default box</td>
+</tr>
+<tr>
+<td><code>20px</code> / <code>22px</code> / <code>25px</code></td>
+<td>62</td>
+<td>larger surfaces</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Elevation:</strong> one box-shadow on the entire page. The system is flat.</p>
+<p><strong>Type:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Face</th>
+<th>Weight</th>
+<th>Role</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clash Grotesk</td>
+<td>400/500/700</td>
+<td>everything structural</td>
+<td>1102 elements</td>
+</tr>
+<tr>
+<td>Beni</td>
+<td>900</td>
+<td>display only</td>
+<td>143 elements</td>
+</tr>
+</tbody>
+</table>
+<p>The display setting is the signature: <code>h2</code> is Beni 900 at <strong>94px with a 65.8px line-height</strong> — a ratio of <strong>0.70</strong>. Body is Clash Grotesk <strong>500</strong> at 10–20px.</p>
+<p><strong>Motion</strong> — the single most characteristic thing the description missed:</p>
+<table>
+<thead>
+<tr>
+<th>Easing</th>
+<th>Count</th>
+<th>Name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cubic-bezier(.23,1,.32,1)</code> @ .4s</td>
+<td>951+</td>
+<td>ease-out-quint</td>
+</tr>
+<tr>
+<td><code>cubic-bezier(.23,1,.32,1)</code> @ .8s</td>
+<td>18</td>
+<td>the same, slower, for entrances</td>
+</tr>
+<tr>
+<td><code>cubic-bezier(.17,.67,.3,1.33)</code></td>
+<td>34</td>
+<td>a <strong>back</strong> ease that overshoots</td>
+</tr>
+<tr>
+<td><code>cubic-bezier(.645,.045,.355,1)</code></td>
+<td>17</td>
+<td>ease-in-out-cubic</td>
+</tr>
+</tbody>
+</table>
+<p>Keyframes present: <code>rotation</code>, <code>flicker</code>, <code>flap</code>, plus limb animations for its illustrations.</p>
+<hr />
+<h2 id="two-conflicts-to-settle-before-any-code">Two conflicts to settle before any code<a class="headerlink" href="#two-conflicts-to-settle-before-any-code" title="Permanent link">&para;</a></h2>
+<h3 id="1-this-design-is-built-on-smooth-easing-the-design-system-forbids-it">1. This design is built on smooth easing; the design system forbids it<a class="headerlink" href="#1-this-design-is-built-on-smooth-easing-the-design-system-forbids-it" title="Permanent link">&para;</a></h3>
+<p><code>docs/explanation/design-system.md</code> is unambiguous:</p>
+<blockquote>
+<p>Every animation uses <code>steps()</code>, never <code>ease</code>. Smooth interpolation is what makes a pixel interface look like a modern interface wearing a costume, so the rule is absolute — including for third-party motion.</p>
+</blockquote>
+<p>Nearly a thousand elements on the reference transition on <code>cubic-bezier(.23,1,.32,1)</code>. A Foudre mode that steps its motion is not this design; it is this design's colours wearing the pixel system's timing. The brief also asks to keep and extend the animations.</p>
+<p><strong>Ruling: amend the contract, do not quietly break it.</strong> The rule already carries exactly one carve-out — a <em>mode</em> potion may redefine status hue wholesale (Greek spends it). Motion gets the same shape of exception, with the same conditions attached:</p>
+<ul>
+<li>A mode may redefine the easing vocabulary, but <strong>wholesale</strong> — it declares its own curves and uses them consistently, rather than mixing smooth and stepped.</li>
+<li>Everything timed still sits inside <code>@media (prefers-reduced-motion: no-preference)</code>, and the reduced case is still <em>designed</em> rather than merely disabled.</li>
+<li>Nothing conveys state through motion alone.</li>
+</ul>
+<p>The default theme and Greek keep <code>steps()</code>. This is the difference between an exception and a hole in the rule, and the doc has to say so in the same breath as the code that relies on it.</p>
+<h3 id="2-beni-is-licensed-and-cannot-ship">2. Beni is licensed and cannot ship<a class="headerlink" href="#2-beni-is-licensed-and-cannot-ship" title="Permanent link">&para;</a></h3>
+<p>Beni Black is the display face and there is no free licence for it. Clash Grotesk is already self-hosted here (ITF Free Font License) and covers the structural voice exactly.</p>
+<p><strong>Ruling: self-host Anton for display.</strong> Anton is SIL OFL, condensed, single heavy weight, and is the closest licensable match to Beni's proportions. Set at a 0.70 line-height and tight tracking it reproduces the reference's dense display block. Task 1 verifies the licence before downloading; if it does not check out, fall back to Clash Grotesk 700 at the same leading and record that in the file.</p>
+<h3 id="3-there-is-already-a-foudre-mode-built-from-a-description">3. There is already a <code>foudre</code> mode built from a description<a class="headerlink" href="#3-there-is-already-a-foudre-mode-built-from-a-description" title="Permanent link">&para;</a></h3>
+<p>It was built from a third-party summary and is close but wrong in specifics: it uses a magenta-derived border where the site uses lilac, a 20px card radius where the site's default box is 10px, no circles, and stepped motion.</p>
+<p><strong>Ruling: rebuild <code>foudre</code> in place rather than adding a second Foudre.</strong> The id is the key a browser has already persisted; two modes for one brand is a worse outcome than one accurate mode. Say so in the report so it can be overridden.</p>
+<hr />
+<h2 id="design">Design<a class="headerlink" href="#design" title="Permanent link">&para;</a></h2>
+<h3 id="tokens">Tokens<a class="headerlink" href="#tokens" title="Permanent link">&para;</a></h3>
+<p>Both registers keep the reference's own relationships: chalk ground, black body copy, magenta as display and fill, lilac hairline. Every pair below is measured before the code is written (Task 2).</p>
+<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>light  bg #fff8f6   fg #000000   card #ffffff   muted #fce5df
+       border #d1cfe4 (hairline) · primary magenta (darkened to fill) · fg-on-primary chalk
+dark   bg forest #00522d deepened · fg chalk · card a lifted forest
+       border lilac · primary bubblegum · fg-on-primary forest
+</code></pre></div></td></tr></table></div>
+<p>The dark register is an inversion the site does not define — it is a light site. Forest green is its second ground, so the dark register is built on forest rather than on an invented neutral, which is what keeps it recognisably Foudre.</p>
+<h3 id="shape">Shape<a class="headerlink" href="#shape" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>--sc-radius: 10px</code> — the site's default box.</li>
+<li>Large surfaces <code>20px</code>; cards holding a table stay <code>0</code> (see the table note in <code>styles.ts</code>).</li>
+<li><strong>Buttons and marks become 60px circles.</strong> This is the most recognisable thing about the reference's chrome and the plan should not soften it: icon buttons and the brand mark are discs; text buttons take a pill so a label still fits.</li>
+<li>Borders: <code>1px solid</code> lilac. No shadows anywhere.</li>
+</ul>
+<h3 id="motion-vocabulary">Motion vocabulary<a class="headerlink" href="#motion-vocabulary" title="Permanent link">&para;</a></h3>
+<p>Declared once as tokens so every rule in the mode uses the same curves:</p>
+<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>--sc-ease:       cubic-bezier(.23, 1, .32, 1)      /* the site&#39;s workhorse */
+--sc-ease-back:  cubic-bezier(.17, .67, .3, 1.33)  /* overshoot, for arrivals */
+--sc-dur:        .4s
+--sc-dur-slow:   .8s
+</code></pre></div></td></tr></table></div>
+<p>Applied to: nav item hover, button hover and press, card hover lift, dialog entrance, and a <code>flicker</code> on the brand mark echoing the reference's own keyframe. Each is a <em>response to an action</em>, which is what keeps it modern rather than busy.</p>
+<hr />
+<h2 id="tasks">Tasks<a class="headerlink" href="#tasks" title="Permanent link">&para;</a></h2>
+<h3 id="task-1-the-display-face">Task 1: The display face<a class="headerlink" href="#task-1-the-display-face" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong> <code>backstage/packages/app/public/fonts/</code>, <code>public/fonts/LICENSE.txt</code>, <code>plugins/platform-ui/src/styles.ts</code></p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Confirm the licence.</strong> Anton is SIL OFL 1.1. Verify at the source before downloading; if it is anything else, stop and use Clash Grotesk 700 instead.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Download the woff2</strong> and place it beside <code>clash-grotesk.woff2</code>.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Record it in <code>LICENSE.txt</code></strong> — family, licence, source URL, and that it stands in for Beni.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Add the <code>@font-face</code></strong> in <code>styles.ts</code> next to the other two, <code>font-display: swap</code>, same-origin <code>/fonts/</code> path.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 5:</strong> <code>cd backstage &amp;&amp; CI=true yarn test plugins/platform-ui/src/styles.test.ts</code> — the existing guard asserts every face is same-origin, so it covers this for free.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 6: Commit</strong> — <code>feat(ui): self-host Anton for display type</code></li>
+</ul>
+<h3 id="task-2-measure-the-palette">Task 2: Measure the palette<a class="headerlink" href="#task-2-measure-the-palette" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong> a scratch script; no repo changes.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Write the checker</strong> using the same maths as <code>contrast.test.ts</code> (<code>srgbOf</code> / <code>luminanceOf</code> / composite-over-cell).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Check both registers</strong> for: <code>fg/bg</code>, <code>fg/card</code>, <code>muted-fg/card</code>, <code>muted-fg/muted</code>, <code>accent-fg/accent</code>, <code>primary-fg/primary</code> at 4.5:1, and <code>border/card</code> at 3:1.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Check the default status ink</strong> against both new cards — this mode moves <code>--sc-card</code>, so the existing status colours must be re-measured on it.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Adjust and re-run until everything passes.</strong> Expect magenta to need darkening where it <em>fills</em>: at its published value it carries white at 3.3:1. It keeps full intensity as display type, which is how the site uses it.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 5: Record the final values</strong> in the plan's report; they are the input to Task 3.</li>
+</ul>
+<h3 id="task-3-rebuild-foudrets">Task 3: Rebuild <code>foudre.ts</code><a class="headerlink" href="#task-3-rebuild-foudrets" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong> <code>plugins/platform-ui/src/foudre.ts</code>, <code>statusTokens.ts</code> (card values)</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Replace the two register blocks</strong> with the measured values from Task 2. Keep <code>--sc-hairline</code> as lilac <code>#d1cfe4</code>, which the site uses for every border.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Set the shape tokens</strong> — <code>--sc-radius: 10px</code>, <code>--sc-radius-sm: 10px</code>, <code>--sc-border-w: 1px</code>, <code>--sc-shadow: none</code>.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Circles.</strong> Icon buttons and both marks (<code>.sc-nav-mark</code>, <code>.sc-login-mark</code>) get <code>border-radius: 50%</code> and a fixed square size; text buttons get a pill. Keep the existing <code>:has(table)</code> rule at radius 0.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Display type.</strong> <code>.sc-h1</code> and <code>.sc-card-title</code> take the display face at <code>line-height: .70</code>, weight 900, tight tracking, magenta at full intensity.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 5: Update <code>MODE_CARDS.foudre</code></strong> in <code>statusTokens.ts</code> to the new card values, or <code>contrast.test.ts</code> measures against a colour nothing paints.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 6:</strong> <code>CI=true yarn test plugins/platform-ui/src/foudre.test.ts plugins/platform-ui/src/contrast.test.ts</code></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 7: Commit</strong> — <code>feat(ui): rebuild foudre from the site's own tokens</code></li>
+</ul>
+<h3 id="task-4-the-motion-vocabulary">Task 4: The motion vocabulary<a class="headerlink" href="#task-4-the-motion-vocabulary" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong> <code>plugins/platform-ui/src/foudre.ts</code>, <code>docs/explanation/design-system.md</code></p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Amend the doc first.</strong> Add the motion exception to the design-system contract, in the same section that carries the status-hue exception, with its three conditions (wholesale, reduced-motion respected, never state-by-motion-alone). Doing this before the code is deliberate: the contract should never trail the thing that breaks it.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Declare the curves</strong> as tokens on <code>:root.sc-foudre</code>.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Apply them</strong> to nav hover, button hover/press, card hover, and dialog entrance — all inside <code>@media (prefers-reduced-motion: no-preference)</code>.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Add the brand-mark flicker</strong>, echoing the reference's own <code>flicker</code> keyframe. Two frames, <code>--sc-ease</code>, and the unanimated default is the lit state so stillness reads as intended.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 5: Test.</strong> A new case asserting that within this mode every <code>transition</code>/<code>animation</code> uses <code>var(--sc-ease…)</code> and none use <code>steps(</code> — the inverse of the base rule, which is exactly the point — plus the existing reduced-motion guard.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 6: Commit</strong> — <code>feat(ui): give foudre the reference's own easing</code></li>
+</ul>
+<h3 id="task-5-verify-in-a-browser-not-in-the-sheet">Task 5: Verify in a browser, not in the sheet<a class="headerlink" href="#task-5-verify-in-a-browser-not-in-the-sheet" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong> a scratch Playwright script; no repo changes.</p>
+<p>This step is not optional. Three separate fixes in this file's history looked correct in CSS and were wrong on screen — a clipped table, a covered border arc, and a classless heading no selector reached.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Log in</strong> against the local stack (<code>admin</code>/<code>admin</code>, per <code>deploy/dev/ldap/bootstrap.ldif</code>).</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: For the foudre mode, assert on the live DOM:</strong> the table's surface has radius <code>0</code> and no clipping ancestor; <code>h1</code>, <code>.sc-h1</code> and <code>.sc-card-title</code> all resolve to the display or body face as intended; a button's computed <code>border-radius</code> is a circle; the computed <code>transition-timing-function</code> on a nav item is the site's curve.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Check both registers</strong> by toggling the theme, not just the light one.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Report the measured values.</strong> If any differ from the sheet, fix the sheet — the browser is the authority.</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 5: Delete the scratch script</strong> so it never lands in a commit.</li>
+</ul>
+<h3 id="task-6-full-ci-and-the-image">Task 6: Full CI and the image<a class="headerlink" href="#task-6-full-ci-and-the-image" title="Permanent link">&para;</a></h3>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1:</strong> <code>cd backstage &amp;&amp; CI=true yarn tsc &amp;&amp; CI=true yarn lint:all &amp;&amp; CI=true yarn test &amp;&amp; CI=true yarn build:all</code></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2:</strong> <code>bash scripts/prod-image-up.sh</code></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Confirm the served bundle</strong> carries the new face and the mode, and that <code>/fonts/&lt;display&gt;.woff2</code> returns 200 — a CDN reference would fail the CSP silently.</li>
+</ul>
+<hr />
+<h2 id="risks">Risks<a class="headerlink" href="#risks" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>The motion exception is the load-bearing decision here.</strong> If it is not wanted, the mode still works with stepped timing and loses the thing that most distinguishes the reference. That is the one call worth confirming before Task 4.</li>
+<li><strong>Circles cost width.</strong> A 60px disc is right for an icon button and wrong for <code>SUBMIT REQUEST</code>. The plan splits them deliberately; if a text button ends up circular it will truncate.</li>
+<li><strong>A 0.70 line-height clips descenders</strong> on anything but a display size. It belongs on <code>.sc-h1</code> and card titles, not on body copy.</li>
+<li><strong>Anton is a stand-in, not Beni.</strong> It is close in proportion and wrong in detail. Worth saying plainly rather than implying the type is exact.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.footer", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../search/main.js"></script>
+      
+    
+  </body>
+</html>
