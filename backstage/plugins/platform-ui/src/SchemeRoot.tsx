@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
+import { BRAND_DEFS } from './brands';
 import { AMPHORA_VESSEL, SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
 import { PixelPotion } from './components';
 import { templateHeaderCss } from './templateHeaders';
@@ -63,7 +64,18 @@ type Scheme = {
  * each pick: a mode class left behind is a second palette still applying, and
  * which one wins is then decided by stylesheet order rather than by the click.
  */
-const MODES = ['greek', 'foudre', 'slush'] as const;
+const MODES = [
+  'greek',
+  'foudre',
+  'slush',
+  'spiderverse',
+  'newform',
+  'tiger',
+  'hermes',
+  'papers',
+  'discord',
+  'claude',
+] as const;
 type Mode = (typeof MODES)[number];
 
 // Saturated toward NES-era values. `fg` is the text colour that sits on the
@@ -94,6 +106,21 @@ export const SCHEMES: Scheme[] = [
     fg: WHITE, // 4.62
     mode: 'slush',
   },
+  {
+    id: 'spiderverse',
+    label: 'Spider-Verse',
+    hsl: '355 82% 42%',
+    fg: WHITE, // 7.05
+    mode: 'spiderverse',
+  },
+  // The table-driven brand modes, from brands.ts.
+  ...BRAND_DEFS.map(b => ({
+    id: b.id,
+    label: b.label,
+    hsl: b.bottle,
+    fg: b.bottleFg,
+    mode: b.id as Mode,
+  })),
 ];
 
 /**

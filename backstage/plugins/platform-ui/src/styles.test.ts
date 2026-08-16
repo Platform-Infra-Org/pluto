@@ -1,4 +1,5 @@
 import { SHADCN_CSS } from './styles';
+import { GRAPH_OVERRIDES } from './theme';
 import { SPRITE_SIZE } from './sprites';
 import { STARFIELD } from './starfield';
 
@@ -219,6 +220,27 @@ describe('SHADCN_CSS', () => {
     // the template's own copy already says.
     expect(SHADCN_CSS).toMatch(
       /\.sc-route-create[^{]*> h3\s*\{\s*display:\s*none/,
+    );
+  });
+
+  it('lets the visualizer follow whatever theme is live', () => {
+    // The four DependencyGraph override keys carried hardcoded hex chosen for
+    // one dark palette, so the graph stayed that colour in every mode and in
+    // light mode — a dark canvas with pale nodes on a parchment page. MUI
+    // freezes these at theme construction, so they have to read a variable.
+    const graph = JSON.stringify(GRAPH_OVERRIDES);
+    expect(graph.length).toBeGreaterThan(100);
+    expect(graph).not.toMatch(/#[0-9a-fA-F]{3,8}/);
+    expect(graph).toMatch(/hsl\(var\(--sc-card\)\)/);
+    expect(graph).toMatch(/hsl\(var\(--sc-fg\)\)/);
+  });
+
+  it('makes the template name the card headline', () => {
+    // h4 is the template's name. It arrived at the header's inherited size,
+    // which read as a caption on a card whose whole job is to be picked out of
+    // a grid.
+    expect(SHADCN_CSS).toMatch(
+      /\.sc-route-create[^{]*> h4 \{[^}]*font-size:\s*22px/,
     );
   });
 

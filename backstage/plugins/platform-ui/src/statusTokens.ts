@@ -62,7 +62,18 @@ export const STATUS_TOKENS: StatusToken[] = [
 ];
 
 /** Which palette a scheme drives. `default` is the six accent-only potions. */
-export type SchemeMode = 'default' | 'greek' | 'foudre' | 'slush';
+export type SchemeMode =
+  | 'default'
+  | 'greek'
+  | 'foudre'
+  | 'slush'
+  | 'spiderverse'
+  | 'newform'
+  | 'tiger'
+  | 'hermes'
+  | 'papers'
+  | 'discord'
+  | 'claude';
 
 /** `--sc-card` in the Greek registers, from greek.ts. */
 export const GREEK_CARD_LIGHT = '42 45% 98%';
@@ -126,6 +137,13 @@ export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   // has to be re-measured against new paper.
   foudre: STATUS_TOKENS,
   slush: STATUS_TOKENS,
+  spiderverse: STATUS_TOKENS,
+  newform: STATUS_TOKENS,
+  tiger: STATUS_TOKENS,
+  hermes: STATUS_TOKENS,
+  papers: STATUS_TOKENS,
+  discord: STATUS_TOKENS,
+  claude: STATUS_TOKENS,
 };
 
 export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
@@ -133,6 +151,13 @@ export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   greek: { light: GREEK_CARD_LIGHT, dark: GREEK_CARD_DARK },
   foudre: { light: '0 0% 100%', dark: '153 60% 7%' },
   slush: { light: '0 0% 100%', dark: '0 0% 8%' },
+  spiderverse: { light: '45 60% 98%', dark: '260 40% 10%' },
+  newform: { light: '0 0% 100%', dark: '135 10% 9%' },
+  tiger: { light: '38 70% 99%', dark: '20 55% 8%' },
+  hermes: { light: '0 0% 100%', dark: '0 0% 8%' },
+  papers: { light: '0 0% 100%', dark: '0 0% 8%' },
+  discord: { light: '0 0% 100%', dark: '227 9% 10%' },
+  claude: { light: '48 33% 97%', dark: '60 3% 8%' },
 };
 
 /** The `:root` declarations for every mode, for interpolation into SHADCN_CSS. */

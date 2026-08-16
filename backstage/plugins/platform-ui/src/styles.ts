@@ -6,6 +6,8 @@ import { statusTokenCss } from './statusTokens';
 import { greekCss } from './greek';
 import { foudreCss } from './foudre';
 import { slushCss } from './slush';
+import { brandsCss } from './brands';
+import { spiderverseCss } from './spiderverse';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
@@ -77,6 +79,8 @@ ${statusTokenCss()}
 ${greekCss()}
 ${foudreCss()}
 ${slushCss()}
+${brandsCss()}
+${spiderverseCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because
@@ -416,7 +420,15 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    already says and it was reading as the card's headline. */
 .sc-route-create .MuiCard-root > .MuiBox-root:first-child { display: flex; flex-direction: column; }
 .sc-route-create .MuiCard-root > .MuiBox-root:first-child > * { order: 3; }
-.sc-route-create .MuiCard-root > .MuiBox-root:first-child > h4 { order: 1; }
+.sc-route-create .MuiCard-root > .MuiBox-root:first-child > h4 {
+  order: 1;
+  /* The name IS the card. It arrived at the header's inherited size, which read
+     as a caption on a card whose whole job is to be picked from a grid. */
+  font-size: 22px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.02em;
+}
 .sc-route-create .MuiCard-root > .MuiBox-root:first-child > h3 { display: none; }
 
 .sc-route-create .MuiCard-root > .MuiBox-root:first-child {

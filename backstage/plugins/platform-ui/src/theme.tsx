@@ -63,6 +63,44 @@ const pageThemes = {
   apis: genPageTheme({ colors: [PRIMARY, ACCENT], shape: shapes.wave }),
 };
 
+/**
+ * The app visualizer's four override keys.
+ *
+ * Every value reads a token rather than a literal. The hex that used to sit
+ * here was picked for one dark palette, so the graph stayed that colour in
+ * every mode and in light mode — a dark canvas with pale nodes on a parchment
+ * page. MUI freezes these at theme construction, so a CSS variable is the only
+ * way they can follow the live theme, which is the same reason the header art
+ * is reached through one.
+ *
+ * Exported so a test can assert on the object; the built theme is not
+ * introspectable.
+ */
+export const GRAPH_OVERRIDES = {
+    BackstageDependencyGraphNode: {
+      styleOverrides: {
+        node: { fill: 'hsl(var(--sc-card))', stroke: 'hsl(var(--sc-border))' },
+      },
+    },
+    BackstageDependencyGraphDefaultNode: {
+      styleOverrides: {
+        node: {
+          fill: 'hsl(var(--sc-card))',
+          stroke: 'hsl(var(--sc-border))',
+          rx: 8,
+          ry: 8,
+        },
+        text: { fill: 'hsl(var(--sc-fg))' },
+      },
+    },
+    BackstageDependencyGraphDefaultLabel: {
+      styleOverrides: { text: { fill: 'hsl(var(--sc-fg))' } },
+    },
+    BackstageDependencyGraphEdge: {
+      styleOverrides: { path: { stroke: 'hsl(var(--sc-border) / .55)' } },
+    },
+};
+
 function makeTheme(mode: 'light' | 'dark', t: Tone) {
   const base = mode === 'light' ? palettes.light : palettes.dark;
   // Backstage's own components are styled here, through their published
@@ -83,21 +121,7 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
     // keep it on the platform's palette. They were deleted with the catalog
     // graph's overrides and left the visualizer unstyled: a transparent canvas
     // with default light-blue nodes on a dark page.
-    BackstageDependencyGraphNode: {
-      styleOverrides: { node: { fill: '#17171f', stroke: '#32303e' } },
-    },
-    BackstageDependencyGraphDefaultNode: {
-      styleOverrides: {
-        node: { fill: '#17171f', stroke: '#32303e', rx: 8, ry: 8 },
-        text: { fill: '#e7e7ef' },
-      },
-    },
-    BackstageDependencyGraphDefaultLabel: {
-      styleOverrides: { text: { fill: '#e7e7ef' } },
-    },
-    BackstageDependencyGraphEdge: {
-      styleOverrides: { path: { stroke: 'rgba(255,255,255,.24)' } },
-    },
+    ...GRAPH_OVERRIDES,
     BackstageHeader: {
         styleOverrides: {
           header: {
