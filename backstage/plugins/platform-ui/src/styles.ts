@@ -233,6 +233,15 @@ body, body *, input, select, textarea, button, optgroup {
 }
 /* The BUI page title is the biggest type on a native page. */
 [class*="bui-HeaderTitle"] { font-size: 28px !important; }
+/* The one bui surface with no rule here: PluginHeader ships its own white
+   ground and black ink, measured rgb(255,255,255) on a production build while
+   the mode's card was 42 45% 98%. Every potion is affected, so this is
+   app-wide rather than route-scoped. */
+[class*="bui-PluginHeader"] {
+  background: hsl(var(--sc-card)) !important;
+  color: hsl(var(--sc-fg)) !important;
+  border-bottom: var(--sc-border-w) solid hsl(var(--sc-border));
+}
 /* The API explorer's title sits on a different gutter from its own table.
    Its page is <HeaderPage> + <Content>, while every other native page is
    <Header> + <Container>: the header's slots ARE bui Containers
@@ -336,9 +345,44 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    mangles to jss<n>, so they were dead in every deployed release while working
    perfectly on the dev server. */
 /* The app visualizer draws Backstage's SVG graph, which is a different feature
-   from the catalog graph and still exists. Its id is stable, so the canvas can
-   take the space colour without naming any generated class. */
-#dependency-graph { background-color: #05050c; border-radius: var(--sc-radius); }
+   from the catalog graph and still exists. Its id is stable, so it can be
+   reached without naming any generated class.
+   The tree it draws is NOT the DependencyGraph default node: the plugin passes
+   its own renderNode, which bypasses the four BackstageDependencyGraph*
+   overrides in theme.tsx and hardcodes #90caf9, #9e9e9e, #2196f3, #757575 and
+   #000000. Those are React props on "rect" and "text", so they render as SVG
+   presentation attributes — bottom of the cascade, specificity 0 — and a plain
+   author rule beats them without !important. The plugin distinguishes its two
+   node kinds only by corner radius (rx=0 an extension node, rx=20 a group), so
+   that is what these read. Scoped by the svg's own id, DEPENDENCY_GRAPH_SVG in
+   core-components: nothing else in this app carries it, and our three graphs
+   are React Flow.
+   The canvas moves off the hardcoded near-black it used to share with the
+   catalog graph: with the nodes now on the mode's card it would be the last
+   thing on the page not following the potion, and in light mode it read as
+   broken. The starfield stays where it was designed to live, on the React Flow
+   canvas below. */
+#dependency-graph {
+  background-color: hsl(var(--sc-bg));
+  border-radius: var(--sc-radius);
+}
+#dependency-graph rect[rx="0"] {
+  fill: hsl(var(--sc-card));
+  stroke: hsl(var(--sc-border));
+}
+#dependency-graph rect[rx="20"] {
+  fill: hsl(var(--sc-muted));
+  stroke: hsl(var(--sc-border));
+}
+/* The label is the rect's next sibling inside the node's own g, so this cannot
+   reach an edge label, which theme.tsx already owns. */
+#dependency-graph rect + text { fill: hsl(var(--sc-card-fg)); }
+/* The visualizer's Detailed tab keeps its own hues on purpose. getOutputColor
+   assigns a distinct colour per output type (reactElement, routePath, routeRef,
+   apiFactory, plus a rotating palette) and computes its own text contrast: that
+   is categorical data encoding, the same exception the experience bar's status
+   colours take. Flattening the chips to one token destroys the legend, so no
+   rules are added for them. */
 
 /* ===== Catalog graph (our React Flow one) ===== */
 .sc-graph-layout { display: grid; grid-template-columns: 280px 1fr; gap: 16px;
@@ -1117,68 +1161,89 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* ===== Register an existing component =====
    The one flow built almost entirely from raw MUI — a stepper, a bare form,
    plain Typography — so it arrived with none of the design layer while every
-   other page inherited it. Everything here targets Mui globals, which is what
-   survives a production build, scoped by route so it reaches nothing else. */
-.sc-route-import .MuiStepper-root {
+   other page inherited it.
+   This route mounts its own JSS class-name generator, and it is the only one
+   that does: measured on a production build, 83 of its 90 MUI classes arrive
+   counter-suffixed (MuiStepLabel-label-234, MuiBox-root-27) against 0 of ~90
+   on /catalog. A CSS class selector matches whole tokens, so .MuiStepLabel-label
+   cannot match class="MuiStepLabel-label-234" and every exact-class rule here
+   was dead. The attribute-substring form matches both spellings, so it is
+   correct on the dev server and in the image alike.
+   The exact-class rules were rewritten in place rather than duplicated: these
+   are route-scoped, so they cover nothing else and a second spelling would be
+   dead weight. The GLOBAL Mui rules further down are a different matter and
+   stay as they are.
+   Note [class*="MuiStepLabel-label"] also matches MuiStepLabel-labelContainer.
+   That is harmless — the container is a bare wrapper span and the label
+   inherits the same declarations anyway. */
+.sc-route-import [class*="MuiStepper-root"] {
   background: transparent !important;
   padding: 8px 0 16px !important;
 }
-.sc-route-import .MuiStepLabel-label {
+.sc-route-import [class*="MuiStepLabel-label"] {
   font-family: var(--sc-font-ui) !important;
   text-transform: uppercase;
   letter-spacing: 0;
   font-size: 13px !important;
   color: hsl(var(--sc-muted-fg)) !important;
 }
-.sc-route-import .MuiStepLabel-label.Mui-active,
-.sc-route-import .MuiStepLabel-label.Mui-completed {
+/* The compound .MuiStepLabel-label.Mui-active cannot survive here: the suffix
+   breaks both halves of it, so the state class is matched on its own. */
+.sc-route-import [class*="MuiStepLabel-active"],
+.sc-route-import [class*="MuiStepLabel-completed"] {
   color: hsl(var(--sc-fg)) !important;
   font-weight: 600 !important;
 }
 /* The step bubbles take the accent and the hard edge the rest of the app uses,
    rather than MUI's default flat circles. */
-.sc-route-import .MuiStepIcon-root {
+.sc-route-import [class*="MuiStepIcon-root"] {
   color: hsl(var(--sc-muted)) !important;
   border: var(--sc-border-w) solid hsl(var(--sc-border));
   border-radius: 50%;
 }
-.sc-route-import .MuiStepIcon-root.Mui-active,
-.sc-route-import .MuiStepIcon-root.Mui-completed {
+.sc-route-import [class*="MuiStepIcon-active"],
+.sc-route-import [class*="MuiStepIcon-completed"] {
   color: hsl(var(--sc-primary)) !important;
   border-color: hsl(var(--sc-primary));
 }
-.sc-route-import .MuiStepIcon-text { fill: hsl(var(--sc-primary-fg)) !important; }
-.sc-route-import .MuiStepConnector-line {
+.sc-route-import [class*="MuiStepIcon-text"] { fill: hsl(var(--sc-primary-fg)) !important; }
+.sc-route-import [class*="MuiStepConnector-line"] {
   border-color: hsl(var(--sc-border)) !important;
 }
 /* The analysis result and the form sit in bare Papers. */
-.sc-route-import .MuiPaper-root {
+.sc-route-import [class*="MuiPaper-root"] {
   background: hsl(var(--sc-card)) !important;
   border: var(--sc-border-w) solid hsl(var(--sc-border));
   border-radius: var(--sc-radius);
   box-shadow: var(--sc-shadow);
 }
-.sc-route-import .MuiTypography-h6,
-.sc-route-import .MuiFormLabel-root,
-.sc-route-import .MuiInputLabel-root {
+.sc-route-import [class*="MuiTypography-h6"],
+.sc-route-import [class*="MuiFormLabel-root"],
+.sc-route-import [class*="MuiInputLabel-root"] {
   font-family: var(--sc-font-ui) !important;
   text-transform: uppercase;
   letter-spacing: 0;
   color: hsl(var(--sc-fg)) !important;
 }
-.sc-route-import .MuiTypography-body1,
-.sc-route-import .MuiTypography-body2 {
+.sc-route-import [class*="MuiTypography-body1"],
+.sc-route-import [class*="MuiTypography-body2"] {
   color: hsl(var(--sc-fg));
 }
+/* The links arrive indigo for the same reason: the global .MuiLink-root rule
+   names the class exactly and misses every suffixed token on this route. */
+.sc-route-import [class*="MuiLink-root"],
+.sc-route-import [class*="MuiTypography-colorPrimary"] {
+  color: hsl(var(--sc-primary)) !important;
+}
 /* The repository-URL field is the page's one real input; it arrives bare. */
-.sc-route-import .MuiOutlinedInput-root {
+.sc-route-import [class*="MuiOutlinedInput-root"] {
   background: hsl(var(--sc-bg));
   border-radius: var(--sc-radius);
 }
-.sc-route-import .MuiListItem-root {
+.sc-route-import [class*="MuiListItem-root"] {
   border-bottom: var(--sc-border-w) solid hsl(var(--sc-border) / .6);
 }
-.sc-route-import .MuiLinearProgress-root {
+.sc-route-import [class*="MuiLinearProgress-root"] {
   border: var(--sc-border-w) solid hsl(var(--sc-border));
   border-radius: var(--sc-radius);
 }

@@ -235,6 +235,42 @@ describe('SHADCN_CSS', () => {
     expect(graph).toMatch(/hsl\(var\(--sc-fg\)\)/);
   });
 
+  it('reaches the JSS-suffixed classes /catalog-import mounts', () => {
+    // That route, alone in the app, mounts its own JSS class-name generator:
+    // measured on a production build, 83 of its 90 MUI classes arrive
+    // counter-suffixed (MuiStepLabel-label-234) against 0 of ~90 on /catalog.
+    // A class selector matches whole tokens, so every exact-class rule scoped
+    // to the route was dead there. Without that census these two assertions
+    // look like a style preference; they are the fix.
+    expect(SHADCN_CSS).not.toMatch(/\.sc-route-import\s+\.Mui/);
+    expect(SHADCN_CSS).toContain('.sc-route-import [class*="MuiStepIcon-root"]');
+  });
+
+  it('themes the bui plugin header', () => {
+    // It ships its own white ground and black ink — measured rgb(255,255,255)
+    // on a production build while the mode's card was 42 45% 98%.
+    expect(SHADCN_CSS).toMatch(
+      /\[class\*="bui-PluginHeader"\]\s*\{[^}]*hsl\(var\(--sc-card\)\)/,
+    );
+  });
+
+  it('recolours the visualizer tree, which bypasses the theme overrides', () => {
+    // The plugin passes its own renderNode, so the BackstageDependencyGraph*
+    // keys in theme.tsx never see the nodes; it hardcodes #90caf9 as a React
+    // prop on "rect", which lands as an SVG presentation attribute at
+    // specificity 0 and loses to a plain author rule. Node kind is readable
+    // only from the corner radius.
+    expect(SHADCN_CSS).toContain('#dependency-graph rect[rx="0"]');
+    // Comments are stripped first: the rule's own comment names the hex it
+    // exists to beat, and prose is not a declaration.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '').toLowerCase();
+    expect(rules).not.toContain('#90caf9');
+    // The canvas follows the mode instead of a fixed near-black.
+    expect(SHADCN_CSS).toMatch(
+      /#dependency-graph\s*\{[^}]*background-color:\s*hsl\(var\(--sc-bg\)\)/,
+    );
+  });
+
   it('makes the template name the card headline', () => {
     // h4 is the template's name. It arrived at the header's inherited size,
     // which read as a caption on a card whose whole job is to be picked out of
