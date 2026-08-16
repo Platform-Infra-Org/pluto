@@ -149,8 +149,25 @@ rather than an obvious break.
 
 Every animation uses `steps()`, never `ease`. Smooth interpolation is what
 makes a pixel interface look like a modern interface wearing a costume, so the
-rule is absolute — including for third-party motion: React Flow's animated
-graph edges are stepped here too.
+rule holds for the default theme and for third-party motion alike: React Flow's
+animated graph edges are stepped here too.
+
+There is one exception, and it is the same shape as the status-hue one: a
+**mode** potion may redefine the easing vocabulary. A mode exists to render
+another design system in this app's furniture, and for some of them the timing
+*is* the design — Agence Foudre transitions nearly a thousand elements on
+`cubic-bezier(.23, 1, .32, 1)`, and reproducing its colours over stepped timing
+would be that design wearing this one's clock. Three conditions make it an
+exception rather than a hole:
+
+- **Wholesale.** A mode declares its own curves as tokens and uses them
+  consistently. Mixing smooth and stepped inside one theme is the failure this
+  rule exists to prevent, and it looks worse than either alone.
+- **The reduced-motion contract is unchanged.** Everything timed still sits
+  inside the query, and the still frame is still designed.
+- **Nothing conveys state through motion alone**, which was never negotiable.
+
+The default theme and Ancient Greek keep `steps()`.
 
 Everything timed sits inside `@media (prefers-reduced-motion: no-preference)`,
 and the reduced case is designed rather than merely disabled: the tour's
