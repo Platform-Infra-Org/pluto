@@ -109,9 +109,25 @@ requester cannot wave their own request through unless they are also an
 approver.
 
 A step may override that for itself — see **[Handing a gate to another
-team](#handing-a-gate-to-another-team)** below. Stop is not overridable: it ends
-the whole run rather than any one step, so it keeps asking the request-level
-question.
+team](#handing-a-gate-to-another-team)** below.
+
+Stopping appears in two places, because Argo cannot stop a single node: `/stop`
+ends the run, so refusing a gate and abandoning a request are the same call
+reached from two directions, and they are gated differently.
+
+| control | means | who may |
+|---|---|---|
+| **Refuse and stop**, beside a step | refuse *this* gate | whoever may resume that step — the named team, or the owner where no team is named |
+| **Stop the whole workflow**, at the foot of the card | abandon the request | an admin, the owning team, **or whoever filed it** |
+
+A team locked out of a gate cannot refuse it either — otherwise naming a team
+would only move who says yes, and leave anyone able to say no. The request-level
+Stop is wider on purpose: someone who no longer wants what they asked for should
+not have to find an approver to withdraw it. It is the only one behind a
+confirmation, because it throws away a run that may already have provisioned
+something, and its reason field reaches the same audit trail as an approval
+note — stopping is recorded as a rejection, because that is what refusing a
+request is.
 
 ## Handing a gate to another team
 

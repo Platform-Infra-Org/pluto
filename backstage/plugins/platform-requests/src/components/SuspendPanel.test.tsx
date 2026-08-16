@@ -3,7 +3,7 @@
 // the assertions read as the thing being tested — whether the control is
 // offered — instead of as a className check.
 import '@testing-library/jest-dom';
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { TestApiProvider } from '@backstage/test-utils';
 import { SuspendedNode } from '@internal/plugin-platform-common';
 import { requestsApiRef } from '../api';
@@ -30,9 +30,16 @@ const node = (
   suppliedOutputs: [],
 });
 
+const REQUESTER = 'user:default/dana';
+
 const show = (
   nodes: SuspendedNode[],
-  who: { isAdmin?: boolean; groups?: string[] } = {},
+  who: {
+    isAdmin?: boolean;
+    groups?: string[];
+    /** Defaults to somebody who is neither the requester nor in any group. */
+    actor?: string;
+  } = {},
 ) =>
   render(
     <TestApiProvider apis={[[requestsApiRef, {} as any]]}>
@@ -41,6 +48,8 @@ const show = (
         nodes={nodes}
         isAdmin={who.isAdmin ?? false}
         groups={who.groups ?? []}
+        actor={who.actor ?? 'user:default/someone-else'}
+        requester={REQUESTER}
         ownerGroup={OWNER}
         onResumed={() => {}}
       />
@@ -115,8 +124,66 @@ describe('SuspendPanel gating', () => {
     expect(screen.getByRole('button', { name: /Stop/ })).toBeEnabled();
   });
 
-  it('withholds Stop from the step-owning team, which does not own the request', () => {
+  it('withholds the global Stop from a team that owns only a step', () => {
+    // Finance may refuse its own gate — that control sits beside the step —
+    // but abandoning the whole request is not theirs to do.
     show([node('approve-cost', FINANCE)], { groups: [FINANCE] });
-    expect(screen.queryByRole('button', { name: /Stop/ })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: /Stop the whole workflow/ }),
+    ).toBeNull();
+    expect(
+      step('approve-cost').getByRole('button', { name: /Refuse and stop/ }),
+    ).toBeEnabled();
+  });
+
+  it('lets the person who filed it abandon their own request', () => {
+    // Not in the owning team, not an admin, owns no gate — but it is theirs.
+    show([node('approve-cost', FINANCE)], { actor: REQUESTER });
+    expect(
+      screen.getByRole('button', { name: /Stop the whole workflow/ }),
+    ).toBeEnabled();
+  });
+
+  it('never lets an unresolved identity match an unrecorded requester', () => {
+    // Both empty compared equal in the first cut of mayStopWorkflow, which
+    // opened the global Stop to anyone whose identity had not resolved yet.
+    // The emptiness is the bug; it must not also be the key.
+    render(
+      <TestApiProvider apis={[[requestsApiRef, {} as any]]}>
+        <SuspendPanel
+          requestId={1}
+          nodes={[node('approve-cost', FINANCE)]}
+          isAdmin={false}
+          groups={[]}
+          actor=""
+          requester=""
+          ownerGroup={OWNER}
+          onResumed={() => {}}
+        />
+      </TestApiProvider>,
+    );
+    expect(
+      screen.queryByRole('button', { name: /Stop the whole workflow/ }),
+    ).toBeNull();
+  });
+
+  it('gives a refusing team no confirmation, and the requester one', () => {
+    // Refusing a gate is the answer the team was asked for, so it acts at once.
+    // Abandoning the run throws away work that may already exist, so it asks.
+    show([node('approve-cost', FINANCE)], { groups: [FINANCE] });
+    fireEvent.click(
+      step('approve-cost').getByRole('button', { name: /Refuse and stop/ }),
+    );
+    expect(screen.queryByText(/This ends the run/)).toBeNull();
+
+    cleanup();
+    show([node('approve-cost', FINANCE)], { actor: REQUESTER });
+    fireEvent.click(
+      screen.getByRole('button', { name: /Stop the whole workflow/ }),
+    );
+    expect(screen.getByText(/This ends the run/)).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('Reason (optional)'),
+    ).toBeInTheDocument();
   });
 });

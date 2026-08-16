@@ -376,3 +376,61 @@ export function mayResumeNode(opts: {
         reason: `Only ${opts.ownerGroup} or an admin can resume this step`,
       };
 }
+
+/**
+ * The short id a request records for whoever filed it.
+ *
+ * `user:default/dana` becomes `dana`. Exported because two sides compare
+ * against it and they must agree: the router stores it on the row, and the
+ * suspend panel decides whether to offer the requester a Stop button. Passing
+ * a raw `userEntityRef` to that check silently denies the one person the rule
+ * is for, and the UI and the API then disagree about the same request.
+ */
+export function actorIdOf(userEntityRef: string): string {
+  return userEntityRef.split('/').pop()!.split(':')[0];
+}
+
+/**
+ * May this principal end the whole run? Pure — no I/O.
+ *
+ * Argo has no way to stop one node: `/stop` ends the workflow. So refusing a
+ * gate and abandoning the request are the same operation reached from two
+ * places, and they are gated differently on purpose.
+ *
+ * - **From a gate** the question is the gate's own — use {@link mayResumeNode}.
+ *   The team that owns a step may refuse it, and refusing ends the run.
+ * - **From the request** the question is this one: the owning team, an admin,
+ *   or the person who filed it. A requester who no longer wants what they asked
+ *   for should not have to find an approver to withdraw it.
+ *
+ * `requester` is matched on the stored entityRef rather than on group
+ * membership, so the set cannot widen later when somebody joins a team.
+ */
+export function mayStopWorkflow(opts: {
+  isAdmin: boolean;
+  /** The principal's group entityRefs. */
+  groups: string[];
+  /** The caller's own user entityRef. */
+  actor: string;
+  /** The request's owning service team, if it has one. */
+  ownerGroup?: string;
+  /** Who filed the request. */
+  requester: string;
+}): { allowed: boolean; reason: string } {
+  if (opts.isAdmin) return { allowed: true, reason: 'admin' };
+  // Both empty must never match each other. An unresolved identity and a
+  // request with no recorded requester would otherwise compare equal and open
+  // the gate to anyone — the emptiness is the bug, and it must not be the key.
+  if (opts.actor && opts.actor === opts.requester) {
+    return { allowed: true, reason: 'the requester' };
+  }
+  if (opts.ownerGroup && opts.groups.includes(opts.ownerGroup)) {
+    return { allowed: true, reason: `member of ${opts.ownerGroup}` };
+  }
+  return {
+    allowed: false,
+    reason: opts.ownerGroup
+      ? `Only ${opts.ownerGroup}, the requester or an admin can stop this workflow`
+      : 'Only the requester or an admin can stop this workflow',
+  };
+}

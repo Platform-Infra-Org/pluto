@@ -27,8 +27,7 @@ import {
   isTerminal,
   isDeletable,
   approvalProgress,
-  catalogPath,
-} from '@internal/plugin-platform-common';
+  catalogPath, actorIdOf } from '@internal/plugin-platform-common';
 import { RefreshResult, requestsApiRef } from '../api';
 import { requestRouteRef } from '../routes';
 import { useCatalogNamespace } from '../useCatalogNamespace';
@@ -104,6 +103,9 @@ export function RequestPage() {
     'LR',
   );
   const [myGroups, setMyGroups] = useState<string[]>([]);
+  // The viewer's own user entityRef. Stopping a run asks whether you filed it,
+  // which group membership cannot answer.
+  const [me, setMe] = useState<string>('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
@@ -141,7 +143,12 @@ export function RequestPage() {
   useEffect(() => {
     identity
       .getBackstageIdentity()
-      .then(i => setMyGroups(i.ownershipEntityRefs));
+      .then(i => {
+        setMyGroups(i.ownershipEntityRefs);
+        // Normalised the same way the router stores it — a raw entityRef would
+        // never match and would deny the requester their own Stop button.
+        setMe(actorIdOf(i.userEntityRef));
+      });
   }, [identity]);
 
   const decide = async (decision: 'approve' | 'reject') => {
@@ -452,6 +459,8 @@ export function RequestPage() {
                 nodes={request.suspendedNodes ?? []}
                 isAdmin={isAdmin}
                 groups={myGroups}
+                actor={me}
+                requester={request.requester}
                 ownerGroup={request.ownerGroup}
                 onResumed={load}
               />

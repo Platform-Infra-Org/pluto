@@ -39,6 +39,7 @@ describe('createRouter', () => {
     reconcileRequest?: jest.Mock<Promise<ReconcileOutcome>, [PlatformRequest]>;
     suspendedNodesFor?: (name: string, ns?: string) => Promise<SuspendedNode[]>;
     resumeNode?: jest.Mock<Promise<void>, [string, string, object]>;
+    stopWorkflow?: jest.Mock<Promise<void>, [string, object]>;
   }) {
     const knex = await databases.init('SQLITE_3');
     const store = await RequestsStore.create(mockServices.database({ knex }));
@@ -52,6 +53,7 @@ describe('createRouter', () => {
       cipher: opts.cipher,
       secretsEnabled: opts.secretsEnabled,
       reconcileRequest: opts.reconcileRequest,
+      stopWorkflow: opts.stopWorkflow,
       suspendedNodesFor: opts.suspendedNodesFor,
       resumeNode: opts.resumeNode,
     });
@@ -755,6 +757,111 @@ describe('createRouter', () => {
       });
       expect((await resume(app, id, 'node-schema')).status).toBe(200);
       expect(resumeNode).toHaveBeenCalled();
+    });
+
+    describe('stopping', () => {
+      // Argo cannot stop one node -- /stop ends the run -- so refusing a gate
+      // and abandoning the request are the same call, told apart by nodeId and
+      // gated differently on purpose.
+      async function seedStoppable(
+        nodes: SuspendedNode[],
+        principal: { isAdmin: boolean; groups: string[] },
+      ) {
+        const stopWorkflow = jest.fn(async (_wf: string, _o: object) => {});
+        const { app, store } = await makeApp({
+          result: AuthorizeResult.ALLOW,
+          ownerResolver: async () => OWNER,
+          principalResolver: async () => principal,
+          suspendedNodesFor: async () => nodes,
+          stopWorkflow,
+        });
+        const created = await request(app).post('/requests').send(NEW_REQUEST);
+        const id = created.body.id as number;
+        await store.setWorkflow(id, {
+          name: 'wf-1',
+          namespace: 'argo',
+          suspendedNodes: nodes,
+        });
+        await store.setState(id, 'AWAITING_INPUT');
+        return { app, id, stopWorkflow };
+      }
+
+      it('lets the team that owns a gate refuse it', async () => {
+        const { app, id, stopWorkflow } = await seedStoppable(
+          [gate('cost', FINANCE)],
+          { isAdmin: false, groups: [FINANCE] },
+        );
+        const res = await request(app)
+          .post(`/requests/${id}/stop`)
+          .send({ nodeId: 'node-cost' });
+        expect(res.status).toBe(200);
+        expect(stopWorkflow).toHaveBeenCalled();
+      });
+
+      it('DENIES the owning team a gate that names another team', async () => {
+        // The same exclusion resume enforces: a team locked out of answering a
+        // step cannot refuse it either, or the gate means nothing.
+        const { app, id, stopWorkflow } = await seedStoppable(
+          [gate('cost', FINANCE)],
+          { isAdmin: false, groups: [OWNER] },
+        );
+        const res = await request(app)
+          .post(`/requests/${id}/stop`)
+          .send({ nodeId: 'node-cost' });
+        expect(res.status).toBe(403);
+        expect(res.body.error.message).toContain(FINANCE);
+        expect(stopWorkflow).not.toHaveBeenCalled();
+      });
+
+      it('lets the owning team abandon the whole request', async () => {
+        const { app, id, stopWorkflow } = await seedStoppable(
+          [gate('cost', FINANCE)],
+          { isAdmin: false, groups: [OWNER] },
+        );
+        // No nodeId: the request-level gate, which the owner passes even though
+        // it may answer none of the gates above.
+        const res = await request(app).post(`/requests/${id}/stop`).send({});
+        expect(res.status).toBe(200);
+        expect(stopWorkflow).toHaveBeenCalled();
+      });
+
+      it('lets the requester abandon their own request', async () => {
+        // Neither an admin nor in the owning team: `mock` filed it.
+        const { app, id, stopWorkflow } = await seedStoppable(
+          [gate('cost', FINANCE)],
+          { isAdmin: false, groups: [] },
+        );
+        const res = await request(app).post(`/requests/${id}/stop`).send({});
+        expect(res.status).toBe(200);
+        expect(stopWorkflow).toHaveBeenCalled();
+      });
+
+      it('refuses a global stop from someone with no claim on it', async () => {
+        const { app, id, stopWorkflow } = await seedStoppable(
+          [gate('cost', FINANCE)],
+          { isAdmin: false, groups: [FINANCE] },
+        );
+        // Finance owns a gate, which is not the same as owning the request.
+        const res = await request(app)
+          .post(`/requests/${id}/stop`)
+          .set('authorization', mockCredentials.user.header('user:default/other'))
+          .send({});
+        expect(res.status).toBe(403);
+        expect(stopWorkflow).not.toHaveBeenCalled();
+      });
+
+      it('says so when the gate it was asked to refuse is already gone', async () => {
+        const { app, id, stopWorkflow } = await seedStoppable([], {
+          isAdmin: true,
+          groups: [],
+        });
+        const res = await request(app)
+          .post(`/requests/${id}/stop`)
+          .send({ nodeId: 'node-gone' });
+        expect(res.status).toBe(200);
+        expect(res.body.stopped).toBe(false);
+        expect(stopWorkflow).not.toHaveBeenCalled();
+      });
     });
 
     it('lets an admin resume it', async () => {
