@@ -5,11 +5,23 @@
 import { statusTokenCss } from './statusTokens';
 import { greekCss } from './greek';
 import { foudreCss } from './foudre';
+import { huddleCss } from './huddle';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
 /* Self-hosted so the CSP (font-src 'self') is satisfied and the app works
    offline. Latin subset, 12KB. SIL OFL — see public/fonts/LICENSE.txt. */
+@font-face {
+  /* Clash Grotesk, self-hosted for the same reason as the pixel face: the CSP
+     is font-src 'self', so a CDN reference would simply not load. The variable
+     file covers 200-700 in one asset. ITF Free Font License — see
+     public/fonts/LICENSE.txt. */
+  font-family: 'Clash Grotesk';
+  src: url('/fonts/clash-grotesk.woff2') format('woff2');
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
 @font-face {
   font-family: 'Pixelify Sans';
   src: url('/fonts/pixelify-sans.woff2') format('woff2');
@@ -67,6 +79,7 @@ export const SHADCN_CSS = `
 ${statusTokenCss()}
 ${greekCss()}
 ${foudreCss()}
+${huddleCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because
@@ -397,16 +410,17 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    it to the templates page, because .MuiCard-root alone is every card in the
    app. This positional cycling cannot move into theme styleOverrides — nth-child
    is not expressible there. */
-/* The template's NAME first, its type under it.
+/* The template's NAME, and only the name.
    ItemCardHeader renders subtitle (the type) before title (the name), so the
    type led every card. It gives them stable tags rather than classes —
    subtitle is component="h3" and title is component="h4" — which is what makes
    this orderable without naming a class a production build would discard.
-   Everything else in the header (the card's own children) is pushed last. */
+   The type is dropped outright: it repeats what the template's own copy
+   already says and it was reading as the card's headline. */
 .sc-route-create .MuiCard-root > .MuiBox-root:first-child { display: flex; flex-direction: column; }
 .sc-route-create .MuiCard-root > .MuiBox-root:first-child > * { order: 3; }
 .sc-route-create .MuiCard-root > .MuiBox-root:first-child > h4 { order: 1; }
-.sc-route-create .MuiCard-root > .MuiBox-root:first-child > h3 { order: 2; opacity: .85; }
+.sc-route-create .MuiCard-root > .MuiBox-root:first-child > h3 { display: none; }
 
 .sc-route-create .MuiCard-root > .MuiBox-root:first-child {
   /* Ancient Greek, drawn entirely with hard colour stops.
@@ -553,6 +567,21 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* card */
 .sc-card { background: hsl(var(--sc-card)); color: hsl(var(--sc-card-fg));
   border: var(--sc-border-w) solid hsl(var(--sc-border)); border-radius: var(--sc-radius); overflow: hidden; }
+/* A rounded surface clips its corners, and a table is almost always wider than
+   the surface holding it — so the clip cut the last column and the outer rows'
+   edges off. Any surface carrying a table stops clipping and takes the small
+   radius instead, which is tight enough that the table's square corner inside
+   it is not visible. This is the general form of a fix the mode sheets each
+   used to carry alone. */
+.sc-card:has(table),
+.MuiCard-root:has(table),
+.MuiPaper-root:has(table) {
+  overflow: visible !important;
+  border-radius: var(--sc-radius-sm) !important;
+}
+/* And the scroll goes on the container that owns the width, so a wide table
+   scrolls rather than being cut. */
+.MuiTableContainer-root { overflow-x: auto; max-width: 100%; }
 .sc-card-h { padding: 18px 20px 0; }
 /* Title and its optional action share a row; the action keeps to the right and
    never squeezes the title, which wraps first. */
@@ -1071,6 +1100,75 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 ::-webkit-scrollbar-thumb:hover { background: hsl(var(--sc-primary) / .82); }
 ::-webkit-scrollbar-corner { background: hsl(var(--sc-muted)); }
 
+/* ===== Register an existing component =====
+   The one flow built almost entirely from raw MUI — a stepper, a bare form,
+   plain Typography — so it arrived with none of the design layer while every
+   other page inherited it. Everything here targets Mui globals, which is what
+   survives a production build, scoped by route so it reaches nothing else. */
+.sc-route-import .MuiStepper-root {
+  background: transparent !important;
+  padding: 8px 0 16px !important;
+}
+.sc-route-import .MuiStepLabel-label {
+  font-family: var(--sc-font-pixel) !important;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  font-size: 13px !important;
+  color: hsl(var(--sc-muted-fg)) !important;
+}
+.sc-route-import .MuiStepLabel-label.Mui-active,
+.sc-route-import .MuiStepLabel-label.Mui-completed {
+  color: hsl(var(--sc-fg)) !important;
+  font-weight: 600 !important;
+}
+/* The step bubbles take the accent and the hard edge the rest of the app uses,
+   rather than MUI's default flat circles. */
+.sc-route-import .MuiStepIcon-root {
+  color: hsl(var(--sc-muted)) !important;
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-radius: 50%;
+}
+.sc-route-import .MuiStepIcon-root.Mui-active,
+.sc-route-import .MuiStepIcon-root.Mui-completed {
+  color: hsl(var(--sc-primary)) !important;
+  border-color: hsl(var(--sc-primary));
+}
+.sc-route-import .MuiStepIcon-text { fill: hsl(var(--sc-primary-fg)) !important; }
+.sc-route-import .MuiStepConnector-line {
+  border-color: hsl(var(--sc-border)) !important;
+}
+/* The analysis result and the form sit in bare Papers. */
+.sc-route-import .MuiPaper-root {
+  background: hsl(var(--sc-card)) !important;
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-radius: var(--sc-radius);
+  box-shadow: var(--sc-shadow);
+}
+.sc-route-import .MuiTypography-h6,
+.sc-route-import .MuiFormLabel-root,
+.sc-route-import .MuiInputLabel-root {
+  font-family: var(--sc-font-pixel) !important;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  color: hsl(var(--sc-fg)) !important;
+}
+.sc-route-import .MuiTypography-body1,
+.sc-route-import .MuiTypography-body2 {
+  color: hsl(var(--sc-fg));
+}
+/* The repository-URL field is the page's one real input; it arrives bare. */
+.sc-route-import .MuiOutlinedInput-root {
+  background: hsl(var(--sc-bg));
+  border-radius: var(--sc-radius);
+}
+.sc-route-import .MuiListItem-root {
+  border-bottom: var(--sc-border-w) solid hsl(var(--sc-border) / .6);
+}
+.sc-route-import .MuiLinearProgress-root {
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-radius: var(--sc-radius);
+}
+
 /* [flare] The konami code. Flips to a fixed NES-hardware accent and sends a
    block walking along the footer. Stored nowhere and announced nowhere: it
    resets on reload, which is the point of an easter egg. */
@@ -1273,7 +1371,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
      matters too — bui also renders a HeaderTitleStack wrapper, which would
      otherwise draw a second caret.
      (No backticks in this file: the whole stylesheet is one template literal.) */
-  content: '\\2588' / '';
+  content: '\\258C' / '';
   margin-left: 4px;
   color: hsl(var(--sc-primary));
 }

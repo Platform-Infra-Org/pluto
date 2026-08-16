@@ -133,7 +133,7 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
             // selectors this can't share, since a hashed class fragment
             // doesn't survive a production build).
             '&::after': {
-              content: "'\\2588' / ''",
+              content: "'\\258C' / ''",
               marginLeft: 4,
               color: 'hsl(var(--sc-primary))',
             },

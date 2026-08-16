@@ -31,12 +31,12 @@ describe('colour schemes', () => {
     // An id is the key a browser has already persisted; a label is only what
     // someone reads. A pick that no longer exists degrades to the first bottle
     // rather than throwing.
-    expect(SCHEMES.map(s => s.id)).toEqual(['greek', 'foudre']);
+    expect(SCHEMES.map(s => s.id)).toEqual(['greek', 'foudre', 'huddle']);
   });
 
   it('gives each mode to exactly one potion', () => {
     const modes = SCHEMES.filter(s => s.mode).map(s => s.mode);
-    expect([...modes].sort()).toEqual(['foudre', 'greek']);
+    expect([...modes].sort()).toEqual(['foudre', 'greek', 'huddle']);
     expect(new Set(modes).size).toBe(modes.length);
   });
 
@@ -53,7 +53,7 @@ describe('colour schemes', () => {
     // a second complete palette still matching, and which one wins is then
     // decided by stylesheet order rather than by what was clicked. Every mode
     // must be cleared on every pick, not only the one being replaced.
-    const ALL = ['sc-greek', 'sc-foudre'];
+    const ALL = ['sc-greek', 'sc-foudre', 'sc-huddle'];
     const classesFor = (id: string) => {
       applyScheme(id);
       return ALL.filter(c => document.documentElement.classList.contains(c));

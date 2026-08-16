@@ -19,6 +19,10 @@ const ROUTES: Array<{ prefix: string; className: string }> = [
   // Backstage Content instead of a bui Container, so its title and its table
   // are laid out by two different gutters. See the rule in styles.ts.
   { prefix: '/api-docs', className: 'sc-route-api-docs' },
+  // Register-an-existing-component. It is the one flow built almost entirely
+  // from raw MUI — a stepper, a bare form, plain Typography — so it arrived
+  // unreskinned while every other page inherited the design layer.
+  { prefix: '/catalog-import', className: 'sc-route-import' },
 ];
 
 export function routeClassFor(pathname: string): string | undefined {

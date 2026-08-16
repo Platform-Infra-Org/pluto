@@ -155,6 +155,40 @@ describe('SHADCN_CSS', () => {
     );
   });
 
+  it('self-hosts every face it names, same-origin', () => {
+    // The CSP is font-src 'self'. A CDN url in an @font-face would simply not
+    // load, and the failure is silent — the page falls back and looks nearly
+    // right. Both faces are files this app serves.
+    const faces = Array.from(SHADCN_CSS.matchAll(/@font-face\s*\{([^}]*)\}/g), m => m[1]);
+    expect(faces.length).toBe(2);
+    for (const face of faces) {
+      const url = /url\('([^']+)'\)/.exec(face);
+      expect(url).not.toBeNull();
+      expect(url![1].startsWith('/fonts/')).toBe(true);
+    }
+  });
+
+  it('lets a surface holding a table scroll rather than clip its edge', () => {
+    // A rounded surface clips its corners, and a table is almost always wider
+    // than the surface holding it — so the clip cut the last column off. The
+    // fix has to be BOTH halves: stop clipping, and drop the radius so the
+    // table's square corner does not then show through.
+    expect(SHADCN_CSS).toMatch(
+      /\.MuiPaper-root:has\(table\)\s*\{[^}]*overflow:\s*visible/,
+    );
+    expect(SHADCN_CSS).toMatch(
+      /\.MuiPaper-root:has\(table\)\s*\{[^}]*border-radius:\s*var\(--sc-radius-sm\)/,
+    );
+  });
+
+  it('drops the type subtitle from a template card', () => {
+    // The card led with its type rather than its name; the type repeats what
+    // the template's own copy already says.
+    expect(SHADCN_CSS).toMatch(
+      /\.sc-route-create[^{]*> h3\s*\{\s*display:\s*none/,
+    );
+  });
+
   it('uses no class name that a production build discards', () => {
     // Material-UI keeps a makeStyles `name` in the generated class only outside
     // production; in a built image BackstageItemCardHeader-root-130 is jss130.
