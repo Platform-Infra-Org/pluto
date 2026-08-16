@@ -424,6 +424,25 @@ body, body *, input, select, textarea, button, optgroup {
 [class*="bui-PluginHeaderToolbar"] {
   border-bottom: none !important;
 }
+/* Three canon components that read a different token from the one the map
+   fills, so mapping alone leaves them looking like Backstage on an entity
+   page. Measured on a group page with the map in place: --bui-border-1 was
+   correctly our gold and --bui-fg-link correctly our accent, and neither
+   reached the screen.
+   Card draws no border at all and takes canon's 8px, beside MUI cards at
+   var(--sc-radius) — two card shapes on one page. Link colours itself from
+   --bui-fg-primary, so every link on those pages rendered as body text.
+   No !important: these must lose to a mode sheet, which says the same thing
+   at higher specificity when it wants something else (foudre's links are
+   muted and underlined on purpose). Canon ships inside @layer, and an
+   unlayered author rule beats a layered one whatever the order. */
+[class*="bui-Card"] {
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-radius: var(--sc-radius);
+}
+[class*="bui-Link"] {
+  color: hsl(var(--sc-primary));
+}
 /* The API explorer's title sits on a different gutter from its own table.
    Its page is <HeaderPage> + <Content>, while every other native page is
    <Header> + <Container>: the header's slots ARE bui Containers
