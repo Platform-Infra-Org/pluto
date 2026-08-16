@@ -72,6 +72,7 @@ export type SchemeMode =
   | 'hermes'
   | 'papers'
   | 'discord'
+  | 'github'
   | 'claude'
   | 'dairy'
   | 'obsidian';
@@ -143,6 +144,7 @@ export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   hermes: STATUS_TOKENS,
   papers: STATUS_TOKENS,
   discord: STATUS_TOKENS,
+  github: STATUS_TOKENS,
   claude: STATUS_TOKENS,
   dairy: STATUS_TOKENS,
   obsidian: STATUS_TOKENS,
@@ -158,6 +160,7 @@ export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   hermes: { light: '0 0% 100%', dark: '0 0% 10%' },
   papers: { light: '0 0% 100%', dark: '0 0% 9%' },
   discord: { light: '0 0% 100%', dark: '227 9% 11%' },
+  github: { light: '0 0% 100%', dark: '214 25% 11%' },
   claude: { light: '48 33% 97%', dark: '60 3% 8%' },
   // Dairy's dark card is 7% and not 10% for exactly this table's sake: at
   // `168 30% 10%` all four default status inks fall to 4.34-4.48 on the

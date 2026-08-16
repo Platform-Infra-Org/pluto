@@ -81,6 +81,7 @@ const MODES = [
   'hermes',
   'papers',
   'discord',
+  'github',
   'claude',
   'dairy',
   'obsidian',

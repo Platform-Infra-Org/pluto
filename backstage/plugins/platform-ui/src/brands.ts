@@ -156,6 +156,38 @@ export const BRAND_DEFS: BrandDef[] = [
     ease: 'cubic-bezier(.4, 0, .2, 1)',
   },
   {
+    id: 'github',
+    label: 'GitHub',
+    // Read from Primer's own custom properties rather than from the rendered
+    // page: github.com exposes --bgColor-default, --fgColor-muted and the rest
+    // on :root, and switches them on data-color-mode, so both registers came
+    // off the same document. The marketing homepage is dark whatever the
+    // browser asks for, which is why the light half is read from the attribute
+    // rather than from prefers-color-scheme.
+    // Accent #0969da carries white at 5.02:1, so unusually for these rows it
+    // fills a button at its published value with no darkening at all.
+    bottle: '212 92% 45%',
+    bottleFg: WHITE,
+    // Two departures, both forced by the 3:1 bar on a rule. Primer's borders
+    // are hairlines -- #d1d9e0 measures 1.42:1 on white and #3d444d 1.75:1 on
+    // its own card -- which works on a page that leans on whitespace and would
+    // leave a form here with edges nobody can see.
+    light: { bg:'210 29% 97%', fg:'213 13% 14%', card:'0 0% 100%', muted:'210 20% 92%',
+      mutedFg:'211 11% 39%', border:'210 12% 56%', primary:'212 92% 45%', primaryFg:WHITE,
+      accent:'199 100% 93%', accentFg:'212 92% 20%' },
+    // The dark muted surface is 18%, not the 20% that would sit evenly between
+    // card and border: at 20% the published #9198a1 ink measured 4.47 on it.
+    dark: { bg:'216 28% 7%', fg:'210 67% 96%', card:'214 25% 11%', muted:'214 20% 18%',
+      mutedFg:'214 8% 60%', border:'215 10% 44%', primary:'214 93% 62%', primaryFg:'216 28% 7%',
+      accent:'214 25% 18%', accentFg:'210 67% 96%' },
+    // 6px is Primer's --borderRadius-medium (.375rem) and the most common
+    // corner on the page; the house scale rounds it to the nearest step.
+    radius: { base:'8px', card:'12px', button:'8px' },
+    borderW: '1px',
+    ease: 'cubic-bezier(.2, .4, .2, 1)',
+    dur: { colour: '.2s', transform: '.2s' },
+  },
+  {
     id: 'claude',
     label: 'Claude',
     // NOT measured from the app: claude.ai serves an automated browser a

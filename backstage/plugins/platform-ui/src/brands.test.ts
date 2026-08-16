@@ -148,7 +148,16 @@ describe('brand character', () => {
 
   it('animates only where the reference chrome moves', () => {
     const moving = BRAND_DEFS.filter(b => b.ease).map(b => b.id);
-    expect(moving).toEqual(['newform', 'discord', 'dairy', 'obsidian']);
+    // github joins them: Primer transitions its chrome on a measured curve
+    // (cubic-bezier(.2,.4,.2,1)), so reproducing the palette over stepped
+    // timing would be that design wearing this one's clock.
+    expect(moving).toEqual([
+      'newform',
+      'discord',
+      'github',
+      'dairy',
+      'obsidian',
+    ]);
     const css = stripComments(brandsCss());
     const guarded = css.slice(css.indexOf('@media (prefers-reduced-motion: no-preference)'));
     const total = (css.match(/transition:/g) ?? []).length;
