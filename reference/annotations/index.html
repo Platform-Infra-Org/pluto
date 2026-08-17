@@ -814,6 +814,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#on-an-argo-suspend-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On an Argo suspend template
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#standard-backstage-annotations-also-used" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1251,6 +1262,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#on-an-argo-suspend-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        On an Argo suspend template
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#standard-backstage-annotations-also-used" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1340,6 +1362,76 @@
 </tr>
 </tbody>
 </table>
+<h2 id="on-an-argo-suspend-template">On an Argo suspend template<a class="headerlink" href="#on-an-argo-suspend-template" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Annotation</th>
+<th>Value</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>platform.io/approver-group</code></td>
+<td>group entityRef, e.g. <code>group:default/finance</code></td>
+<td>The team that answers <strong>that</strong> suspend step.</td>
+</tr>
+</tbody>
+</table>
+<p>Written on the template's own <code>metadata.annotations</code>, not on the workflow:</p>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">templates</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">approve-cost</span>
+<span class="w">    </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">platform.io/approver-group</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">group:default/finance</span>
+<span class="w">    </span><span class="nt">suspend</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+</code></pre></div></td></tr></table></div>
+<p>Who may resume a given node, in order:</p>
+<table>
+<thead>
+<tr>
+<th>Node</th>
+<th>Who may resume it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No annotation</td>
+<td>Admin <strong>or</strong> the request's <code>ownerGroup</code> — the original rule, unchanged.</td>
+</tr>
+<tr>
+<td>Annotation names a group</td>
+<td>Admin <strong>or</strong> that group. <strong><code>ownerGroup</code> is not sufficient for this step.</strong></td>
+</tr>
+<tr>
+<td>Annotation empty or unresolvable</td>
+<td><strong>Admin only — fail closed.</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The decision is <strong>per node</strong>, so one workflow can send a cost gate to finance and
+a schema gate to DBAs and have each answered by its own team. An unresolvable
+group deliberately narrows to admins rather than falling back to the owner: a
+typo then becomes a visible stall somebody escalates, never a silently wider
+gate. The UI names the group it could not resolve for exactly that reason.</p>
+<p>Anyone who can edit a <code>WorkflowTemplate</code> can therefore move a gate. That does not
+widen the trust boundary — in this architecture the Argo templates are already
+the trusted layer, and the <code>git-ops</code> template is the single writer of the catalog
+repo — but it is worth knowing before it is discovered.</p>
+<p><strong>Where it is read from.</strong> An Argo status node carries <code>templateName</code> but not the
+template's annotations, so the backend looks the definition back up on the
+workflow. Observed against a live argo-server: a step referenced from a
+<code>WorkflowTemplate</code> leaves <code>spec.templates</code> <strong>empty</strong> and the resolved definition
+lands in <code>status.storedTemplates</code>, keyed
+<code>namespaced/&lt;workflowTemplate&gt;/&lt;template&gt;</code> with the bare name in <code>.name</code>.
+Templates written inline on the workflow arrive in <code>spec.templates</code> instead. Both
+are matched by <code>.name</code>, so the key format is never parsed.</p>
 <h2 id="standard-backstage-annotations-also-used">Standard Backstage annotations also used<a class="headerlink" href="#standard-backstage-annotations-also-used" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>backstage.io/techdocs-ref: dir:.</code> — TechDocs source (templates, this doc site).</li>

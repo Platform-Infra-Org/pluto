@@ -1016,6 +1016,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The second gate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-step-may-name-the-team-that-answers-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A step may name the team that answers it
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1375,6 +1392,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="The second gate">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a-step-may-name-the-team-that-answers-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A step may name the team that answers it
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1582,9 +1616,60 @@ the request to <code>IN_PROGRESS</code> — the platform never becomes the only 
 workflow along.</p>
 <p>Resuming supplies the step's declared answers and releases the node; stopping
 ends the run through Argo's <code>/stop</code>, so the workflow's own <code>onExit</code> handlers
-still clean up. Both are gated like any approval and both are recorded in the
-same audit trail. See
+still clean up. Both are recorded in the same audit trail. See
 <strong><a href="../../how-to/add-a-review-gate/">Add a mid-workflow review gate</a></strong>.</p>
+<h3 id="a-step-may-name-the-team-that-answers-it">A step may name the team that answers it<a class="headerlink" href="#a-step-may-name-the-team-that-answers-it" title="Permanent link">&para;</a></h3>
+<p>By default the second gate asks the same question as the first — admin, or a
+member of the request's <code>ownerGroup</code>. A suspend template can override that for
+itself with
+<strong><a href="../../reference/annotations/#on-an-argo-suspend-template"><code>platform.io/approver-group</code></a></strong>:</p>
+<table>
+<thead>
+<tr>
+<th>The step</th>
+<th>Who may resume it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No annotation</td>
+<td>Admin or the request's <code>ownerGroup</code>, as before.</td>
+</tr>
+<tr>
+<td>Names a group</td>
+<td>Admin or that group.</td>
+</tr>
+<tr>
+<td>Names a group that is empty or unresolvable</td>
+<td>Admin only.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The owning team is excluded from an annotated step.</strong> This is the surprising
+part. The owner is not added to the named team; it is replaced by it for that
+step, and a request the owner filed can reach a gate the owner cannot release.
+That is deliberate: the owner already approved at the start, and a cost gate
+addressed to finance means nothing if the team asking for the resource can wave
+it through. The alternative — owner <em>and</em> the named team, dual control — was
+considered and not chosen, because it needs per-node approval records rather
+than a single resume call.</p>
+<p>Two consequences follow from the decision being <strong>per node</strong> rather than per
+request. A request can wait on a finance gate and a DBA gate at once, each
+released by its own team and neither by the other, so the page renders a verdict
+per step instead of one banner. And a viewer who can answer no gate at all still
+sees every gate — hiding them would leave nobody knowing whom to chase.</p>
+<p>An empty or unresolvable group falls to admins rather than back to the owner,
+which is the same instinct as the absent-<code>ownerGroup</code> rule above: a typo in a
+group ref stalls the workflow visibly instead of quietly widening who may move
+it. Fail-closed only works if the stall is legible, so the UI names the group it
+could not resolve.</p>
+<p>Stopping is unaffected. It ends the whole run rather than any one step, so it
+keeps asking the request-level question — admin or <code>ownerGroup</code> — which means an
+owner locked out of every gate can still refuse the workflow, and a member of a
+named team can release its own step without being able to kill the run.</p>
+<p>The router and the UI reach this verdict through the same function rather than
+each re-deriving it, so the disabled button and the <code>403</code> can never disagree
+about who was allowed.</p>
 <h2 id="when-a-failed-run-comes-back">When a failed run comes back<a class="headerlink" href="#when-a-failed-run-comes-back" title="Permanent link">&para;</a></h2>
 <p><code>FAILED</code> is terminal by default, and for a long time it was also a dead end. The
 poll in step 4 reconciles <code>IN_PROGRESS</code> and <code>AWAITING_INPUT</code> only, so once a

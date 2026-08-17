@@ -558,6 +558,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#handing-a-gate-to-another-team" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Handing a gate to another team
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#things-worth-knowing" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1295,6 +1306,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#handing-a-gate-to-another-team" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Handing a gate to another team
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#things-worth-knowing" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1458,9 +1480,118 @@ the approvals card with the step's inputs, its questions, and two actions:</p>
 <li><strong>Stop</strong> — ends the run (Argo <code>/stop</code>, so the workflow's <code>onExit</code> handlers
   still run and clean up what it created). The request lands in <code>FAILED</code>.</li>
 </ul>
-<p>Both are recorded in the same audit trail as the first approval, and both are
-gated the same way: <strong>an admin or a member of the owning team</strong>. The requester
-cannot wave their own request through unless they are also an approver.</p>
+<p>Both are recorded in the same audit trail as the first approval. By default both
+are gated the same way: <strong>an admin or a member of the owning team</strong>. The
+requester cannot wave their own request through unless they are also an
+approver.</p>
+<p>A step may override that for itself — see <strong><a href="#handing-a-gate-to-another-team">Handing a gate to another
+team</a></strong> below.</p>
+<p>Stopping appears in two places, because Argo cannot stop a single node: <code>/stop</code>
+ends the run, so refusing a gate and abandoning a request are the same call
+reached from two directions, and they are gated differently.</p>
+<table>
+<thead>
+<tr>
+<th>control</th>
+<th>means</th>
+<th>who may</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Refuse and stop</strong>, beside a step</td>
+<td>refuse <em>this</em> gate</td>
+<td>whoever may resume that step — the named team, or the owner where no team is named</td>
+</tr>
+<tr>
+<td><strong>Stop the whole workflow</strong>, at the foot of the card</td>
+<td>abandon the request</td>
+<td>an admin, the owning team, <strong>or whoever filed it</strong></td>
+</tr>
+</tbody>
+</table>
+<p>A team locked out of a gate cannot refuse it either — otherwise naming a team
+would only move who says yes, and leave anyone able to say no. The request-level
+Stop is wider on purpose: someone who no longer wants what they asked for should
+not have to find an approver to withdraw it. It is the only one behind a
+confirmation, because it throws away a run that may already have provisioned
+something, and its reason field reaches the same audit trail as an approval
+note — stopping is recorded as a rejection, because that is what refusing a
+request is.</p>
+<h2 id="handing-a-gate-to-another-team">Handing a gate to another team<a class="headerlink" href="#handing-a-gate-to-another-team" title="Permanent link">&para;</a></h2>
+<p>A gate does not have to belong to the team that owns the request. Put
+<code>platform.io/approver-group</code> on the <strong>suspend template</strong> and that step is
+answered by the group you name:</p>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">templates</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">approve-cost</span>
+<span class="w">    </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">annotations</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">platform.io/approver-group</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">group:default/payments</span>
+<span class="w">    </span><span class="nt">suspend</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{}</span>
+</code></pre></div></td></tr></table></div>
+<p>The annotation goes on the template — specifically, on <strong>the template that
+holds the <code>suspend: {}</code></strong>. Two variations look reasonable and neither works:</p>
+<ul>
+<li><strong>On the <code>steps:</code> entry that calls it.</strong> Argo rejects the manifest outright:
+  <code>json: unknown field "metadata"</code>. A <code>WorkflowStep</code> has no metadata.</li>
+<li><strong>On a wrapper template whose inner template suspends.</strong> This one is worse,
+  because it is accepted and then does nothing. The waiting node's
+  <code>templateName</code> is the <em>inner</em> template, so that is where the annotation is
+  looked for; a wrapper's annotation is never read and the gate quietly falls
+  back to the owning team. Verified against a live argo-server: a workflow
+  wrapping an unannotated <code>gate</code> inside an annotated <code>approve-cost</code> suspends on
+  <code>templateName: gate</code>, and the platform sees no group at all.</li>
+</ul>
+<p>A consequence of the same rule: a template carries one group, so calling the
+same suspend template twice gives both gates the same team. Two teams means two
+templates — which is what <code>team-gates.yaml</code> does.</p>
+<p>Three states, and the middle one is what you get by writing nothing:</p>
+<table>
+<thead>
+<tr>
+<th>the suspend template</th>
+<th>who may resume it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>names a group that has members</td>
+<td>an admin, or that group</td>
+</tr>
+<tr>
+<td>carries no annotation</td>
+<td>an admin, or the request's owning team</td>
+</tr>
+<tr>
+<td>names a group nobody is in, or is empty</td>
+<td>an admin, and nobody else</td>
+</tr>
+</tbody>
+</table>
+<p>Two things about the first row are worth saying plainly, because both surprise
+people:</p>
+<ul>
+<li><strong>It replaces the owner, it does not add to them.</strong> The owning team approved
+  the request at the start; a cost gate means little if the team spending the
+  money can release it. A request its own owner filed can therefore reach a gate
+  its owner cannot answer — the step stays visible on the request page, naming
+  the team, so they know whom to chase.</li>
+<li><strong>The decision is per step, not per request.</strong> Two gates in the same step
+  group suspend at the same time and are answered independently by two different
+  teams, in either order.</li>
+</ul>
+<p>The last row is deliberate. An unresolvable group narrows to admins rather than
+falling back to the owner, so a typo stalls in the open instead of quietly
+widening the gate. The request page names the group it could not resolve.</p>
+<p>A worked example with all three states in one run lives in
+<code>deploy/dev/argo/team-gates.yaml</code>, wired to the <strong>Provision With Team Gates</strong>
+template: checkout owns the request, payments answers the cost gate, search
+answers the schema gate, and a third unannotated gate returns to checkout.</p>
 <h2 id="things-worth-knowing">Things worth knowing<a class="headerlink" href="#things-worth-knowing" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong>A suspended node reports <code>phase: Running</code>.</strong> Argo has no "Suspended" phase,
