@@ -40,12 +40,33 @@ describe('titleOf', () => {
 
 describe('useResourceTitles', () => {
   it('maps names to titles when the catalog knows them', async () => {
+    // Both assertions live inside the waitFor, and the timeout is explicit.
+    //
+    // This is the only case in the file that asserts an *upgraded* value; the
+    // others assert the fallback, which reads the same before and after the
+    // state lands and so cannot be raced. That is why this one alone used to
+    // fail, roughly once in ten full-suite runs and never when the file ran on
+    // its own: the hook resolves a promise and commits in a `then`, and
+    // waitFor's default 1s budget is not guaranteed on a worker competing with
+    // six others. Waiting on the rendered result rather than on the call, and
+    // giving it room, is what makes it deterministic — the assertion is
+    // retried as a unit instead of one value being checked after the other.
     const get = jest.fn().mockResolvedValue(entities('Alpha', 'Beta'));
     const { result } = render(['a', 'b'], get);
-    await waitFor(() => expect(result.current.get('a')).toBe('Alpha'));
-    expect(result.current.get('b')).toBe('Beta');
+    await waitFor(
+      () => {
+        expect(result.current.get('a')).toBe('Alpha');
+        expect(result.current.get('b')).toBe('Beta');
+      },
+      { timeout: 10_000 },
+    );
   });
 
+  // The three below wait on the call rather than on the result, which is only
+  // safe because each asserts the *fallback*: titleOf returns the name whether
+  // or not the map has landed, so there is no window in which they could read
+  // a different answer. Anything asserting an upgraded value must wait on the
+  // value, as the case above does.
   it('leaves a name unmapped when the entity is missing or has no title', async () => {
     // 'a' has not been ingested yet; 'b' exists but carries no title.
     const get = jest
