@@ -459,6 +459,24 @@ describe('SHADCN_CSS', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('lets chrome inherit its ground instead of asserting a surface', () => {
+    // Twice now: a field named --sc-bg while sitting on a card, and a toolbar
+    // named --sc-card while sitting on the page. Both are strips of chrome, and
+    // chrome does not know what it is standing on -- only a surface does. The
+    // failure is invisible wherever the two tokens happen to agree, which is
+    // why it read as a Hermes and Flying Papers bug rather than a general one.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const sel of ['MuiToolbar-root', 'MuiAppBar-root']) {
+      const block = rules.match(
+        new RegExp(`\\[class\\*="${sel}"\\]\\s*\\{([^}]*)\\}`),
+      );
+      if (!block) continue;
+      const bg = block[1].match(/background(-color)?:\s*([^;]+)/);
+      if (!bg) continue;
+      expect(`${sel}:${bg[2].trim()}`).toBe(`${sel}:transparent`);
+    }
+  });
+
   it('themes the bui plugin header', () => {
     // It ships its own white ground and black ink — measured rgb(255,255,255)
     // on a production build while the mode's card was 42 45% 98%.

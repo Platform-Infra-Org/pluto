@@ -535,8 +535,16 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* Three components that had no rule at all and so rendered MUI's own defaults
    wherever a plugin uses them — visible on the TechDocs routes, which is also
    where the class arrives counter-suffixed. */
+/* A toolbar is a strip of chrome, not a surface, so it takes the ink and
+   inherits the ground. It named --sc-card here, which is right only when it
+   happens to sit in a card: the scaffolder's filter toolbar sits directly on
+   the page, so on every mode whose page is not white it painted a white slab
+   around the search field. Invisible in the modes whose bg IS white, which is
+   why it read as a Hermes and Flying Papers bug rather than a general one.
+   The same mistake the field grounds had — naming a surface on something that
+   is not one. */
 [class*="MuiToolbar-root"] {
-  background-color: hsl(var(--sc-card));
+  background-color: transparent;
   color: hsl(var(--sc-fg));
 }
 [class*="MuiDivider-root"] {
