@@ -1,0 +1,62 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: team-gates
+  title: Provision With Team Gates
+  description: >
+    Request a resource whose workflow pauses twice, for two different teams.
+    Checkout owns the request and approves it at the start; the workflow then
+    plans the change and stops on two gates at once — payments answers the
+    cost, search answers the schema — and neither team can answer the other's.
+    A third gate carries no annotation and comes back to the owner, so one run
+    shows all three ways a suspend step can be gated.
+  tags:
+    - platform
+    - demo
+    - approval
+  annotations:
+    platform.io/resource-type: team-gates
+spec:
+  # The owner approves the request itself, and answers the one gate that names
+  # nobody. It does NOT answer the two annotated gates — that is the capability
+  # this template exists to show, and the part that surprises people: naming a
+  # team on a step replaces the owner there rather than adding to them.
+  owner: group:default/checkout
+  type: resource
+  parameters:
+    - title: What to provision
+      required:
+        - resourceName
+        - region
+      properties:
+        resourceName:
+          type: string
+          title: Name
+          description: Name of the resource to provision
+        region:
+          type: string
+          title: Region
+          default: eu-west-1
+          enum: [eu-west-1, us-east-1, ap-south-1]
+  steps:
+    - id: submit
+      name: Submit request
+      action: platform:request:submit
+      input:
+        resourceType: team-gates
+        resourceName: ${{ parameters.resourceName }}
+        kind: CREATE
+        params:
+          region: ${{ parameters.region }}
+        # The workflow whose suspend templates carry
+        # platform.io/approver-group (deploy/dev/argo/team-gates.yaml).
+        argoSubmit:
+          namespace: argo
+          workflowTemplate: team-gates
+          labels:
+            platform.io/requested-by: "<< requester >>"
+        resultOutput: result
+  output:
+    links:
+      - title: Open request
+        url: /requests/${{ steps.submit.output.requestId }}

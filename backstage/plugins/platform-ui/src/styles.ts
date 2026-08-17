@@ -38,6 +38,10 @@ export const SHADCN_CSS = `
      border width beside it is what still separates one mode from the next. */
   --sc-radius: 12px;
   --sc-radius-sm: 8px;
+  /* The horizontal inset of a field's own text. The label that names it reads
+     the same variable, so the two cannot drift: MUI positions a standard-variant
+     label at left:0 because that variant has no box, and we give it one. */
+  --sc-field-x: 10px;
   --sc-border-w: 2px;
   --sc-shadow: 3px 3px 0 hsl(var(--sc-fg) / .16);
   --sc-font-ui: 'Clash Grotesk', Inter, system-ui, -apple-system, sans-serif;
@@ -531,8 +535,16 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* Three components that had no rule at all and so rendered MUI's own defaults
    wherever a plugin uses them — visible on the TechDocs routes, which is also
    where the class arrives counter-suffixed. */
+/* A toolbar is a strip of chrome, not a surface, so it takes the ink and
+   inherits the ground. It named --sc-card here, which is right only when it
+   happens to sit in a card: the scaffolder's filter toolbar sits directly on
+   the page, so on every mode whose page is not white it painted a white slab
+   around the search field. Invisible in the modes whose bg IS white, which is
+   why it read as a Hermes and Flying Papers bug rather than a general one.
+   The same mistake the field grounds had — naming a surface on something that
+   is not one. */
 [class*="MuiToolbar-root"] {
-  background-color: hsl(var(--sc-card));
+  background-color: transparent;
   color: hsl(var(--sc-fg));
 }
 [class*="MuiDivider-root"] {
@@ -928,14 +940,34 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* The template filter's search arrived as MUI's underline input: a rule under
    the text and nothing else, which is the one control on that page that looks
    like it belongs to a different app. It takes the same box every other field
-   here has — ground, edge, radius, and a ring when it is focused — and the
-   underline pseudo-elements that would otherwise draw a second line under the
-   box are turned off. */
+   here has — edge, radius, and a ring when it is focused — and the underline
+   pseudo-elements that would otherwise draw a second line under the box are
+   turned off.
+   The ground is inherited, not named: this field sits on a card, and it used
+   to declare --sc-bg, which mismatched the card in 9 of the 11 modes. See the
+   note on .sc-input below. */
 .sc-route-create [class*="MuiInput-root"] {
-  background: hsl(var(--sc-bg));
+  background: transparent;
   border: var(--sc-border-w) solid hsl(var(--sc-border));
   border-radius: var(--sc-radius);
-  padding: 3px 10px;
+  padding: 3px var(--sc-field-x);
+}
+/* The scaffolder's fields are MUI's *standard* variant, whose label is absolutely
+   positioned at left: 0 — correct for a bare underline, wrong the moment the
+   field has a box and a corner. Unfixed, the label sat on the rounded corner
+   while the value it named was inset 10px, so the two read as belonging to
+   different fields. Measured at inset 0 against a padding of 10 on every label
+   of every scaffolder form; no other page in the app has a boxed standard field.
+   Both states move together: at rest the label sits in the box beside the value,
+   and shrunk it floats above the border on the same left edge. */
+.sc-route-create [class*="MuiInputLabel-root"],
+.sc-route-create [class*="MuiFormLabel-root"] {
+  left: var(--sc-field-x);
+}
+/* MUI shrinks by scaling about the top-left, so a shrunk label keeps that same
+   left edge and needs only clearance from the border it now sits on. */
+.sc-route-create [class*="MuiInputLabel-shrink"] {
+  padding-inline-end: 4px;
 }
 .sc-route-create [class*="MuiInput-underline"]::before,
 .sc-route-create [class*="MuiInput-underline"]::after {
@@ -987,6 +1019,18 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-btn-ghost:hover:not(:disabled) { background: hsl(var(--sc-accent)); }
 .sc-btn-destructive { background: transparent; color: hsl(var(--sc-destructive)); border-color: transparent; }
 .sc-btn-destructive:hover:not(:disabled) { background: hsl(var(--sc-destructive) / .1); }
+/* Neutral at rest, red under the pointer. A control that ends a running
+   workflow sits in a toolbar beside ordinary ones, and a permanently red button
+   there reads as an error the page is reporting rather than an action offered.
+   The colour arrives on the reach, which is when the warning is useful.
+   Layered on a variant rather than replacing one, so it keeps that variant's
+   geometry: .sc-btn-outline .sc-btn-danger is an outline button that turns. */
+.sc-btn-danger:hover:not(:disabled),
+.sc-btn-danger:focus-visible:not(:disabled) {
+  background: hsl(var(--sc-destructive) / .12);
+  border-color: hsl(var(--sc-destructive));
+  color: hsl(var(--sc-destructive));
+}
 .sc-btn-sm { height: 30px; padding: 0 10px; font-size: 12.5px; }
 
 /* badge */
@@ -1319,10 +1363,18 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   color: hsl(var(--sc-primary));
 }
 
-/* input */
+/* input.
+   A field takes the ground of whatever it is sitting on, so it names no ground
+   token at all. These declared --sc-bg while every one of them is mounted on a
+   card or a toolbar, which is --sc-card: measured on the built app, the two
+   differed in 9 of the 11 modes, and the two that agreed did so only because
+   they happen to set both tokens to the same white. Transparent is correct in
+   every mode by construction — there is no second token left to disagree — and
+   it is what the catalog and search fields already do. The edge, the radius
+   and the focus ring are what make it read as a field. */
 .sc-input, .sc-select { height: 36px; width: 100%; padding: 0 10px; font-size: 14px;
   border-radius: var(--sc-radius); border: 1px solid hsl(var(--sc-input));
-  background: hsl(var(--sc-bg)); color: hsl(var(--sc-fg)); outline: none; font-family: inherit; }
+  background: transparent; color: hsl(var(--sc-fg)); outline: none; font-family: inherit; }
 .sc-input:focus, .sc-select:focus { border-color: hsl(var(--sc-ring)); outline: var(--sc-border-w) solid hsl(var(--sc-ring)); outline-offset: 2px; box-shadow: none; }
 .sc-textarea { height: auto; min-height: 92px; padding: 8px 10px; line-height: 1.45;
   font-family: var(--sc-font-mono, ui-monospace, monospace); resize: vertical; }
@@ -1668,9 +1720,11 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    The rest of this block stays: the stepper rules above have no global
    counterpart at all, and the surface/label/input/list/progress rules below
    carry declarations the global sheet does not. */
-/* The repository-URL field is the page's one real input; it arrives bare. */
+/* The repository-URL field is the page's one real input; it arrives bare. It
+   sits in the Paper above, which is --sc-card, so it inherits that ground
+   rather than naming --sc-bg — see the note on .sc-input. */
 .sc-route-import [class*="MuiOutlinedInput-root"] {
-  background: hsl(var(--sc-bg));
+  background: transparent;
   border-radius: var(--sc-radius);
 }
 .sc-route-import [class*="MuiListItem-root"] {

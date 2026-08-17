@@ -69,8 +69,17 @@ export interface RequestsApi {
   ): Promise<ResumeResult>;
   /** Re-read a failed request's workflow in Argo. Restarts nothing. */
   refresh(id: number): Promise<RefreshResult>;
-  /** Refuse the gate: stop the workflow instead of releasing it. */
-  stop(id: number, note?: string): Promise<{ stopped: boolean; request: Request }>;
+  /**
+   * End the run. Argo cannot stop one node, so this is both "refuse this gate"
+   * and "abandon this request" — `nodeId` says which, and decides who is
+   * allowed: the step's own approver group with it, the request-level gate
+   * (owner, requester or admin) without it.
+   */
+  stop(
+    id: number,
+    note?: string,
+    nodeId?: string,
+  ): Promise<{ stopped: boolean; reason?: string; request: Request }>;
   /**
    * Destroy a finished request and its approvals. Irreversible, and refused by
    * the backend for any request whose workflow may still be live.
@@ -196,14 +205,14 @@ export class RequestsClient implements RequestsApi {
     );
   }
 
-  async stop(id: number, note?: string) {
-    return this.json<{ stopped: boolean; request: Request }>(
+  async stop(id: number, note?: string, nodeId?: string) {
+    return this.json<{ stopped: boolean; reason?: string; request: Request }>(
       await this.opts.fetchApi.fetch(
         `${await this.base()}/requests/${id}/stop`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ note }),
+          body: JSON.stringify({ note, nodeId }),
         },
       ),
     );

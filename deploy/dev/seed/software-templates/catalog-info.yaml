@@ -16,3 +16,4 @@ spec:
     - ./templates/param-forwarding-demo/template.yaml
     - ./templates/retryable-demo/template.yaml
     - ./templates/review-gate/template.yaml
+    - ./templates/team-gates/template.yaml

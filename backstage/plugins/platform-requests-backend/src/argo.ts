@@ -237,6 +237,30 @@ export interface ArgoStatusNode {
   };
 }
 
+/** Annotation on a suspend template naming the team that answers that gate. */
+const A_APPROVER_GROUP = 'platform.io/approver-group';
+
+/** A template definition, as far as its annotations go. */
+export interface ArgoTemplateDef {
+  name?: string;
+  metadata?: { annotations?: Record<string, string> };
+}
+
+/**
+ * The places a template's own definition — and so its annotations — can live on
+ * a workflow. A status node carries only `templateName`, never the annotations.
+ *
+ * Observed against a live argo-server (2026-08-16): a step referenced from a
+ * `WorkflowTemplate` leaves `spec.templates` **empty** and lands in
+ * `status.storedTemplates`, keyed `namespaced/<workflowTemplate>/<template>`
+ * with the bare template name in `.name`. Inline templates arrive in
+ * `spec.templates`. Both are matched by name, so the key format is never parsed.
+ */
+export interface ArgoTemplateSource {
+  spec?: { templates?: ArgoTemplateDef[] };
+  status?: { storedTemplates?: Record<string, ArgoTemplateDef> };
+}
+
 /**
  * The suspend steps that are currently waiting.
  *
@@ -247,10 +271,23 @@ export interface ArgoStatusNode {
  * A supplied output with a `default` can be resumed without an answer; one
  * without a default cannot. That is Argo's own semantics, so `required` is read
  * off the workflow rather than configured anywhere in this platform.
+ *
+ * `wf` is the workflow the nodes came off, used only to look a node's template
+ * definition back up for its `platform.io/approver-group`. Pure.
  */
 export function suspendedNodesOf(
   nodes: Record<string, ArgoStatusNode> | undefined,
+  wf?: ArgoTemplateSource,
 ): SuspendedNode[] {
+  // storedTemplates last: it is Argo's own resolved copy of what actually ran.
+  const byName = new Map<string, ArgoTemplateDef>();
+  for (const t of [
+    ...(wf?.spec?.templates ?? []),
+    ...Object.values(wf?.status?.storedTemplates ?? {}),
+  ]) {
+    if (t?.name) byName.set(t.name, t);
+  }
+
   return Object.values(nodes ?? {})
     .filter(n => n.type === 'Suspend' && n.phase === 'Running')
     .map(n => ({
@@ -258,6 +295,12 @@ export function suspendedNodesOf(
       name: n.displayName || n.name || n.id,
       templateName: n.templateName,
       message: n.message,
+      // Left undefined when the template did not annotate; an empty annotation
+      // stays an empty string, because "named nobody" is admin-only and must
+      // not decay into "not named" (which is owner-may-resume).
+      approverGroup: n.templateName
+        ? byName.get(n.templateName)?.metadata?.annotations?.[A_APPROVER_GROUP]
+        : undefined,
       inputs: (n.inputs?.parameters ?? [])
         .filter(pp => pp.name !== undefined)
         .map(pp => ({ name: pp.name as string, value: pp.value })),
@@ -431,11 +474,13 @@ export class ArgoClient {
     const data = (await res.json()) as {
       items?: Array<{
         metadata?: { name?: string; creationTimestamp?: string };
+        spec?: { templates?: ArgoTemplateDef[] };
         status?: {
           phase?: string;
           message?: string;
           outputs?: { parameters?: Array<{ name?: string; value?: string }> };
           nodes?: Record<string, ArgoStatusNode>;
+          storedTemplates?: Record<string, ArgoTemplateDef>;
         };
       }>;
     };
@@ -461,7 +506,7 @@ export class ArgoClient {
       outputs,
       // The list response already carries status.nodes, so noticing a suspend
       // step costs no extra request — it was being parsed away.
-      suspendedNodes: suspendedNodesOf(wf?.status?.nodes),
+      suspendedNodes: suspendedNodesOf(wf?.status?.nodes, wf),
     };
   }
 
@@ -554,9 +599,13 @@ export class ArgoClient {
     );
     if (!res.ok) return [];
     const wf = (await res.json()) as {
-      status?: { nodes?: Record<string, ArgoStatusNode> };
+      spec?: { templates?: ArgoTemplateDef[] };
+      status?: {
+        nodes?: Record<string, ArgoStatusNode>;
+        storedTemplates?: Record<string, ArgoTemplateDef>;
+      };
     };
-    return suspendedNodesOf(wf.status?.nodes);
+    return suspendedNodesOf(wf.status?.nodes, wf);
   }
 
   /**

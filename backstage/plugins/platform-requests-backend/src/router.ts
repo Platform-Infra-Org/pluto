@@ -23,7 +23,8 @@ import {
 // Type-only: plugin.ts imports createRouter from here, and a type import is
 // erased at compile time, so the cycle never exists at runtime.
 import type { ReconcileOutcome } from './plugin';
-import { applyDecision } from './stateMachine';
+import { applyDecision, mayResumeNode } from './stateMachine';
+import { actorIdOf, mayStopWorkflow } from '@internal/plugin-platform-common';
 import { RequestsStore } from './store';
 import { Cipher } from './crypto';
 import { filterSuppliedOutputs } from './suspend';
@@ -137,6 +138,20 @@ const newRequestSchema = z.object({
 
 const decisionSchema = z.object({ note: z.string().optional() });
 
+/**
+ * Stopping, optionally from one gate.
+ *
+ * Argo cannot stop a single node — `/stop` ends the run — so refusing a gate
+ * and abandoning the request are one operation reached from two places, and
+ * `nodeId` is which. Present: the caller is refusing that step, and the step's
+ * own approver group decides. Absent: the caller is abandoning the request, and
+ * the request-level gate decides.
+ */
+const stopSchema = z.object({
+  nodeId: z.string().min(1).optional(),
+  note: z.string().optional(),
+});
+
 const resumeSchema = z.object({
   nodeId: z.string().min(1),
   note: z.string().optional(),
@@ -145,9 +160,8 @@ const resumeSchema = z.object({
 });
 
 /** `user:default/admin` -> `admin`. */
-function actorId(userEntityRef: string): string {
-  return userEntityRef.split('/').pop()!.split(':')[0];
-}
+/** Defined in platform-common, because the suspend panel compares against it. */
+const actorId = actorIdOf;
 
 export async function createRouter(
   options: RouterOptions,
@@ -407,9 +421,14 @@ export async function createRouter(
   /**
    * Release a suspend step the workflow is waiting on.
    *
-   * Same gate as approving the request itself: whoever may approve may resume.
+   * The gate is per *step*, not per request (`mayResumeNode`): a suspend
+   * template that annotates `platform.io/approver-group` belongs to that team,
+   * and the request's owning team is then not sufficient for it. Unannotated
+   * steps keep the original rule — whoever may approve the request may resume.
+   *
    * The request is re-read from Argo first — the stored list is a cache, and two
-   * approvers on the same page is the normal case, not the edge one.
+   * approvers on the same page is the normal case, not the edge one. The group
+   * is read off that live node for the same reason.
    */
   router.post('/requests/:id/resume', async (req, res) => {
     const parsed = resumeSchema.safeParse(req.body ?? {});
@@ -428,16 +447,6 @@ export async function createRouter(
     if (!request) throw new NotFoundError(`No request ${req.params.id}`);
     if (!request.workflowName) {
       throw new InputError(`Request ${request.id} has no workflow`);
-    }
-
-    // The owning-team gate, the same one applyDecision enforces for approvals.
-    const { isAdmin, groups } = await principalResolver(credentials);
-    const allowed =
-      isAdmin || (!!request.ownerGroup && groups.includes(request.ownerGroup));
-    if (!allowed) {
-      throw new NotAllowedError(
-        'Only the owning service team or an admin can resume this workflow',
-      );
     }
 
     if (!options.resumeNode || !options.suspendedNodesFor) {
@@ -463,6 +472,18 @@ export async function createRouter(
       });
       return;
     }
+
+    // The gate, decided against the LIVE node and not the stored cache: the
+    // approver group is a property of the step, and a template edit must not be
+    // raceable by holding a stale page open.
+    const { isAdmin, groups } = await principalResolver(credentials);
+    const gate = mayResumeNode({
+      isAdmin,
+      groups,
+      ownerGroup: request.ownerGroup,
+      approverGroup: node.approverGroup,
+    });
+    if (!gate.allowed) throw new NotAllowedError(gate.reason);
 
     const { accepted, rejected, missing, invalid } = filterSuppliedOutputs(
       node,
@@ -524,7 +545,7 @@ export async function createRouter(
    * what a stopped workflow means.
    */
   router.post('/requests/:id/stop', async (req, res) => {
-    const parsed = decisionSchema.safeParse(req.body ?? {});
+    const parsed = stopSchema.safeParse(req.body ?? {});
     if (!parsed.success) throw new InputError(parsed.error.toString());
     const { credentials, actor } = await actorOf(req);
 
@@ -543,13 +564,46 @@ export async function createRouter(
     }
 
     const { isAdmin, groups } = await principalResolver(credentials);
-    const allowed =
-      isAdmin || (!!request.ownerGroup && groups.includes(request.ownerGroup));
-    if (!allowed) {
-      throw new NotAllowedError(
-        'Only the owning service team or an admin can stop this workflow',
+    const { nodeId } = parsed.data;
+
+    if (nodeId) {
+      // Refusing one gate. The step's own team decides, exactly as it does for
+      // resume — a team that may release a step may also refuse it, and the
+      // owning team is no more entitled here than it is there. Read live from
+      // Argo rather than from the stored cache, for the same reason resume
+      // does: the cache can be a poll behind a template edit.
+      if (!options.suspendedNodesFor) {
+        throw new InputError('Argo resume is not configured');
+      }
+      const live = await options.suspendedNodesFor(
+        request.workflowName,
+        request.workflowNamespace,
       );
+      const node = live.find(n => n.id === nodeId);
+      if (!node) {
+        res.json({ stopped: false, reason: 'That step is no longer suspended.' });
+        return;
+      }
+      const gate = mayResumeNode({
+        isAdmin,
+        groups,
+        ownerGroup: request.ownerGroup,
+        approverGroup: node.approverGroup,
+      });
+      if (!gate.allowed) throw new NotAllowedError(gate.reason);
+    } else {
+      // Abandoning the request. Wider than a gate on purpose: whoever asked for
+      // this should be able to withdraw it without finding an approver.
+      const gate = mayStopWorkflow({
+        isAdmin,
+        groups,
+        actor,
+        ownerGroup: request.ownerGroup,
+        requester: request.requester,
+      });
+      if (!gate.allowed) throw new NotAllowedError(gate.reason);
     }
+
     if (!options.stopWorkflow) throw new InputError('Argo stop is not configured');
 
     const reason = parsed.data.note

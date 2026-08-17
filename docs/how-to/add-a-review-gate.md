@@ -103,9 +103,92 @@ the approvals card with the step's inputs, its questions, and two actions:
 - **Stop** — ends the run (Argo `/stop`, so the workflow's `onExit` handlers
   still run and clean up what it created). The request lands in `FAILED`.
 
-Both are recorded in the same audit trail as the first approval, and both are
-gated the same way: **an admin or a member of the owning team**. The requester
-cannot wave their own request through unless they are also an approver.
+Both are recorded in the same audit trail as the first approval. By default both
+are gated the same way: **an admin or a member of the owning team**. The
+requester cannot wave their own request through unless they are also an
+approver.
+
+A step may override that for itself — see **[Handing a gate to another
+team](#handing-a-gate-to-another-team)** below.
+
+Stopping appears in two places, because Argo cannot stop a single node: `/stop`
+ends the run, so refusing a gate and abandoning a request are the same call
+reached from two directions, and they are gated differently.
+
+| control | means | who may |
+|---|---|---|
+| **Refuse and stop**, beside a step | refuse *this* gate | whoever may resume that step — the named team, or the owner where no team is named |
+| **Stop the whole workflow**, at the foot of the card | abandon the request | an admin, the owning team, **or whoever filed it** |
+
+A team locked out of a gate cannot refuse it either — otherwise naming a team
+would only move who says yes, and leave anyone able to say no. The request-level
+Stop is wider on purpose: someone who no longer wants what they asked for should
+not have to find an approver to withdraw it. It is the only one behind a
+confirmation, because it throws away a run that may already have provisioned
+something, and its reason field reaches the same audit trail as an approval
+note — stopping is recorded as a rejection, because that is what refusing a
+request is.
+
+## Handing a gate to another team
+
+A gate does not have to belong to the team that owns the request. Put
+`platform.io/approver-group` on the **suspend template** and that step is
+answered by the group you name:
+
+```yaml
+templates:
+  - name: approve-cost
+    metadata:
+      annotations:
+        platform.io/approver-group: group:default/payments
+    suspend: {}
+```
+
+The annotation goes on the template — specifically, on **the template that
+holds the `suspend: {}`**. Two variations look reasonable and neither works:
+
+- **On the `steps:` entry that calls it.** Argo rejects the manifest outright:
+  `json: unknown field "metadata"`. A `WorkflowStep` has no metadata.
+- **On a wrapper template whose inner template suspends.** This one is worse,
+  because it is accepted and then does nothing. The waiting node's
+  `templateName` is the *inner* template, so that is where the annotation is
+  looked for; a wrapper's annotation is never read and the gate quietly falls
+  back to the owning team. Verified against a live argo-server: a workflow
+  wrapping an unannotated `gate` inside an annotated `approve-cost` suspends on
+  `templateName: gate`, and the platform sees no group at all.
+
+A consequence of the same rule: a template carries one group, so calling the
+same suspend template twice gives both gates the same team. Two teams means two
+templates — which is what `team-gates.yaml` does.
+
+Three states, and the middle one is what you get by writing nothing:
+
+| the suspend template | who may resume it |
+|---|---|
+| names a group that has members | an admin, or that group |
+| carries no annotation | an admin, or the request's owning team |
+| names a group nobody is in, or is empty | an admin, and nobody else |
+
+Two things about the first row are worth saying plainly, because both surprise
+people:
+
+- **It replaces the owner, it does not add to them.** The owning team approved
+  the request at the start; a cost gate means little if the team spending the
+  money can release it. A request its own owner filed can therefore reach a gate
+  its owner cannot answer — the step stays visible on the request page, naming
+  the team, so they know whom to chase.
+- **The decision is per step, not per request.** Two gates in the same step
+  group suspend at the same time and are answered independently by two different
+  teams, in either order.
+
+The last row is deliberate. An unresolvable group narrows to admins rather than
+falling back to the owner, so a typo stalls in the open instead of quietly
+widening the gate. The request page names the group it could not resolve.
+
+A worked example with all three states in one run lives in
+`deploy/dev/argo/team-gates.yaml`, wired to the **Provision With Team Gates**
+template: checkout owns the request, payments answers the cost gate, search
+answers the schema gate, and a third unannotated gate returns to checkout.
 
 ## Things worth knowing
 

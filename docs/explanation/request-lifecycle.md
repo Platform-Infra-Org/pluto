@@ -81,9 +81,51 @@ workflow along.
 
 Resuming supplies the step's declared answers and releases the node; stopping
 ends the run through Argo's `/stop`, so the workflow's own `onExit` handlers
-still clean up. Both are gated like any approval and both are recorded in the
-same audit trail. See
+still clean up. Both are recorded in the same audit trail. See
 **[Add a mid-workflow review gate](../how-to/add-a-review-gate.md)**.
+
+### A step may name the team that answers it
+
+By default the second gate asks the same question as the first — admin, or a
+member of the request's `ownerGroup`. A suspend template can override that for
+itself with
+**[`platform.io/approver-group`](../reference/annotations.md#on-an-argo-suspend-template)**:
+
+| The step | Who may resume it |
+|---|---|
+| No annotation | Admin or the request's `ownerGroup`, as before. |
+| Names a group | Admin or that group. |
+| Names a group that is empty or unresolvable | Admin only. |
+
+**The owning team is excluded from an annotated step.** This is the surprising
+part. The owner is not added to the named team; it is replaced by it for that
+step, and a request the owner filed can reach a gate the owner cannot release.
+That is deliberate: the owner already approved at the start, and a cost gate
+addressed to finance means nothing if the team asking for the resource can wave
+it through. The alternative — owner *and* the named team, dual control — was
+considered and not chosen, because it needs per-node approval records rather
+than a single resume call.
+
+Two consequences follow from the decision being **per node** rather than per
+request. A request can wait on a finance gate and a DBA gate at once, each
+released by its own team and neither by the other, so the page renders a verdict
+per step instead of one banner. And a viewer who can answer no gate at all still
+sees every gate — hiding them would leave nobody knowing whom to chase.
+
+An empty or unresolvable group falls to admins rather than back to the owner,
+which is the same instinct as the absent-`ownerGroup` rule above: a typo in a
+group ref stalls the workflow visibly instead of quietly widening who may move
+it. Fail-closed only works if the stall is legible, so the UI names the group it
+could not resolve.
+
+Stopping is unaffected. It ends the whole run rather than any one step, so it
+keeps asking the request-level question — admin or `ownerGroup` — which means an
+owner locked out of every gate can still refuse the workflow, and a member of a
+named team can release its own step without being able to kill the run.
+
+The router and the UI reach this verdict through the same function rather than
+each re-deriving it, so the disabled button and the `403` can never disagree
+about who was allowed.
 
 ## When a failed run comes back
 

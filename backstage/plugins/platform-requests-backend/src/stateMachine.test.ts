@@ -3,7 +3,7 @@ import {
   ApprovalPolicy,
   Request,
 } from '@internal/plugin-platform-common';
-import { applyDecision, policySatisfied } from './stateMachine';
+import { applyDecision, mayResumeNode, policySatisfied } from './stateMachine';
 
 const OWNER = 'group:default/team-a';
 
@@ -48,6 +48,104 @@ describe('policySatisfied', () => {
     expect(policySatisfied(p, [approve('bob')])).toBe(false);
     expect(policySatisfied(p, [approve('bob'), approve('bob')])).toBe(false);
     expect(policySatisfied(p, [approve('bob'), approve('carol')])).toBe(true);
+  });
+});
+
+describe('mayResumeNode', () => {
+  const DBA = 'group:default/dba';
+  const owner = { groups: [OWNER] };
+  const dba = { groups: [DBA] };
+  const nobody = { groups: [] };
+
+  describe('a step with no approver-group annotation (unchanged behaviour)', () => {
+    it('lets the owning team through', () => {
+      expect(
+        mayResumeNode({ isAdmin: false, ...owner, ownerGroup: OWNER }).allowed,
+      ).toBe(true);
+    });
+
+    it('keeps everyone else out, and names the team that would be allowed', () => {
+      const v = mayResumeNode({ isAdmin: false, ...dba, ownerGroup: OWNER });
+      expect(v.allowed).toBe(false);
+      expect(v.reason).toContain(OWNER);
+    });
+
+    it('is admin-only when the request has no owning team', () => {
+      expect(
+        mayResumeNode({ isAdmin: false, ...owner, ownerGroup: undefined }).allowed,
+      ).toBe(false);
+      expect(
+        mayResumeNode({ isAdmin: true, ...nobody, ownerGroup: undefined }).allowed,
+      ).toBe(true);
+    });
+  });
+
+  describe('a step that names a group', () => {
+    it('lets a member of the named group through', () => {
+      expect(
+        mayResumeNode({
+          isAdmin: false,
+          ...dba,
+          ownerGroup: OWNER,
+          approverGroup: DBA,
+        }).allowed,
+      ).toBe(true);
+    });
+
+    // The case the whole change exists for: the owner approved the request at
+    // the start, but this gate belongs to someone else.
+    it('DENIES the owning team a step that names another team', () => {
+      const v = mayResumeNode({
+        isAdmin: false,
+        ...owner,
+        ownerGroup: OWNER,
+        approverGroup: DBA,
+      });
+      expect(v.allowed).toBe(false);
+      expect(v.reason).toContain(DBA);
+      expect(v.reason).not.toContain(OWNER);
+    });
+  });
+
+  describe('a step whose group is empty or unresolvable', () => {
+    it('is admin-only for an empty annotation — fail closed', () => {
+      for (const approverGroup of ['', '   ']) {
+        const v = mayResumeNode({
+          isAdmin: false,
+          ...owner,
+          ownerGroup: OWNER,
+          approverGroup,
+        });
+        expect(v.allowed).toBe(false);
+        expect(v.reason).toMatch(/could not be resolved/);
+      }
+    });
+
+    // A group ref that resolves to nothing is a group nobody is a member of, so
+    // it denies through the same path rather than needing a catalog lookup.
+    it('is admin-only for a group nobody is in', () => {
+      expect(
+        mayResumeNode({
+          isAdmin: false,
+          ...owner,
+          ownerGroup: OWNER,
+          approverGroup: 'group:default/typo',
+        }).allowed,
+      ).toBe(false);
+    });
+  });
+
+  it('an admin is allowed in every state', () => {
+    for (const approverGroup of [undefined, DBA, '', 'group:default/typo']) {
+      expect(
+        mayResumeNode({
+          isAdmin: true,
+          ...nobody,
+          ownerGroup: undefined,
+          approverGroup,
+        }).allowed,
+      ).toBe(true);
+    }
   });
 });
 

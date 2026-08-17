@@ -27,8 +27,7 @@ import {
   isTerminal,
   isDeletable,
   approvalProgress,
-  catalogPath,
-} from '@internal/plugin-platform-common';
+  catalogPath, actorIdOf } from '@internal/plugin-platform-common';
 import { RefreshResult, requestsApiRef } from '../api';
 import { requestRouteRef } from '../routes';
 import { useCatalogNamespace } from '../useCatalogNamespace';
@@ -36,6 +35,7 @@ import { titleOf, useResourceTitles } from '../useResourceTitles';
 import { parseResultRefs } from '../resultRefs';
 import { argoWorkflowUrl } from '../argoUrl';
 import { WorkflowGraph } from './WorkflowGraph';
+import { StopWorkflowButton } from './StopWorkflowButton';
 import { SuspendPanel } from './SuspendPanel';
 import { ExperienceBar } from './ExperienceBar';
 import { stateBadge, formatTs } from './RequestsPage';
@@ -104,6 +104,9 @@ export function RequestPage() {
     'LR',
   );
   const [myGroups, setMyGroups] = useState<string[]>([]);
+  // The viewer's own user entityRef. Stopping a run asks whether you filed it,
+  // which group membership cannot answer.
+  const [me, setMe] = useState<string>('');
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
@@ -141,7 +144,12 @@ export function RequestPage() {
   useEffect(() => {
     identity
       .getBackstageIdentity()
-      .then(i => setMyGroups(i.ownershipEntityRefs));
+      .then(i => {
+        setMyGroups(i.ownershipEntityRefs);
+        // Normalised the same way the router stores it — a raw entityRef would
+        // never match and would deny the requester their own Stop button.
+        setMe(actorIdOf(i.userEntityRef));
+      });
   }, [identity]);
 
   const decide = async (decision: 'approve' | 'reject') => {
@@ -244,9 +252,9 @@ export function RequestPage() {
     request.workflowName,
   );
   // Only an admin, or a member of the owning service team, may decide it.
+  const isAdmin = myGroups.some(g => adminGroups.includes(g));
   const canApprove =
-    myGroups.some(g => adminGroups.includes(g)) ||
-    (!!request.ownerGroup && myGroups.includes(request.ownerGroup));
+    isAdmin || (!!request.ownerGroup && myGroups.includes(request.ownerGroup));
 
   return (
     <Page>
@@ -445,10 +453,14 @@ export function RequestPage() {
         {request.state === 'AWAITING_INPUT' &&
           (request.suspendedNodes?.length ?? 0) > 0 && (
             <div style={{ gridColumn: '1 / -1' }}>
+              {/* Not `canApprove`: a suspend step may name its own approving
+                  team, so the panel decides node by node. */}
               <SuspendPanel
                 requestId={request.id}
                 nodes={request.suspendedNodes ?? []}
-                canResume={canApprove}
+                isAdmin={isAdmin}
+                groups={myGroups}
+                ownerGroup={request.ownerGroup}
                 onResumed={load}
               />
             </div>
@@ -472,11 +484,31 @@ export function RequestPage() {
                 }
                 description={request.workflowPhase ?? undefined}
                 action={
-                  <GraphDirectionPicker
-                    value={workflowDirection}
-                    onChange={setWorkflowDirection}
-                    id="workflow-dir"
-                  />
+                  // Beside the direction picker, and present for as long as the
+                  // run is: stopping used to live in the suspend panel, so it
+                  // existed only while something happened to be waiting on a
+                  // human. A workflow is worth abandoning whenever it is still
+                  // going. Gone once the state is terminal — there is nothing
+                  // left to stop, and the backend would record a rejection
+                  // against a request that already has an outcome.
+                  <div className="sc-row">
+                    <GraphDirectionPicker
+                      value={workflowDirection}
+                      onChange={setWorkflowDirection}
+                      id="workflow-dir"
+                    />
+                    {!isTerminal(request.state) && (
+                      <StopWorkflowButton
+                        requestId={request.id}
+                        isAdmin={isAdmin}
+                        groups={myGroups}
+                        actor={me}
+                        requester={request.requester}
+                        ownerGroup={request.ownerGroup}
+                        onStopped={load}
+                      />
+                    )}
+                  </div>
                 }
               />
               <CardBody>

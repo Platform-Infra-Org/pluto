@@ -438,6 +438,45 @@ describe('SHADCN_CSS', () => {
     );
   });
 
+  it('gives no field the page ground, because a field lives on a card', () => {
+    // A field inherits the ground of the surface it sits on. Naming --sc-bg
+    // while sitting on a --sc-card surface is how the two drift apart: measured
+    // on the built app, light register, /create, they differed in 9 of the 11
+    // modes. slush and discord passed only because they happen to set --sc-bg
+    // and --sc-card to the same white, which is exactly why pinning one mode's
+    // colour would not have caught this — the check has to be on the rule, not
+    // on a rendered pixel.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    const FIELD =
+      /MuiInput|MuiOutlinedInput|\.sc-input|\.sc-select|\.sc-textarea|bui-(?:Input|Field|TextField|Search)/;
+    const offenders = Array.from(
+      rules.matchAll(/([^{}]+)\{([^{}]*)\}/g),
+      m => [m[1].trim(), m[2]] as const,
+    )
+      .filter(([sel]) => FIELD.test(sel))
+      .filter(([, body]) => /background(?:-color)?:[^;]*--sc-bg\b/.test(body))
+      .map(([sel]) => sel);
+    expect(offenders).toEqual([]);
+  });
+
+  it('lets chrome inherit its ground instead of asserting a surface', () => {
+    // Twice now: a field named --sc-bg while sitting on a card, and a toolbar
+    // named --sc-card while sitting on the page. Both are strips of chrome, and
+    // chrome does not know what it is standing on -- only a surface does. The
+    // failure is invisible wherever the two tokens happen to agree, which is
+    // why it read as a Hermes and Flying Papers bug rather than a general one.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const sel of ['MuiToolbar-root', 'MuiAppBar-root']) {
+      const block = rules.match(
+        new RegExp(`\\[class\\*="${sel}"\\]\\s*\\{([^}]*)\\}`),
+      );
+      if (!block) continue;
+      const bg = block[1].match(/background(-color)?:\s*([^;]+)/);
+      if (!bg) continue;
+      expect(`${sel}:${bg[2].trim()}`).toBe(`${sel}:transparent`);
+    }
+  });
+
   it('themes the bui plugin header', () => {
     // It ships its own white ground and black ink — measured rgb(255,255,255)
     // on a production build while the mode's card was 42 45% 98%.
