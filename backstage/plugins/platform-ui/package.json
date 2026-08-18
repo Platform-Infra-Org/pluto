@@ -50,6 +50,7 @@
     "@backstage/config": "*",
     "@backstage/core-app-api": "*",
     "@backstage/test-utils": "*",
+    "@testing-library/jest-dom": "*",
     "@testing-library/react": "*"
   }
 }

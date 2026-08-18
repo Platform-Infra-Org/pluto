@@ -86,4 +86,29 @@ export interface Config {
       flavour?: 'fantasy';
     };
   };
+
+  platform?: {
+    /**
+     * An existing Grafana dashboard, embedded. Frontend-visible, so it holds a
+     * URL and nothing else — this feature makes no Grafana API call and needs
+     * no token. baseUrl is also the origin allowlist: nothing outside it is
+     * ever framed.
+     * @visibility frontend
+     */
+    grafana?: {
+      /** @visibility frontend */
+      baseUrl: string;
+      /** @visibility frontend */
+      dashboard: {
+        /** @visibility frontend */
+        uid: string;
+        /** @visibility frontend */
+        slug: string;
+      };
+      /** @visibility frontend */
+      theme?: 'light' | 'dark';
+      /** @visibility frontend */
+      kiosk?: boolean;
+    };
+  };
 }
