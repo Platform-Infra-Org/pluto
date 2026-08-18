@@ -237,11 +237,16 @@ describe('SHADCN_CSS', () => {
     );
   });
 
-  it('drops the type subtitle from a template card', () => {
-    // The card led with its type rather than its name; the type repeats what
-    // the template's own copy already says.
+  it('drops the type text from a template card but keeps its buttons', () => {
+    // The card led with its type rather than its name, and the type repeats
+    // what the template's own copy already says. Hiding the whole h3 also hid
+    // the detail and favourite buttons that live in it, which are the only way
+    // from a card to the Template entity.
     expect(SHADCN_CSS).toMatch(
-      /\.sc-route-create[^{]*> h3\s*\{\s*display:\s*none/,
+      /\.sc-route-create[^{]*> h3 > div:first-child \{\s*display:\s*none/,
+    );
+    expect(SHADCN_CSS).not.toMatch(
+      /\.sc-route-create[^{]*> h3 \{[^}]*display:\s*none/,
     );
   });
 
@@ -521,12 +526,12 @@ describe('SHADCN_CSS', () => {
     // which read as a caption on a card whose whole job is to be picked out of
     // a grid.
     expect(SHADCN_CSS).toMatch(
-      /\.sc-route-create[^{]*> h4 \{[^}]*font-size:\s*22px/,
+      /\.sc-route-create[^{]*> h4 \{[^}]*font-size:\s*16px/,
     );
-    // The PLATE is what shrinks, never the type. 4px of vertical padding made a
-    // 34.39px band over a 90px header scene while the line box needs only
-    // 26.4px; at 1px the descender still has 2.24px of clearance. Comments are
-    // stripped first — the rule's own comment quotes the old value.
+    // The plate hugs the type. 4px of vertical padding made a 34.39px band over
+    // a 90px header scene; at 16px/1.2 the line box needs 19.2px and 1px of
+    // padding leaves the descender 1.6px of clearance. Comments are stripped
+    // first — the rule's own comment quotes the old values.
     const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
     const block = rules.match(/\.sc-route-create[^{]*> h4 \{([^}]*)\}/);
     expect(block).toBeTruthy();

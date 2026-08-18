@@ -749,7 +749,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   order: 1;
   /* The name IS the card. It arrived at the header's inherited size, which read
      as a caption on a card whose whole job is to be picked from a grid. */
-  font-size: 22px !important;
+  font-size: 16px !important;
   font-weight: 600 !important;
   line-height: 1.2 !important;
   letter-spacing: -0.02em;
@@ -760,19 +760,31 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
      white over it clears AA whatever is painted underneath. */
   color: hsl(0 0% 100%) !important;
   background-color: hsl(240 12% 6% / .72);
-  /* The PLATE shrinks, never the type: 4px 8px made a 34.39px band over a 90px
-     header scene. At 1px 6px it is 28.4px (-17%) and the descender still has
-     2.24px of clearance inside the 26.4px line box, so nothing is clipped.
-     line-height 1.2 stays; 1.05 is available if 28.4px is still too tall and
-     1.0 is the true floor. font-size is pinned at 22px by styles.test.ts and
-     the pin is correct — the title is the card's headline. */
-  padding: 1px 6px;
+  /* The PLATE shrinks with the type, not instead of it: 22px over 4px 8px made
+     a 34.39px band on a 90px header scene, which was a banner rather than a
+     card title. At 16px over 1px 4px the band is 21.2px — the 19.2px line box
+     plus 1px top and bottom — and the descender keeps 1.6px of clearance
+     inside it, so nothing is clipped. line-height 1.2 stays; 1.05 is available
+     if 21.2px is still too tall and 1.0 is the true floor. The 16px is pinned
+     by styles.test.ts. */
+  padding: 1px 4px;
   margin: 0;
   align-self: flex-start;
   max-width: 100%;
   border-radius: var(--sc-radius-sm);
 }
-.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h3 { display: none; }
+/* The h3 holds two children: the type text, and the detail + favourite buttons.
+   Only the first is unwanted — hiding the whole h3 (as this rule did until
+   now) also removed the only route from a card to its Template entity.
+   order 0 lifts the surviving button row above the title in the flex column,
+   and flex-end parks it against the card's right edge. */
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h3 {
+  order: 0;
+  align-self: flex-end;
+  margin: 0;
+  line-height: 1;
+}
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h3 > div:first-child { display: none; }
 
 .sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child {
   /* Ancient Greek, drawn entirely with hard colour stops.
