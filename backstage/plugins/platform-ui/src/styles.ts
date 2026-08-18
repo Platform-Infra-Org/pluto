@@ -1427,13 +1427,16 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   box-shadow: var(--sc-shadow); }
 .sc-nav-mark svg, .sc-nav-mark img { width: 17px; height: 17px; color: hsl(var(--sc-primary-fg)); object-fit: contain; }
 .sc-nav-word { font-weight: 700; font-size: 17px; letter-spacing: -0.02em; color: hsl(var(--sc-fg)); white-space: nowrap; }
-/* The picker's own controls are the same object as the sidebar's toggle — one
-   26px square, same rule, so the two never drift apart. Only placement below. */
-.sc-nav-toggle, .sc-picker-toggle { flex: 0 0 auto; width: 26px; height: 26px; border-radius: var(--sc-radius); border: var(--sc-border-w) solid hsl(var(--sc-border));
+/* The sidebar's collapse control: one 26px square.
+   .sc-picker-toggle used to share this rule, back when the picker had a
+   separate chevron. It does not any more — the class now marks the equipped
+   bottle that opens the tray, which is a .sc-potion and takes that rule's
+   geometry. A bordered box drawn behind it would be a second control. */
+.sc-nav-toggle { flex: 0 0 auto; width: 26px; height: 26px; border-radius: var(--sc-radius); border: var(--sc-border-w) solid hsl(var(--sc-border));
   background: transparent; color: hsl(var(--sc-muted-fg)); cursor: pointer; font-size: 13px; line-height: 1;
   display: flex; align-items: center; justify-content: center; }
-.sc-nav-toggle:hover, .sc-picker-toggle:hover { background: hsl(var(--sc-accent)); color: hsl(var(--sc-fg)); }
-.sc-nav-toggle:focus-visible, .sc-picker-toggle:focus-visible {
+.sc-nav-toggle:hover { background: hsl(var(--sc-accent)); color: hsl(var(--sc-fg)); }
+.sc-nav-toggle:focus-visible {
   outline: var(--sc-border-w) solid hsl(var(--sc-ring)); outline-offset: 2px; }
 .sc-nav-list { display: flex; flex-direction: column; gap: 2px; }
 .sc-nav-item { position: relative; display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: var(--sc-radius);
@@ -1492,6 +1495,11 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    its scheme as liquid. The shelf floor is a hard 3px rule the potions stand
    on, so they read as objects placed rather than icons laid out. */
 .sc-picker { display: flex; align-items: flex-end; gap: 2px;
+  /* The tray is position: absolute and opens against its shelf. The floating
+     instance resolves it off .sc-picker-float's fixed placement; the sign-in
+     card's has no positioned ancestor at all, so without this the tray escapes
+     to the viewport. Harmless for the floating one, which overrides it. */
+  position: relative;
   padding: 8px 10px 5px; border-radius: var(--sc-radius);
   background: hsl(var(--sc-card));
   border: var(--sc-border-w) solid hsl(var(--sc-border));

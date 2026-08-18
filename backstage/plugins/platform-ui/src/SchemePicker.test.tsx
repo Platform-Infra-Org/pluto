@@ -189,16 +189,24 @@ describe('SchemePicker', () => {
       expect(container.querySelector('.sc-picker-inv')).not.toBeNull();
     });
 
-    it('keeps the sign-in card free of the tray', () => {
-      // packages/app/src/modules/auth.tsx mounts a second, non-floating picker
-      // inside the card. There the shelf IS every bottle, so there is nothing
-      // to open and no control to show.
-      const { container } = render(<SchemePicker />);
+    it('gives the sign-in card the same one-bottle box as the app', () => {
+      // The card is 296px of content box; twelve bottles need 358px and fifteen
+      // need 442px, so the flat shelf squeezed the sprites below their 16px grid
+      // and got worse with every potion added. The tray is the same interaction
+      // the app already has, and it does not grow the card at all.
+      const { container } = render(<SchemePicker compact />);
+      expect(potions(container)).toHaveLength(1);
+      expect(container.querySelector('.sc-picker-toggle')).not.toBeNull();
+      expect(container.querySelector('.sc-picker-float')).toBeNull();
+    });
 
-      expect(container.querySelector('.sc-picker-toggle')).toBeNull();
-      expect(container.querySelector('.sc-picker-inv')).toBeNull();
-      expect(potions(container)).toHaveLength(SCHEMES.length);
-      expect(potions(container)[0].getAttribute('aria-expanded')).toBeNull();
+    it('opens the full inventory from the sign-in card', () => {
+      const { container } = render(<SchemePicker compact />);
+      const toggle = potions(container)[0];
+      expect(toggle.getAttribute('aria-expanded')).toBe('false');
+      fireEvent.click(toggle);
+      expect(toggle.getAttribute('aria-expanded')).toBe('true');
+      expect(container.querySelectorAll('.sc-inv-potion')).toHaveLength(SCHEMES.length);
     });
 
     it('says which potion is equipped without any motion', () => {

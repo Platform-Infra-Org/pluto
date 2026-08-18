@@ -151,7 +151,7 @@ function PlatformSignInPage(props: SignInPageProps) {
           {busy ? 'Signing in…' : 'Sign in with Keycloak'}
         </Button>
         <div className="sc-login-pick">
-          <SchemePicker />
+          <SchemePicker compact />
         </div>
       </div>
     </div>

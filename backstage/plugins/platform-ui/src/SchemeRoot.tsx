@@ -399,12 +399,20 @@ applyScheme();
 /**
  * The scheme picker.
  *
- * `floating` is the corner shelf that follows you around the app. Without it
- * the picker sits in the flow, which is how the sign-in card carries its own —
- * the card is the only place the floating one is suppressed, so there is never
- * a second shelf stacked on the first.
+ * `floating` is the corner shelf that follows you around the app: fixed
+ * placement, draggable, one bottle plus a tray. `compact` is that last part on
+ * its own — the box the sign-in card mounts, in the flow of the card and
+ * undraggable. The card is the only place the floating one is suppressed, so
+ * there is never a second shelf stacked on the first.
  */
-export function SchemePicker({ floating }: { floating?: boolean } = {}) {
+export function SchemePicker({
+  floating,
+  compact,
+}: { floating?: boolean; compact?: boolean } = {}) {
+  // `floating` used to mean three things at once: one bottle plus a tray, a
+  // fixed position, and drag. The sign-in card wants the first without the
+  // other two — its shelf is inside a 296px card and cannot grow.
+  const collapsed = floating || compact;
   const [scheme, setScheme] = useState(
     () =>
       (typeof localStorage !== 'undefined' &&
@@ -639,13 +647,13 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
     );
   };
 
-  // Floating only, guarded exactly like the drag above: packages/app's sign-in
-  // card mounts a second, non-floating picker, and there the shelf IS the whole
-  // card — every bottle is already on show, so there is nothing to open.
+  // Collapsed, not floating: the sign-in card mounts the same one-bottle box
+  // without the fixed placement or the drag, because a flat shelf of every
+  // bottle does not fit a 296px card and got worse with each potion added.
   // A pick that no longer exists degrades to the first bottle rather than
   // rendering nothing — the same rule applyScheme() uses.
   const equipped = SCHEMES.find(s => s.id === scheme) ?? defaultScheme();
-  const shelf = floating ? [equipped] : SCHEMES;
+  const shelf = collapsed ? [equipped] : SCHEMES;
 
   /**
    * Take a bottle off the shelf: play its cast, then equip.
@@ -688,24 +696,24 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
       {shelf.map((s, i) => (
         <button
           key={s.id}
-          ref={floating ? invBtn : undefined}
+          ref={collapsed ? invBtn : undefined}
           type="button"
-          className="sc-potion"
+          className={`sc-potion${collapsed ? ' sc-picker-toggle' : ''}`}
           // Staggers the rattle so the bottles move out of phase. In unison
           // they read as the shelf vibrating rather than as loose objects.
           style={{ ['--sc-i' as string]: i } as CSSProperties}
           aria-pressed={s.id === scheme}
           // On the shelf this bottle is the way into the inventory, so it says
           // so; in the sign-in card it is still just a swatch that picks.
-          {...(floating
+          {...(collapsed
             ? { 'aria-expanded': inv, 'aria-controls': 'sc-picker-inv' }
             : {})}
           // The sprite is decorative, so the button carries the name itself.
           aria-label={
-            floating ? `${s.label} — open potion inventory` : s.label
+            collapsed ? `${s.label} — open potion inventory` : s.label
           }
-          title={floating ? `${s.label} — open potion inventory` : s.label}
-          onClick={() => (floating ? setInv(v => !v) : setScheme(s.id))}
+          title={collapsed ? `${s.label} — open potion inventory` : s.label}
+          onClick={() => (collapsed ? setInv(v => !v) : setScheme(s.id))}
         >
           <PixelPotion
             liquid={`hsl(${s.hsl})`}
@@ -715,7 +723,7 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
               is equipped is carried by aria-pressed, by the label, and by being
               the only bottle on the shelf. Drawn at full opacity by default, so
               under reduced motion they simply sit there instead of blinking. */}
-          {floating && (
+          {collapsed && (
             <span className="sc-potion-stars" aria-hidden="true">
               {[0, 1, 2].map(n => (
                 <PixelStar
@@ -727,7 +735,7 @@ export function SchemePicker({ floating }: { floating?: boolean } = {}) {
           )}
         </button>
       ))}
-      {floating && inv && (
+      {collapsed && inv && (
         <div
           id="sc-picker-inv"
           className="sc-picker-inv"
