@@ -157,5 +157,20 @@ export interface Config {
         maxAgeHours?: number;
       };
     };
+
+    /**
+     * S3 destination for scaffolder file uploads. Backend-only: the browser
+     * receives a presigned URL, never a credential.
+     */
+    uploads?: {
+      bucket: string;
+      region: string;
+      /** Override for MinIO or another S3-compatible endpoint. */
+      endpoint?: string;
+      keyPrefix: string;
+      maxBytes: number;
+      allowedExtensions: string[];
+      urlTtlSeconds: number;
+    };
   };
 }
