@@ -19,6 +19,13 @@ interface Presigned {
   key: string;
   bucket: string;
   expiresIn: number;
+  /**
+   * Server-derived from the validated extension, not the `contentType` this
+   * component sent — the backend won't sign the caller's own Content-Type
+   * (see platform-requests-backend/uploads.ts). Content-Type is a signed
+   * header, so the PUT below must send exactly this value back.
+   */
+  contentType: string;
 }
 
 /**
@@ -79,7 +86,7 @@ export function FileFieldComponent(props: any) {
         method: 'PUT',
         body: file,
         headers: {
-          'Content-Type': file.type || 'application/octet-stream',
+          'Content-Type': signed.contentType,
         },
         signal: aborter.current.signal,
       });

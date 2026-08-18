@@ -996,6 +996,30 @@ describe('createRouter', () => {
       expect(res.body.key).toMatch(/^scaffolder\/mock\//);
     });
 
+    it('never signs a caller-supplied Content-Type — it is derived from the extension', async () => {
+      const { app } = await configuredApp();
+      const res = await request(app)
+        .post('/uploads/presign')
+        .set('Authorization', mockCredentials.user.header())
+        // Asks to have a .json file signed (and later served) as HTML.
+        .send({ filename: 'values.json', size: 10, contentType: 'text/html' });
+      expect(res.status).toBe(200);
+      expect(res.body.contentType).toBe('application/json');
+      expect(res.body.contentType).not.toBe('text/html');
+    });
+
+    it('denies an unauthorized principal (403)', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.DENY,
+        config: mockServices.rootConfig({ data: UPLOAD_CONFIG }),
+      });
+      const res = await request(app)
+        .post('/uploads/presign')
+        .set('Authorization', mockCredentials.user.header())
+        .send({ filename: 'values.yaml', size: 10, contentType: 'text/yaml' });
+      expect(res.status).toBe(403);
+    });
+
     it('returns 501 when platform.uploads is not configured', async () => {
       const { app } = await makeApp({
         result: AuthorizeResult.ALLOW,

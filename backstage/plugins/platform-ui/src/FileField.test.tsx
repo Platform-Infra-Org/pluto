@@ -52,6 +52,7 @@ describe('FileFieldComponent', () => {
       key: 'scaffolder/ada/u/values.yaml',
       bucket: 'platform-uploads',
       expiresIn: 300,
+      contentType: 'application/yaml',
     });
     render(
       <TestApiProvider apis={a as never}>
@@ -76,12 +77,29 @@ describe('FileFieldComponent', () => {
     );
     expect(globalFetch).toHaveBeenCalledWith(s3Url, expect.objectContaining({ method: 'PUT' }));
     expect(fetchApiFetch).not.toHaveBeenCalledWith(s3Url, expect.anything());
+
+    // The PUT's Content-Type is the server-derived value from the presign
+    // response, not the browser-reported `file.type` ('text/yaml' for FILE)
+    // — that value is a signed header, so the caller cannot substitute
+    // anything else and still have S3 accept the request. See uploads.ts.
+    expect(globalFetch).toHaveBeenCalledWith(
+      s3Url,
+      expect.objectContaining({
+        headers: { 'Content-Type': 'application/yaml' },
+      }),
+    );
   });
 
   it('leaves the value unset and reports when the upload is rejected', async () => {
     const onChange = jest.fn();
     const { apis: a } = apis(
-      { url: 'https://s3.example.com/x?sig', key: 'k', expiresIn: 300, bucket: 'b' },
+      {
+        url: 'https://s3.example.com/x?sig',
+        key: 'k',
+        expiresIn: 300,
+        bucket: 'b',
+        contentType: 'application/yaml',
+      },
       false,
     );
     render(

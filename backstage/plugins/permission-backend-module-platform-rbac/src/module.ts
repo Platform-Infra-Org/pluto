@@ -19,8 +19,8 @@ const DEFAULT_AUDITOR_GROUPS = ['group:default/platform-auditors'];
 
 /**
  * Coarse gate on the identity's ownershipEntityRefs:
- * - approve/create/delete requests → anyone except a pure auditor (auditor =
- *   read-only)
+ * - approve/create/delete requests, or mint a presigned upload → anyone
+ *   except a pure auditor (auditor = read-only)
  * - everything else → allow (read, catalog, scaffolder, …)
  *
  * Delete shares approve's branch rather than getting its own. The catch-all
@@ -53,7 +53,8 @@ export class PlatformPermissionPolicy implements PermissionPolicy {
     if (
       name === PLATFORM_PERMISSIONS.requestApprove ||
       name === PLATFORM_PERMISSIONS.requestCreate ||
-      name === PLATFORM_PERMISSIONS.requestDelete
+      name === PLATFORM_PERMISSIONS.requestDelete ||
+      name === PLATFORM_PERMISSIONS.uploadCreate
     ) {
       return {
         result:

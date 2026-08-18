@@ -20,6 +20,7 @@ import {
   requestApprovePermission,
   requestCreatePermission,
   requestDeletePermission,
+  uploadCreatePermission,
 } from './permissions';
 // Type-only: plugin.ts imports createRouter from here, and a type import is
 // erased at compile time, so the cycle never exists at runtime.
@@ -304,6 +305,16 @@ export async function createRouter(
   // browser -> S3 directly; credentials never reach the browser.
   router.post('/uploads/presign', async (req, res) => {
     const credentials = await httpAuth.credentials(req, { allow: ['user'] });
+    // Per-object size and extension are capped by platform.uploads, but
+    // nothing caps object count — authorize the same way every other
+    // mutating route here does, so this isn't unbounded for any signed-in user.
+    const [authz] = await permissions.authorize(
+      [{ permission: uploadCreatePermission }],
+      { credentials },
+    );
+    if (authz.result !== AuthorizeResult.ALLOW) {
+      throw new NotAllowedError('Not allowed to request uploads');
+    }
     const raw = options.config?.getOptionalConfig('platform.uploads');
     if (!raw) {
       // Fail loudly rather than 500ing somewhere inside the AWS SDK: an

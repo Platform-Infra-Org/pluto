@@ -1,4 +1,4 @@
-import { uploadKey, validateUpload } from './uploads';
+import { contentTypeForExtension, uploadKey, validateUpload } from './uploads';
 
 const CONFIG = {
   bucket: 'platform-uploads',
@@ -32,6 +32,22 @@ describe('validateUpload', () => {
 
   it('is case-insensitive about the extension', () => {
     expect(validateUpload({ ...ok, filename: 'VALUES.YAML' }, CONFIG)).toBeUndefined();
+  });
+});
+
+describe('contentTypeForExtension', () => {
+  it('derives the safe type from a permitted extension, never a caller-supplied one', () => {
+    // The extension is the only trustworthy signal — validateUpload has
+    // already checked it against the allow-list. Whatever `contentType` a
+    // caller sent (e.g. 'text/html', to have a .json file served as a page)
+    // plays no part here: this function never reads it.
+    expect(contentTypeForExtension('values.json')).toBe('application/json');
+    expect(contentTypeForExtension('values.yaml')).toBe('application/yaml');
+  });
+
+  it('is case-insensitive, and falls back to a type nothing renders inline', () => {
+    expect(contentTypeForExtension('VALUES.JSON')).toBe('application/json');
+    expect(contentTypeForExtension('payload.html')).toBe('application/octet-stream');
   });
 });
 
