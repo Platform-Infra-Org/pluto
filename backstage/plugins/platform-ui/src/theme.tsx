@@ -250,8 +250,10 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
       // Input geometry lives here, not in styles.ts: MUI publishes these slots,
       // and createUnifiedTheme runs transformV5ComponentThemesToV4 over every
       // Mui* key, so a v5-shaped override reaches the MUI v4 scaffolder form.
-      // Scoped by slot rather than by route class, which is what makes it cover
-      // EntityPicker/OwnedEntityPicker/RepoUrlPicker the day a template uses one.
+      // The outlined/notchedOutline corrections below are app-wide on purpose
+      // (slot-scoped, not route-scoped) — that is what makes them cover
+      // EntityPicker/OwnedEntityPicker/RepoUrlPicker wherever a template uses
+      // one, not just on the create route.
       MuiInputLabel: {
         styleOverrides: {
           // `formControl` is NOT the standard variant only: MUI v4 puts that
@@ -261,19 +263,33 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
           // own styles object, that key order survives the theme merge, and at
           // equal specificity the later rule wins. Hence the explicit reset in
           // the outlined slot below.
+          //
+          // The `var(--sc-field-x)` inset itself is nested under
+          // `.sc-route-create &`, not applied bare: it exists only to align
+          // with the boxed standard-variant field
+          // (`.sc-route-create [class*="MuiInput-root"]` in styles.ts, padding
+          // `3px var(--sc-field-x)`) that exists on the scaffolder create route
+          // and nowhere else. Applied bare it shifted every standard MUI label
+          // in the app — catalog filters, the import page, table pagination —
+          // by 10px, none of which was ever measured against this box.
           formControl: {
-            left: 'var(--sc-field-x)',
+            '.sc-route-create &': {
+              left: 'var(--sc-field-x)',
+            },
           },
           shrink: {
             paddingInlineEnd: '4px',
           },
           outlined: {
             // left: 0 is load-bearing, not redundant. It cancels the
-            // standard-variant inset that formControl above also applies to
-            // this label; delete it and the label desyncs from its <legend>
-            // notch again, which is the exact bug this block exists to fix.
-            // The shrunk state then gets one more pixel of clearance than
-            // MUI's -6px, which assumes a 1px border where ours is 2px.
+            // .sc-route-create standard-variant inset that formControl above
+            // also applies to this label there; delete it and the label
+            // desyncs from its <legend> notch again on that route, which is
+            // the exact bug this block exists to fix. The shrunk state then
+            // gets one more pixel of clearance than MUI's -6px, which assumes
+            // a 1px border where ours is 2px. This correction stays app-wide
+            // — it is corrective (undoing the create-route inset), not
+            // decorative, so every outlined label needs it, not just create's.
             left: '0',
             '&.MuiInputLabel-shrink': {
               paddingInlineEnd: '0',
