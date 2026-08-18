@@ -22,6 +22,7 @@ import {
   useGraphDirection,
   HOURGLASS,
   GrafanaFrame,
+  isGrafanaConfigured,
 } from '@internal/plugin-platform-ui';
 import {
   Request,
@@ -525,8 +526,11 @@ export function RequestPage() {
 
         {/* Bound to this request's own timestamps rather than a bookmarked
             dashboard: the window is exactly what happened while the workflow
-            ran. Only shown once there's a workflow run worth plotting. */}
-        {['IN_PROGRESS', 'SUCCEEDED', 'FAILED'].includes(request.state) && (
+            ran. Only shown once there's a workflow run worth plotting, and
+            only when Grafana is actually configured — otherwise this would be
+            a card with an empty body instead of no card at all. */}
+        {isGrafanaConfigured(config) &&
+          ['IN_PROGRESS', 'SUCCEEDED', 'FAILED'].includes(request.state) && (
           <div style={{ gridColumn: '1 / -1' }}>
             <Card>
               <CardHeader title="Metrics" />

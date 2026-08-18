@@ -67,4 +67,36 @@ describe('GrafanaFrame', () => {
       'https://grafana.example.com',
     );
   });
+
+  it('refuses a uid that injects a query-string parameter', () => {
+    const { container } = renderWith({
+      platform: {
+        grafana: {
+          baseUrl: 'https://grafana.example.com',
+          dashboard: { uid: 'abc123?evil=1', slug: 'y' },
+        },
+      },
+    });
+    expect(container.querySelector('iframe')).toBeNull();
+    expect(screen.getByRole('link', { name: /open grafana/i })).toHaveAttribute(
+      'href',
+      'https://grafana.example.com',
+    );
+  });
+
+  it('refuses a slug that injects a fragment', () => {
+    const { container } = renderWith({
+      platform: {
+        grafana: {
+          baseUrl: 'https://grafana.example.com',
+          dashboard: { uid: 'abc123', slug: 'y#evil' },
+        },
+      },
+    });
+    expect(container.querySelector('iframe')).toBeNull();
+    expect(screen.getByRole('link', { name: /open grafana/i })).toHaveAttribute(
+      'href',
+      'https://grafana.example.com',
+    );
+  });
 });

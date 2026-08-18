@@ -1,9 +1,32 @@
+import type { ConfigApi } from '@backstage/core-plugin-api';
+
 export interface GrafanaConfig {
   baseUrl: string;
   uid: string;
   slug: string;
   theme?: 'light' | 'dark';
   kiosk?: boolean;
+}
+
+/** Whether `platform.grafana` is present in config at all. */
+export function isGrafanaConfigured(config: ConfigApi): boolean {
+  return !!config.getOptionalConfig('platform.grafana');
+}
+
+/**
+ * Whether a uid/slug is safe to concatenate into a dashboard URL's path.
+ *
+ * uid/slug land straight in the path, so '/' would inject extra path
+ * segments, '?' would inject query parameters and '#' would inject a
+ * fragment. None of the three can move the built URL off the configured
+ * origin — sameOrigin's own origin check already holds regardless, since path
+ * traversal normalizes away without ever changing the authority — this only
+ * stops the URL itself from being hijacked into carrying something other than
+ * a plain uid/slug. It is a fixed three-character blocklist, not a validator
+ * against Grafana's actual uid/slug charset.
+ */
+export function isSafePathSegment(value: string): boolean {
+  return !/[/?#]/.test(value);
 }
 
 /**

@@ -49,4 +49,5 @@ export { DynamicSelect, toChoiceOptions } from './DynamicSelect';
 export type { DynamicSelectProps, ChoiceOption, Fetcher } from './DynamicSelect';
 export { platformScaffolderFieldsModule } from './DynamicSelectField';
 export { GrafanaFrame } from './GrafanaFrame';
+export { isGrafanaConfigured } from './grafana';
 export { fileFormField } from './FileField';

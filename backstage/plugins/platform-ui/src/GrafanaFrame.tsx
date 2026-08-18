@@ -1,5 +1,10 @@
 import { configApiRef, useApi } from '@backstage/core-plugin-api';
-import { dashboardUrl, sameOrigin } from './grafana';
+import {
+  dashboardUrl,
+  isGrafanaConfigured,
+  isSafePathSegment,
+  sameOrigin,
+} from './grafana';
 
 /**
  * One configured Grafana dashboard in an iframe.
@@ -21,8 +26,8 @@ export function GrafanaFrame({
   height?: number;
 }) {
   const config = useApi(configApiRef);
-  const cfg = config.getOptionalConfig('platform.grafana');
-  if (!cfg) return null;
+  if (!isGrafanaConfigured(config)) return null;
+  const cfg = config.getOptionalConfig('platform.grafana')!;
 
   const baseUrl = cfg.getString('baseUrl');
   const uid = cfg.getString('dashboard.uid');
@@ -39,15 +44,18 @@ export function GrafanaFrame({
     { from, to, panelId },
   );
 
-  // uid/slug are concatenated straight into the URL path, so a value built
-  // from cfg.baseUrl always parses back to cfg.baseUrl's origin no matter what
-  // they contain — path traversal inside them normalizes away without ever
-  // changing the origin. The real guard against a hostile uid/slug (which may
-  // one day come from a user-writable annotation) is refusing a '/' in either
-  // one, before the origin check even runs.
-  const injectsExtraSegments = uid.includes('/') || slug.includes('/');
-
-  if (injectsExtraSegments || !sameOrigin(baseUrl, built)) {
+  // sameOrigin alone cannot catch a hostile uid/slug: a value built from
+  // cfg.baseUrl always parses back to cfg.baseUrl's origin no matter what they
+  // contain (path traversal inside them normalizes away without ever changing
+  // the origin). isSafePathSegment is what stops '/', '?' and '#' from
+  // injecting extra path segments, query parameters or a fragment into the
+  // built URL — see its doc comment for exactly what it does and does not
+  // cover.
+  if (
+    !isSafePathSegment(uid) ||
+    !isSafePathSegment(slug) ||
+    !sameOrigin(baseUrl, built)
+  ) {
     return (
       <a href={baseUrl} target="_blank" rel="noreferrer">
         Open Grafana

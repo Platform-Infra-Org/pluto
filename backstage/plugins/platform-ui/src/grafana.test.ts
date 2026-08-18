@@ -1,4 +1,10 @@
-import { dashboardUrl, sameOrigin } from './grafana';
+import { ConfigReader } from '@backstage/config';
+import {
+  dashboardUrl,
+  isGrafanaConfigured,
+  isSafePathSegment,
+  sameOrigin,
+} from './grafana';
 
 const CFG = {
   baseUrl: 'https://grafana.example.com',
@@ -53,5 +59,38 @@ describe('sameOrigin', () => {
     // Test data only, never executed — the string itself is what's under test.
     // eslint-disable-next-line no-script-url
     expect(sameOrigin('https://grafana.example.com', 'javascript:alert(1)')).toBe(false);
+  });
+});
+
+describe('isSafePathSegment', () => {
+  it('accepts a plain uid/slug', () => {
+    expect(isSafePathSegment('abc123')).toBe(true);
+    expect(isSafePathSegment('platform-overview')).toBe(true);
+  });
+
+  it('rejects a slash', () => {
+    expect(isSafePathSegment('../../..//evil.example.com/x')).toBe(false);
+  });
+
+  it('rejects a query-string injection', () => {
+    expect(isSafePathSegment('abc123?evil=1')).toBe(false);
+  });
+
+  it('rejects a fragment injection', () => {
+    expect(isSafePathSegment('abc123#evil')).toBe(false);
+  });
+});
+
+describe('isGrafanaConfigured', () => {
+  it('is true when platform.grafana is present', () => {
+    const config = new ConfigReader({
+      platform: { grafana: { baseUrl: 'https://grafana.example.com' } },
+    });
+    expect(isGrafanaConfigured(config as never)).toBe(true);
+  });
+
+  it('is false when platform.grafana is absent', () => {
+    const config = new ConfigReader({});
+    expect(isGrafanaConfigured(config as never)).toBe(false);
   });
 });
