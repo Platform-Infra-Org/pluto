@@ -7,6 +7,7 @@ import { spiderverseCss } from './spiderverse';
 import { greekCss } from './greek';
 import { hanamiCss } from './hanami';
 import { nightshadeCss } from './nightshade';
+import { rimefastCss } from './rimefast';
 
 const stripComments = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 
@@ -222,6 +223,7 @@ describe('every mode sheet reaches the nested-ThemeProvider routes', () => {
     ['greek', greekCss()],
     ['hanami', hanamiCss()],
     ['nightshade', nightshadeCss()],
+    ['rimefast', rimefastCss()],
     ['brands', brandsCss()],
   ];
 

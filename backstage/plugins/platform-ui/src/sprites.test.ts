@@ -25,6 +25,10 @@ import {
   FILIGREE,
   SPRIG,
   MOON_STRIP,
+  FUTHARK,
+  YGGDRASIL,
+  KNOTWORK,
+  AURORA,
 } from './sprites';
 
 const grid = (...rows: string[]) => rows;
@@ -58,6 +62,7 @@ describe('sprite data', () => {
     const items = {
       AMPHORA, KEY, LAUREL, HELM, TORCH, SCROLL, POTION, RUPEE,
       SEIGAIHA, TORII, CRESCENT_FLAME, CAULDRON, SPRIG,
+      FUTHARK, YGGDRASIL, KNOTWORK,
     };
     for (const [name, sprite] of Object.entries({
       TEMPLE,
@@ -161,12 +166,13 @@ describe('sprite data', () => {
 });
 
 describe('mode ornament sprites', () => {
-  it('keeps every frame strip on the 8px grid, at a whole number of frames', () => {
+  it('keeps every wide strip on the 8px grid, at a whole number of cells', () => {
     // A strip is the one shape that is deliberately not square: CSS advances
     // one background-position in whole steps, so N frames of an animation have
     // to be one image. Height is the grid; width must be an exact multiple of
-    // it, or the last step lands mid-frame and the sprite smears.
-    for (const [name, strip] of Object.entries({ PETAL_STRIP, MOON_STRIP })) {
+    // it, or the last step lands mid-frame and the sprite smears. AURORA is
+    // the same geometry used as a tile rather than as frames.
+    for (const [name, strip] of Object.entries({ PETAL_STRIP, MOON_STRIP, AURORA })) {
       expect(`${name}:${strip.length}`).toBe(`${name}:${SMALL_SPRITE_SIZE}`);
       for (const row of strip) {
         expect(`${name}:${row.length % SMALL_SPRITE_SIZE}`).toBe(`${name}:0`);
@@ -190,6 +196,16 @@ describe('mode ornament sprites', () => {
     for (let y = 0; y < 8; y++) {
       const shifted = SEIGAIHA[y].slice(8) + SEIGAIHA[y].slice(0, 8);
       expect(`row${y}:${SEIGAIHA[y + 8]}`).toBe(`row${y}:${shifted}`);
+    }
+  });
+
+  it('keeps Yggdrasil symmetric about its trunk, crown to root', () => {
+    // The mirror IS the tree: nine worlds above and below one axis. A drifted
+    // branch reads as a lopsided shrub.
+    for (let y = 0; y < 16; y++) {
+      const mirrored = [...YGGDRASIL[y]].reverse().join('');
+      expect(`row${y}:${YGGDRASIL[y]}`).toBe(`row${y}:${mirrored}`);
+      expect(`row${y}:${YGGDRASIL[y]}`).toBe(`row${y}:${YGGDRASIL[15 - y]}`);
     }
   });
 

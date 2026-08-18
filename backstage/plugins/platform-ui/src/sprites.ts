@@ -856,3 +856,111 @@ export const MOON_STRIP: Sprite = [
   '.....##.....###...#####..######..#####...###.....##......#....#.',
   '......#.....##....####....####....####....##.....#........####..',
 ];
+
+/* ===== Rimefast ornament =====
+   EXCLUDED, DELIBERATELY, AND NOT BY OVERSIGHT: the Valknut, Othala,
+   Sowilo (the sig-rune), the Tyr rune and the sunwheel. Every one of them is a
+   genuine Norse form, and every one is catalogued as an appropriated extremist
+   symbol. Nobody should add one later thinking the set was left incomplete.
+   Ravens, Yggdrasil, knotwork and a generic futhark band carry no such
+   freight, and rimefast.test.ts asserts the sheet never names the five.
+   The raven itself went the way of the koi and the moth: a bird silhouette at
+   eight pixels reads as a comma. */
+
+/**
+ * A decorative rune band, tiling horizontally with a period of four pixels.
+ *
+ * Two alternating stave glyphs with upward branches — a pattern, not a word.
+ * Runes were carved without horizontals, which is exactly what a pixel grid
+ * renders cleanly, and it is also why nothing here needs anti-aliasing.
+ */
+export const FUTHARK: Sprite = [
+  '................',
+  '#...#...#...#...',
+  '##..#...##..#...',
+  '#.#.##..#.#.##..',
+  '#...#.#.#...#.#.',
+  '##..#...##..#...',
+  '#.#.##..#.#.##..',
+  '#...#.#.#...#.#.',
+  '#...#...#...#...',
+  '#...#...#...#...',
+  '#...#...#...#...',
+  '#...#...#...#...',
+  '#...#...#...#...',
+  '#...#...#...#...',
+  '#...#...#...#...',
+  '................',
+];
+
+/**
+ * Yggdrasil: a 2px trunk, three branches, three roots, symmetric about the
+ * trunk.
+ *
+ * The mirror between crown and roots is the point of the tree — nine worlds
+ * above and below one axis — and it also means the sprite reads the same way
+ * up if anyone ever flips it.
+ */
+export const YGGDRASIL: Sprite = [
+  '..##...##...##..',
+  '...#...##...#...',
+  '....#..##..#....',
+  '.....#.##.#.....',
+  '......####......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '......####......',
+  '.....#.##.#.....',
+  '....#..##..#....',
+  '...#...##...#...',
+  '..##...##...##..',
+];
+
+/**
+ * Urnes-style interlace, as two 2px bands crossing with a 1px break where one
+ * passes under the other.
+ *
+ * 16x16 is the floor for this and not a preference: an interlace needs three
+ * distinguishable bands across a crossing — over, gap, under — and below that
+ * the crossing closes up into a solid blob and the knot stops being a knot.
+ */
+export const KNOTWORK: Sprite = [
+  '##......##......',
+  '.##......##.....',
+  '..##..##..##..##',
+  '...##......##...',
+  '....##......##..',
+  '.....##......##.',
+  '..##..##..##..##',
+  '#......##......#',
+  '##......##......',
+  '.##......##.....',
+  '..##..##..##..##',
+  '...##......##...',
+  '....##......##..',
+  '.....##......##.',
+  '..##..##..##..##',
+  '#......##......#',
+];
+
+/**
+ * The aurora, as a 32x8 dithered curtain that tiles horizontally.
+ *
+ * Dithered rather than faded, because this design system has no gradients in
+ * its ornament: the soft edge is a checkerboard, which is how an 8-bit machine
+ * drew one and how this app draws every other translucent fill.
+ */
+export const AURORA: Sprite = [
+  '###########.#################.##',
+  '##########.#.###############.#.#',
+  '#########.....###.#####.#.#.#...',
+  '##########...#.#.#######.#.#....',
+  '###.#.###.........#####.........',
+  '.#.#...#...........###..........',
+  '....................#...........',
+  '................................',
+];

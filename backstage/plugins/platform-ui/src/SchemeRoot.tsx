@@ -87,6 +87,7 @@ const MODES = [
   'obsidian',
   'hanami',
   'nightshade',
+  'rimefast',
 ] as const;
 type Mode = (typeof MODES)[number];
 
@@ -138,6 +139,13 @@ export const SCHEMES: Scheme[] = [
     hsl: '142 67% 66%',
     fg: '240 10% 8%', // 11.62 — witch green is far too light to take white
     mode: 'nightshade',
+  },
+  {
+    id: 'rimefast',
+    label: 'Rimefast',
+    hsl: '41 75% 51%',
+    fg: '240 10% 8%', // 8.46 — orpiment is far too light to take white
+    mode: 'rimefast',
   },
   // The table-driven brand modes, from brands.ts.
   ...BRAND_DEFS.map(b => ({
@@ -912,6 +920,7 @@ function ModeArt() {
         ))}
       </div>
       <div className="sc-moon" />
+      <div className="sc-rune-rule" />
     </div>
   );
 }

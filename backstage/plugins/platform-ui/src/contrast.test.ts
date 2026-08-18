@@ -3,6 +3,7 @@ import { foudreCss } from './foudre';
 import { greekCss } from './greek';
 import { hanamiCss } from './hanami';
 import { nightshadeCss } from './nightshade';
+import { rimefastCss } from './rimefast';
 import { spiderverseCss } from './spiderverse';
 import {
   CARD_DARK,
@@ -239,6 +240,7 @@ describe('dark rules', () => {
         'nightshade',
         registerOf(nightshadeCss(), ':root.sc-nightshade.sc-dark'),
       ],
+      ['rimefast', registerOf(rimefastCss(), ':root.sc-rimefast.sc-dark')],
     ];
 
     for (const [mode, tokens] of registers) {

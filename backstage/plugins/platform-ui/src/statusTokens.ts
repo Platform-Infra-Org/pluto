@@ -77,7 +77,8 @@ export type SchemeMode =
   | 'dairy'
   | 'obsidian'
   | 'hanami'
-  | 'nightshade';
+  | 'nightshade'
+  | 'rimefast';
 
 /** `--sc-card` in the Greek registers, from greek.ts. */
 export const GREEK_CARD_LIGHT = '42 45% 98%';
@@ -152,6 +153,7 @@ export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   obsidian: STATUS_TOKENS,
   hanami: STATUS_TOKENS,
   nightshade: STATUS_TOKENS,
+  rimefast: STATUS_TOKENS,
 };
 
 export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
@@ -175,6 +177,9 @@ export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   // exactly 5.00 there, so any lift breaks the status set. See hanami.ts.
   hanami: { light: '45 100% 98.4%', dark: '195 29% 5.5%' },
   nightshade: { light: '260 30% 99%', dark: '254 39% 6.5%' },
+  // Rimefast's dark card is pinned at 5.5% for the same reason as hanami's:
+  // at 8% the worst status pair is 4.78 and at 10% it is 4.54. See rimefast.ts.
+  rimefast: { light: '44 40% 98%', dark: '205 43% 5.5%' },
 };
 
 /** The `:root` declarations for every mode, for interpolation into SHADCN_CSS. */
