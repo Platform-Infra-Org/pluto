@@ -21,7 +21,7 @@ spec:
   # The template owner IS the service owner: only this team (or an admin) may
   # approve create/update/delete requests for demo-resource.
   owner: group:default/owners-payments
-  type: resource
+  type: demo
   parameters:
     - title: Resource details
       required:
@@ -42,6 +42,13 @@ spec:
             # server-side (see proxy.endpoints./demo-options in app-config).
             proxyPath: /demo-options/regions
             intervalMs: 30000
+        valuesFile:
+          type: string
+          title: Values file
+          ui:field: PlatformFile
+          ui:options:
+            accept: .yaml,.yml,.json
+          description: Uploaded to S3; the workflow receives the s3:// path.
   steps:
     - id: submit
       name: Submit request
@@ -52,6 +59,7 @@ spec:
         kind: CREATE
         params:
           region: ${{ parameters.region }}
+          valuesFile: ${{ parameters.valuesFile }}
         # create commits the resource to Git via the shared git-ops workflow.
         # << paramsJson >> becomes the resource's data file.
         argoSubmit:
