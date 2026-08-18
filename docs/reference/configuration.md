@@ -140,6 +140,33 @@ enable. See **[Customise the home page](../how-to/customise-the-home-page.md)**.
 entry is tried on decrypt, which is how the key rotates without re-encrypting
 held blobs. See **[Secret lifecycle](../explanation/secrets-lifecycle.md)**.
 
+## `platform.uploads`
+
+```yaml
+platform:
+  uploads:
+    bucket: platform-uploads
+    region: eu-west-1
+    endpoint: http://localhost:9000   # optional — S3-compatible (e.g. MinIO); omit for real AWS S3
+    keyPrefix: scaffolder
+    maxBytes: 10485760                # 10 MiB
+    allowedExtensions: ['.yaml', '.yml', '.json', '.txt', '.csv']
+    urlTtlSeconds: 300
+```
+
+Backs `POST /uploads/presign`, which signs a single S3 `PutObjectCommand` for
+the `ui:field: PlatformFile` scaffolder field — bytes go straight from the
+browser to S3, never through Backstage. Unset (the default): the route
+returns 501 rather than failing inside the AWS SDK, and `PlatformFile` reports
+"not configured".
+
+Content-Length is signed as part of the URL, so `maxBytes` is enforced by S3,
+not merely advised to the browser. Content-Type is **not** taken from the
+caller — it is derived server-side from the (validated) extension, so a
+caller cannot sign an upload as a type the bucket would later serve as HTML.
+See **[File uploads](../how-to/author-a-template.md#file-uploads)** for the
+CORS, CSP and bucket-lifecycle requirements this needs on the S3 side.
+
 ## `platform.requests.retention`
 
 Off by default — deleting rows cannot be undone.

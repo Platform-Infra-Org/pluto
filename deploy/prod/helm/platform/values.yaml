@@ -196,6 +196,18 @@ platform:
   #    slug: platform-overview
   #  theme: dark
   #  kiosk: true
+  # Presigned S3 uploads for the PlatformFile scaffolder field. Empty by
+  # default — POST /uploads/presign 501s and PlatformFile reports "not
+  # configured" until this is set. See docs/how-to/author-a-template.md's
+  # File uploads section for the CORS/CSP/lifecycle-rule requirements this
+  # needs on the S3 side.
+  uploads: {}
+  #  bucket: platform-uploads
+  #  region: eu-west-1
+  #  keyPrefix: scaffolder
+  #  maxBytes: 10485760
+  #  allowedExtensions: ['.yaml', '.yml', '.json', '.txt', '.csv']
+  #  urlTtlSeconds: 300
   branding: {}
   #  mark: /branding/mark.svg
   #  flavour: fantasy

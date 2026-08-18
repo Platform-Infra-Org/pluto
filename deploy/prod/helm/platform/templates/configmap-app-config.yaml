@@ -156,6 +156,10 @@ data:
       grafana:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+      {{- with .Values.platform.uploads }}
+      uploads:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 
     {{- with .Values.extraAppConfig }}
     {{- toYaml . | nindent 4 }}

@@ -76,6 +76,12 @@ secret manager.
   [Embed a Grafana dashboard](embed-a-grafana-dashboard.md) for
   `platform.grafana`, the matching `backend.csp.frame-src` entry, Grafana's own
   `allow_embedding`, and the authentication trade-offs.
+- **S3 uploads**, if any template uses `ui:field: PlatformFile`: unset by
+  default, so nothing to do unless a template needs it — `POST
+  /uploads/presign` 501s until `platform.uploads` is set. See
+  [Author a template](author-a-template.md#file-uploads) for
+  `platform.uploads` and the bucket-side CORS, CSP `connect-src` and
+  lifecycle-rule requirements.
 
 ## 4. Hardening
 
@@ -104,6 +110,8 @@ page and `argoSubmit` / `resource-data` conventions.
 - [ ] `platform.secrets.encryptionKey` set from the secret manager
 - [ ] If embedding Grafana: `platform.grafana` set, `backend.csp.frame-src`
       widened to match, and Grafana's own `allow_embedding = true`
+- [ ] If any template uses `PlatformFile`: `platform.uploads` set, and the
+      bucket's CORS, `backend.csp.connect-src` and lifecycle rule configured
 - [ ] A retention policy decided: either `platform.requests.retention.enabled`
       with windows that suit your compliance position, or a deliberate choice to
       keep every request forever

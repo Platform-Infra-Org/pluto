@@ -287,6 +287,20 @@ platform:
   #     slug: ${GRAFANA_DASHBOARD_SLUG}
   #   theme: dark
   #   kiosk: true
+  # Presigned S3 uploads for the `ui:field: PlatformFile` scaffolder field.
+  # Bytes go straight from the browser to S3; Backstage credentials never
+  # touch them (see docs/how-to/author-a-template.md#file-uploads for the CORS
+  # + CSP + bucket lifecycle-rule requirements on the S3 side). Unset in dev —
+  # POST /uploads/presign 501s and PlatformFile reports "not configured"
+  # rather than 500ing inside the AWS SDK.
+  # uploads:
+  #   bucket: platform-uploads
+  #   region: eu-west-1
+  #   # endpoint: http://localhost:9000  # optional — S3-compatible (e.g. MinIO); omit for real AWS S3
+  #   keyPrefix: scaffolder
+  #   maxBytes: 10485760                 # 10 MiB
+  #   allowedExtensions: ['.yaml', '.yml', '.json', '.txt', '.csv']
+  #   urlTtlSeconds: 300
   # Request retention. Off by default: deleting rows cannot be undone.
   # Expiry moves an undecided request to EXPIRED; the windows below then delete
   # terminal requests. APPROVED and IN_PROGRESS are never deleted.
