@@ -125,12 +125,16 @@ proxy:
 
     # Infra coordinate-tree API for the cascading DynamicSelect example
     # (provision-database). The token stays server-side; the browser only
-    # ever calls /api/proxy/infra/...
-    '/infra':
-      target: ${INFRA_CONFIG_API_URL}
-      changeOrigin: true
-      headers:
-        Authorization: Bearer ${INFRA_CONFIG_API_TOKEN}
+    # ever calls /api/proxy/infra/... Uncomment and set INFRA_CONFIG_API_URL
+    # (+ INFRA_CONFIG_API_TOKEN) when that API is available: an unset
+    # ${INFRA_CONFIG_API_URL} is dropped by the config-loader, leaving this
+    # endpoint with no `target`, and proxy-backend refuses to boot the whole
+    # backend over one invalid route (skipInvalidProxies defaults to false).
+    # '/infra':
+    #   target: ${INFRA_CONFIG_API_URL}
+    #   changeOrigin: true
+    #   headers:
+    #     Authorization: Bearer ${INFRA_CONFIG_API_TOKEN}
 
     # Production: route Argo REST calls through the proxy so the token/mTLS is
     # injected here (server-side) and never lives in the plugin. Point
