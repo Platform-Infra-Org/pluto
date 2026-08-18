@@ -19,7 +19,7 @@ metadata:
   # template's owner, which is the intended gate.
 spec:
   owner: group:default/checkout
-  type: resource
+  type: bulk
   parameters:
     - title: Resources to create
       required:

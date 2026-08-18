@@ -17,7 +17,7 @@ metadata:
     platform.io/resource-type: postgres
 spec:
   owner: group:default/payments
-  type: resource
+  type: database
   parameters:
     - title: Database
       required:

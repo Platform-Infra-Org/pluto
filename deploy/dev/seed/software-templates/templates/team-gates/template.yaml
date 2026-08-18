@@ -22,7 +22,7 @@ spec:
   # this template exists to show, and the part that surprises people: naming a
   # team on a step replaces the owner there rather than adding to them.
   owner: group:default/checkout
-  type: resource
+  type: demo
   parameters:
     - title: What to provision
       required:

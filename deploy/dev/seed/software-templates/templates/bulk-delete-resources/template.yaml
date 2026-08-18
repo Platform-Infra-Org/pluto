@@ -19,7 +19,7 @@ metadata:
   # which is exactly the intended gate.
 spec:
   owner: group:default/checkout
-  type: resource
+  type: bulk
   parameters:
     - title: Resources to delete
       required:
@@ -31,6 +31,11 @@ spec:
             Only git-resource resources are listed — a batch is one kind, so the
             request has one resourceType and therefore one owning team.
           type: array
+          # MultiEntityPicker's declared output is array-of-string. Say so:
+          # without it nothing between the form and the request enforces string
+          # items, and a numeric-looking id arrives as a JSON number.
+          items:
+            type: string
           ui:field: MultiEntityPicker
           ui:options:
             catalogFilter:

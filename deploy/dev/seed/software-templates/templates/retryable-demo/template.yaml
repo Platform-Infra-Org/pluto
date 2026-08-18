@@ -23,7 +23,7 @@ metadata:
   # template, which is how a request's owning team is resolved.
 spec:
   owner: group:default/checkout
-  type: resource
+  type: demo
   parameters:
     - title: How should it end?
       required:
