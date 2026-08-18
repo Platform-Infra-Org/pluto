@@ -254,8 +254,13 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
       // EntityPicker/OwnedEntityPicker/RepoUrlPicker the day a template uses one.
       MuiInputLabel: {
         styleOverrides: {
-          // `formControl` is the standard variant only — the outlined and filled
-          // slots below are separate, so this can no longer leak onto them.
+          // `formControl` is NOT the standard variant only: MUI v4 puts that
+          // class on every label inside a FormControl, so an outlined label
+          // carries both formControl and outlined. What separates them is
+          // cascade order — MUI declares `outlined` after `formControl` in its
+          // own styles object, that key order survives the theme merge, and at
+          // equal specificity the later rule wins. Hence the explicit reset in
+          // the outlined slot below.
           formControl: {
             left: 'var(--sc-field-x)',
           },
@@ -263,9 +268,12 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
             paddingInlineEnd: '4px',
           },
           outlined: {
-            // Undo the standard-variant offset for this slot and give the shrunk
-            // label one more pixel of clearance: our border is 2px where MUI's
-            // -6px assumes 1px.
+            // left: 0 is load-bearing, not redundant. It cancels the
+            // standard-variant inset that formControl above also applies to
+            // this label; delete it and the label desyncs from its <legend>
+            // notch again, which is the exact bug this block exists to fix.
+            // The shrunk state then gets one more pixel of clearance than
+            // MUI's -6px, which assumes a 1px border where ours is 2px.
             left: '0',
             '&.MuiInputLabel-shrink': {
               paddingInlineEnd: '0',

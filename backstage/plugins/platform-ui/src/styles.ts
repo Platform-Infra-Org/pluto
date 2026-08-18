@@ -786,9 +786,11 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   max-width: 100%;
   border-radius: var(--sc-radius-sm);
 }
-/* The h3 holds two children: the type text, and the detail + favourite buttons.
-   Only the first is unwanted — hiding the whole h3 (as this rule did until
-   now) also removed the only route from a card to its Template entity.
+/* The h3 holds ONE child, CardHeader's subtitleWrapper, and that wrapper holds
+   two: the type text, then the detail + favourite buttons. Only the type text
+   is unwanted, so the rule has to reach two levels down — hiding the h3, or
+   hiding the wrapper, takes the buttons with it and removes the only route
+   from a card to its Template entity. Both have been shipped by mistake.
    order 0 lifts the surviving button row above the title in the flex column,
    and flex-end parks it against the card's right edge. */
 .sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h3 {
@@ -797,7 +799,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   margin: 0;
   line-height: 1;
 }
-.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h3 > div:first-child { display: none; }
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h3 > div > div:first-child { display: none; }
 
 .sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child {
   /* Ancient Greek, drawn entirely with hard colour stops.

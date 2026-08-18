@@ -244,9 +244,13 @@ describe('SHADCN_CSS', () => {
     // The card led with its type rather than its name, and the type repeats
     // what the template's own copy already says. Hiding the whole h3 also hid
     // the detail and favourite buttons that live in it, which are the only way
-    // from a card to the Template entity.
+    // from a card to the Template entity — and so does hiding its single
+    // subtitleWrapper child, which is why the selector descends twice.
+    // What this cannot prove: it reads the CSS string and never renders the
+    // card, so a well-formed selector aimed at the wrong node still passes.
+    // That has happened once already; the DOM is in the rule's own comment.
     expect(SHADCN_CSS).toMatch(
-      /\.sc-route-create[^{]*> h3 > div:first-child \{\s*display:\s*none/,
+      /\.sc-route-create[^{]*> h3 > div > div:first-child \{\s*display:\s*none/,
     );
     expect(SHADCN_CSS).not.toMatch(
       /\.sc-route-create[^{]*> h3 \{[^}]*display:\s*none/,
