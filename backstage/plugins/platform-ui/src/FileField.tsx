@@ -69,15 +69,17 @@ export function FileFieldComponent(props: any) {
       }
       const signed = (await presignRes.json()) as Presigned;
 
-      // Content-Length is part of the signature. Sending anything else is
-      // rejected by S3, which is what makes the size cap real rather than
-      // advisory.
+      // The length is signed server-side (Task 6's presignUpload), not set by
+      // us here: Content-Length is a forbidden header per the Fetch spec, so
+      // the browser silently drops it and computes the real one from `body`
+      // instead. There is no call-site control over it. What still makes the
+      // cap real rather than advisory is S3 rejecting a body whose actual
+      // length doesn't match the one in the signature.
       const put = await fetch(signed.url, {
         method: 'PUT',
         body: file,
         headers: {
           'Content-Type': file.type || 'application/octet-stream',
-          'Content-Length': String(file.size),
         },
         signal: aborter.current.signal,
       });
