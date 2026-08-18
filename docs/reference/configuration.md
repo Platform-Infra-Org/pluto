@@ -197,6 +197,14 @@ and a `schedule`. See **[Identity & LDAP](../explanation/identity-and-ldap.md)**
 Server-side proxy routes (e.g. `/demo-options` for DynamicSelect, `/argo-workflows`
 for Argo). Inject upstream auth here so secrets never reach the browser/plugin.
 
+The `/infra` route feeds the cascading `DynamicSelect` example
+(`provision-database`, see **[Add a DynamicSelect
+field](../how-to/add-a-dynamic-select-field.md)**). It needs two env vars:
+
+- `INFRA_CONFIG_API_URL` — base URL of the coordinate-tree API.
+- `INFRA_CONFIG_API_TOKEN` — bearer token the proxy injects server-side; the
+  browser only ever calls `/api/proxy/infra/...` and never sees it.
+
 ## Auth
 
 `auth.providers.oidc` (Keycloak), `auth.session.secret`. See

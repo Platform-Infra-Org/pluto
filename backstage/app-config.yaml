@@ -119,6 +119,15 @@ proxy:
       # `headers.Authorization` is supplied by app-config.local.yaml alongside
       # the token it has to match, so the two cannot drift apart.
 
+    # Infra coordinate-tree API for the cascading DynamicSelect example
+    # (provision-database). The token stays server-side; the browser only
+    # ever calls /api/proxy/infra/...
+    '/infra':
+      target: ${INFRA_CONFIG_API_URL}
+      changeOrigin: true
+      headers:
+        Authorization: Bearer ${INFRA_CONFIG_API_TOKEN}
+
     # Production: route Argo REST calls through the proxy so the token/mTLS is
     # injected here (server-side) and never lives in the plugin. Point
     # platform.argo.proxyPath at this path to switch the ArgoClient onto it.
@@ -258,6 +267,18 @@ platform:
       - recentlyVisited
       - favouriteTemplates
     maxItems: 8
+  # An existing Grafana dashboard, embedded on /dashboard and on request pages
+  # (scoped to that request's own time window). See
+  # docs/how-to/embed-a-grafana-dashboard.md for the allow_embedding
+  # requirement and the authentication trade-offs. Unset in dev — GrafanaFrame
+  # renders nothing when platform.grafana is absent.
+  # grafana:
+  #   baseUrl: ${GRAFANA_BASE_URL}
+  #   dashboard:
+  #     uid: ${GRAFANA_DASHBOARD_UID}
+  #     slug: ${GRAFANA_DASHBOARD_SLUG}
+  #   theme: dark
+  #   kiosk: true
   # Request retention. Off by default: deleting rows cannot be undone.
   # Expiry moves an undecided request to EXPIRED; the windows below then delete
   # terminal requests. APPROVED and IN_PROGRESS are never deleted.

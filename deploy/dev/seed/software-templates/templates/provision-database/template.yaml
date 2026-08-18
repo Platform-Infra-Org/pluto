@@ -21,7 +21,7 @@ spec:
   # A different service team than demo-resource: its members (or an admin) may
   # approve database requests; the demo-resource owner cannot.
   owner: group:default/payments
-  type: resource
+  type: database
   parameters:
     - title: Database details
       required:
@@ -46,6 +46,31 @@ spec:
           ui:options:
             proxyPath: /demo-options/sizes
             intervalMs: 30000
+        space:
+          type: string
+          title: Space
+          ui:field: DynamicSelect
+          ui:options: { proxyPath: /infra/coordinate-tree, treePath: coordinates }
+        network:
+          type: string
+          title: Network
+          ui:field: DynamicSelect
+          ui:options: { proxyPath: /infra/coordinate-tree, treePath: coordinates, dependsOn: [space] }
+        region:
+          type: string
+          title: Region
+          ui:field: DynamicSelect
+          ui:options: { proxyPath: /infra/coordinate-tree, treePath: coordinates, dependsOn: [space, network] }
+        island:
+          type: string
+          title: Island
+          ui:field: DynamicSelect
+          ui:options: { proxyPath: /infra/coordinate-tree, treePath: coordinates, dependsOn: [space, network, region] }
+        environment:
+          type: string
+          title: Environment
+          ui:field: DynamicSelect
+          ui:options: { proxyPath: /infra/coordinate-tree, treePath: coordinates, dependsOn: [space, network, region, island] }
   steps:
     - id: submit
       name: Submit request
@@ -57,6 +82,11 @@ spec:
         params:
           engine: ${{ parameters.engine }}
           size: ${{ parameters.size }}
+          space: ${{ parameters.space }}
+          network: ${{ parameters.network }}
+          region: ${{ parameters.region }}
+          island: ${{ parameters.island }}
+          environment: ${{ parameters.environment }}
         # create commits the resource to Git via the shared git-ops workflow.
         argoSubmit:
           namespace: argo
