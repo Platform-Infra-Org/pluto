@@ -8,6 +8,7 @@ import { foudreCss } from './foudre';
 import { slushCss } from './slush';
 import { brandsCss } from './brands';
 import { spiderverseCss } from './spiderverse';
+import { hanamiCss } from './hanami';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
@@ -28,6 +29,13 @@ export const SHADCN_CSS = `
   font-display: swap;
 }
 .sc, .sc * { box-sizing: border-box; }
+/* The host for the animated mode ornaments — SchemeRoot mounts it once, and a
+   mode sheet turns on the child it wants. Hidden by default and pointer-events
+   none, so a mode that claims nothing costs one empty fixed box. Kept OUT of
+   the mode sheets because the default must be off for every mode at once, and
+   a per-mode default is a per-mode chance to forget one. */
+.sc-mode-art { position: fixed; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+.sc-mode-art > * { display: none; position: absolute; }
 /* Tokens live on :root so BOTH our .sc components and the MUI/Backstage reskin
    below read the same variables (and follow the color picker). */
 :root {
@@ -87,6 +95,7 @@ ${foudreCss()}
 ${slushCss()}
 ${brandsCss()}
 ${spiderverseCss()}
+${hanamiCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because

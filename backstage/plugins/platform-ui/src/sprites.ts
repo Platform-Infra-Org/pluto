@@ -71,6 +71,14 @@ export function spriteDataUri(
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
+/**
+ * A sprite as a CSS `url()`, ready to interpolate into a mode sheet.
+ *
+ * The fill is baked, so a two-colour motif is two calls — see spriteDataUri.
+ */
+export const spriteUrl = (sprite: Sprite, fill: string, layer?: string) =>
+  `url("${spriteDataUri(sprite, fill, layer)}")`;
+
 /** The platform mark: a temple on its raised platform, pixel-drawn. */
 export const TEMPLE: Sprite = [
   '.......##.......',
@@ -639,3 +647,95 @@ export const STATE_SPRITES: Record<RequestState, Sprite> = {
   REJECTED: CROSS,
   EXPIRED: HOURGLASS_SPENT,
 };
+
+/* ===== Hanami ornament =====
+   Objects and patterns, not creatures: the koi and the kitsune mask were both
+   drawn and both dropped, for the reason already recorded above the item
+   vocabulary — a 16x16 silhouette that has to read as a living thing takes
+   several attempts and still reads as a blob, while a torii or a wave says
+   what it is at a glance. Asanoha went the same way: the hemp leaf needs three
+   distinguishable line weights across one hexagon and collapses into a grey
+   mesh at this size. */
+
+/**
+ * Seigaiha — the blue-sea-wave scale pattern, as a true unit cell.
+ *
+ * Two half-offset rows of nested arcs in one 16x16 tile, so it tiles in both
+ * directions with no seam: the second row is the first shifted by half a
+ * scale, which is exactly what the pattern does on a kimono bolt.
+ */
+export const SEIGAIHA: Sprite = [
+  '......####......',
+  '....##....##....',
+  '...#........#...',
+  '..#...####...#..',
+  '..#..#....#..#..',
+  '.#..#..##..#..#.',
+  '.#..#.#..#.#..#.',
+  '#...#.#..#.#...#',
+  '##............##',
+  '..##........##..',
+  '....#......#....',
+  '##...#....#...##',
+  '..#..#....#..#..',
+  '#..#..#..#..#..#',
+  '.#.#..#..#..#.#.',
+  '.#.#...##...#.#.',
+];
+
+/** A torii: kasagi over nuki over two pillars. The threshold, so it marks one. */
+export const TORII: Sprite = [
+  '################',
+  '.##############.',
+  '................',
+  '.##############.',
+  '.##############.',
+  '...##......##...',
+  '...##......##...',
+  '...##......##...',
+  '...##......##...',
+  '...##......##...',
+  '...##......##...',
+  '...##......##...',
+  '...##......##...',
+  '...##......##...',
+  '..####....####..',
+  '..####....####..',
+];
+
+/**
+ * A blossom on the small 8px grid, symmetric under a quarter turn.
+ *
+ * The symmetry is the point, the same as ROSETTE: one sprite serves all four
+ * corners of a frame as four background layers, which is how a two-pseudo-
+ * element ceiling gets sidestepped entirely.
+ */
+export const BLOSSOM: Sprite = [
+  '...##...',
+  '..####..',
+  '.##..##.',
+  '##.##.##',
+  '##.##.##',
+  '.##..##.',
+  '..####..',
+  '...##...',
+];
+
+/**
+ * The falling petal, as a four-frame tumble strip: 8x8 frames laid side by
+ * side, so 32x8.
+ *
+ * A strip rather than four sprites because CSS advances one background-position
+ * in whole steps; four images would need four elements. Frames run flat, part
+ * turned, edge on, part turned the other way — the whole of a petal's tumble.
+ */
+export const PETAL_STRIP: Sprite = [
+  '................................',
+  '..####.....##......##.....##....',
+  '.######...####.....##.....###...',
+  '.######...####.....##.....####..',
+  '.######...####.....##......###..',
+  '..####.....##......##.......##..',
+  '................................',
+  '................................',
+];

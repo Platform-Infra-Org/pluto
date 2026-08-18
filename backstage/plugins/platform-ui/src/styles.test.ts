@@ -24,6 +24,7 @@ describe('SHADCN_CSS', () => {
       // Proves greekCss() is actually interpolated. Without this, greek.ts can
       // be perfectly correct and simply never reach the page.
       ':root.sc-greek',
+      ':root.sc-hanami',
     ]) {
       expect(`${marker}:${SHADCN_CSS.includes(marker)}`).toBe(`${marker}:true`);
     }

@@ -16,6 +16,10 @@ import {
   CREEP_B,
   SMALL_SPRITE_SIZE,
   STAR,
+  SEIGAIHA,
+  TORII,
+  BLOSSOM,
+  PETAL_STRIP,
 } from './sprites';
 
 const grid = (...rows: string[]) => rows;
@@ -46,7 +50,10 @@ describe('spriteRects', () => {
 
 describe('sprite data', () => {
   it('every sprite is a square grid of the declared size', () => {
-    const items = { AMPHORA, KEY, LAUREL, HELM, TORCH, SCROLL, POTION, RUPEE };
+    const items = {
+      AMPHORA, KEY, LAUREL, HELM, TORCH, SCROLL, POTION, RUPEE,
+      SEIGAIHA, TORII,
+    };
     for (const [name, sprite] of Object.entries({
       TEMPLE,
       ...items,
@@ -122,7 +129,7 @@ describe('sprite data', () => {
   it('keeps the small sprites square at their own documented size', () => {
     // The only sprites here that are not SPRITE_SIZE: several must fit on a
     // 12px bar, so they are 8x8 and say so.
-    for (const [name, sprite] of Object.entries({ CREEP_A, CREEP_B, STAR })) {
+    for (const [name, sprite] of Object.entries({ CREEP_A, CREEP_B, STAR, BLOSSOM })) {
       expect(`${name}:${sprite.length}`).toBe(`${name}:${SMALL_SPRITE_SIZE}`);
       for (const row of sprite) {
         expect(`${name}:${row.length}`).toBe(`${name}:${SMALL_SPRITE_SIZE}`);
@@ -145,5 +152,48 @@ describe('sprite data', () => {
   it('keeps the amphora vessel on the 16x16 grid', () => {
     expect(AMPHORA_VESSEL).toHaveLength(SPRITE_SIZE);
     for (const row of AMPHORA_VESSEL) expect(row).toHaveLength(SPRITE_SIZE);
+  });
+});
+
+describe('mode ornament sprites', () => {
+  it('keeps every frame strip on the 8px grid, at a whole number of frames', () => {
+    // A strip is the one shape that is deliberately not square: CSS advances
+    // one background-position in whole steps, so N frames of an animation have
+    // to be one image. Height is the grid; width must be an exact multiple of
+    // it, or the last step lands mid-frame and the sprite smears.
+    for (const [name, strip] of Object.entries({ PETAL_STRIP })) {
+      expect(`${name}:${strip.length}`).toBe(`${name}:${SMALL_SPRITE_SIZE}`);
+      for (const row of strip) {
+        expect(`${name}:${row.length % SMALL_SPRITE_SIZE}`).toBe(`${name}:0`);
+        expect(`${name}:${row.length === strip[0].length}`).toBe(`${name}:true`);
+      }
+    }
+  });
+
+  it('gives the petal strip four distinct frames', () => {
+    // Identical frames animate into a static smudge, the same failure the run
+    // cycle guards against above.
+    const frames = Array.from({ length: 4 }, (_, f) =>
+      PETAL_STRIP.map(r => r.slice(f * 8, f * 8 + 8)).join(''),
+    );
+    expect(new Set(frames).size).toBe(4);
+  });
+
+  it('tiles seigaiha as a true unit cell', () => {
+    // The second row of scales is the first shifted by half a scale. If that
+    // ever stops holding, the pattern grows a visible seam every 16px.
+    for (let y = 0; y < 8; y++) {
+      const shifted = SEIGAIHA[y].slice(8) + SEIGAIHA[y].slice(0, 8);
+      expect(`row${y}:${SEIGAIHA[y + 8]}`).toBe(`row${y}:${shifted}`);
+    }
+  });
+
+  it('keeps the blossom symmetric under a quarter turn', () => {
+    // The whole reason it can serve all four corners of a frame from ONE
+    // sprite as four background layers.
+    const turned = BLOSSOM.map((_, x) =>
+      BLOSSOM.map(row => row[x]).reverse().join(''),
+    );
+    expect(turned).toEqual([...BLOSSOM]);
   });
 });

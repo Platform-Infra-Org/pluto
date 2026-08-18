@@ -85,6 +85,7 @@ const MODES = [
   'claude',
   'dairy',
   'obsidian',
+  'hanami',
 ] as const;
 type Mode = (typeof MODES)[number];
 
@@ -122,6 +123,13 @@ export const SCHEMES: Scheme[] = [
     hsl: '355 82% 42%',
     fg: WHITE, // 7.05
     mode: 'spiderverse',
+  },
+  {
+    id: 'hanami',
+    label: 'Hanami',
+    hsl: '355 59% 39%',
+    fg: '45 100% 98%', // 7.36 — gofun, the mode's own card colour
+    mode: 'hanami',
   },
   // The table-driven brand modes, from brands.ts.
   ...BRAND_DEFS.map(b => ({
@@ -864,8 +872,38 @@ export function SchemeRoot() {
   return (
     <>
       <SchemePicker floating />
+      <ModeArt />
       <QuickstartHost />
     </>
+  );
+}
+
+/** Nine petals: enough for a drift, few enough that none of them overlap. */
+const PETALS = Array.from({ length: 9 }, (_, i) => i);
+
+/**
+ * The host for the animated mode ornaments.
+ *
+ * Mounted unconditionally and hidden by CSS rather than branched on the picked
+ * scheme, because `applyScheme` runs before React and writes a class on the
+ * root element — there is no React state holding the current mode, and adding
+ * one would give the ornament a second source of truth that can disagree with
+ * the class actually applied. styles.ts hides every child; each mode sheet
+ * turns on the one it draws.
+ *
+ * Decoration only, so aria-hidden: a screen reader has nothing to gain from
+ * nine falling petals, and every one of these is behind
+ * prefers-reduced-motion.
+ */
+function ModeArt() {
+  return (
+    <div className="sc-mode-art" aria-hidden="true">
+      <div className="sc-sakura">
+        {PETALS.map(i => (
+          <i key={i} />
+        ))}
+      </div>
+    </div>
   );
 }
 

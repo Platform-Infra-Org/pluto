@@ -5,6 +5,7 @@ import { foudreCss } from './foudre';
 import { slushCss } from './slush';
 import { spiderverseCss } from './spiderverse';
 import { greekCss } from './greek';
+import { hanamiCss } from './hanami';
 
 const stripComments = (css: string) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 
@@ -218,6 +219,7 @@ describe('every mode sheet reaches the nested-ThemeProvider routes', () => {
     ['slush', slushCss()],
     ['spiderverse', spiderverseCss()],
     ['greek', greekCss()],
+    ['hanami', hanamiCss()],
     ['brands', brandsCss()],
   ];
 
