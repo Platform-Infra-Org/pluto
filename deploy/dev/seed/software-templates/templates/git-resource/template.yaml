@@ -22,7 +22,7 @@ metadata:
     platform.io/verb-delete: '{"argoSubmit":{"namespace":"argo","workflowTemplate":"git-ops","entrypoint":"bulk-delete","parameters":{"resources":"<< resourcesJson >>"}}}'
 spec:
   owner: group:default/checkout
-  type: resource
+  type: git
   parameters:
     - title: Resource details
       required:
@@ -54,6 +54,11 @@ spec:
           default: [prod, eu]
           items:
             type: string
+          # RJSF renders a copy button per row when this is set, duplicating the
+          # row with its current values. Built in since @rjsf/core 5 — no field
+          # extension needed.
+          ui:options:
+            copyable: true
   steps:
     - id: submit
       name: Submit request

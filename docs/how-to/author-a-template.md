@@ -160,6 +160,28 @@ PlatformSecret` instead, which encrypts it and keeps it out of params, logs and
 Git — `PlatformFile`'s value is a plain S3 path, visible wherever the request's
 params are.
 
+### Repeating rows the user can duplicate
+
+An array field gets a per-row copy button — which duplicates the row *with its
+current values* — from one option:
+
+```yaml
+mounts:
+  type: array
+  title: Mounts
+  ui:options:
+    copyable: true
+  items:
+    type: object
+    properties:
+      path: { type: string, title: Path }
+      readOnly: { type: boolean, title: Read only, default: false }
+```
+
+This is RJSF's own feature, not a platform field extension. Making **Add**
+itself copy the previous row is not supported, and would remove the only way to
+get an empty row.
+
 ## 2. Enable edit & delete
 
 Add verb annotations so the resource's **Manage resource** card works. They point
