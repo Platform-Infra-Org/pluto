@@ -635,4 +635,16 @@ describe('SHADCN_CSS', () => {
     // designed one rather than a half-finished pop.
     expect(SHADCN_CSS).toMatch(/\.sc-cast-stars svg\s*\{[^}]*color:/);
   });
+
+  it('never repositions an outlined label, whose notch geometry MUI owns', () => {
+    // The standard variant needs left: 10px to sit inside our boxed field.
+    // The outlined variant must not be touched: its label is placed by a
+    // transform and its <legend> is cut to match, so moving one and not the
+    // other puts the text on the border. Selecting an entity in a
+    // MultiEntityPicker is what makes it visible.
+    const offenders = SHADCN_CSS.split('}')
+      .filter(block => /left:\s*var\(--sc-field-x\)/.test(block))
+      .filter(block => /MuiInputLabel-root|MuiFormLabel-root/.test(block));
+    expect(offenders).toEqual([]);
+  });
 });

@@ -247,6 +247,46 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
           },
         },
       },
+      // Input geometry lives here, not in styles.ts: MUI publishes these slots,
+      // and createUnifiedTheme runs transformV5ComponentThemesToV4 over every
+      // Mui* key, so a v5-shaped override reaches the MUI v4 scaffolder form.
+      // Scoped by slot rather than by route class, which is what makes it cover
+      // EntityPicker/OwnedEntityPicker/RepoUrlPicker the day a template uses one.
+      MuiInputLabel: {
+        styleOverrides: {
+          // `formControl` is the standard variant only — the outlined and filled
+          // slots below are separate, so this can no longer leak onto them.
+          formControl: {
+            left: 'var(--sc-field-x)',
+          },
+          shrink: {
+            paddingInlineEnd: '4px',
+          },
+          outlined: {
+            // Undo the standard-variant offset for this slot and give the shrunk
+            // label one more pixel of clearance: our border is 2px where MUI's
+            // -6px assumes 1px.
+            left: '0',
+            '&.MuiInputLabel-shrink': {
+              paddingInlineEnd: '0',
+              transform: 'translate(14px, -7px) scale(0.75)',
+            },
+          },
+        },
+      },
+      MuiOutlinedInput: {
+        styleOverrides: {
+          notchedOutline: {
+            // The label is uppercased (styles.ts) but the <legend> MUI generates
+            // from the raw title is not, so the notch was cut too narrow for the
+            // text sitting in it.
+            '& legend': {
+              textTransform: 'uppercase',
+              fontFamily: 'var(--sc-font-ui)',
+            },
+          },
+        },
+      },
       BackstageSidebarPage: {
         styleOverrides: {
           root: {

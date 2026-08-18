@@ -952,23 +952,12 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   border-radius: var(--sc-radius);
   padding: 3px var(--sc-field-x);
 }
-/* The scaffolder's fields are MUI's *standard* variant, whose label is absolutely
-   positioned at left: 0 — correct for a bare underline, wrong the moment the
-   field has a box and a corner. Unfixed, the label sat on the rounded corner
-   while the value it named was inset 10px, so the two read as belonging to
-   different fields. Measured at inset 0 against a padding of 10 on every label
-   of every scaffolder form; no other page in the app has a boxed standard field.
-   Both states move together: at rest the label sits in the box beside the value,
-   and shrunk it floats above the border on the same left edge. */
-.sc-route-create [class*="MuiInputLabel-root"],
-.sc-route-create [class*="MuiFormLabel-root"] {
-  left: var(--sc-field-x);
-}
-/* MUI shrinks by scaling about the top-left, so a shrunk label keeps that same
-   left edge and needs only clearance from the border it now sits on. */
-.sc-route-create [class*="MuiInputLabel-shrink"] {
-  padding-inline-end: 4px;
-}
+/* Label position, notch and outline geometry used to live here, scoped to
+   .sc-route-create. They now live in theme.tsx (MuiInputLabel /
+   MuiOutlinedInput), because a route-scoped rule cannot tell MUI's standard
+   variant from its outlined one: the inset that a boxed standard field needs
+   pushed the outlined label off its own <legend> notch. This sheet may still
+   colour an input; it must not move its label. */
 .sc-route-create [class*="MuiInput-underline"]::before,
 .sc-route-create [class*="MuiInput-underline"]::after {
   display: none !important;
@@ -1722,10 +1711,11 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    carry declarations the global sheet does not. */
 /* The repository-URL field is the page's one real input; it arrives bare. It
    sits in the Paper above, which is --sc-card, so it inherits that ground
-   rather than naming --sc-bg — see the note on .sc-input. */
+   rather than naming --sc-bg — see the note on .sc-input. Colour only: the
+   radius this rule used to repeat is already set app-wide above, and the
+   label/notch geometry it might otherwise have grown lives in theme.tsx. */
 .sc-route-import [class*="MuiOutlinedInput-root"] {
   background: transparent;
-  border-radius: var(--sc-radius);
 }
 .sc-route-import [class*="MuiListItem-root"] {
   border-bottom: var(--sc-border-w) solid hsl(var(--sc-border) / .6);

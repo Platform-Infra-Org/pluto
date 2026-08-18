@@ -36,6 +36,11 @@ backslash before digits is a legacy octal escape that fails the app build while
 class names — `theme.tsx` uses the published override keys, which are typed, so
 a renamed slot fails the build rather than silently unstyling a page. What is
 left in CSS targets stable MUI global classes and canon's `--bui-*` variables.
+Input geometry — label position, the outline notch, outline width — lives in
+`theme.tsx` override keys; `styles.ts` may colour an input but must not
+reposition its label, because a route-scoped selector cannot tell MUI's
+standard variant from its outlined one and the inset one needs knocks the other
+off its own notch.
 
 **A route gets a class so a general selector can be specific again.**
 `routeClass.ts` maps a pathname to one `sc-route-*` class on the root element.
