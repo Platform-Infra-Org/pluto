@@ -183,6 +183,19 @@ platform:
       - recentlyVisited
       - favouriteTemplates
     maxItems: 8
+  # Existing Grafana dashboard, embedded on /dashboard and on request pages
+  # (scoped to that request's own time window). Empty by default —
+  # GrafanaFrame renders nothing when platform.grafana is unset, and no
+  # frame-src is added to the CSP either. See
+  # docs/how-to/embed-a-grafana-dashboard.md for the allow_embedding
+  # requirement and the authentication trade-offs.
+  grafana: {}
+  #  baseUrl: https://grafana.example.com
+  #  dashboard:
+  #    uid: abc123
+  #    slug: platform-overview
+  #  theme: dark
+  #  kiosk: true
   branding: {}
   #  mark: /branding/mark.svg
   #  flavour: fantasy

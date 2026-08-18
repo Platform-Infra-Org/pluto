@@ -20,6 +20,7 @@ nav:
       - Add a live (DynamicSelect) field: how-to/add-a-dynamic-select-field.md
       - Add a mid-workflow review gate: how-to/add-a-review-gate.md
       - Customise the home page: how-to/customise-the-home-page.md
+      - Embed a Grafana dashboard: how-to/embed-a-grafana-dashboard.md
       - Change the logo, favicon and title: how-to/rebrand-the-portal.md
       - Upgrade Backstage: how-to/upgrade-backstage.md
       - Run the production image locally: how-to/run-the-production-image.md

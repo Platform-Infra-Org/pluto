@@ -71,6 +71,11 @@ secret manager.
   only for a dev argo-server running `--auth-mode=server --secure=false`.
 - **TLS everywhere**, and real `app.baseUrl` / `backend.baseUrl` values instead
   of `localhost:7007`.
+- **Grafana**, if the dashboard mounts are used: unset by default, so nothing
+  to do unless you want them. See
+  [Embed a Grafana dashboard](embed-a-grafana-dashboard.md) for
+  `platform.grafana`, the matching `backend.csp.frame-src` entry, Grafana's own
+  `allow_embedding`, and the authentication trade-offs.
 
 ## 4. Hardening
 
@@ -97,6 +102,8 @@ page and `argoSubmit` / `resource-data` conventions.
 - [ ] IdP, LDAPS and Argo (TLS + auth) endpoints real; `platform.argo.proxyPath` set
 - [ ] TLS and real base URLs; `backend.reading.allow` scoped
 - [ ] `platform.secrets.encryptionKey` set from the secret manager
+- [ ] If embedding Grafana: `platform.grafana` set, `backend.csp.frame-src`
+      widened to match, and Grafana's own `allow_embedding = true`
 - [ ] A retention policy decided: either `platform.requests.retention.enabled`
       with windows that suit your compliance position, or a deliberate choice to
       keep every request forever

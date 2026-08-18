@@ -50,6 +50,12 @@ data:
           - host: {{ .Values.bitbucket.host }}
       # No externalAccess block: the dev static bearer token exists for seed
       # scripts and smoke tests, and has no business in production.
+      {{- with .Values.platform.grafana.baseUrl }}
+      # Only widened when a dashboard is actually configured — otherwise the
+      # base image's CSP (no frame-src override) stands.
+      csp:
+        frame-src: ["'self'", {{ . | quote }}]
+      {{- end }}
 
     integrations:
       # The base config ships a Gitea entry pointing at localhost:3001. An empty
@@ -146,6 +152,10 @@ data:
           {{- toYaml .Values.platform.requests.retention | nindent 10 }}
       home:
         {{- toYaml .Values.platform.home | nindent 8 }}
+      {{- with .Values.platform.grafana }}
+      grafana:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
 
     {{- with .Values.extraAppConfig }}
     {{- toYaml . | nindent 4 }}

@@ -71,6 +71,10 @@ backend:
     connect-src: ["'self'", 'http:', 'https:']
     # Content-Security-Policy directives follow the Helmet format: https://helmetjs.github.io/#reference
     # Default Helmet Content-Security-Policy values can be removed by setting the key to false
+    # Uncomment alongside platform.grafana above (both need GRAFANA_BASE_URL
+    # set) so the embedded dashboard iframe is allowed to load. Left off in dev
+    # so an unset var doesn't put an unresolved placeholder in a live header.
+    # frame-src: ["'self'", '${GRAFANA_BASE_URL}']
   cors:
     origin: http://localhost:3000
     methods: [GET, HEAD, PATCH, POST, PUT, DELETE]

@@ -21,6 +21,7 @@ import {
   GraphDirectionPicker,
   useGraphDirection,
   HOURGLASS,
+  GrafanaFrame,
 } from '@internal/plugin-platform-ui';
 import {
   Request,
@@ -516,6 +517,25 @@ export function RequestPage() {
                   direction={workflowDirection}
                   id={request.id}
                   live={!isTerminal(request.state)}
+                />
+              </CardBody>
+            </Card>
+          </div>
+        )}
+
+        {/* Bound to this request's own timestamps rather than a bookmarked
+            dashboard: the window is exactly what happened while the workflow
+            ran. Only shown once there's a workflow run worth plotting. */}
+        {['IN_PROGRESS', 'SUCCEEDED', 'FAILED'].includes(request.state) && (
+          <div style={{ gridColumn: '1 / -1' }}>
+            <Card>
+              <CardHeader title="Metrics" />
+              <CardBody>
+                <GrafanaFrame
+                  title={`Metrics for request #${request.id}`}
+                  from={String(new Date(request.createdAt).getTime())}
+                  to={String(new Date(request.updatedAt).getTime())}
+                  height={420}
                 />
               </CardBody>
             </Card>
