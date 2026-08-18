@@ -20,6 +20,11 @@ import {
   TORII,
   BLOSSOM,
   PETAL_STRIP,
+  CRESCENT_FLAME,
+  CAULDRON,
+  FILIGREE,
+  SPRIG,
+  MOON_STRIP,
 } from './sprites';
 
 const grid = (...rows: string[]) => rows;
@@ -52,7 +57,7 @@ describe('sprite data', () => {
   it('every sprite is a square grid of the declared size', () => {
     const items = {
       AMPHORA, KEY, LAUREL, HELM, TORCH, SCROLL, POTION, RUPEE,
-      SEIGAIHA, TORII,
+      SEIGAIHA, TORII, CRESCENT_FLAME, CAULDRON, SPRIG,
     };
     for (const [name, sprite] of Object.entries({
       TEMPLE,
@@ -129,7 +134,7 @@ describe('sprite data', () => {
   it('keeps the small sprites square at their own documented size', () => {
     // The only sprites here that are not SPRITE_SIZE: several must fit on a
     // 12px bar, so they are 8x8 and say so.
-    for (const [name, sprite] of Object.entries({ CREEP_A, CREEP_B, STAR, BLOSSOM })) {
+    for (const [name, sprite] of Object.entries({ CREEP_A, CREEP_B, STAR, BLOSSOM, FILIGREE })) {
       expect(`${name}:${sprite.length}`).toBe(`${name}:${SMALL_SPRITE_SIZE}`);
       for (const row of sprite) {
         expect(`${name}:${row.length}`).toBe(`${name}:${SMALL_SPRITE_SIZE}`);
@@ -161,7 +166,7 @@ describe('mode ornament sprites', () => {
     // one background-position in whole steps, so N frames of an animation have
     // to be one image. Height is the grid; width must be an exact multiple of
     // it, or the last step lands mid-frame and the sprite smears.
-    for (const [name, strip] of Object.entries({ PETAL_STRIP })) {
+    for (const [name, strip] of Object.entries({ PETAL_STRIP, MOON_STRIP })) {
       expect(`${name}:${strip.length}`).toBe(`${name}:${SMALL_SPRITE_SIZE}`);
       for (const row of strip) {
         expect(`${name}:${row.length % SMALL_SPRITE_SIZE}`).toBe(`${name}:0`);
@@ -188,12 +193,23 @@ describe('mode ornament sprites', () => {
     }
   });
 
-  it('keeps the blossom symmetric under a quarter turn', () => {
-    // The whole reason it can serve all four corners of a frame from ONE
+  it('keeps the corner medallions symmetric under a quarter turn', () => {
+    // The whole reason each can serve all four corners of a frame from ONE
     // sprite as four background layers.
-    const turned = BLOSSOM.map((_, x) =>
-      BLOSSOM.map(row => row[x]).reverse().join(''),
-    );
-    expect(turned).toEqual([...BLOSSOM]);
+    for (const [name, sprite] of Object.entries({ BLOSSOM, FILIGREE })) {
+      const turned = sprite.map((_, x) =>
+        sprite.map(row => row[x]).reverse().join(''),
+      );
+      expect(`${name}:${turned.join('/')}`).toBe(`${name}:${sprite.join('/')}`);
+    }
+  });
+
+  it('draws both layers of every two-colour motif', () => {
+    // A data URI inherits no custom property, so a two-colour motif is two
+    // images. A grid missing one layer renders as half a picture.
+    for (const [name, sprite] of Object.entries({ CRESCENT_FLAME, CAULDRON })) {
+      expect(`${name}:${spriteRects(sprite, '#').length > 0}`).toBe(`${name}:true`);
+      expect(`${name}:${spriteRects(sprite, '~').length > 0}`).toBe(`${name}:true`);
+    }
   });
 });

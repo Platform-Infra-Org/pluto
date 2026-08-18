@@ -86,6 +86,7 @@ const MODES = [
   'dairy',
   'obsidian',
   'hanami',
+  'nightshade',
 ] as const;
 type Mode = (typeof MODES)[number];
 
@@ -130,6 +131,13 @@ export const SCHEMES: Scheme[] = [
     hsl: '355 59% 39%',
     fg: '45 100% 98%', // 7.36 — gofun, the mode's own card colour
     mode: 'hanami',
+  },
+  {
+    id: 'nightshade',
+    label: 'Nightshade',
+    hsl: '142 67% 66%',
+    fg: '240 10% 8%', // 11.62 — witch green is far too light to take white
+    mode: 'nightshade',
   },
   // The table-driven brand modes, from brands.ts.
   ...BRAND_DEFS.map(b => ({
@@ -903,6 +911,7 @@ function ModeArt() {
           <i key={i} />
         ))}
       </div>
+      <div className="sc-moon" />
     </div>
   );
 }

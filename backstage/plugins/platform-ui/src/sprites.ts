@@ -739,3 +739,120 @@ export const PETAL_STRIP: Sprite = [
   '................................',
   '................................',
 ];
+
+/* ===== Nightshade ornament =====
+   The moth went the way of the koi: a creature silhouette at this size reads as
+   a smudge with antennae. What survived are objects and a pattern, which is the
+   same rule the item vocabulary above already follows. */
+
+/**
+ * A crescent cradling a witch-green flame: '#' is the moon, '~' the fire.
+ *
+ * Two layers rather than two sprites, so the flame cannot drift out of the
+ * crescent's mouth when one of them is edited.
+ */
+export const CRESCENT_FLAME: Sprite = [
+  '.....#####......',
+  '...###...###....',
+  '..##.......##...',
+  '.##.......~~....',
+  '.##......~~~~...',
+  '##......~~~~~~..',
+  '##......~~~~~~..',
+  '##.....~~~~~~~~.',
+  '##.....~~~~~~~~.',
+  '##......~~~~~~..',
+  '##......~~~~~~..',
+  '.##......~~~~...',
+  '.##.......~~....',
+  '..##.......##...',
+  '...###...###....',
+  '.....#####......',
+];
+
+/**
+ * A cauldron with three bubbles rising: '#' is the iron, '~' the brew.
+ *
+ * The bubbles are the brew colour and sit clear of the rim, or the whole thing
+ * reads as a cooking pot with crumbs on it.
+ */
+export const CAULDRON: Sprite = [
+  '....~.......~...',
+  '................',
+  '.......~........',
+  '................',
+  '################',
+  '#~~~~~~~~~~~~~~#',
+  '#~~~~~~~~~~~~~~#',
+  '.##############.',
+  '.##############.',
+  '.##############.',
+  '..############..',
+  '..############..',
+  '...##########...',
+  '....########....',
+  '...##......##...',
+  '..###......###..',
+];
+
+/**
+ * A filigree medallion on the small 8px grid, symmetric under a quarter turn.
+ *
+ * Same trick as ROSETTE and BLOSSOM: one sprite serves all four corners of a
+ * frame as four background layers, which sidesteps the two-pseudo-element
+ * ceiling rather than settling for two corners.
+ */
+export const FILIGREE: Sprite = [
+  '..####..',
+  '.#....#.',
+  '#.#..#.#',
+  '#..##..#',
+  '#..##..#',
+  '#.#..#.#',
+  '.#....#.',
+  '..####..',
+];
+
+/**
+ * A nightshade sprig, tiling horizontally along the stem in the middle row.
+ *
+ * Leaves above and below so the band has vertical weight — a vine drawn only
+ * along its stem reads as a dotted rule.
+ */
+export const SPRIG: Sprite = [
+  '....##....##....',
+  '...####..####...',
+  '....##....##....',
+  '.....#....#.....',
+  '......#..#......',
+  '.......##.......',
+  '..##...##...##..',
+  '#####..##..#####',
+  '..##...##...##..',
+  '.......##.......',
+  '......#..#......',
+  '.....#....#.....',
+  '....##....##....',
+  '...####..####...',
+  '....##....##....',
+  '................',
+];
+
+/**
+ * The eight phases of the moon as one 64x8 strip: eight 8x8 frames.
+ *
+ * A strip because CSS advances one background-position in whole steps; eight
+ * images would need eight elements. New moon is drawn as an outline rather
+ * than left blank, so the ornament never simply disappears for an eighth of
+ * the cycle.
+ */
+export const MOON_STRIP: Sprite = [
+  '......#.....##....####....####....####....##.....#........####..',
+  '.....##.....###...#####..######..#####...###.....##......#....#.',
+  '......##....####.######################.####....##......#......#',
+  '......##....####.######################.####....##......#......#',
+  '......##....####.######################.####....##......#......#',
+  '......##....####.######################.####....##......#......#',
+  '.....##.....###...#####..######..#####...###.....##......#....#.',
+  '......#.....##....####....####....####....##.....#........####..',
+];

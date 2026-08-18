@@ -76,7 +76,8 @@ export type SchemeMode =
   | 'claude'
   | 'dairy'
   | 'obsidian'
-  | 'hanami';
+  | 'hanami'
+  | 'nightshade';
 
 /** `--sc-card` in the Greek registers, from greek.ts. */
 export const GREEK_CARD_LIGHT = '42 45% 98%';
@@ -150,6 +151,7 @@ export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   dairy: STATUS_TOKENS,
   obsidian: STATUS_TOKENS,
   hanami: STATUS_TOKENS,
+  nightshade: STATUS_TOKENS,
 };
 
 export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
@@ -172,6 +174,7 @@ export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   // Hanami's dark card is pinned at 5.5% lightness: destructive-on-cell is
   // exactly 5.00 there, so any lift breaks the status set. See hanami.ts.
   hanami: { light: '45 100% 98.4%', dark: '195 29% 5.5%' },
+  nightshade: { light: '260 30% 99%', dark: '254 39% 6.5%' },
 };
 
 /** The `:root` declarations for every mode, for interpolation into SHADCN_CSS. */

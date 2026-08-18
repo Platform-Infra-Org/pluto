@@ -2,6 +2,7 @@ import { BRAND_DEFS } from './brands';
 import { foudreCss } from './foudre';
 import { greekCss } from './greek';
 import { hanamiCss } from './hanami';
+import { nightshadeCss } from './nightshade';
 import { spiderverseCss } from './spiderverse';
 import {
   CARD_DARK,
@@ -234,6 +235,10 @@ describe('dark rules', () => {
         registerOf(spiderverseCss(), ':root.sc-spiderverse.sc-dark'),
       ],
       ['hanami', registerOf(hanamiCss(), ':root.sc-hanami.sc-dark')],
+      [
+        'nightshade',
+        registerOf(nightshadeCss(), ':root.sc-nightshade.sc-dark'),
+      ],
     ];
 
     for (const [mode, tokens] of registers) {

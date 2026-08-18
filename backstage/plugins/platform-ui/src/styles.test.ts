@@ -25,6 +25,7 @@ describe('SHADCN_CSS', () => {
       // be perfectly correct and simply never reach the page.
       ':root.sc-greek',
       ':root.sc-hanami',
+      ':root.sc-nightshade',
     ]) {
       expect(`${marker}:${SHADCN_CSS.includes(marker)}`).toBe(`${marker}:true`);
     }

@@ -9,6 +9,7 @@ import { slushCss } from './slush';
 import { brandsCss } from './brands';
 import { spiderverseCss } from './spiderverse';
 import { hanamiCss } from './hanami';
+import { nightshadeCss } from './nightshade';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
@@ -96,6 +97,7 @@ ${slushCss()}
 ${brandsCss()}
 ${spiderverseCss()}
 ${hanamiCss()}
+${nightshadeCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because
