@@ -41,20 +41,25 @@ nothing — that is the single most common mistake here.
 
 ### Choosing a logo that works with every swatch
 
-The six accents all sit in a narrow lightness band (40–55%):
+There is no table here on purpose. `SCHEMES` in
+`plugins/platform-ui/src/SchemeRoot.tsx` is the single source of truth for what
+is on the shelf, and a list that has to be hand-synced with a code array goes
+stale — this one did, twice, while the shelf grew from six bottles to fifteen.
+Read the array.
 
-| Violet | Blue | Green | Rose | Amber | Slate |
-|---|---|---|---|---|---|
-| `250 52% 55%` | `217 60% 52%` | `152 42% 40%` | `345 55% 52%` | `32 70% 48%` | `215 20% 40%` |
+What matters for a logo is the *spread*, and it is wide: the tile behind your
+mark can be anything from Ancient Greek's deep terracotta through Rimefast's
+orpiment yellow to Nightshade's witch green.
 
-- A **white or light monochrome** logo reads well against all six. This is what
-  the built-in glyph does, and what most portal logos already are.
-- A **mid-tone colour** logo is a gamble — an amber mark on the Amber swatch
-  nearly disappears, a navy mark on Blue or Slate goes muddy.
+- A **white or light monochrome** logo reads well against all of them. This is
+  what the built-in glyph does, and what most portal logos already are.
+- A **mid-tone colour** logo is a gamble — an amber mark nearly disappears on
+  the yellow-accented modes, and a navy mark goes muddy on the blue ones.
 - If the brand colours are non-negotiable and clash, set `favicon` explicitly and
   accept that the sidebar tile still recolours behind the mark.
 
-Check all six swatches before shipping. It takes ten seconds.
+Check a light one, a dark one and a saturated one before shipping. It takes ten
+seconds, and the picker's tray shows the whole shelf at once.
 
 ## The tab icon
 
