@@ -372,7 +372,15 @@ export function greekCss(): string {
    The still frame is designed, not frozen: outside the motion query the embers
    are a scattered arrangement resting near the hearth line at full opacity,
    which is the picture a reader who asked for less motion is meant to get. ===== */
-:root.sc-greek .sc-greek-embers { display: block; }
+/* inset: 0 is not decoration. Children of the mode-art layer are absolutely
+   positioned with no offsets, so an unstretched wrapper collapses to 0x0 in the
+   top-left corner — and a bottom of 0 on an ember then resolves against a box
+   of no height, parking every spark at the TOP of the screen to rise off it
+   immediately. Twelve embers, one visible at a time, all climbing out of frame:
+   the bug that read as there being no animation at all. Hanami's petals dodge
+   it only by falling from a top of 0, where the collapsed corner happens to be
+   the right place to start. */
+:root.sc-greek .sc-greek-embers { display: block; inset: 0; }
 :root.sc-greek .sc-greek-embers i {
   position: absolute;
   display: block;

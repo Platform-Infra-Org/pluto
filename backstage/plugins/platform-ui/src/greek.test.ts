@@ -155,6 +155,13 @@ describe('greekCss', () => {
     }
   });
 
+  it('stretches the ember layer over the viewport it draws in', () => {
+    // .sc-mode-art > * is absolute with no offsets, so a wrapper that does not
+    // stretch is 0x0 in the corner and every `bottom` inside it resolves
+    // against nothing.
+    expect(greekCss()).toMatch(/\.sc-greek-embers \{[^}]*inset:\s*0/);
+  });
+
   it('starts every ember at the hearth line once it is moving', () => {
     // The still-frame positions are :nth-child rules, so the animated reset has
     // to carry a :nth-child of its own or it loses the cascade and each ember
