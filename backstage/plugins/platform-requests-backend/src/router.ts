@@ -295,6 +295,38 @@ export async function createRouter(
       'AP South (Mumbai)': 'ap-south-1',
     },
     sizes: ['small', 'medium', 'large'],
+    // Demo coordinate hierarchy for the cascading DynamicSelect, in the shape
+    // the real config API returns: space -> network -> region -> island, with
+    // the island's environments as the leaf. Served from here rather than as a
+    // file under packages/app/public/, because everything in that folder is
+    // copied into dist and served publicly by EVERY deployment — a demo
+    // fixture would have shipped to production. This route is demo data that
+    // already exists, and it sits behind the same auth as its neighbours.
+    'coordinate-tree': {
+      coordinates: {
+        aurora: {
+          core: {
+            'eu-west': {
+              mgmt: ['dev', 'staging', 'prod'],
+              paris: ['prod'],
+              dublin: ['dev', 'prod'],
+            },
+            'us-east': { ashburn: ['dev', 'staging'], reston: ['prod'] },
+          },
+          edge: {
+            'eu-north': { stockholm: ['dev'] },
+            'ap-south': { mumbai: ['dev', 'prod'] },
+          },
+        },
+        borealis: {
+          core: { 'eu-central': { frankfurt: ['staging', 'prod'], munich: ['dev'] } },
+          // One region, one island: the branch that shows auto-select filling
+          // the rest of the chain from a single pick.
+          lab: { 'eu-west': { cork: ['sandbox'] } },
+        },
+      },
+      projects: ['checkout', 'payments', 'search'],
+    },
   };
   router.get('/options/:name', async (req, res) => {
     await httpAuth.credentials(req, { allow: ['user', 'service'] });

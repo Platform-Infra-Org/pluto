@@ -25,34 +25,34 @@ spec:
         - island
         - environment
       properties:
-        # `url` rather than `proxyPath` because this fixture is served by the
-        # app itself (packages/app/public/coordinate-tree.json), same-origin and
-        # unauthenticated. A real deployment points `proxyPath` at the config
-        # API instead — see docs/how-to/add-a-dynamic-select-field.md.
+        # Same wiring a real deployment uses: proxyPath through the Backstage
+        # proxy, so the upstream's credentials stay server-side. Here it points
+        # at the platform backend's own demo options route; in production it
+        # points at the config API (/infra/coordinate-tree).
         space:
           type: string
           title: Space
           ui:field: DynamicSelect
-          ui:options: { url: /coordinate-tree.json, treePath: coordinates }
+          ui:options: { proxyPath: /demo-options/coordinate-tree, treePath: coordinates }
         network:
           type: string
           title: Network
           ui:field: DynamicSelect
           ui:options:
-            { url: /coordinate-tree.json, treePath: coordinates, dependsOn: [space] }
+            { proxyPath: /demo-options/coordinate-tree, treePath: coordinates, dependsOn: [space] }
         region:
           type: string
           title: Region
           ui:field: DynamicSelect
           ui:options:
-            { url: /coordinate-tree.json, treePath: coordinates, dependsOn: [space, network] }
+            { proxyPath: /demo-options/coordinate-tree, treePath: coordinates, dependsOn: [space, network] }
         island:
           type: string
           title: Island
           ui:field: DynamicSelect
           ui:options:
             {
-              url: /coordinate-tree.json,
+              proxyPath: /demo-options/coordinate-tree,
               treePath: coordinates,
               dependsOn: [space, network, region],
             }
@@ -62,7 +62,7 @@ spec:
           ui:field: DynamicSelect
           ui:options:
             {
-              url: /coordinate-tree.json,
+              proxyPath: /demo-options/coordinate-tree,
               treePath: coordinates,
               dependsOn: [space, network, region, island],
             }
