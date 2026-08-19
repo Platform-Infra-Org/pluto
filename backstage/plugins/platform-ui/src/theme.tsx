@@ -273,9 +273,17 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
           // in the app — catalog filters, the import page, table pagination —
           // by 10px, none of which was ever measured against this box.
           formControl: {
-            '.sc-route-create &': {
-              left: 'var(--sc-field-x)',
-            },
+            // Standard-variant labels only. The :not() pair is load-bearing:
+            // this selector is (0,2,0) and the `outlined` reset below is
+            // (0,1,0), so without them the inset wins on the create route and
+            // an outlined label sits 10px right of the notch that was cut for
+            // it. Matched by substring because MUI v4 suffixes its class names
+            // (MuiInputLabel-outlined-234), the same reason styles.ts uses
+            // [class*=] throughout.
+            '.sc-route-create &:not([class*="MuiInputLabel-outlined"]):not([class*="MuiInputLabel-filled"])':
+              {
+                left: 'var(--sc-field-x)',
+              },
           },
           shrink: {
             paddingInlineEnd: '4px',
@@ -304,9 +312,17 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
             // The label is uppercased (styles.ts) but the <legend> MUI generates
             // from the raw title is not, so the notch was cut too narrow for the
             // text sitting in it.
+            // MUI already sizes the notch to the label: legendLabelled is
+            // width:auto at fontSize .75em, matching the label's scale(.75)
+            // (NotchedOutline.js). It only fits if the legend renders the same
+            // string with the same metrics — so every property styles.ts forces
+            // on the label has to be mirrored here, or the two measure
+            // differently and the error grows with the title's length.
             '& legend': {
               textTransform: 'uppercase',
               fontFamily: 'var(--sc-font-ui)',
+              letterSpacing: 0,
+              fontWeight: 400,
             },
           },
         },
@@ -357,7 +373,13 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
   });
 }
 
-const platformLight = makeTheme('light', LIGHT);
+/**
+ * Exported for theme.test.ts only. Input geometry lives in these override keys
+ * rather than in styles.ts (design-system.md), and a selector here that never
+ * matches fails silently — no test rendered this file before, which is how a
+ * label sat 10px outside its own notch on a shipped build.
+ */
+export const platformLight = makeTheme('light', LIGHT);
 const platformDark = makeTheme('dark', DARK);
 
 function themeExt(id: string, title: string, variant: 'light' | 'dark', theme: unknown) {
