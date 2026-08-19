@@ -18,6 +18,8 @@ import {
   STAR,
   SEIGAIHA,
   TORII,
+  ASANOHA,
+  KOI,
   BLOSSOM,
   PETAL_STRIP,
   CRESCENT_FLAME,
@@ -61,7 +63,7 @@ describe('sprite data', () => {
   it('every sprite is a square grid of the declared size', () => {
     const items = {
       AMPHORA, KEY, LAUREL, HELM, TORCH, SCROLL, POTION, RUPEE,
-      SEIGAIHA, TORII, CRESCENT_FLAME, CAULDRON, SPRIG,
+      SEIGAIHA, TORII, ASANOHA, KOI, CRESCENT_FLAME, CAULDRON, SPRIG,
       FUTHARK, YGGDRASIL, KNOTWORK,
     };
     for (const [name, sprite] of Object.entries({
@@ -212,12 +214,24 @@ describe('mode ornament sprites', () => {
   it('keeps the corner medallions symmetric under a quarter turn', () => {
     // The whole reason each can serve all four corners of a frame from ONE
     // sprite as four background layers.
-    for (const [name, sprite] of Object.entries({ BLOSSOM, FILIGREE })) {
+    // ASANOHA rides along: it is not a corner medallion, but the same
+    // symmetry is what makes the lattice tile in both directions with no seam,
+    // and it is generated from one quarter arc precisely so it holds.
+    for (const [name, sprite] of Object.entries({ BLOSSOM, FILIGREE, ASANOHA })) {
       const turned = sprite.map((_, x) =>
         sprite.map(row => row[x]).reverse().join(''),
       );
       expect(`${name}:${turned.join('/')}`).toBe(`${name}:${sprite.join('/')}`);
     }
+  });
+
+  it('keeps the koi notched, which is the only reason it reads as a fish', () => {
+    // Fill the tail notch and it is a torpedo; fill the eye and it is a bean.
+    // Both are one pixel, so a well-meaning tidy-up removes them silently.
+    expect(KOI[5][4]).toBe('.');
+    expect(KOI[5][12]).toBe('.');
+    expect(KOI[5][11]).toBe('#');
+    expect(KOI[5][13]).toBe('#');
   });
 
   it('draws both layers of every two-colour motif', () => {

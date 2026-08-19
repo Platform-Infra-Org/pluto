@@ -649,13 +649,21 @@ export const STATE_SPRITES: Record<RequestState, Sprite> = {
 };
 
 /* ===== Hanami ornament =====
-   Objects and patterns, not creatures: the koi and the kitsune mask were both
-   drawn and both dropped, for the reason already recorded above the item
-   vocabulary — a 16x16 silhouette that has to read as a living thing takes
-   several attempts and still reads as a blob, while a torii or a wave says
-   what it is at a glance. Asanoha went the same way: the hemp leaf needs three
-   distinguishable line weights across one hexagon and collapses into a grey
-   mesh at this size. */
+   Objects and patterns first: a torii or a wave says what it is at a glance,
+   which is why they carry the mode. Two motifs recorded here as dropped are
+   back, on terms that answer why they failed the first time:
+
+   - **Asanoha** is drawn as the LATTICE, not as a hexagon. The literal hemp
+     leaf needs three distinguishable line weights across one hexagon and does
+     collapse into grey mesh at 16px; the diamond lattice the pattern is built
+     from survives at one pixel a line, and it is what the eye reads as asanoha
+     on a paper screen anyway.
+   - **The koi** is 16x16 and is a fish, which is the one silhouette that does
+     survive at this size — a body, a forked tail and one eye gap. The kitsune
+     mask stays dropped: a face needs holes, and holes this small close up.
+
+   Anything living that needs more than a silhouette still does not belong on
+   this grid. */
 
 /**
  * Seigaiha — the blue-sea-wave scale pattern, as a true unit cell.
@@ -681,6 +689,62 @@ export const SEIGAIHA: Sprite = [
   '#..#..#..#..#..#',
   '.#.#..#..#..#.#.',
   '.#.#...##...#.#.',
+];
+
+/**
+ * Asanoha, as the diamond lattice the hemp-leaf pattern is built from.
+ *
+ * Generated rather than eyeballed: the two full diagonals plus one quarter arc
+ * unioned with its three quarter turns, which is what makes the tile symmetric
+ * under a quarter turn — and that symmetry is what makes it tile in both
+ * directions with no seam, because each edge meets its own mirror. The period
+ * is 8, so a 16px tile shows four cells and a 32px tile still reads as fabric
+ * rather than as four big diamonds.
+ */
+export const ASANOHA: Sprite = [
+  '#......##......#',
+  '.#....#..#....#.',
+  '..#..#....#..#..',
+  '...##......##...',
+  '...##......##...',
+  '..#..#....#..#..',
+  '.#....#..#....#.',
+  '#......##......#',
+  '#......##......#',
+  '.#....#..#....#.',
+  '..#..#....#..#..',
+  '...##......##...',
+  '...##......##...',
+  '..#..#....#..#..',
+  '.#....#..#....#.',
+  '#......##......#',
+];
+
+/**
+ * A koi, facing right, with the forked tail at the left and one eye gap.
+ *
+ * The gaps are the whole sprite: fill the notch at the tail and it is a
+ * torpedo, fill the eye and it is a bean. Both are single pixels wide because
+ * this is drawn at 32px in the wave field, where one grid pixel is two device
+ * pixels.
+ */
+export const KOI: Sprite = [
+  '................',
+  '.........####...',
+  '.......#######..',
+  '.#....##########',
+  '.##..###########',
+  '.###.#######.###',
+  '.###############',
+  '.###############',
+  '.###############',
+  '.###.###########',
+  '.##..###########',
+  '.#....##########',
+  '.......#######..',
+  '.........####...',
+  '................',
+  '................',
 ];
 
 /** A torii: kasagi over nuki over two pillars. The threshold, so it marks one. */
