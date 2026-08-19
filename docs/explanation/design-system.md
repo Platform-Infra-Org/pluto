@@ -144,7 +144,7 @@ and running moves to a cold 188° cyan that no other scheme uses.
 
 Every bottle on the shelf is now a *mode*: it carries a whole palette and its
 own chrome, hung off a single `sc-<id>` class on the root element. There are
-sixteen, and they arrived in two kinds. Eight are **table-driven** — a row in
+fifteen, and they arrived in two kinds. Seven are **table-driven** — a row in
 `brands.ts` with two registers of colour and a radius, which is all a mode needs
 when it is a recolour. Eight are **hand-written sheets**, one file each, because
 a `BRAND_DEFS` row cannot express ornament or an animation:
@@ -235,7 +235,7 @@ sheets are not discovered from `BRAND_DEFS`; and a baked sprite fill is a
 literal inside an SVG data URI, which inherits neither `currentColor` nor a
 custom property, so a two-colour motif is two URIs that have to be kept in step.
 
-The three animated modes share one host. `SchemeRoot` mounts `.sc-mode-art`
+The five animated modes share one host. `SchemeRoot` mounts `.sc-mode-art`
 once, unconditionally and `aria-hidden`, and each mode sheet turns on the child
 it draws. It is not branched on the picked scheme because `applyScheme` runs
 before React and writes a class on the root element — a React copy of "which
@@ -264,11 +264,14 @@ exception rather than a hole:
   inside the query, and the still frame is still designed.
 - **Nothing conveys state through motion alone**, which was never negotiable.
 
-The default theme keeps `steps()`, and so do Ancient Greek, Hanami, Nightshade and Rimefast — in the three animated modes the stepping is
-load-bearing rather than stylistic. A petal interpolated between pixel rows
-blurs, a moon strip interpolated between frames shows two half-moons at
-once, and an aurora interpolated across its tile reads as a banner sliding
-past rather than a curtain moving.
+The default theme keeps `steps()`, and so do Ancient Greek, Hanami,
+Nightshade, Rimefast and Ancient Egyptian — in all five animated modes the
+stepping is load-bearing rather than stylistic. A petal interpolated between
+pixel rows blurs, a moon strip interpolated between frames shows two
+half-moons at once, an aurora interpolated across its tile reads as a banner
+sliding past rather than a curtain moving, and the Aten has nowhere to
+interpolate *to*: its two frames are the same eight rays turned 45°, so an
+in-between position is a position the rays are never in.
 
 Everything timed sits inside `@media (prefers-reduced-motion: no-preference)`,
 and the reduced case is designed rather than merely disabled: the tour's

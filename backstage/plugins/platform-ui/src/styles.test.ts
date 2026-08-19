@@ -536,7 +536,7 @@ describe('SHADCN_CSS', () => {
     // named --sc-card while sitting on the page. Both are strips of chrome, and
     // chrome does not know what it is standing on -- only a surface does. The
     // failure is invisible wherever the two tokens happen to agree, which is
-    // why it read as a Hermes and Flying Papers bug rather than a general one.
+    // why it read as a Flying Papers bug rather than a general one.
     const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
     for (const sel of ['MuiToolbar-root', 'MuiAppBar-root']) {
       const block = rules.match(

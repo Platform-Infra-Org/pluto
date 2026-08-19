@@ -88,7 +88,6 @@ const MODES = [
   'slush',
   'spiderverse',
   'newform',
-  'hermes',
   'papers',
   'discord',
   'github',

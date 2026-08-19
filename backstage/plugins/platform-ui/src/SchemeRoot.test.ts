@@ -31,7 +31,7 @@ describe('colour schemes', () => {
     // An id is the key a browser has already persisted; a label is only what
     // someone reads. A pick that no longer exists degrades to the first bottle
     // rather than throwing.
-    expect(SCHEMES.map(s => s.id)).toEqual(['greek', 'hanami', 'nightshade', 'rimefast', 'egyptian', 'foudre', 'slush', 'spiderverse', 'newform', 'hermes', 'papers', 'discord', 'github', 'claude', 'dairy', 'obsidian']);
+    expect(SCHEMES.map(s => s.id)).toEqual(['greek', 'hanami', 'nightshade', 'rimefast', 'egyptian', 'foudre', 'slush', 'spiderverse', 'newform', 'papers', 'discord', 'github', 'claude', 'dairy', 'obsidian']);
   });
 
   it('keeps the vessel-bearing modes contiguous and first', () => {
@@ -58,7 +58,7 @@ describe('colour schemes', () => {
 
   it('gives each mode to exactly one potion', () => {
     const modes = SCHEMES.filter(s => s.mode).map(s => s.mode);
-    expect([...modes].sort()).toEqual(['claude', 'dairy', 'discord', 'egyptian', 'foudre', 'github', 'greek', 'hanami', 'hermes', 'newform', 'nightshade', 'obsidian', 'papers', 'rimefast', 'slush', 'spiderverse']);
+    expect([...modes].sort()).toEqual(['claude', 'dairy', 'discord', 'egyptian', 'foudre', 'github', 'greek', 'hanami', 'newform', 'nightshade', 'obsidian', 'papers', 'rimefast', 'slush', 'spiderverse']);
     expect(new Set(modes).size).toBe(modes.length);
   });
 
@@ -75,7 +75,7 @@ describe('colour schemes', () => {
     // a second complete palette still matching, and which one wins is then
     // decided by stylesheet order rather than by what was clicked. Every mode
     // must be cleared on every pick, not only the one being replaced.
-    const ALL = ['sc-greek', 'sc-hanami', 'sc-nightshade', 'sc-rimefast', 'sc-egyptian', 'sc-foudre', 'sc-slush', 'sc-spiderverse', 'sc-newform', 'sc-hermes', 'sc-papers', 'sc-discord', 'sc-github', 'sc-claude', 'sc-dairy', 'sc-obsidian'];
+    const ALL = ['sc-greek', 'sc-hanami', 'sc-nightshade', 'sc-rimefast', 'sc-egyptian', 'sc-foudre', 'sc-slush', 'sc-spiderverse', 'sc-newform', 'sc-papers', 'sc-discord', 'sc-github', 'sc-claude', 'sc-dairy', 'sc-obsidian'];
     const classesFor = (id: string) => {
       applyScheme(id);
       return ALL.filter(c => document.documentElement.classList.contains(c));
