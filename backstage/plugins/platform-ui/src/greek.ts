@@ -418,7 +418,13 @@ export function greekCss(): string {
   @keyframes sc-greek-waver { from { margin-left: 0; } to { margin-left: 18px; } }
   @keyframes sc-greek-flicker { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 
-  :root.sc-greek .sc-greek-embers i {
+  /* :nth-child(n) matches every ember and exists only to raise this rule to
+     the specificity of the scattered still-frame positions above, which are
+     (0,4,1) because of their own :nth-child. Without it the reset loses, each
+     ember starts partway up the screen, and rising 104vh from there puts it
+     above the fold for most of its cycle — twelve sparks of which one is
+     visible at a time, which is how this read as "no animation at all". */
+  :root.sc-greek .sc-greek-embers i:nth-child(n) {
     bottom: 0;
     animation: sc-greek-rise 13s steps(26) infinite,
                sc-greek-waver 3.4s steps(3) infinite alternate,

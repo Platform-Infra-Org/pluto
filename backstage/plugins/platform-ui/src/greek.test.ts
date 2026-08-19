@@ -155,6 +155,16 @@ describe('greekCss', () => {
     }
   });
 
+  it('starts every ember at the hearth line once it is moving', () => {
+    // The still-frame positions are :nth-child rules, so the animated reset has
+    // to carry a :nth-child of its own or it loses the cascade and each ember
+    // climbs from wherever its static position left it — off the top of the
+    // screen for most of the cycle, which looks exactly like no animation.
+    expect(greekCss()).toMatch(
+      /\.sc-greek-embers i:nth-child\(n\)\s*\{[^}]*bottom:\s*0/,
+    );
+  });
+
   it('uses steps() for any animation, never ease', () => {
     expect(greekCss()).not.toMatch(/animation:[^;]*\bease\b/);
   });
