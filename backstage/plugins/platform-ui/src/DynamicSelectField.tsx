@@ -70,7 +70,15 @@ function fetchTree(url: string, fetcher: (u: string) => Promise<Response>) {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function DynamicSelectFieldComponent(props: any) {
-  const { formData, onChange, uiSchema, schema, formContext } = props;
+  const { formData, onChange, uiSchema, schema, registry } = props;
+  // RJSF v5 moved the canonical formContext onto `registry`: FieldProps declares
+  // `formContext?` (optional, and undefined under Backstage's Stepper) while
+  // RegistryProps declares `formContext` outright, which is what RJSF's own
+  // internals read. Reading only the top-level prop worked in an @rjsf theme
+  // harness and silently failed in the real form — every ancestor resolved to
+  // '' and every dependent level reported "Pick <parent> first" while the
+  // parent plainly had a value.
+  const formContext = props.formContext ?? registry?.formContext;
   const opts = (uiSchema?.['ui:options'] ?? {}) as UiOptions;
   const fetchApi = useApi(fetchApiRef);
   const discovery = useApi(discoveryApiRef);

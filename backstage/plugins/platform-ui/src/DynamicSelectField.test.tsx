@@ -45,6 +45,25 @@ describe('DynamicSelectFieldComponent', () => {
     formData: '',
   };
 
+  it('reads the ancestors from registry.formContext when that is the only copy', async () => {
+    // RJSF v5's canonical location. FieldProps.formContext is optional and is
+    // undefined under Backstage's Stepper, so a field that reads only the
+    // top-level prop sees no ancestors at all and blocks every level below it.
+    renderField({
+      ...base,
+      formContext: undefined,
+      registry: { formContext: { formData: { space: 'prod', network: 'core' } } },
+      uiSchema: {
+        'ui:options': {
+          proxyPath: '/infra/coordinate-tree',
+          treePath: 'coordinates',
+          dependsOn: ['space', 'network'],
+        },
+      },
+    });
+    await screen.findByRole('option', { name: 'eu-west' });
+  });
+
   it('offers the children of the chosen ancestors', async () => {
     renderField({
       ...base,
