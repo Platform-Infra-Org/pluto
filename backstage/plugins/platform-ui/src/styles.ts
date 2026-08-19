@@ -1356,9 +1356,11 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    nothing looks wrong in the markup.
    dvh rather than vh because on mobile a collapsing URL bar makes vh taller
    than what is actually on screen, which is the same bug with a different
-   trigger. The inner overflow is the safety valve: on a viewport too short for
+   trigger. Each is declared twice, vh first: a browser without dvh drops that
+   declaration entirely, and without the fallback beneath it the wrapper would
+   be left with no height at all — worse than the bug being fixed. The inner overflow is the safety valve: on a viewport too short for
    the card the card scrolls, never the page, and nothing is clipped away. */
-.sc-login { height: 100dvh; min-height: 100dvh; overflow-y: auto;
+.sc-login { height: 100vh; height: 100dvh; min-height: 100vh; min-height: 100dvh; overflow-y: auto;
   display: flex; align-items: center; justify-content: center;
   background: hsl(var(--sc-bg)); padding: 24px; }
 .sc-login-card { width: 360px; max-width: 100%; padding: 36px 32px; text-align: center;
