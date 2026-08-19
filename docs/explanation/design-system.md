@@ -144,9 +144,9 @@ and running moves to a cold 188° cyan that no other scheme uses.
 
 Every bottle on the shelf is now a *mode*: it carries a whole palette and its
 own chrome, hung off a single `sc-<id>` class on the root element. There are
-fifteen, and they arrived in two kinds. Eight are **table-driven** — a row in
+fifteen, and they arrived in two kinds. Seven are **table-driven** — a row in
 `brands.ts` with two registers of colour and a radius, which is all a mode needs
-when it is a recolour. Seven are **hand-written sheets**, one file each, because
+when it is a recolour. Eight are **hand-written sheets**, one file each, because
 a `BRAND_DEFS` row cannot express ornament or an animation:
 
 - **Ancient Greek** (`greek.ts`) — bronze on bone, gold on obsidian; meander,
@@ -187,6 +187,29 @@ a `BRAND_DEFS` row cannot express ornament or an animation:
   what the mode uses. `rimefast.test.ts` asserts the sheet never names the five,
   so completing the set in a year's time fails a test rather than a shipping
   review. This paragraph is the reason, kept next to the rule.
+- **Ancient Egyptian** (`egyptian.ts`) — pigment rather than sand; beige is
+  what four thousand years of weathering left, not what anyone painted. The
+  light register is **lapis and Egyptian blue on a cool limestone white**, with
+  gold demoted to an accent, and it is that way on purpose: as papyrus-and-
+  ochre it read as the same room as Ancient Greek's parchment-and-bronze, and
+  two warm grounds carrying a warm metal is one design with two names. The dark
+  register is a tomb interior — gold leaf and Egyptian blue lit against black.
+  Both cards are solved backwards from the shared status set and both are
+  pinned: the light one cannot fall below 96% lightness (warning-on-cell is
+  4.99 at 95%) and the dark one cannot rise above 7% (4.90 at 8%). The ornament
+  is hieroglyphic: a four-sign glyph register (ankh, feather of Maat, water
+  ripple, reed over a ground line) under every page title and along both edges
+  of a command window, papyrus down the sidebar, djed pillars and a facing pair
+  of wedjat eyes at the sign-in threshold with a cartouche between them, an
+  ankh on an empty shelf, and the Aten stepping its rays in the bottom-right
+  corner on two frames, 800ms a frame. **The signs are real and the arrangement
+  is deliberately not a sentence** — a band of genuine glyphs in sequence spells
+  something and a decorative band that spells something spells it wrong, so the
+  cartouche holds one ankh rather than a name. `sprites.ts` says so beside the
+  grids, because the obvious later "fix" is to make it read. Malachite is
+  confined to the sign-in page — it sits 16° from the success status hue, and
+  green ornament beside a badge turns decoration into state;
+  `egyptian.test.ts` fails if it appears anywhere else.
 
 The mechanism is specificity alone. The injected accent sheet writes `:root`,
 which is (0,1,0); `:root.sc-greek` is (0,2,0) and wins whatever the injection
@@ -212,7 +235,7 @@ sheets are not discovered from `BRAND_DEFS`; and a baked sprite fill is a
 literal inside an SVG data URI, which inherits neither `currentColor` nor a
 custom property, so a two-colour motif is two URIs that have to be kept in step.
 
-The three animated modes share one host. `SchemeRoot` mounts `.sc-mode-art`
+The five animated modes share one host. `SchemeRoot` mounts `.sc-mode-art`
 once, unconditionally and `aria-hidden`, and each mode sheet turns on the child
 it draws. It is not branched on the picked scheme because `applyScheme` runs
 before React and writes a class on the root element — a React copy of "which
@@ -241,11 +264,14 @@ exception rather than a hole:
   inside the query, and the still frame is still designed.
 - **Nothing conveys state through motion alone**, which was never negotiable.
 
-The default theme keeps `steps()`, and so do Ancient Greek, Hanami, Nightshade and Rimefast — in the three animated modes the stepping is
-load-bearing rather than stylistic. A petal interpolated between pixel rows
-blurs, a moon strip interpolated between frames shows two half-moons at
-once, and an aurora interpolated across its tile reads as a banner sliding
-past rather than a curtain moving.
+The default theme keeps `steps()`, and so do Ancient Greek, Hanami,
+Nightshade, Rimefast and Ancient Egyptian — in all five animated modes the
+stepping is load-bearing rather than stylistic. A petal interpolated between
+pixel rows blurs, a moon strip interpolated between frames shows two
+half-moons at once, an aurora interpolated across its tile reads as a banner
+sliding past rather than a curtain moving, and the Aten has nowhere to
+interpolate *to*: its two frames are the same eight rays turned 45°, so an
+in-between position is a position the rays are never in.
 
 Everything timed sits inside `@media (prefers-reduced-motion: no-preference)`,
 and the reduced case is designed rather than merely disabled: the tour's

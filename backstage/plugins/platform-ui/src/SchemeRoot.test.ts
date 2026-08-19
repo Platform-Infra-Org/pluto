@@ -1,4 +1,4 @@
-import { SCHEMES, applyScheme } from './SchemeRoot';
+import { MODE_VESSELS, SCHEMES, applyScheme } from './SchemeRoot';
 
 /** WCAG relative luminance for an "H S% L%" triplet. */
 function luminance(hsl: string): number {
@@ -31,12 +31,34 @@ describe('colour schemes', () => {
     // An id is the key a browser has already persisted; a label is only what
     // someone reads. A pick that no longer exists degrades to the first bottle
     // rather than throwing.
-    expect(SCHEMES.map(s => s.id)).toEqual(['greek', 'foudre', 'slush', 'spiderverse', 'hanami', 'nightshade', 'rimefast', 'newform', 'hermes', 'papers', 'discord', 'github', 'claude', 'dairy', 'obsidian']);
+    expect(SCHEMES.map(s => s.id)).toEqual(['greek', 'hanami', 'nightshade', 'rimefast', 'egyptian', 'foudre', 'slush', 'spiderverse', 'newform', 'papers', 'discord', 'github', 'claude', 'dairy', 'obsidian']);
+  });
+
+  it('keeps the vessel-bearing modes contiguous and first', () => {
+    // The shelf is meant to read as "the crafted ones, then the brand ones",
+    // and that is carried by ORDER alone — nothing on screen labels the
+    // groups. Slot a new scheme in at index 2 and the grouping is silently
+    // gone, which is exactly the change nobody reviews. Checked as one string
+    // so a failure prints the whole shelf rather than an index.
+    const shelf = SCHEMES.map(s =>
+      s.mode && MODE_VESSELS[s.mode] ? 'V' : '.',
+    ).join('');
+    const n = Object.keys(MODE_VESSELS).length;
+    expect(shelf).toBe('V'.repeat(n) + '.'.repeat(SCHEMES.length - n));
+  });
+
+  it('gives every vessel to a mode that is actually on the shelf', () => {
+    // A vessel keyed to a mode no scheme carries draws nothing and fails
+    // nowhere.
+    const modes = new Set(SCHEMES.map(s => s.mode));
+    for (const mode of Object.keys(MODE_VESSELS)) {
+      expect(`${mode}:${modes.has(mode as never)}`).toBe(`${mode}:true`);
+    }
   });
 
   it('gives each mode to exactly one potion', () => {
     const modes = SCHEMES.filter(s => s.mode).map(s => s.mode);
-    expect([...modes].sort()).toEqual(['claude', 'dairy', 'discord', 'foudre', 'github', 'greek', 'hanami', 'hermes', 'newform', 'nightshade', 'obsidian', 'papers', 'rimefast', 'slush', 'spiderverse']);
+    expect([...modes].sort()).toEqual(['claude', 'dairy', 'discord', 'egyptian', 'foudre', 'github', 'greek', 'hanami', 'newform', 'nightshade', 'obsidian', 'papers', 'rimefast', 'slush', 'spiderverse']);
     expect(new Set(modes).size).toBe(modes.length);
   });
 
@@ -53,7 +75,7 @@ describe('colour schemes', () => {
     // a second complete palette still matching, and which one wins is then
     // decided by stylesheet order rather than by what was clicked. Every mode
     // must be cleared on every pick, not only the one being replaced.
-    const ALL = ['sc-greek', 'sc-foudre', 'sc-slush', 'sc-spiderverse', 'sc-hanami', 'sc-nightshade', 'sc-rimefast', 'sc-newform', 'sc-hermes', 'sc-papers', 'sc-discord', 'sc-github', 'sc-claude', 'sc-dairy', 'sc-obsidian'];
+    const ALL = ['sc-greek', 'sc-hanami', 'sc-nightshade', 'sc-rimefast', 'sc-egyptian', 'sc-foudre', 'sc-slush', 'sc-spiderverse', 'sc-newform', 'sc-papers', 'sc-discord', 'sc-github', 'sc-claude', 'sc-dairy', 'sc-obsidian'];
     const classesFor = (id: string) => {
       applyScheme(id);
       return ALL.filter(c => document.documentElement.classList.contains(c));

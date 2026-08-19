@@ -33,15 +33,30 @@
  * person will otherwise reach for the pretty pink.
  *
  * The ornament, not the palette, is what makes this read as Japanese: seigaiha
- * under every page title, a torii on an empty shelf, a wave field at the
- * threshold, and sakura falling across the whole viewport. All from sprite
- * grids (sprites.ts), so they sit in the same pixel language as the rest of the
- * app rather than looking like a decal over it.
+ * under every page title and printed across the whole sign-in page as a real
+ * field, a torii over the card and another on an empty shelf, a koi in the
+ * waves, asanoha down the sidebar as a shoji screen, and sakura falling across
+ * the viewport. All from sprite grids (sprites.ts), so they sit in the same
+ * pixel language as the rest of the app rather than looking like a decal over
+ * it.
+ *
+ * Two registers of ornament ink, and mixing them is the mistake to avoid: the
+ * LINE inks (ai-iro, enji) are full strength and draw keylines and objects; the
+ * GROUND tint (--sc-washi) is one step off its own surface and prints fields.
+ * A field in a line ink is a page of pattern with an app somewhere behind it.
  *
  * Kept out of styles.ts for the reason greek.ts records: that file is one
  * template literal and a stray backtick truncates the lot.
  */
-import { BLOSSOM, PETAL_STRIP, SEIGAIHA, TORII, spriteUrl } from './sprites';
+import {
+  ASANOHA,
+  BLOSSOM,
+  KOI,
+  PETAL_STRIP,
+  SEIGAIHA,
+  TORII,
+  spriteUrl,
+} from './sprites';
 
 /**
  * The ornament inks, as literals.
@@ -56,6 +71,18 @@ const ASAGI = 'hsl(187 38% 64.7%)'; // asagi, the same indigo lifted for night
 const ENJI = 'hsl(355 59% 38.8%)'; // enji, the vermilion a torii is painted
 const BENI = 'hsl(348 79% 70.2%)'; // beni, safflower red for the dark register
 const SAKURA = 'hsl(14 92% 86%)'; // sakura-iro. Decoration only, never text.
+/**
+ * The paper tints, for ornament that is a GROUND rather than a line.
+ *
+ * A field is not a band: seigaiha across a whole page and asanoha down a whole
+ * panel in the full-strength indigo above would be a page of pattern with an
+ * app somewhere behind it. These two sit one step off their own surface, which
+ * is what a pattern printed into paper does. They carry no text and no meaning,
+ * and --sc-washi holds the same value in each register so the literal here can
+ * be checked against the sheet.
+ */
+const WASHI = 'hsl(28 45% 89%)'; // the tint by day
+const YORU = 'hsl(196 24% 11.5%)'; // and by night
 
 export function hanamiCss(): string {
   return `
@@ -88,6 +115,8 @@ export function hanamiCss(): string {
      yamabuki is 1.95: neither may carry text or a border that means anything. */
   --sc-sakura: 14 92% 86%;
   --sc-yamabuki: 39 100% 50%;
+  /* The paper tint the wave field and the shoji panel are printed in. */
+  --sc-washi: 28 45% 89%;
 }
 /* ===== dark register: the same garden at night, lit by the lanterns ===== */
 :root.sc-hanami.sc-dark {
@@ -118,6 +147,7 @@ export function hanamiCss(): string {
   --sc-sakura: 14 92% 86%;
   /* Safe as text HERE and only here: 9.64 against the night card. */
   --sc-yamabuki: 39 100% 50%;
+  --sc-washi: 196 24% 11.5%;
 }
 
 /* ===== Chrome. Indigo outline on gofun in the light register, asagi on a
@@ -154,6 +184,7 @@ export function hanamiCss(): string {
   box-shadow:
     0 0 0 2px hsl(var(--sc-card)),
     0 0 0 4px hsl(var(--sc-ai)),
+    0 0 14px hsl(var(--sc-primary) / .18),
     var(--sc-shadow) !important;
   background-image: ${spriteUrl(BLOSSOM, SAKURA)}, ${spriteUrl(BLOSSOM, SAKURA)},
     ${spriteUrl(BLOSSOM, SAKURA)}, ${spriteUrl(BLOSSOM, SAKURA)};
@@ -201,18 +232,45 @@ export function hanamiCss(): string {
   background-image: ${spriteUrl(SEIGAIHA, ASAGI)};
 }
 
-/* The sign-in page stands at the shore: a wave field along the bottom edge and
-   nothing else. Deliberately only here, the same restraint greek keeps — a
-   motif reads as intent where it means something and as wallpaper everywhere
-   else, and a data grid is not a threshold. */
+/* The sign-in page as the threshold it is: a torii standing over the card, and
+   the whole page printed with seigaiha as a real FIELD rather than a band along
+   one edge — the pattern tiles in both directions with no seam, so anything
+   less than the full page was throwing that away. A koi swims in it.
+
+   Three layers, and the order is the picture: the torii and the koi are listed
+   first because the first layer paints on top, and the wave is the paper they
+   are printed on. The field is in the paper tint, not the indigo the keylines
+   use; at full strength this is a page of pattern with an app behind it.
+
+   Deliberately only here, the same restraint greek keeps — a motif reads as
+   intent where it means something and as wallpaper everywhere else, and a data
+   grid is not a threshold. */
 :root.sc-hanami .sc-login {
-  background-image: ${spriteUrl(SEIGAIHA, AI)};
-  background-repeat: repeat-x;
-  background-size: 32px 32px;
-  background-position: left bottom;
+  background-image: ${spriteUrl(TORII, ENJI)}, ${spriteUrl(KOI, ENJI)},
+    ${spriteUrl(SEIGAIHA, WASHI)};
+  background-repeat: no-repeat, no-repeat, repeat;
+  background-size: 48px 48px, 32px 32px, 32px 32px;
+  background-position: center top 24px, left 14% bottom 56px, left top;
 }
 :root.sc-hanami.sc-dark .sc-login {
-  background-image: ${spriteUrl(SEIGAIHA, ASAGI)};
+  background-image: ${spriteUrl(TORII, BENI)}, ${spriteUrl(KOI, BENI)},
+    ${spriteUrl(SEIGAIHA, YORU)};
+}
+
+/* The sidebar as a shoji screen: asanoha printed into the panel, in the same
+   paper tint. A lattice at one pixel a line is the one form of this pattern
+   that survives 16px — the literal hemp leaf needs three line weights across a
+   hexagon and turns to grey mesh, which is why sprites.ts draws the lattice.
+   The nav is the right panel for it and the only one: a screen is a wall, and
+   walls are where a household pattern goes. Data grids are not walls. */
+:root.sc-hanami .sc-nav {
+  background-image: ${spriteUrl(ASANOHA, WASHI)};
+  background-repeat: repeat;
+  background-size: 32px 32px;
+  background-position: left top;
+}
+:root.sc-hanami.sc-dark .sc-nav {
+  background-image: ${spriteUrl(ASANOHA, YORU)};
 }
 
 /* An empty shelf gets a torii — vermilion, which is what a torii is painted,
@@ -226,6 +284,19 @@ export function hanamiCss(): string {
 }
 :root.sc-hanami.sc-dark .sc-empty {
   background-image: ${spriteUrl(TORII, BENI)};
+}
+
+/* Primary buttons take the same indigo keyline the cards do — a woodblock
+   print outlines every shape in one ink, and a button is a shape.
+
+   No bloom on it, deliberately, and this is where hanami parts from greek: an
+   ember glow is a light source, and this mode is lit by daylight on paper.
+   Greek's button glows because its room is dark. The motion budget here is
+   spent on the petals, which are the thing worth watching. */
+:root.sc-hanami [class*="MuiButton-containedPrimary"],
+:root.sc-hanami .sc-btn-primary,
+:root.sc-hanami [data-variant="primary"][class*="bui-Button"] {
+  border: var(--sc-border-w) solid hsl(var(--sc-ai)) !important;
 }
 
 /* ===== Sakura =====

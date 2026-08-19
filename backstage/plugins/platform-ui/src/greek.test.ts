@@ -7,6 +7,7 @@ import {
 } from './statusTokens';
 import {
   COLUMN,
+  FRET,
   MEANDER,
   PALMETTE,
   ROSETTE,
@@ -109,6 +110,81 @@ describe('greekCss', () => {
     const css = greekCss();
     expect(css).toMatch(/\.sc-greek-embers i \{[^}]*opacity: 1/);
     expect(css).toMatch(/@keyframes sc-greek-flicker \{\s*0%, 100% \{ opacity: 1; \}/);
+  });
+
+  it('throws enough sparks, and big enough ones, to be seen', () => {
+    // The reported defect: the ember animation was invisible. Six 4px squares
+    // in mid-gold on 96% parchment is a spark every few hundred pixels of
+    // viewport, below the size at which movement registers at all, in an ink
+    // that barely leaves the page. All three had to move together — a bigger
+    // square in a paler ink is still invisible — so all three are pinned.
+    const css = greekCss();
+    const placed = Array.from(
+      css.matchAll(/\.sc-greek-embers i:nth-child\((\d+)\) \{ left:/g),
+      m => Number(m[1]),
+    );
+    // The count here and EMBERS in SchemeRoot.tsx are two halves of one thing:
+    // an ember with no nth-child rule of its own sits at the default position
+    // on the default clock, so the extras stack up in one spot in lockstep.
+    expect(placed).toEqual(Array.from({ length: 12 }, (_, i) => i + 1));
+    const spark = /\.sc-greek-embers i \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    const size = Number(/width:\s*(\d+)px/.exec(spark)?.[1]);
+    expect(size).toBeGreaterThanOrEqual(6);
+    expect(spark).toContain(`height: ${size}px`);
+    // Still a hard square in a flat ink. The fix for "too faint" is never a
+    // blur, in this design system.
+    expect(spark).not.toMatch(/border-radius|radial-gradient/);
+    // And every ember still travels on a clock of its own.
+    const timed = (css.match(/\.sc-greek-embers i:nth-child\(\d+\) \{ animation-duration:/g) ?? []).length;
+    expect(timed).toBe(placed.length - 1);
+  });
+
+  it('burns the ember in an ink that is not the failure badge', () => {
+    // Decoration carries no contrast requirement, but it does carry this one:
+    // a warm square rising up the page must not be mistaken for a status
+    // colour coming loose. The ember hue has to stay clear of destructive.
+    const css = greekCss();
+    const hueOf = (token: string, selector: string) => {
+      const start = css.indexOf(`${selector} {`);
+      const body = css.slice(start, css.indexOf('}', start));
+      return Number(new RegExp(`--sc-${token}:\\s*([\\d.]+)`).exec(body)?.[1]);
+    };
+    // Distinguishable, not merely distant in hue. A fire ember IS red, so on
+    // the daylight register it sits about 6deg from the failure badge and no
+    // hue rule can separate them — what separates them there is weight: 30%
+    // lightness against the badge's 50%, a dark coal rather than a warning.
+    // Either axis satisfies this; needing both would forbid a red ember, and
+    // needing neither would let one drift into looking like state.
+    const lightOf = (token: string, selector: string) => {
+      const start = css.indexOf(`${selector} {`);
+      const body = css.slice(start, css.indexOf('}', start));
+      return Number(
+        new RegExp(`--sc-${token}:\\s*[\\d.]+\\s+[\\d.]+%\\s+([\\d.]+)`).exec(body)?.[1],
+      );
+    };
+    for (const register of [':root.sc-greek', ':root.sc-greek.sc-dark']) {
+      const hueGap = Math.abs(hueOf('ember', register) - hueOf('destructive', register));
+      const lightGap = Math.abs(lightOf('ember', register) - lightOf('destructive', register));
+      const distinct = hueGap >= 20 || lightGap >= 18;
+      expect(`${register}:${distinct}`).toBe(`${register}:true`);
+    }
+  });
+
+  it('stretches the ember layer over the viewport it draws in', () => {
+    // .sc-mode-art > * is absolute with no offsets, so a wrapper that does not
+    // stretch is 0x0 in the corner and every `bottom` inside it resolves
+    // against nothing.
+    expect(greekCss()).toMatch(/\.sc-greek-embers \{[^}]*inset:\s*0/);
+  });
+
+  it('starts every ember at the hearth line once it is moving', () => {
+    // The still-frame positions are :nth-child rules, so the animated reset has
+    // to carry a :nth-child of its own or it loses the cascade and each ember
+    // climbs from wherever its static position left it — off the top of the
+    // screen for most of the cycle, which looks exactly like no animation.
+    expect(greekCss()).toMatch(
+      /\.sc-greek-embers i:nth-child\(n\)\s*\{[^}]*bottom:\s*0/,
+    );
   });
 
   it('uses steps() for any animation, never ease', () => {
@@ -280,6 +356,54 @@ describe('greek ornament renders inside its box', () => {
     expect(offenders.map(o => o.sel)).toEqual([]);
   });
 
+  it('prints the sidebar as a field rather than a strip down one edge', () => {
+    // The hanami sidebar is the model this follows: a full-panel tiled lattice
+    // at low contrast, so the nav reads as a wall the labels sit on. A band
+    // anchored to one edge reads as a seam — something the layout did — and it
+    // has nowhere to go when the nav collapses to icon width.
+    // FRET, not MEANDER: the band is drawn with two-pixel rails because it is
+    // read at heading size, and tiled across a panel those rails are half the
+    // surface. And in the ground tint, never in bronze.
+    const css = greekCss();
+    const nav = /:root\.sc-greek \.sc-nav \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(nav).toMatch(/background-repeat:\s*repeat;/);
+    expect(nav).not.toMatch(/repeat-y/);
+    expect(nav).toContain(spriteDataUri(FRET, 'hsl(40 38% 94%)'));
+    const dark = /:root\.sc-greek\.sc-dark \.sc-nav \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(dark).toContain(spriteDataUri(FRET, 'hsl(265 20% 15%)'));
+  });
+
+  it('fields the sign-in page instead of tiling strips down its edges', () => {
+    // What shipped before: a 14px column sprite on repeat-y down each edge of
+    // the viewport. A repeat-y tile is not a tall ornament, it is a short one
+    // stacked with a seam at every joint, and at most window sizes that read
+    // as a glitch rather than as a facade. Whatever the tile draws, the eye
+    // finds the seams.
+    // A frieze along the top edge and a palmette field behind everything else
+    // have no seam to find — and the field is in the ground tint, because a
+    // full-page pattern in bronze is a page of pattern with a form behind it.
+    const css = greekCss();
+    const login = /:root\.sc-greek \.sc-login \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(login).not.toMatch(/repeat-y/);
+    expect(login).toContain(spriteDataUri(PALMETTE, 'hsl(40 38% 94%)'));
+    expect(login).toContain(spriteDataUri(MEANDER, 'hsl(40 55% 46%)'));
+    const dark = /:root\.sc-greek\.sc-dark \.sc-login \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(dark).toContain(spriteDataUri(PALMETTE, 'hsl(265 20% 15%)'));
+    expect(dark).toContain(spriteDataUri(MEANDER, 'hsl(43 62% 46%)'));
+    // Every layer keeps a repeat of its own, or the frieze becomes a field too.
+    expect((login.match(/ORNAMENT|url\("data:/g) ?? []).length).toBe(2);
+    expect(login).toMatch(/background-repeat:\s*repeat-x,\s*repeat;/);
+  });
+
+  it('draws no ornament it does not render, and renders none twice over', () => {
+    // COLUMN left the sheet with the sign-in strips. It is deliberately still
+    // in sprites.ts and deliberately not imported here: an unused import is
+    // the shape a half-finished revert leaves behind, and lint would not catch
+    // it in the test file.
+    expect(greekCss()).not.toContain(spriteDataUri(COLUMN, 'hsl(40 55% 46%)'));
+    expect(greekCss()).not.toContain(spriteDataUri(COLUMN, 'hsl(43 62% 46%)'));
+  });
+
   it('keeps every ornament paired with a repeat', () => {
     // A background-image with no background-repeat tiles across the whole
     // surface: a corner medallion becomes wallpaper, a header band becomes a
@@ -325,7 +449,6 @@ describe('greek ornament is drawn from sprites', () => {
     for (const [name, sprite] of Object.entries({
       MEANDER,
       PALMETTE,
-      COLUMN,
       ROSETTE,
     })) {
       const light = spriteDataUri(sprite, 'hsl(40 55% 46%)');
@@ -348,5 +471,17 @@ describe('greek ornament is drawn from sprites', () => {
     };
     expect(borderIn(':root.sc-greek')).toBe('40 55% 46%');
     expect(borderIn(':root.sc-greek.sc-dark')).toBe('43 62% 46%');
+
+    // The sidebar field is printed in a GROUND tint rather than in the rule
+    // colour — same literal-tracks-token trap, one layer quieter. If the two
+    // ever meet, the sidebar stops being a wall and becomes a drawing.
+    const groundIn = (selector: string) => {
+      const start = css.indexOf(`${selector} {`);
+      const body = css.slice(start, css.indexOf('}', start));
+      return /--sc-ground:\s*([^;]+);/.exec(body)?.[1].trim();
+    };
+    expect(groundIn(':root.sc-greek')).toBe('40 38% 94%');
+    expect(groundIn(':root.sc-greek.sc-dark')).toBe('265 20% 15%');
+    expect(groundIn(':root.sc-greek')).not.toBe(borderIn(':root.sc-greek'));
   });
 });

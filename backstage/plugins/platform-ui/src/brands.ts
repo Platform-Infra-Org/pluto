@@ -91,34 +91,6 @@ export const BRAND_DEFS: BrandDef[] = [
     ease: 'cubic-bezier(.2, .8, .2, 1)',
   },
   {
-    id: 'hermes',
-    label: 'Hermes',
-    // Pure #0000f2 carries white at 3.6:1. Both registers move it: down to 40%
-    // on light, up to 76% on dark, which is the only way a brutalist blue holds
-    // a label at either end. 76 rather than 72 because the blue also has to
-    // carry the active nav item, whose ground is the accent rather than the
-    // card — at 72% that pairing measured 4.04:1 on screen and at 74% it was
-    // still 4.43. Measured against the ground the browser actually paints,
-    // not against the token. Darkening the accent instead
-    // would have fixed the ratio and cost the state its surface: the accent
-    // sits at 15% against a 10% card, and dropping it to 11% makes the active
-    // row indistinguishable from the panel it sits on.
-    bottle: '240 100% 40%',
-    bottleFg: WHITE,
-    light: { bg:'0 0% 96%', fg:'0 0% 0%', card:'0 0% 100%', muted:'0 0% 92%',
-      mutedFg:'0 0% 30%', border:'240 100% 47%', primary:'240 100% 40%', primaryFg:WHITE,
-      accent:'240 100% 95%', accentFg:'240 100% 20%' },
-    dark: { bg:'0 0% 4%', fg:'0 0% 96%', card:'0 0% 10%', muted:'0 0% 18%',
-      mutedFg:'0 0% 72%', border:'0 0% 40%', primary:'240 100% 76%', primaryFg:'0 0% 4%',
-      accent:'240 25% 15%', accentFg:'0 0% 96%' },
-    // The reference is square — 4px on one element and nothing else — but a
-    // square surface reads as unfinished beside the rest of the app, so the
-    // corners come up to the house radius. What carries the brutalism here is
-    // the rule weight and the pure-blue accent, both untouched.
-    radius: { base:'12px', card:'16px', button:'10px' },
-    borderW: '1px',
-  },
-  {
     id: 'papers',
     label: 'Flying Papers',
     // Acid yellow #f4ed36 is 414 elements of text on dark and cannot fill a

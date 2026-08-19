@@ -8,7 +8,17 @@ import {
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
 import { BRAND_DEFS } from './brands';
-import { AMPHORA_VESSEL, SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
+import {
+  AMPHORA_VESSEL,
+  CANOPIC_VESSEL,
+  CAULDRON_VESSEL,
+  TANKARD_VESSEL,
+  Sprite,
+  SPRITE_SIZE,
+  spriteRects,
+  TEMPLE,
+  TOKKURI_VESSEL,
+} from './sprites';
 import { PixelPotion, PixelStar } from './components';
 import { templateHeaderCss } from './templateHeaders';
 import { listenForKonami } from './konami';
@@ -78,7 +88,6 @@ const MODES = [
   'slush',
   'spiderverse',
   'newform',
-  'hermes',
   'papers',
   'discord',
   'github',
@@ -88,43 +97,48 @@ const MODES = [
   'hanami',
   'nightshade',
   'rimefast',
+  'egyptian',
 ] as const;
 type Mode = (typeof MODES)[number];
+
+/**
+ * The modes whose potion is a vessel of its own rather than the generic bottle.
+ *
+ * A map and not a chain of ternaries at the two call sites: the shelf and the
+ * inventory tray both render a bottle, and a branch in each is how the two
+ * drifted apart the first time. Adding the next one is a row here.
+ *
+ * ORDER MATTERS ELSEWHERE. These five sit contiguously at the front of
+ * `SCHEMES` so the shelf reads as "the crafted ones, then the brand ones", and
+ * `SchemeRoot.test.ts` fails if a new scheme is slotted in between them.
+ */
+export const MODE_VESSELS: Partial<Record<Mode, Sprite>> = {
+  greek: AMPHORA_VESSEL,
+  hanami: TOKKURI_VESSEL,
+  nightshade: CAULDRON_VESSEL,
+  rimefast: TANKARD_VESSEL,
+  egyptian: CANOPIC_VESSEL,
+};
 
 // Saturated toward NES-era values. `fg` is the text colour that sits on the
 // accent: white where it clears 4.5:1, near-black where it doesn't. Green and
 // amber are the reason this field exists — darkening them enough for white text
 // would have turned them to mud. Ratios are measured, see SchemeRoot.test.ts.
 export const SCHEMES: Scheme[] = [
-  // Two design systems, each rendered in this app's furniture. Ids are the key
-  // a browser has already persisted and never change once published.
+  // THREE GROUPS, IN THIS ORDER, AND THE ORDER IS THE POINT. First the modes
+  // with a vessel of their own, so the shelf opens on five different
+  // silhouettes rather than five different colours of the same bottle; then
+  // the reference design systems, which are a palette and a chrome but still
+  // the generic bottle; then the table-driven brand rows. "The crafted ones,
+  // then the brand ones" is a thing a user can see without being told.
+  // Ids are the key a browser has already persisted and never change once
+  // published, so reordering is free — this is a display order, not a schema.
   {
     id: 'greek',
     label: 'Ancient Greek',
     hsl: '10 68% 34%',
     fg: WHITE, // 7.94
     mode: 'greek',
-  },
-  {
-    id: 'foudre',
-    label: 'Agence Foudre',
-    hsl: '330 68% 38%',
-    fg: WHITE, // 6.80
-    mode: 'foudre',
-  },
-  {
-    id: 'slush',
-    label: 'Slush',
-    hsl: '213 100% 43%',
-    fg: WHITE, // 4.62
-    mode: 'slush',
-  },
-  {
-    id: 'spiderverse',
-    label: 'Spider-Verse',
-    hsl: '355 82% 42%',
-    fg: WHITE, // 7.05
-    mode: 'spiderverse',
   },
   {
     id: 'hanami',
@@ -146,6 +160,35 @@ export const SCHEMES: Scheme[] = [
     hsl: '41 75% 51%',
     fg: '240 10% 8%', // 8.46 — orpiment is far too light to take white
     mode: 'rimefast',
+  },
+  {
+    id: 'egyptian',
+    label: 'Ancient Egyptian',
+    hsl: '221 62% 32%',
+    fg: WHITE, // 9.98 — lapis, the light register's primary
+    mode: 'egyptian',
+  },
+  // Reference design systems, each rendered in this app's furniture.
+  {
+    id: 'foudre',
+    label: 'Agence Foudre',
+    hsl: '330 68% 38%',
+    fg: WHITE, // 6.80
+    mode: 'foudre',
+  },
+  {
+    id: 'slush',
+    label: 'Slush',
+    hsl: '213 100% 43%',
+    fg: WHITE, // 4.62
+    mode: 'slush',
+  },
+  {
+    id: 'spiderverse',
+    label: 'Spider-Verse',
+    hsl: '355 82% 42%',
+    fg: WHITE, // 7.05
+    mode: 'spiderverse',
   },
   // The table-driven brand modes, from brands.ts.
   ...BRAND_DEFS.map(b => ({
@@ -749,7 +792,7 @@ export function SchemePicker({
         >
           <PixelPotion
             liquid={`hsl(${s.hsl})`}
-            sprite={s.mode === 'greek' ? AMPHORA_VESSEL : undefined}
+            sprite={s.mode ? MODE_VESSELS[s.mode] : undefined}
           />
           {/* Sparkles on the equipped bottle. Decoration and nothing else: what
               is equipped is carried by aria-pressed, by the label, and by being
@@ -792,7 +835,7 @@ export function SchemePicker({
                 >
                   <PixelPotion
                     liquid={`hsl(${s.hsl})`}
-                    sprite={s.mode === 'greek' ? AMPHORA_VESSEL : undefined}
+                    sprite={s.mode ? MODE_VESSELS[s.mode] : undefined}
                   />
                   {casting === s.id && (
                     <span className="sc-cast-stars" aria-hidden="true">
@@ -904,9 +947,13 @@ export function SchemeRoot() {
 
 /** Nine petals: enough for a drift, few enough that none of them overlap. */
 const PETALS = Array.from({ length: 9 }, (_, i) => i);
-/* Six, not nine: a hearth throws fewer sparks than a tree drops petals, and
-   each one is a 4px square rather than a 16px sprite. */
-const EMBERS = Array.from({ length: 6 }, (_, i) => i);
+/* Twelve. It was six, and at six 4px squares nobody could see the animation at
+   all — a spark every few hundred pixels of viewport reads as a rendering
+   glitch rather than as a hearth. greek.ts carries the rest of that reasoning,
+   and it holds the per-ember placement and timing: this count and the
+   nth-child list there have to agree, or the last few sparks pile up on one
+   spot in lockstep. greek.test.ts pins the count for that reason. */
+const EMBERS = Array.from({ length: 12 }, (_, i) => i);
 
 /**
  * The host for the animated mode ornaments.
@@ -932,6 +979,7 @@ function ModeArt() {
       </div>
       <div className="sc-moon" />
       <div className="sc-rune-rule" />
+      <div className="sc-aten" />
       <div className="sc-greek-embers">
         {EMBERS.map(i => (
           <i key={i} />

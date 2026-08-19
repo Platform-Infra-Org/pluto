@@ -46,6 +46,13 @@ nav:
 # pinned toolchain is build input, not a page.
 exclude_docs: |
   requirements.txt
+  # Implementation plans and design specs: working records of how a change was
+  # built, written for whoever was building it. They are not product
+  # documentation, they are not in the nav, and mkdocs was publishing them as
+  # orphan pages anyone could reach by URL — which is how a plan that still
+  # describes a mode we deleted, or a count from three schemes ago, ends up
+  # reading as current guidance. Kept in the repo as history, off the site.
+  superpowers/
 
 plugins:
   - techdocs-core

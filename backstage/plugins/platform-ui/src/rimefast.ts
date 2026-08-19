@@ -35,6 +35,12 @@
  * a badge, or the decoration starts reading as state — the same trap greek
  * recorded when it pushed success sixty degrees to clear the stock amber.
  *
+ * The ornament is what carries the mode, not the palette: a rune band under
+ * every page title, interlace worked across the whole sidebar as a field and
+ * along the edges of a command window and down both jambs of the sign-in
+ * page, a raven perched at each top corner of the card, Yggdrasil on
+ * an empty shelf, and the aurora across the top rail.
+ *
  * Kept out of styles.ts for the reason greek.ts records: that file is one
  * template literal and a stray backtick truncates the lot.
  */
@@ -42,7 +48,9 @@ import {
   AURORA,
   FUTHARK,
   KNOTWORK,
+  RAVEN,
   YGGDRASIL,
+  mirrorSprite,
   spriteUrl,
 } from './sprites';
 
@@ -60,6 +68,26 @@ const WOAD = 'hsl(205 45% 30%)';
 const FROST = 'hsl(157 35% 40%)';
 const AURORA_INK = 'hsl(157 60% 59.8%)';
 const AURORA_DAY = 'hsl(157 55% 28%)';
+
+/**
+ * The ground tint, for ornament that is a SURFACE rather than a line.
+ *
+ * Interlace in woad across a whole sidebar is a page of pattern with an app
+ * somewhere behind it; the same knot a few points off its own surface is the
+ * carving worked into the panel. --sc-ground holds the same value in each
+ * register so the literal here can be checked against the sheet.
+ */
+const BONE = 'hsl(44 30% 93%)'; // the tint by day
+const POLAR = 'hsl(205 30% 12%)'; // and on polar night
+
+/**
+ * The pair at the door.
+ *
+ * Derived rather than authored twice: a mirrored raven drawn by hand drifts
+ * from its twin the first time either is edited.
+ */
+const RAVEN_L = RAVEN;
+const RAVEN_R = mirrorSprite(RAVEN);
 
 export function rimefastCss(): string {
   return `
@@ -92,6 +120,8 @@ export function rimefastCss(): string {
   /* Madder, and this is the LIFTED value. The true pigment (#C7503F) is 3.60
      against the card and may be used as a fill only. */
   --sc-madder: 9 60% 40%;
+  /* The ground tint the sidebar field is printed in. */
+  --sc-ground: 44 30% 93%;
 }
 /* ===== dark register: polar night, which is the designed one ===== */
 :root.sc-rimefast.sc-dark {
@@ -122,6 +152,7 @@ export function rimefastCss(): string {
   --sc-lichen: 272 42% 68.2%;
   /* Madder, lifted, for anything carrying text. */
   --sc-madder: 9 68% 62%;
+  --sc-ground: 205 30% 12%;
 }
 
 /* ===== Chrome. Woad linework on bone by day, frost green on polar night. ===== */
@@ -157,6 +188,7 @@ export function rimefastCss(): string {
   box-shadow:
     0 0 0 2px hsl(var(--sc-card)),
     0 0 0 4px hsl(var(--sc-border)),
+    0 0 14px hsl(var(--sc-primary) / .22),
     var(--sc-shadow) !important;
   background-image: ${spriteUrl(KNOTWORK, WOAD)}, ${spriteUrl(KNOTWORK, WOAD)};
   background-repeat: repeat-x;
@@ -219,6 +251,41 @@ export function rimefastCss(): string {
   background-image: ${spriteUrl(KNOTWORK, FROST)}, ${spriteUrl(KNOTWORK, FROST)};
 }
 
+/* A raven perched at each top corner of the sign-in card, facing inward.
+   The mirror is generated, not drawn: two birds facing the same way are one
+   drawing used twice, which is what the eye notices first.
+   On the CARD and nowhere else. Ravens are a pair at a threshold; a bird in
+   the corner of every panel is an infestation. */
+:root.sc-rimefast .sc-login-card {
+  background-image: ${spriteUrl(RAVEN_L, OCHRE_DAY)}, ${spriteUrl(RAVEN_R, OCHRE_DAY)};
+  background-repeat: no-repeat;
+  background-size: 20px 20px;
+  background-position: left 8px top 8px, right 8px top 8px;
+}
+:root.sc-rimefast.sc-dark .sc-login-card {
+  background-image: ${spriteUrl(RAVEN_L, ORPIMENT)}, ${spriteUrl(RAVEN_R, ORPIMENT)};
+}
+
+/* The sidebar as a carved panel: interlace worked across the whole surface, in
+   the ground tint rather than in woad.
+   A FIELD, not a strip. The rune band used to run down the inner edge in a 16px
+   column, and a band down one edge of a panel reads as a seam — something the
+   layout did — where the same motif tiled across the surface reads as the wall
+   the navigation is cut into. It is also the only form that survives the nav
+   collapsing to icon width, because a field has no edge to be anchored to.
+   Interlace rather than runes, for the reason the band itself is only two
+   glyphs long: a wall of letterforms invites being read, and this one is
+   decoration. Quiet is the requirement — every label on the nav has to win. */
+:root.sc-rimefast .sc-nav {
+  background-image: ${spriteUrl(KNOTWORK, BONE)};
+  background-repeat: repeat;
+  background-size: 32px 32px;
+  background-position: left top;
+}
+:root.sc-rimefast.sc-dark .sc-nav {
+  background-image: ${spriteUrl(KNOTWORK, POLAR)};
+}
+
 /* An empty shelf gets Yggdrasil — a tree is a better thing to meet than a
    blank rectangle, and this one is the axis the whole cosmology hangs on. */
 :root.sc-rimefast .sc-empty {
@@ -232,7 +299,40 @@ export function rimefastCss(): string {
   background-image: ${spriteUrl(YGGDRASIL, ORPIMENT)};
 }
 
-/* ===== The aurora =====
+/* Primary buttons take the orpiment rule and an orpiment bloom.
+   GOLD, not aurora green, and that is this mode's own rule rather than a
+   colour whim: aurora green sits about five degrees from the success status
+   hue, and a green halo around a button that sits in the same sight line as a
+   status badge turns decoration into state. The aurora keeps to the top rail,
+   as far from a badge as the viewport allows; everything nearer than that
+   glows in the primary.
+   filter: drop-shadow(), not box-shadow: styles.ts claims box-shadow with
+   !important on the button root, and an important author declaration beats
+   both a normal one at any specificity AND the animation origin, so a
+   box-shadow glow here would never paint. Nothing claims filter.
+   The unanimated declaration below is the LIT frame, so a reader who asked for
+   stillness gets the intended picture rather than a glow frozen halfway. */
+:root.sc-rimefast [class*="MuiButton-containedPrimary"],
+:root.sc-rimefast .sc-btn-primary,
+:root.sc-rimefast [data-variant="primary"][class*="bui-Button"] {
+  border: var(--sc-border-w) solid hsl(var(--sc-primary)) !important;
+  filter: drop-shadow(0 0 5px hsl(var(--sc-primary) / .45));
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* Two frames, stepped, and slower than the aurora above it: a forge glows,
+     it does not blink. */
+  @keyframes sc-rimefast-forge {
+    0%, 100% { filter: drop-shadow(0 0 5px hsl(var(--sc-primary) / .45)); }
+    50% { filter: drop-shadow(0 0 9px hsl(var(--sc-primary) / .75)); }
+  }
+  :root.sc-rimefast [class*="MuiButton-containedPrimary"],
+  :root.sc-rimefast .sc-btn-primary,
+  :root.sc-rimefast [data-variant="primary"][class*="bui-Button"] {
+    animation: sc-rimefast-forge 2s steps(2) infinite;
+  }
+}
+
+/* ===== The aurora =====/* ===== The aurora =====
    SchemeRoot mounts .sc-mode-art once for every mode; this claims the top rail.
    The class name is .sc-rune-rule because it is the rule across the top of the
    viewport, and in this mode that rule is painted as an aurora.

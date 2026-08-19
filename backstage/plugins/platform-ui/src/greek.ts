@@ -19,14 +19,14 @@
  *
  * Colour alone does not make a theme Greek, though — a recoloured app is just a
  * recoloured app. The ornament is what carries it: the meander running under
- * every page title, the fluting down the sidebar, the rosettes at the corners
- * of a command window, the palmette on an empty shelf. Those are drawn from
+ * every page title, the key printed across the whole sidebar as a field, the
+ * rosettes at the corners of a command window, the palmette on an empty shelf. Those are drawn from
  * sprite grids (sprites.ts) rather than approximated with gradients, so they
  * sit in the same pixel language as the rest of the app instead of looking like
  * a decal applied over it.
  */
 import {
-  COLUMN,
+  FRET,
   MEANDER,
   PALMETTE,
   ROSETTE,
@@ -44,6 +44,20 @@ import {
  */
 const BRONZE = 'hsl(40 55% 46%)';
 const GOLD = 'hsl(43 62% 46%)';
+
+/**
+ * The ground tint, for ornament that is a SURFACE rather than a line.
+ *
+ * A field is not a band. The key in bronze across a whole sidebar is a page of
+ * pattern with an app somewhere behind it — which is the failure the mode's
+ * old ornament had at the other end of the scale, a narrow strip down one edge
+ * that read as a seam rather than as decoration. The tint sits a few points off
+ * its own surface, the way a pattern printed into plaster does, and --sc-ground
+ * holds the same value in each register so the literal can be checked against
+ * the sheet.
+ */
+const CHALK = 'hsl(40 38% 94%)'; // the tint by day
+const SHADE = 'hsl(265 20% 15%)'; // and in the Underworld
 
 /** An ornament as a CSS url(), ready to interpolate. */
 const art = (sprite: Sprite, fill: string) =>
@@ -72,6 +86,13 @@ export function greekCss(): string {
   --sc-destructive: 12 78% 50%;
   /* The filigree gold, used by the chrome. Not a shadcn token. */
   --sc-gold: 40 55% 46%;
+  /* The ground tint the sidebar field is printed in. Not a shadcn token. */
+  --sc-ground: 40 38% 94%;
+  /* The hearth ember. Deep bronze rather than the filigree gold: gold at 46%
+     lightness on 96% parchment is a spark nobody can see, which is exactly
+     what was reported. 26deg off the destructive hue and far darker, so a
+     rising ember never reads as a failure badge drifting up the page. */
+  --sc-ember: 6 74% 30%;
 }
 /* ===== dark register: the Underworld ===== */
 :root.sc-greek.sc-dark {
@@ -98,6 +119,9 @@ export function greekCss(): string {
   --sc-warning: 188 65% 45%;
   --sc-destructive: 12 78% 50%;
   --sc-gold: 43 62% 46%;
+  --sc-ground: 265 20% 15%;
+  /* Gold, unchanged: against the Underworld violet it already reads. */
+  --sc-ember: 43 62% 46%;
 }
 
 /* ===== Ornate chrome. One grammar, two brightnesses: the light register is
@@ -174,20 +198,34 @@ export function greekCss(): string {
   --sc-header-art: ${art(MEANDER, GOLD)};
 }
 
-/* The sign-in page as a temple facade: a fluted Doric column standing at each
-   side of the card, running the full height of the viewport.
-   Deliberately only here. Columns down the sidebar and a key along every table
-   header turned the ornament into wallpaper — a motif reads as intent when it
-   appears where it means something and as noise when it appears everywhere. A
-   threshold is worth a facade; a data grid is not. */
+/* The sign-in page as a temple wall: a frieze along the top edge, and a field
+   of palmettes printed across the rest of it.
+
+   NOT the two columns this used to be. A 14px sprite tiled down each edge of
+   the viewport is a 14px-wide vertical strip, and at most window sizes that is
+   what it looked like — two glitch artefacts rather than a facade. The failure
+   is structural and worth stating, because the fluted column is a genuinely
+   good sprite: a tall narrow motif needs to be tall on the SCREEN, and a
+   repeat-y tile is not tall, it is one short tile stacked over and over with a
+   visible seam at every joint. Whatever the tile draws, the eye reads the
+   seams.
+
+   A field has no seams to find, and a frieze runs along an edge the way a
+   frieze actually does. The palmette ground is in the tint for the reason the
+   sidebar's is: a full-page pattern in bronze is a page of pattern with a
+   sign-in form somewhere behind it.
+
+   Deliberately only here, which is the restraint the columns already kept: a
+   motif reads as intent where it means something and as wallpaper everywhere
+   else. A threshold is worth a facade; a data grid is not. */
 :root.sc-greek .sc-login {
-  background-image: ${art(COLUMN, BRONZE)}, ${art(COLUMN, BRONZE)};
-  background-repeat: repeat-y, repeat-y;
-  background-size: 14px 36px, 14px 36px;
-  background-position: left 18px top, right 18px top;
+  background-image: ${art(MEANDER, BRONZE)}, ${art(PALMETTE, CHALK)};
+  background-repeat: repeat-x, repeat;
+  background-size: 24px 12px, 32px 32px;
+  background-position: left top, left top;
 }
 :root.sc-greek.sc-dark .sc-login {
-  background-image: ${art(COLUMN, GOLD)}, ${art(COLUMN, GOLD)};
+  background-image: ${art(MEANDER, GOLD)}, ${art(PALMETTE, SHADE)};
 }
 
 /* A meander rule under section headings, the same band at half height.
@@ -222,6 +260,26 @@ export function greekCss(): string {
   background-image: ${art(MEANDER, GOLD)};
 }
 
+/* The sidebar as a plastered wall: the key printed across the whole panel, in
+   the ground tint rather than in bronze.
+   A FIELD, not a strip. An ornament that runs down one edge of a panel reads
+   as a seam — something the layout did — where the same motif tiled across the
+   surface reads as the wall the navigation is painted on. It is also the only
+   form that survives the nav collapsing to icon width, because a field has no
+   edge to be anchored to.
+   Quiet is the whole requirement here: the nav carries navigation, and every
+   label on it has to win. Hence the tint and hence FRET, which is the key drawn
+   at one pixel a line instead of MEANDER's two. */
+:root.sc-greek .sc-nav {
+  background-image: ${art(FRET, CHALK)};
+  background-repeat: repeat;
+  background-size: 24px 24px;
+  background-position: left top;
+}
+:root.sc-greek.sc-dark .sc-nav {
+  background-image: ${art(FRET, SHADE)};
+}
+
 /* An empty shelf gets a palmette — the akroterion at the peak of a temple, and
    a friendlier thing to meet than a blank rectangle. */
 :root.sc-greek .sc-empty {
@@ -241,10 +299,16 @@ export function greekCss(): string {
    outside the border box, where a background is never painted. The mark keeps
    its accent tile; the ornament goes around it, not on it. */
 
+/* The fluted COLUMN is no longer drawn anywhere in this mode, and that is a
+   decision rather than an oversight: see the note on the sign-in page above.
+   The sprite stays in sprites.ts, unreferenced, beside the pomegranate and the
+   owl — it is a good drawing that has no place at the size CSS can give it. */
+
 /* The sign-in card carries no watermark. The pomegranate sat in its corner and
    read as a stray dot on a form rather than as the fruit it is — at 28px there
-   is not enough of it left to be recognisable, and the columns flanking the
-   card already say Greek. The sprite stays in sprites.ts, unreferenced. */
+   is not enough of it left to be recognisable, and the frieze and palmette
+   field behind the card already say Greek. The sprite stays in sprites.ts,
+   unreferenced. */
 
 /* The tour box carries no ornament: it is a coach mark that sits over live
    content, and the owl that used to perch in its corner competed with the
@@ -291,32 +355,58 @@ export function greekCss(): string {
    hearth in it. It RISES, which is also what keeps it from reading as the
    sakura overlay recoloured: the two motions are opposites at a glance.
 
-   An ember is a pixel. No sprite and no gradient — a hard 4px square in the
-   mode's own gold, with a single-pixel ring for the glow. A soft radial here
-   would be the one blurred thing in the whole design system.
+   An ember is a pixel. No sprite and no gradient — a hard 7px square, with a
+   ring of glow around it. A soft radial here would be the one blurred thing in
+   the whole design system.
+
+   SIZE AND COUNT ARE THE DESIGN, not defaults nobody revisited. This shipped
+   as six 4px squares in the filigree gold, and the report back was that the
+   animation could not be seen at all: 4px is below the size at which a moving
+   speck registers in peripheral vision, six of them across a desktop viewport
+   is a spark every few hundred pixels, and mid-gold on 96% parchment has
+   almost nothing to separate it from the page. All three had to move together
+   — a bigger square in a paler ink is still invisible. Twelve at 7px in the
+   deep bronze --sc-ember reads as a hearth throwing sparks; more than that, or
+   larger, and the page is a fireworks display with a form on it.
 
    The still frame is designed, not frozen: outside the motion query the embers
    are a scattered arrangement resting near the hearth line at full opacity,
    which is the picture a reader who asked for less motion is meant to get. ===== */
-:root.sc-greek .sc-greek-embers { display: block; }
+/* inset: 0 is not decoration. Children of the mode-art layer are absolutely
+   positioned with no offsets, so an unstretched wrapper collapses to 0x0 in the
+   top-left corner — and a bottom of 0 on an ember then resolves against a box
+   of no height, parking every spark at the TOP of the screen to rise off it
+   immediately. Twelve embers, one visible at a time, all climbing out of frame:
+   the bug that read as there being no animation at all. Hanami's petals dodge
+   it only by falling from a top of 0, where the collapsed corner happens to be
+   the right place to start. */
+:root.sc-greek .sc-greek-embers { display: block; inset: 0; }
 :root.sc-greek .sc-greek-embers i {
   position: absolute;
   display: block;
-  width: 4px;
-  height: 4px;
+  width: 7px;
+  height: 7px;
   opacity: 1;
-  background: hsl(var(--sc-gold));
+  background: hsl(var(--sc-ember));
   /* drop-shadow, not box-shadow, for the same reason the button ember uses it:
      styles.ts sets box-shadow with !important on MUI surfaces, and an important
-     author declaration beats both a normal one and the animation origin. */
-  filter: drop-shadow(0 0 2px hsl(var(--sc-gold) / .45));
+     author declaration beats both a normal one and the animation origin.
+     3px of glow rather than 2: the halo has to stay proportionate to a square
+     that is now most of twice the size, or the ember looks like a lost pixel. */
+  filter: drop-shadow(0 0 3px hsl(var(--sc-ember) / .5));
 }
-:root.sc-greek .sc-greek-embers i:nth-child(1) { left: 11%; bottom: 14%; }
-:root.sc-greek .sc-greek-embers i:nth-child(2) { left: 26%; bottom: 7%; }
-:root.sc-greek .sc-greek-embers i:nth-child(3) { left: 43%; bottom: 19%; }
-:root.sc-greek .sc-greek-embers i:nth-child(4) { left: 58%; bottom: 9%; }
-:root.sc-greek .sc-greek-embers i:nth-child(5) { left: 73%; bottom: 16%; }
-:root.sc-greek .sc-greek-embers i:nth-child(6) { left: 89%; bottom: 6%; }
+:root.sc-greek .sc-greek-embers i:nth-child(1) { left: 4%; bottom: 12%; }
+:root.sc-greek .sc-greek-embers i:nth-child(2) { left: 13%; bottom: 5%; }
+:root.sc-greek .sc-greek-embers i:nth-child(3) { left: 21%; bottom: 18%; }
+:root.sc-greek .sc-greek-embers i:nth-child(4) { left: 30%; bottom: 8%; }
+:root.sc-greek .sc-greek-embers i:nth-child(5) { left: 38%; bottom: 15%; }
+:root.sc-greek .sc-greek-embers i:nth-child(6) { left: 47%; bottom: 4%; }
+:root.sc-greek .sc-greek-embers i:nth-child(7) { left: 55%; bottom: 20%; }
+:root.sc-greek .sc-greek-embers i:nth-child(8) { left: 63%; bottom: 10%; }
+:root.sc-greek .sc-greek-embers i:nth-child(9) { left: 72%; bottom: 6%; }
+:root.sc-greek .sc-greek-embers i:nth-child(10) { left: 80%; bottom: 17%; }
+:root.sc-greek .sc-greek-embers i:nth-child(11) { left: 88%; bottom: 9%; }
+:root.sc-greek .sc-greek-embers i:nth-child(12) { left: 94%; bottom: 13%; }
 
 @media (prefers-reduced-motion: no-preference) {
   /* Each steps() is load-bearing. rise moves whole pixel rows, so a 4px square
@@ -336,19 +426,32 @@ export function greekCss(): string {
   @keyframes sc-greek-waver { from { margin-left: 0; } to { margin-left: 18px; } }
   @keyframes sc-greek-flicker { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
 
-  :root.sc-greek .sc-greek-embers i {
+  /* :nth-child(n) matches every ember and exists only to raise this rule to
+     the specificity of the scattered still-frame positions above, which are
+     (0,4,1) because of their own :nth-child. Without it the reset loses, each
+     ember starts partway up the screen, and rising 104vh from there puts it
+     above the fold for most of its cycle — twelve sparks of which one is
+     visible at a time, which is how this read as "no animation at all". */
+  :root.sc-greek .sc-greek-embers i:nth-child(n) {
     bottom: 0;
     animation: sc-greek-rise 13s steps(26) infinite,
                sc-greek-waver 3.4s steps(3) infinite alternate,
                sc-greek-flicker 1.4s steps(2) infinite;
   }
-  /* Negative delays start each ember mid-climb: six sparks leaving the hearth
-     in formation would read as a machine, not a fire. */
+  /* Negative delays start each ember mid-climb, and no two share a triple:
+     twelve sparks leaving the hearth in formation would read as a machine, not
+     a fire, and the more of them there are the more obvious the formation. */
   :root.sc-greek .sc-greek-embers i:nth-child(2) { animation-duration: 16s, 4.1s, 1.9s; animation-delay: -4s, -.6s, -.5s; }
   :root.sc-greek .sc-greek-embers i:nth-child(3) { animation-duration: 11s, 2.8s, 1.1s; animation-delay: -8s, -1.2s, -.9s; }
   :root.sc-greek .sc-greek-embers i:nth-child(4) { animation-duration: 15s, 3.7s, 1.6s; animation-delay: -2s, -.3s, -.2s; }
   :root.sc-greek .sc-greek-embers i:nth-child(5) { animation-duration: 12s, 3.1s, 1.3s; animation-delay: -10s, -1.7s, -.7s; }
   :root.sc-greek .sc-greek-embers i:nth-child(6) { animation-duration: 14s, 4.4s, 1.8s; animation-delay: -6s, -.9s, -1.1s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(7) { animation-duration: 17s, 3.4s, 1.5s; animation-delay: -12s, -2.1s, -.4s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(8) { animation-duration: 10s, 4.7s, 1.2s; animation-delay: -3s, -1.5s, -1s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(9) { animation-duration: 13s, 2.6s, 1.7s; animation-delay: -9s, -.4s, -.6s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(10) { animation-duration: 18s, 3.9s, 1.4s; animation-delay: -5s, -2.4s, -1.2s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(11) { animation-duration: 11s, 4.2s, 2s; animation-delay: -14s, -1.1s, -.3s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(12) { animation-duration: 15s, 2.9s, 1.5s; animation-delay: -7s, -1.9s, -.8s; }
 }
 `;
 }

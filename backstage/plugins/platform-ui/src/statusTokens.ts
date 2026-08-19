@@ -69,7 +69,6 @@ export type SchemeMode =
   | 'slush'
   | 'spiderverse'
   | 'newform'
-  | 'hermes'
   | 'papers'
   | 'discord'
   | 'github'
@@ -78,7 +77,8 @@ export type SchemeMode =
   | 'obsidian'
   | 'hanami'
   | 'nightshade'
-  | 'rimefast';
+  | 'rimefast'
+  | 'egyptian';
 
 /** `--sc-card` in the Greek registers, from greek.ts. */
 export const GREEK_CARD_LIGHT = '42 45% 98%';
@@ -144,7 +144,6 @@ export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   slush: STATUS_TOKENS,
   spiderverse: STATUS_TOKENS,
   newform: STATUS_TOKENS,
-  hermes: STATUS_TOKENS,
   papers: STATUS_TOKENS,
   discord: STATUS_TOKENS,
   github: STATUS_TOKENS,
@@ -154,6 +153,7 @@ export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   hanami: STATUS_TOKENS,
   nightshade: STATUS_TOKENS,
   rimefast: STATUS_TOKENS,
+  egyptian: STATUS_TOKENS,
 };
 
 export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
@@ -163,7 +163,6 @@ export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   slush: { light: '0 0% 100%', dark: '0 0% 8%' },
   spiderverse: { light: '45 60% 98%', dark: '260 25% 11%' },
   newform: { light: '0 0% 100%', dark: '135 9% 10%' },
-  hermes: { light: '0 0% 100%', dark: '0 0% 10%' },
   papers: { light: '0 0% 100%', dark: '0 0% 9%' },
   discord: { light: '0 0% 100%', dark: '227 9% 11%' },
   github: { light: '0 0% 100%', dark: '214 25% 11%' },
@@ -180,6 +179,12 @@ export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   // Rimefast's dark card is pinned at 5.5% for the same reason as hanami's:
   // at 8% the worst status pair is 4.78 and at 10% it is 4.54. See rimefast.ts.
   rimefast: { light: '44 40% 98%', dark: '205 43% 5.5%' },
+  // Egyptian is pinned at both ends: the light card cannot drop below 96%
+  // (warning-on-cell is 4.99 at 95%) and the dark card cannot rise above 7%
+  // (4.90 at 8%). Both ship one notch inside the limit. The light floor moved
+  // with the ground: the register is cool limestone now, not warm papyrus, and
+  // the whole set had to be re-solved against it. See egyptian.ts.
+  egyptian: { light: '205 32% 97%', dark: '212 44% 6%' },
 };
 
 /** The `:root` declarations for every mode, for interpolation into SHADCN_CSS. */

@@ -12,6 +12,7 @@ import {
 import { DynamicSelect } from './DynamicSelect';
 import { secretFormField } from './SecretField';
 import { pickPath, walkTree } from './coordinateTree';
+import { subscribeTree } from './treeStore';
 import { fileFormField } from './FileField';
 
 interface UiOptions {
@@ -41,27 +42,6 @@ interface UiOptions {
 }
 
 /**
- * One request per URL, shared by every field on the form. Five coordinate
- * levels asking the same endpoint for the same whole tree is five times the
- * work for one answer. Short TTL rather than a context provider: the cache is
- * an implementation detail of this field, and a provider would have to be
- * mounted by every app that uses it.
- */
-const TREE_TTL_MS = 30_000;
-const treeCache = new Map<string, { at: number; promise: Promise<unknown> }>();
-
-function fetchTree(url: string, fetcher: (u: string) => Promise<Response>) {
-  const hit = treeCache.get(url);
-  if (hit && Date.now() - hit.at < TREE_TTL_MS) return hit.promise;
-  const promise = fetcher(url).then(res => {
-    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`.trim());
-    return res.json();
-  });
-  treeCache.set(url, { at: Date.now(), promise });
-  return promise;
-}
-
-/**
  * Scaffolder custom field that renders a DynamicSelect. Referenced from a
  * template with `ui:field: DynamicSelect` and configured via `ui:options`
  * (url or proxyPath, intervalMs, placeholder). Requests go through fetchApi
@@ -70,7 +50,15 @@ function fetchTree(url: string, fetcher: (u: string) => Promise<Response>) {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function DynamicSelectFieldComponent(props: any) {
-  const { formData, onChange, uiSchema, schema, formContext } = props;
+  const { formData, onChange, uiSchema, schema, registry } = props;
+  // RJSF v5 moved the canonical formContext onto `registry`: FieldProps declares
+  // `formContext?` (optional, and undefined under Backstage's Stepper) while
+  // RegistryProps declares `formContext` outright, which is what RJSF's own
+  // internals read. Reading only the top-level prop worked in an @rjsf theme
+  // harness and silently failed in the real form — every ancestor resolved to
+  // '' and every dependent level reported "Pick <parent> first" while the
+  // parent plainly had a value.
+  const formContext = props.formContext ?? registry?.formContext;
   const opts = (uiSchema?.['ui:options'] ?? {}) as UiOptions;
   const fetchApi = useApi(fetchApiRef);
   const discovery = useApi(discoveryApiRef);
@@ -110,22 +98,30 @@ export function DynamicSelectFieldComponent(props: any) {
 
   useEffect(() => {
     if (!url || !opts.treePath) return undefined;
-    let cancelled = false;
-    (async () => {
-      try {
-        const body = await fetchTree(url, u => fetchApi.fetch(u));
-        if (!cancelled) {
-          setTree(pickPath(body, opts.treePath));
+    // Subscribe rather than fetch: the store owns the single request and the
+    // single timer for this URL, so all five levels of a cascade are always
+    // reading the same snapshot. `intervalMs` is honoured here — the tree is
+    // polled exactly like a flat endpoint, just once for the whole cascade.
+    return subscribeTree(
+      url,
+      opts.intervalMs,
+      u =>
+        fetchApi.fetch(u).then(res => {
+          if (!res.ok) throw new Error(`${res.status} ${res.statusText}`.trim());
+          return res.json();
+        }),
+      ({ data, error }) => {
+        if (data !== undefined) {
+          setTree(pickPath(data, opts.treePath));
           setTreeLoaded(true);
         }
-      } catch (e) {
-        if (!cancelled) setErr(String((e as Error)?.message ?? e));
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [url, opts.treePath, fetchApi]);
+        // A failed REFRESH keeps the last good tree and stays quiet in the
+        // field itself; only a failure with nothing to fall back on replaces
+        // the control with an error, because that one leaves nothing to pick.
+        setErr(error && data === undefined ? error : undefined);
+      },
+    );
+  }, [url, opts.treePath, opts.intervalMs, fetchApi]);
 
   // undefined = an ancestor is unset or stale, which is not the same as an
   // empty branch. The first asks for the parent; the second is a real empty list.

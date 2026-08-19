@@ -11,6 +11,7 @@ import { spiderverseCss } from './spiderverse';
 import { hanamiCss } from './hanami';
 import { nightshadeCss } from './nightshade';
 import { rimefastCss } from './rimefast';
+import { egyptianCss } from './egyptian';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
@@ -100,6 +101,7 @@ ${spiderverseCss()}
 ${hanamiCss()}
 ${nightshadeCss()}
 ${rimefastCss()}
+${egyptianCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because
@@ -553,7 +555,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    happens to sit in a card: the scaffolder's filter toolbar sits directly on
    the page, so on every mode whose page is not white it painted a white slab
    around the search field. Invisible in the modes whose bg IS white, which is
-   why it read as a Hermes and Flying Papers bug rather than a general one.
+   why it read as a Flying Papers bug rather than a general one.
    The same mistake the field grounds had — naming a surface on something that
    is not one. */
 [class*="MuiToolbar-root"] {
@@ -598,10 +600,10 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* A selected *row* is not a selected tab. The bare .Mui-selected above paints
    the accent on anything MUI marks selected, and MUI also gives such a row its
    own grey fill — so the catalog's picked filter ended up accent-on-grey, which
-   measured 2.75:1 in hermes dark and under 4.5 in six modes. A row states its
-   selection with the accent *surface* and takes the ink that surface is
-   measured against; contrast.test.ts pins accentFg against accent for every
-   mode, so this pairing cannot drift. */
+   measured 2.75:1 in the worst dark register and under 4.5 in six modes. A
+   row states its selection with the accent *surface* and takes the ink that
+   surface is measured against; contrast.test.ts pins accentFg against accent
+   for every mode, so this pairing cannot drift. */
 .MuiListItem-root.Mui-selected,
 .MuiMenuItem-root.Mui-selected {
   background-color: hsl(var(--sc-accent)) !important;
