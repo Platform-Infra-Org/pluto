@@ -66,7 +66,8 @@ const oidcAuthApi = ApiBlueprint.make({
 
 // Custom sign-in page: fully shadcn-themed so the accent (brand mark + button)
 // follows the color picker — which is rendered right on the login screen.
-function PlatformSignInPage(props: SignInPageProps) {
+/** Exported for auth.test.tsx — nothing else should mount this directly. */
+export function PlatformSignInPage(props: SignInPageProps) {
   const oidc = useApi(oidcAuthApiRef);
   const errorApi = useApi(errorApiRef);
   const [busy, setBusy] = useState(false);
