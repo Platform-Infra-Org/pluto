@@ -5536,6 +5536,7 @@ __metadata:
   resolution: "@internal/plugin-platform-requests@workspace:plugins/platform-requests"
   dependencies:
     "@backstage/catalog-model": "npm:*"
+    "@backstage/config": "npm:*"
     "@backstage/core-components": "npm:*"
     "@backstage/core-plugin-api": "npm:*"
     "@backstage/frontend-plugin-api": "npm:*"
