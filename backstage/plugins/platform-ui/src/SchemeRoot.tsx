@@ -8,7 +8,17 @@ import {
 import { appThemeApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { SHADCN_CSS } from './styles';
 import { BRAND_DEFS } from './brands';
-import { AMPHORA_VESSEL, SPRITE_SIZE, spriteRects, TEMPLE } from './sprites';
+import {
+  AMPHORA_VESSEL,
+  CANOPIC_VESSEL,
+  CAULDRON_VESSEL,
+  HORN_VESSEL,
+  Sprite,
+  SPRITE_SIZE,
+  spriteRects,
+  TEMPLE,
+  TOKKURI_VESSEL,
+} from './sprites';
 import { PixelPotion, PixelStar } from './components';
 import { templateHeaderCss } from './templateHeaders';
 import { listenForKonami } from './konami';
@@ -92,40 +102,44 @@ const MODES = [
 ] as const;
 type Mode = (typeof MODES)[number];
 
+/**
+ * The modes whose potion is a vessel of its own rather than the generic bottle.
+ *
+ * A map and not a chain of ternaries at the two call sites: the shelf and the
+ * inventory tray both render a bottle, and a branch in each is how the two
+ * drifted apart the first time. Adding the next one is a row here.
+ *
+ * ORDER MATTERS ELSEWHERE. These five sit contiguously at the front of
+ * `SCHEMES` so the shelf reads as "the crafted ones, then the brand ones", and
+ * `SchemeRoot.test.ts` fails if a new scheme is slotted in between them.
+ */
+export const MODE_VESSELS: Partial<Record<Mode, Sprite>> = {
+  greek: AMPHORA_VESSEL,
+  hanami: TOKKURI_VESSEL,
+  nightshade: CAULDRON_VESSEL,
+  rimefast: HORN_VESSEL,
+  egyptian: CANOPIC_VESSEL,
+};
+
 // Saturated toward NES-era values. `fg` is the text colour that sits on the
 // accent: white where it clears 4.5:1, near-black where it doesn't. Green and
 // amber are the reason this field exists — darkening them enough for white text
 // would have turned them to mud. Ratios are measured, see SchemeRoot.test.ts.
 export const SCHEMES: Scheme[] = [
-  // Two design systems, each rendered in this app's furniture. Ids are the key
-  // a browser has already persisted and never change once published.
+  // THREE GROUPS, IN THIS ORDER, AND THE ORDER IS THE POINT. First the modes
+  // with a vessel of their own, so the shelf opens on five different
+  // silhouettes rather than five different colours of the same bottle; then
+  // the reference design systems, which are a palette and a chrome but still
+  // the generic bottle; then the table-driven brand rows. "The crafted ones,
+  // then the brand ones" is a thing a user can see without being told.
+  // Ids are the key a browser has already persisted and never change once
+  // published, so reordering is free — this is a display order, not a schema.
   {
     id: 'greek',
     label: 'Ancient Greek',
     hsl: '10 68% 34%',
     fg: WHITE, // 7.94
     mode: 'greek',
-  },
-  {
-    id: 'foudre',
-    label: 'Agence Foudre',
-    hsl: '330 68% 38%',
-    fg: WHITE, // 6.80
-    mode: 'foudre',
-  },
-  {
-    id: 'slush',
-    label: 'Slush',
-    hsl: '213 100% 43%',
-    fg: WHITE, // 4.62
-    mode: 'slush',
-  },
-  {
-    id: 'spiderverse',
-    label: 'Spider-Verse',
-    hsl: '355 82% 42%',
-    fg: WHITE, // 7.05
-    mode: 'spiderverse',
   },
   {
     id: 'hanami',
@@ -154,6 +168,28 @@ export const SCHEMES: Scheme[] = [
     hsl: '221 62% 32%',
     fg: WHITE, // 9.98 — lapis, the light register's primary
     mode: 'egyptian',
+  },
+  // Reference design systems, each rendered in this app's furniture.
+  {
+    id: 'foudre',
+    label: 'Agence Foudre',
+    hsl: '330 68% 38%',
+    fg: WHITE, // 6.80
+    mode: 'foudre',
+  },
+  {
+    id: 'slush',
+    label: 'Slush',
+    hsl: '213 100% 43%',
+    fg: WHITE, // 4.62
+    mode: 'slush',
+  },
+  {
+    id: 'spiderverse',
+    label: 'Spider-Verse',
+    hsl: '355 82% 42%',
+    fg: WHITE, // 7.05
+    mode: 'spiderverse',
   },
   // The table-driven brand modes, from brands.ts.
   ...BRAND_DEFS.map(b => ({
@@ -757,7 +793,7 @@ export function SchemePicker({
         >
           <PixelPotion
             liquid={`hsl(${s.hsl})`}
-            sprite={s.mode === 'greek' ? AMPHORA_VESSEL : undefined}
+            sprite={s.mode ? MODE_VESSELS[s.mode] : undefined}
           />
           {/* Sparkles on the equipped bottle. Decoration and nothing else: what
               is equipped is carried by aria-pressed, by the label, and by being
@@ -800,7 +836,7 @@ export function SchemePicker({
                 >
                   <PixelPotion
                     liquid={`hsl(${s.hsl})`}
-                    sprite={s.mode === 'greek' ? AMPHORA_VESSEL : undefined}
+                    sprite={s.mode ? MODE_VESSELS[s.mode] : undefined}
                   />
                   {casting === s.id && (
                     <span className="sc-cast-stars" aria-hidden="true">

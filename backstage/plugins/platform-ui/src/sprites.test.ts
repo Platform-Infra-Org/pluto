@@ -42,6 +42,10 @@ import {
   GLYPH_BAND,
   PAPYRUS,
   WEDJAT,
+  TOKKURI_VESSEL,
+  CAULDRON_VESSEL,
+  HORN_VESSEL,
+  CANOPIC_VESSEL,
 } from './sprites';
 
 const grid = (...rows: string[]) => rows;
@@ -105,6 +109,7 @@ describe('sprite data', () => {
       SEIGAIHA, TORII, ASANOHA, KOI, CRESCENT_FLAME, CAULDRON, SPRIG,
       FUTHARK, YGGDRASIL, KNOTWORK, SCROLL_CORNER, RAVEN,
       ANKH, WEDJAT, CARTOUCHE, PAPYRUS, DJED,
+      TOKKURI_VESSEL, CAULDRON_VESSEL, HORN_VESSEL, CANOPIC_VESSEL,
     };
     for (const [name, sprite] of Object.entries({
       TEMPLE,
@@ -194,16 +199,42 @@ describe('sprite data', () => {
     expect(CREEP_A.join('')).not.toBe(CREEP_B.join(''));
   });
 
-  it('gives the amphora vessel both layers, like the potion', () => {
+  it('gives every vessel both layers, like the potion', () => {
     // The picker paints '~' in the scheme colour and '#' in currentColor. A
-    // grid with no '~' renders as an outline with nothing inside it.
-    expect(spriteRects(AMPHORA_VESSEL, '~').length).toBeGreaterThan(0);
-    expect(spriteRects(AMPHORA_VESSEL, '#').length).toBeGreaterThan(0);
+    // grid with no '~' renders as an outline with nothing inside it, which is
+    // the whole failure this shelf exists to avoid — and it is silent, because
+    // the sprite still draws.
+    const vessels = {
+      AMPHORA_VESSEL,
+      TOKKURI_VESSEL,
+      CAULDRON_VESSEL,
+      HORN_VESSEL,
+      CANOPIC_VESSEL,
+    };
+    for (const [name, sprite] of Object.entries(vessels)) {
+      expect(`${name} liquid:${spriteRects(sprite, '~').length > 0}`).toBe(
+        `${name} liquid:true`,
+      );
+      expect(`${name} glass:${spriteRects(sprite, '#').length > 0}`).toBe(
+        `${name} glass:true`,
+      );
+      expect(sprite).toHaveLength(SPRITE_SIZE);
+      for (const row of sprite) expect(row).toHaveLength(SPRITE_SIZE);
+    }
   });
 
-  it('keeps the amphora vessel on the 16x16 grid', () => {
-    expect(AMPHORA_VESSEL).toHaveLength(SPRITE_SIZE);
-    for (const row of AMPHORA_VESSEL) expect(row).toHaveLength(SPRITE_SIZE);
+  it('gives every vessel a silhouette of its own', () => {
+    // Two modes sharing a grid is the same bottle twice, which is what the
+    // generic POTION already does for everything unornamented.
+    const shapes = [
+      POTION,
+      AMPHORA_VESSEL,
+      TOKKURI_VESSEL,
+      CAULDRON_VESSEL,
+      HORN_VESSEL,
+      CANOPIC_VESSEL,
+    ].map(s => s.join('/'));
+    expect(new Set(shapes).size).toBe(shapes.length);
   });
 });
 

@@ -309,6 +309,107 @@ export const AMPHORA_VESSEL: Sprite = [
   '.....######.....',
 ];
 
+/* The rest of the vessel shelf: one bottle per ornamented mode.
+   Every one carries BOTH layers the picker draws — '~' for the liquid, which
+   takes the scheme colour, and '#' for the vessel, which takes currentColor.
+   A grid with no '~' comes back as an outline with nothing in it, which is
+   the whole of what these exist to avoid. Silhouette is what separates them
+   at 16px, not detail: a flask, a pot on legs, a tapering horn and a lidded
+   jar with a head on it are four different shapes at a glance, and the
+   generic POTION is still what every unornamented mode gets. */
+
+/** Hanami: a tokkuri, the sake flask — flared lip, collared neck, round belly. */
+export const TOKKURI_VESSEL: Sprite = [
+  '.....######.....',
+  '.....#~~~~#.....',
+  '......####......',
+  '......#~~#......',
+  '......#~~#......',
+  '.....#~~~~#.....',
+  '....#~~~~~~#....',
+  '...#~~~~~~~~#...',
+  '..#~~~~~~~~~~#..',
+  '..#~~~~~~~~~~#..',
+  '..#~~~~~~~~~~#..',
+  '..#~~~~~~~~~~#..',
+  '...#~~~~~~~~#...',
+  '...#~~~~~~~~#...',
+  '....########....',
+  '................',
+];
+
+/**
+ * Nightshade: the cauldron, on legs and under its bail handle.
+ *
+ * Not the CAULDRON above, which is a solid iron body with three bubbles over
+ * it: at bottle scale that reads as a black pot and the scheme colour barely
+ * appears. This one is filled to the rim, so the brew is most of the sprite.
+ */
+export const CAULDRON_VESSEL: Sprite = [
+  '................',
+  '...##########...',
+  '..#..........#..',
+  '.#............#.',
+  '################',
+  '#~~~~~~~~~~~~~~#',
+  '#~~~~~~~~~~~~~~#',
+  '#~~~~~~~~~~~~~~#',
+  '.#~~~~~~~~~~~~#.',
+  '.#~~~~~~~~~~~~#.',
+  '..#~~~~~~~~~~#..',
+  '..#~~~~~~~~~~#..',
+  '...#~~~~~~~~#...',
+  '....########....',
+  '...##......##...',
+  '..###......###..',
+];
+
+/** Rimefast: a drinking horn, mouth at the top right and tapering to a tip. */
+export const HORN_VESSEL: Sprite = [
+  '........######..',
+  '.......#~~~~~~#.',
+  '......#~~~~~~#..',
+  '.....#~~~~~~#...',
+  '.....#~~~~~#....',
+  '....#~~~~~#.....',
+  '....#~~~~#......',
+  '...#~~~~#.......',
+  '...#~~~~#.......',
+  '..#~~~~#........',
+  '..#~~~#.........',
+  '..#~~~#.........',
+  '..#~~#..........',
+  '..#~#...........',
+  '..##............',
+  '................',
+];
+
+/**
+ * Egyptian: a canopic jar, the head-stoppered vessel of the burial set.
+ *
+ * The lid is the whole of the recognition at this size, so it is drawn solid
+ * with two pixels knocked out for the eyes, and the liquid starts under the
+ * shoulder where a stoppered jar would actually hold it.
+ */
+export const CANOPIC_VESSEL: Sprite = [
+  '......####......',
+  '.....######.....',
+  '....########....',
+  '....##....##....',
+  '....########....',
+  '.....######.....',
+  '......####......',
+  '..############..',
+  '..#~~~~~~~~~~#..',
+  '.#~~~~~~~~~~~~#.',
+  '.#~~~~~~~~~~~~#.',
+  '.#~~~~~~~~~~~~#.',
+  '.#~~~~~~~~~~~~#.',
+  '..#~~~~~~~~~~#..',
+  '..############..',
+  '...##########...',
+];
+
 /** A secret: what a request carries that must not be printed. */
 export const KEY: Sprite = [
   '....######......',
