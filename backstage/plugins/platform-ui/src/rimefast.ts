@@ -36,9 +36,9 @@
  * recorded when it pushed success sixty degrees to clear the stock amber.
  *
  * The ornament is what carries the mode, not the palette: a rune band under
- * every page title and the same band turned upright down the sidebar, an
- * interlace along the edges of a command window and down both jambs of the
- * sign-in page, a raven perched at each top corner of the card, Yggdrasil on
+ * every page title, interlace worked across the whole sidebar as a field and
+ * along the edges of a command window and down both jambs of the sign-in
+ * page, a raven perched at each top corner of the card, Yggdrasil on
  * an empty shelf, and the aurora across the top rail.
  *
  * Kept out of styles.ts for the reason greek.ts records: that file is one
@@ -51,7 +51,6 @@ import {
   RAVEN,
   YGGDRASIL,
   mirrorSprite,
-  rotateSprite,
   spriteUrl,
 } from './sprites';
 
@@ -71,15 +70,24 @@ const AURORA_INK = 'hsl(157 60% 59.8%)';
 const AURORA_DAY = 'hsl(157 55% 28%)';
 
 /**
- * The pair at the door, and the rune band turned to run down a panel edge.
+ * The ground tint, for ornament that is a SURFACE rather than a line.
+ *
+ * Interlace in woad across a whole sidebar is a page of pattern with an app
+ * somewhere behind it; the same knot a few points off its own surface is the
+ * carving worked into the panel. --sc-ground holds the same value in each
+ * register so the literal here can be checked against the sheet.
+ */
+const BONE = 'hsl(44 30% 93%)'; // the tint by day
+const POLAR = 'hsl(205 30% 12%)'; // and on polar night
+
+/**
+ * The pair at the door.
  *
  * Derived rather than authored twice: a mirrored raven drawn by hand drifts
- * from its twin the first time either is edited, and a hand-rotated futhark
- * stops matching the band under the page title.
+ * from its twin the first time either is edited.
  */
 const RAVEN_L = RAVEN;
 const RAVEN_R = mirrorSprite(RAVEN);
-const STAVE = rotateSprite(FUTHARK);
 
 export function rimefastCss(): string {
   return `
@@ -112,6 +120,8 @@ export function rimefastCss(): string {
   /* Madder, and this is the LIFTED value. The true pigment (#C7503F) is 3.60
      against the card and may be used as a fill only. */
   --sc-madder: 9 60% 40%;
+  /* The ground tint the sidebar field is printed in. */
+  --sc-ground: 44 30% 93%;
 }
 /* ===== dark register: polar night, which is the designed one ===== */
 :root.sc-rimefast.sc-dark {
@@ -142,6 +152,7 @@ export function rimefastCss(): string {
   --sc-lichen: 272 42% 68.2%;
   /* Madder, lifted, for anything carrying text. */
   --sc-madder: 9 68% 62%;
+  --sc-ground: 205 30% 12%;
 }
 
 /* ===== Chrome. Woad linework on bone by day, frost green on polar night. ===== */
@@ -255,20 +266,24 @@ export function rimefastCss(): string {
   background-image: ${spriteUrl(RAVEN_L, ORPIMENT)}, ${spriteUrl(RAVEN_R, ORPIMENT)};
 }
 
-/* The sidebar takes the same rune band as the page titles, turned upright and
-   run down its inner edge — which is how a rune band is carved when it has to
-   follow a vertical face, glyphs perpendicular to the band rather than lying
-   on their sides. Against the inner edge in a 16px column, so it survives the
-   nav collapsing to icon width: an ornament centred in a panel that changes
-   width is an ornament that moves. */
+/* The sidebar as a carved panel: interlace worked across the whole surface, in
+   the ground tint rather than in woad.
+   A FIELD, not a strip. The rune band used to run down the inner edge in a 16px
+   column, and a band down one edge of a panel reads as a seam — something the
+   layout did — where the same motif tiled across the surface reads as the wall
+   the navigation is cut into. It is also the only form that survives the nav
+   collapsing to icon width, because a field has no edge to be anchored to.
+   Interlace rather than runes, for the reason the band itself is only two
+   glyphs long: a wall of letterforms invites being read, and this one is
+   decoration. Quiet is the requirement — every label on the nav has to win. */
 :root.sc-rimefast .sc-nav {
-  background-image: ${spriteUrl(STAVE, OCHRE_DAY)};
-  background-repeat: repeat-y;
-  background-size: 16px 16px;
-  background-position: right 2px top;
+  background-image: ${spriteUrl(KNOTWORK, BONE)};
+  background-repeat: repeat;
+  background-size: 32px 32px;
+  background-position: left top;
 }
 :root.sc-rimefast.sc-dark .sc-nav {
-  background-image: ${spriteUrl(STAVE, ORPIMENT)};
+  background-image: ${spriteUrl(KNOTWORK, POLAR)};
 }
 
 /* An empty shelf gets Yggdrasil — a tree is a better thing to meet than a

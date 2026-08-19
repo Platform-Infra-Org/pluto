@@ -56,8 +56,8 @@
  * The ornament is what carries the mode, and it is **hieroglyphic**: a glyph
  * register under every page title and along both edges of a command window, a
  * cartouche and a facing pair of wedjat eyes on the sign-in card, djed pillars
- * flanking the sign-in page, papyrus stalks down the sidebar, an ankh on an
- * empty shelf, and the Aten stepping its rays in the corner. The signs are
+ * flanking the sign-in page, a marsh of papyrus across the whole sidebar, an
+ * ankh on an empty shelf, and the Aten stepping its rays in the corner. The signs are
  * real and individually legible; the arrangement deliberately is not a
  * sentence. sprites.ts states that at length beside the grids and says why
  * turning it into one would be the bug.
@@ -98,6 +98,18 @@ const GOLD_LEAF = 'hsl(44 82% 55%)';
 const GOLD_DAY = 'hsl(40 80% 36%)';
 const MALACHITE_DAY = 'hsl(168 52% 26%)';
 const MALACHITE_NIGHT = 'hsl(168 45% 55%)';
+
+/**
+ * The ground tint, for ornament that is a SURFACE rather than a line.
+ *
+ * A field is not a band: a marsh of papyrus in Egyptian blue across a whole
+ * sidebar is a page of pattern with an app somewhere behind it. The tint sits
+ * a few points off its own surface, the way a pattern painted into plaster
+ * does, and --sc-ground holds the same value in each register so the literal
+ * here can be checked against the sheet.
+ */
+const LIMESTONE = 'hsl(205 28% 92%)'; // the tint by day
+const TOMB = 'hsl(212 34% 13%)'; // and inside the tomb
 
 /**
  * The pair over the door.
@@ -147,6 +159,8 @@ export function egyptianCss(): string {
      which is what keeps gold from becoming the structure again. */
   --sc-malachite: 168 52% 26%;
   --sc-sun-ink: 40 80% 36%;
+  /* The ground tint the sidebar field is printed in. */
+  --sc-ground: 205 28% 92%;
 }
 /* ===== dark register: the tomb interior, unchanged and still the best one = */
 :root.sc-egyptian.sc-dark {
@@ -177,6 +191,7 @@ export function egyptianCss(): string {
   /* Gold leaf: the tomb registers paint the sun in metal, and a red disk on a
      black ground reads as a stop light. */
   --sc-sun-ink: 44 82% 55%;
+  --sc-ground: 212 34% 13%;
 }
 
 /* ===== Chrome. Lapis and Egyptian blue on cool limestone by day, gold leaf
@@ -303,19 +318,24 @@ export function egyptianCss(): string {
   background-image: ${spriteUrl(WEDJAT_L, GOLD_LEAF)}, ${spriteUrl(WEDJAT_R, GOLD_LEAF)}, ${spriteUrl(CARTOUCHE, GOLD_LEAF)};
 }
 
-/* Papyrus stalks down the inner edge of the sidebar — the marsh the whole
-   civilisation was written on, and the one motif here that is native to a tall
-   narrow strip. Against the inner edge in a 16px column, so it survives the
-   nav collapsing to icon width: an ornament centred in a panel that changes
-   width is an ornament that moves. */
+/* The sidebar as a painted wall: a marsh of papyrus across the whole panel, in
+   the ground tint rather than in Egyptian blue.
+   A FIELD, not a strip. The stalks used to run down the inner edge in a 16px
+   column, and a band down one edge of a panel reads as a seam — something the
+   layout did — where the same motif tiled across the surface reads as the wall
+   the navigation is painted on. It also survives the nav collapsing to icon
+   width, because a field has no edge to be anchored to. A marsh is a thicket
+   of stalks in any case, never one of them.
+   Quiet is the requirement here: the nav carries navigation, and every label
+   on it has to win. */
 :root.sc-egyptian .sc-nav {
-  background-image: ${spriteUrl(PAPYRUS, NILE_BLUE)};
-  background-repeat: repeat-y;
-  background-size: 16px 32px;
-  background-position: right 3px top;
+  background-image: ${spriteUrl(PAPYRUS, LIMESTONE)};
+  background-repeat: repeat;
+  background-size: 24px 32px;
+  background-position: left top;
 }
 :root.sc-egyptian.sc-dark .sc-nav {
-  background-image: ${spriteUrl(PAPYRUS, GOLD_LEAF)};
+  background-image: ${spriteUrl(PAPYRUS, TOMB)};
 }
 
 /* An empty shelf gets the ankh — life, and a better thing to meet than a blank

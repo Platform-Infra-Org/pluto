@@ -174,6 +174,32 @@ describe('rimefast ornament', () => {
     expect(tokenIn(css, ':root.sc-rimefast.sc-dark', 'sc-aurora-ink')).toBe('157 60% 59.8%');
   });
 
+  it('prints the sidebar as a field rather than a strip down one edge', () => {
+    // The hanami sidebar is the model this follows: a full-panel tiled lattice
+    // at low contrast, so the nav reads as a wall the labels sit on. A band
+    // anchored to one edge reads as a seam — something the layout did — and it
+    // has nowhere to go when the nav collapses to icon width.
+    // Painted in the ground tint, never in woad.
+    const nav = /:root\.sc-rimefast \.sc-nav \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(nav).toMatch(/background-repeat:\s*repeat;/);
+    expect(nav).not.toMatch(/repeat-y/);
+    expect(nav).toContain(spriteDataUri(KNOTWORK, 'hsl(44 30% 93%)'));
+    const dark = /:root\.sc-rimefast\.sc-dark \.sc-nav \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(dark).toContain(spriteDataUri(KNOTWORK, 'hsl(205 30% 12%)'));
+  });
+
+  it('keeps the ground tint a ground, and off the line inks', () => {
+    // Same literal-tracks-token trap as the inks above, one layer quieter: the
+    // sidebar field is printed in a tint that sits a few points off its own
+    // surface. If it ever equals a line ink, the panel stops being a wall and
+    // becomes a drawing.
+    expect(tokenIn(css, ':root.sc-rimefast', 'sc-ground')).toBe('44 30% 93%');
+    expect(tokenIn(css, ':root.sc-rimefast.sc-dark', 'sc-ground')).toBe('205 30% 12%');
+    expect(tokenIn(css, ':root.sc-rimefast', 'sc-ground')).not.toBe(
+      tokenIn(css, ':root.sc-rimefast', 'sc-border'),
+    );
+  });
+
   it('keeps every ornament paired with a repeat', () => {
     // A background-image with no background-repeat tiles the whole surface: a
     // perched raven becomes a flock. Checked per target element, because a

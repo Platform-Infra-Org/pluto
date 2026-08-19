@@ -116,6 +116,8 @@ describe('egyptian ornament', () => {
     'hsl(40 80% 36%)', // the gold accent, by day
     'hsl(168 52% 26%)', // malachite, by day
     'hsl(168 45% 55%)', // malachite, by night
+    'hsl(205 28% 92%)', // the ground tint, by day
+    'hsl(212 34% 13%)', // and inside the tomb
   ];
 
   it('renders every motif it claims, in one register or the other', () => {
@@ -160,6 +162,13 @@ describe('egyptian ornament', () => {
     expect(tokenIn(css, ':root.sc-egyptian.sc-dark', 'sc-malachite')).toBe('168 45% 55%');
     expect(tokenIn(css, ':root.sc-egyptian', 'sc-sun-ink')).toBe('40 80% 36%');
     expect(tokenIn(css, ':root.sc-egyptian.sc-dark', 'sc-sun-ink')).toBe('44 82% 55%');
+    expect(tokenIn(css, ':root.sc-egyptian', 'sc-ground')).toBe('205 28% 92%');
+    expect(tokenIn(css, ':root.sc-egyptian.sc-dark', 'sc-ground')).toBe('212 34% 13%');
+    // The tint is a GROUND, never a line ink. If it ever equals the rule
+    // colour, the sidebar field stops being a wall and becomes a drawing.
+    expect(tokenIn(css, ':root.sc-egyptian', 'sc-ground')).not.toBe(
+      tokenIn(css, ':root.sc-egyptian', 'sc-border'),
+    );
   });
 
   it('keeps malachite off every screen that can show a status badge', () => {
@@ -181,6 +190,20 @@ describe('egyptian ornament', () => {
       .filter(r => malachite.some(uri => r.body.includes(uri)))
       .map(r => target(r.sel));
     expect([...new Set(users)]).toEqual(['.sc-login']);
+  });
+
+  it('prints the sidebar as a field rather than a strip down one edge', () => {
+    // The hanami sidebar is the model this follows: a full-panel tiled lattice
+    // at low contrast, so the nav reads as a wall the labels sit on. A band
+    // anchored to one edge reads as a seam — something the layout did — and it
+    // has nowhere to go when the nav collapses to icon width.
+    // Painted in the ground tint, never in the rule colour.
+    const nav = /:root\.sc-egyptian \.sc-nav \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(nav).toMatch(/background-repeat:\s*repeat;/);
+    expect(nav).not.toMatch(/repeat-y/);
+    expect(nav).toContain(spriteDataUri(PAPYRUS, 'hsl(205 28% 92%)'));
+    const dark = /:root\.sc-egyptian\.sc-dark \.sc-nav \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(dark).toContain(spriteDataUri(PAPYRUS, 'hsl(212 34% 13%)'));
   });
 
   it('keeps every ornament paired with a repeat', () => {

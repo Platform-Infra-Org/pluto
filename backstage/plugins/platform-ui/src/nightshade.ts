@@ -36,7 +36,8 @@
  *   near-white inks on one surface is how a hierarchy stops meaning anything.
  *
  * The ornament is what carries the mode, not the palette: a sprig band under
- * every page title and the same vine turned upright down the sidebar, filigree
+ * every page title and the same sprig printed across the whole sidebar as a
+ * field, filigree
  * medallions at the corners of a command window, a corner bracket at each
  * corner of the sign-in card, crescent and torch flanking it, a cauldron on an
  * empty shelf, and the moon going through its phases in the corner of the
@@ -73,6 +74,18 @@ const SELENE = 'hsl(219 40% 84.9%)';
 const SELENE_DAY = 'hsl(219 30% 60%)';
 
 /**
+ * The ground tint, for ornament that is a SURFACE rather than a line.
+ *
+ * A field is not a band: the sprig in filigree gold across a whole sidebar is
+ * a page of pattern with an app somewhere behind it. The tint sits a few
+ * points off its own surface, which is what a printed paper does, and
+ * --sc-ground holds the same value in each register so the literal here can be
+ * checked against the sheet.
+ */
+const DUSK_DAY = 'hsl(258 22% 94%)'; // the tint by day
+const DUSK = 'hsl(254 30% 13%)'; // and at night
+
+/**
  * The four corner brackets of the nouveau frame.
  *
  * One authored grid and three quarter turns, rather than four hand-drawn
@@ -86,9 +99,6 @@ const CORNER_TL = SCROLL_CORNER;
 const CORNER_TR = rotateSprite(CORNER_TL);
 const CORNER_BR = rotateSprite(CORNER_TR);
 const CORNER_BL = rotateSprite(CORNER_BR);
-
-/** The sprig, turned to run down a panel edge instead of along a rail. */
-const VINE = rotateSprite(SPRIG);
 
 export function nightshadeCss(): string {
   return `
@@ -122,6 +132,8 @@ export function nightshadeCss(): string {
   --sc-moonlight: 269 50% 42%;
   /* ORNAMENT ONLY. Silver is not a second text tone; see the docstring. */
   --sc-selene: 219 30% 60%;
+  /* The ground tint the sidebar field is printed in. */
+  --sc-ground: 258 22% 94%;
 }
 /* ===== dark register: the crossroads at night, which is the designed one ===== */
 :root.sc-nightshade.sc-dark {
@@ -150,6 +162,7 @@ export function nightshadeCss(): string {
   --sc-witch: 142 67% 66.3%;
   --sc-moonlight: 269 68% 69.8%;
   --sc-selene: 219 40% 84.9%;
+  --sc-ground: 254 30% 13%;
 }
 
 /* ===== Chrome. Gold linework on a violet dark, and the same linework in a
@@ -287,20 +300,24 @@ export function nightshadeCss(): string {
     ${spriteUrl(CORNER_BR, GOLD)}, ${spriteUrl(CORNER_BL, GOLD)};
 }
 
-/* The sidebar takes the sprig turned upright, running down its inner edge.
-   The same vine as the page-title band and the section rule, which is the
-   point: one botanical motif, three places, rather than three ornaments. It
-   sits against the inner edge in a 16px column, so the rail survives the nav
-   collapsing to its icon width — an ornament centred in a panel that changes
-   width is an ornament that moves. */
+/* The sidebar as printed paper: the sprig tiled across the whole panel in the
+   ground tint, a nouveau wallpaper rather than a rail.
+   A FIELD, not a strip. The vine used to run down the inner edge in a 16px
+   column, and a band down one edge of a panel reads as a seam — something the
+   layout did — where the same motif tiled across the surface reads as the wall
+   the navigation hangs on. A field also has no edge to be anchored to, so it
+   survives the nav collapsing to its icon width.
+   Still the same botanical motif as the page-title band, which was always the
+   point: one plant, several places. Quiet is the requirement — the nav carries
+   navigation, and every label on it has to win. */
 :root.sc-nightshade .sc-nav {
-  background-image: ${spriteUrl(VINE, GOLD_DAY)};
-  background-repeat: repeat-y;
-  background-size: 16px 16px;
-  background-position: right 2px top;
+  background-image: ${spriteUrl(SPRIG, DUSK_DAY)};
+  background-repeat: repeat;
+  background-size: 32px 32px;
+  background-position: left top;
 }
 :root.sc-nightshade.sc-dark .sc-nav {
-  background-image: ${spriteUrl(VINE, GOLD)};
+  background-image: ${spriteUrl(SPRIG, DUSK)};
 }
 
 /* An empty shelf gets the cauldron, iron in silver and brew in witch green.

@@ -19,14 +19,15 @@
  *
  * Colour alone does not make a theme Greek, though — a recoloured app is just a
  * recoloured app. The ornament is what carries it: the meander running under
- * every page title, the fluting down the sidebar, the rosettes at the corners
- * of a command window, the palmette on an empty shelf. Those are drawn from
+ * every page title, the key printed across the whole sidebar as a field, the
+ * rosettes at the corners of a command window, the palmette on an empty shelf. Those are drawn from
  * sprite grids (sprites.ts) rather than approximated with gradients, so they
  * sit in the same pixel language as the rest of the app instead of looking like
  * a decal applied over it.
  */
 import {
   COLUMN,
+  FRET,
   MEANDER,
   PALMETTE,
   ROSETTE,
@@ -44,6 +45,20 @@ import {
  */
 const BRONZE = 'hsl(40 55% 46%)';
 const GOLD = 'hsl(43 62% 46%)';
+
+/**
+ * The ground tint, for ornament that is a SURFACE rather than a line.
+ *
+ * A field is not a band. The key in bronze across a whole sidebar is a page of
+ * pattern with an app somewhere behind it — which is the failure the mode's
+ * old ornament had at the other end of the scale, a narrow strip down one edge
+ * that read as a seam rather than as decoration. The tint sits a few points off
+ * its own surface, the way a pattern printed into plaster does, and --sc-ground
+ * holds the same value in each register so the literal can be checked against
+ * the sheet.
+ */
+const CHALK = 'hsl(40 38% 94%)'; // the tint by day
+const SHADE = 'hsl(265 20% 15%)'; // and in the Underworld
 
 /** An ornament as a CSS url(), ready to interpolate. */
 const art = (sprite: Sprite, fill: string) =>
@@ -72,6 +87,8 @@ export function greekCss(): string {
   --sc-destructive: 12 78% 50%;
   /* The filigree gold, used by the chrome. Not a shadcn token. */
   --sc-gold: 40 55% 46%;
+  /* The ground tint the sidebar field is printed in. Not a shadcn token. */
+  --sc-ground: 40 38% 94%;
 }
 /* ===== dark register: the Underworld ===== */
 :root.sc-greek.sc-dark {
@@ -98,6 +115,7 @@ export function greekCss(): string {
   --sc-warning: 188 65% 45%;
   --sc-destructive: 12 78% 50%;
   --sc-gold: 43 62% 46%;
+  --sc-ground: 265 20% 15%;
 }
 
 /* ===== Ornate chrome. One grammar, two brightnesses: the light register is
@@ -220,6 +238,26 @@ export function greekCss(): string {
 }
 :root.sc-greek.sc-dark .sc-h1 {
   background-image: ${art(MEANDER, GOLD)};
+}
+
+/* The sidebar as a plastered wall: the key printed across the whole panel, in
+   the ground tint rather than in bronze.
+   A FIELD, not a strip. An ornament that runs down one edge of a panel reads
+   as a seam — something the layout did — where the same motif tiled across the
+   surface reads as the wall the navigation is painted on. It is also the only
+   form that survives the nav collapsing to icon width, because a field has no
+   edge to be anchored to.
+   Quiet is the whole requirement here: the nav carries navigation, and every
+   label on it has to win. Hence the tint and hence FRET, which is the key drawn
+   at one pixel a line instead of MEANDER's two. */
+:root.sc-greek .sc-nav {
+  background-image: ${art(FRET, CHALK)};
+  background-repeat: repeat;
+  background-size: 24px 24px;
+  background-position: left top;
+}
+:root.sc-greek.sc-dark .sc-nav {
+  background-image: ${art(FRET, SHADE)};
 }
 
 /* An empty shelf gets a palmette — the akroterion at the peak of a temple, and

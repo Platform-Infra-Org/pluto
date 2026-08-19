@@ -7,6 +7,7 @@ import {
 } from './statusTokens';
 import {
   COLUMN,
+  FRET,
   MEANDER,
   PALMETTE,
   ROSETTE,
@@ -280,6 +281,23 @@ describe('greek ornament renders inside its box', () => {
     expect(offenders.map(o => o.sel)).toEqual([]);
   });
 
+  it('prints the sidebar as a field rather than a strip down one edge', () => {
+    // The hanami sidebar is the model this follows: a full-panel tiled lattice
+    // at low contrast, so the nav reads as a wall the labels sit on. A band
+    // anchored to one edge reads as a seam — something the layout did — and it
+    // has nowhere to go when the nav collapses to icon width.
+    // FRET, not MEANDER: the band is drawn with two-pixel rails because it is
+    // read at heading size, and tiled across a panel those rails are half the
+    // surface. And in the ground tint, never in bronze.
+    const css = greekCss();
+    const nav = /:root\.sc-greek \.sc-nav \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(nav).toMatch(/background-repeat:\s*repeat;/);
+    expect(nav).not.toMatch(/repeat-y/);
+    expect(nav).toContain(spriteDataUri(FRET, 'hsl(40 38% 94%)'));
+    const dark = /:root\.sc-greek\.sc-dark \.sc-nav \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(dark).toContain(spriteDataUri(FRET, 'hsl(265 20% 15%)'));
+  });
+
   it('keeps every ornament paired with a repeat', () => {
     // A background-image with no background-repeat tiles across the whole
     // surface: a corner medallion becomes wallpaper, a header band becomes a
@@ -348,5 +366,17 @@ describe('greek ornament is drawn from sprites', () => {
     };
     expect(borderIn(':root.sc-greek')).toBe('40 55% 46%');
     expect(borderIn(':root.sc-greek.sc-dark')).toBe('43 62% 46%');
+
+    // The sidebar field is printed in a GROUND tint rather than in the rule
+    // colour — same literal-tracks-token trap, one layer quieter. If the two
+    // ever meet, the sidebar stops being a wall and becomes a drawing.
+    const groundIn = (selector: string) => {
+      const start = css.indexOf(`${selector} {`);
+      const body = css.slice(start, css.indexOf('}', start));
+      return /--sc-ground:\s*([^;]+);/.exec(body)?.[1].trim();
+    };
+    expect(groundIn(':root.sc-greek')).toBe('40 38% 94%');
+    expect(groundIn(':root.sc-greek.sc-dark')).toBe('265 20% 15%');
+    expect(groundIn(':root.sc-greek')).not.toBe(borderIn(':root.sc-greek'));
   });
 });

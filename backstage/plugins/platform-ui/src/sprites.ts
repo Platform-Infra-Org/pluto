@@ -632,6 +632,40 @@ export const STAR: Sprite = [
    into CSS through spriteDataUri. */
 
 /**
+ * The key again, as a FIELD rather than a band: a two-by-two of mirrored
+ * single-line spirals, tiling in both directions.
+ *
+ * A separate sprite and not MEANDER at a smaller size, for the reason that
+ * decides every ground pattern in this design system: MEANDER is drawn with
+ * two-pixel rails because it is a band read at the size of a heading rule, and
+ * tiled across a whole panel those rails are half the surface. This one is one
+ * pixel throughout — about a third ink, the weight asanoha carries in the
+ * hanami sidebar — so at a ground tint it prints into the panel instead of
+ * sitting on top of it.
+ *
+ * Mirrored in pairs because that is how a fret is actually laid out on a wall:
+ * two spirals facing each other under one continuous rail.
+ */
+export const FRET: Sprite = [
+  '################',
+  '......#..#......',
+  '..###.#..#.###..',
+  '..#.#.#..#.#.#..',
+  '..#...#..#...#..',
+  '..#####..#####..',
+  '................',
+  '................',
+  '################',
+  '......#..#......',
+  '..###.#..#.###..',
+  '..#.#.#..#.#.#..',
+  '..#...#..#...#..',
+  '..#####..#####..',
+  '................',
+  '................',
+];
+
+/**
  * The meander — the Greek key. The single most recognisable ornament in Greek
  * art, running along the rim of almost every red-figure vase and the frieze of
  * almost every temple.
