@@ -1,4 +1,5 @@
 import {
+  mirrorSprite,
   rotateSprite,
   spriteRects,
   STATE_SPRITES,
@@ -32,6 +33,7 @@ import {
   FUTHARK,
   YGGDRASIL,
   KNOTWORK,
+  RAVEN,
   AURORA,
 } from './sprites';
 
@@ -69,8 +71,23 @@ describe('rotateSprite', () => {
   });
 
   it('comes back to itself in four turns', () => {
-    const four = [1, 2, 3, 4].reduce(acc => rotateSprite(acc), SCROLL_CORNER as string[]);
+    const four = rotateSprite(
+      rotateSprite(rotateSprite(rotateSprite(SCROLL_CORNER))),
+    );
     expect(four.join('/')).toBe(SCROLL_CORNER.join('/'));
+  });
+});
+
+describe('mirrorSprite', () => {
+  it('flips left to right and back again', () => {
+    expect(mirrorSprite(grid('#..', '..#'))).toEqual(['..#', '#..']);
+    expect(mirrorSprite(mirrorSprite(RAVEN as string[])).join('/')).toBe(RAVEN.join('/'));
+  });
+
+  it('gives the raven a mirror that is actually a different bird', () => {
+    // If the sprite were symmetric the pair would face the same way, which is
+    // one drawing used twice rather than two ravens flanking a door.
+    expect(mirrorSprite(RAVEN).join('/')).not.toBe(RAVEN.join('/'));
   });
 });
 
@@ -79,7 +96,7 @@ describe('sprite data', () => {
     const items = {
       AMPHORA, KEY, LAUREL, HELM, TORCH, SCROLL, POTION, RUPEE,
       SEIGAIHA, TORII, ASANOHA, KOI, CRESCENT_FLAME, CAULDRON, SPRIG,
-      FUTHARK, YGGDRASIL, KNOTWORK, SCROLL_CORNER,
+      FUTHARK, YGGDRASIL, KNOTWORK, SCROLL_CORNER, RAVEN,
     };
     for (const [name, sprite] of Object.entries({
       TEMPLE,

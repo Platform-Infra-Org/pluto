@@ -88,6 +88,16 @@ export const rotateSprite = (sprite: Sprite): Sprite =>
   );
 
 /**
+ * A sprite mirrored left to right.
+ *
+ * For a PAIR: two of the same creature both facing the same way read as one
+ * drawing used twice, which is exactly what it is. One line, and it is the
+ * difference between two ravens flanking a door and two ravens queueing.
+ */
+export const mirrorSprite = (sprite: Sprite): Sprite =>
+  sprite.map(row => [...row].reverse().join(''));
+
+/**
  * A sprite as a CSS `url()`, ready to interpolate into a mode sheet.
  *
  * The fill is baked, so a two-colour motif is two calls — see spriteDataUri.
@@ -975,8 +985,11 @@ export const MOON_STRIP: Sprite = [
    symbol. Nobody should add one later thinking the set was left incomplete.
    Ravens, Yggdrasil, knotwork and a generic futhark band carry no such
    freight, and rimefast.test.ts asserts the sheet never names the five.
-   The raven itself went the way of the koi and the moth: a bird silhouette at
-   eight pixels reads as a comma. */
+   The raven was dropped once at EIGHT pixels, where a bird silhouette reads as
+   a comma. It is drawn below at sixteen, where the head, the beak and the legs
+   are each two pixels and the bird survives — the same correction the koi got
+   in the hanami set. The moth stays dropped: wings need a pattern, and a
+   pattern needs pixels the moth does not have. */
 
 /**
  * A decorative rune band, tiling horizontally with a period of four pixels.
@@ -1056,6 +1069,35 @@ export const KNOTWORK: Sprite = [
   '.....##......##.',
   '..##..##..##..##',
   '#......##......#',
+];
+
+/**
+ * A raven, perched, facing left. Huginn or Muninn, depending on the corner.
+ *
+ * The legs are what make it a perched bird rather than a blot: two two-pixel
+ * uprights with a gap between them and feet at the bottom. The beak is the
+ * other load-bearing pixel — take the three-pixel point off the head and this
+ * is a pigeon.
+ *
+ * Its mirror comes from mirrorSprite, so the pair faces inward.
+ */
+export const RAVEN: Sprite = [
+  '.....####.......',
+  '....######......',
+  '..########......',
+  '.#########......',
+  '..#########.....',
+  '...##########...',
+  '..############..',
+  '.##############.',
+  '.##############.',
+  '.############.##',
+  '..##########.###',
+  '..#########.###.',
+  '...#######.##...',
+  '....##.##.......',
+  '....##.##.......',
+  '...####.###.....',
 ];
 
 /**
