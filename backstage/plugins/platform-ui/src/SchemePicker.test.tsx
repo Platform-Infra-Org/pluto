@@ -189,25 +189,44 @@ describe('SchemePicker', () => {
       expect(container.querySelector('.sc-picker-inv')).not.toBeNull();
     });
 
-    it('shows every scheme on the sign-in card, wrapped, with no tray', () => {
-      // Deliberately not the corner shelf's one-bottle-plus-tray. That version
-      // fitted the space and failed the reader: a lone 26px bottle under the
-      // button was not recognised as the colour picker at all. The card
-      // carries the whole shelf and wraps it instead.
-      const { container } = render(<SchemePicker />);
-      expect(potions(container)).toHaveLength(SCHEMES.length);
-      expect(container.querySelector('.sc-picker-toggle')).toBeNull();
-      expect(container.querySelector('.sc-picker-inv')).toBeNull();
+    it('gives the sign-in card the same one-bottle box as the app', () => {
+      // The card is 296px of content box; twelve bottles need 358px and fifteen
+      // need 442px, so the flat shelf squeezed the sprites below their 16px grid
+      // and got worse with every potion added. The tray is the same interaction
+      // the app already has, and it does not grow the card at all.
+      const { container } = render(<SchemePicker compact />);
+      expect(potions(container)).toHaveLength(1);
+      expect(container.querySelector('.sc-picker-toggle')).not.toBeNull();
       expect(container.querySelector('.sc-picker-float')).toBeNull();
     });
 
-    it('picks a scheme directly from the sign-in card', () => {
-      // No tray in the way: one click on a bottle equips it.
-      const { container } = render(<SchemePicker />);
-      const bottles = potions(container);
-      expect(bottles[0].getAttribute('aria-expanded')).toBeNull();
-      fireEvent.click(bottles[1]);
-      expect(bottles[1].getAttribute('aria-pressed')).toBe('true');
+    it('opens the full inventory from the sign-in card', () => {
+      const { container } = render(<SchemePicker compact />);
+      const toggle = potions(container)[0];
+      expect(toggle.getAttribute('aria-expanded')).toBe('false');
+      fireEvent.click(toggle);
+      expect(toggle.getAttribute('aria-expanded')).toBe('true');
+      expect(container.querySelectorAll('.sc-inv-potion')).toHaveLength(SCHEMES.length);
+    });
+
+    it('says which potion is equipped without any motion', () => {
+      // The sparkles are decoration. Turn every animation off and the shelf
+      // still answers the question, from aria-pressed, from the label, and from
+      // being one bottle — and the stars are hidden from assistive technology.
+      const { container } = render(<SchemePicker floating />);
+
+      const [bottle] = potions(container);
+      expect(bottle.getAttribute('aria-pressed')).toBe('true');
+      expect(bottle.getAttribute('aria-label')).toContain(fallback.label);
+
+      const stars = Array.from(container.querySelectorAll('.sc-potion-star'));
+      expect(stars.length).toBeGreaterThan(0);
+      expect(stars.map(st => st.getAttribute('aria-hidden'))).toEqual(
+        stars.map(() => 'true'),
+      );
+      expect(
+        container.querySelector('.sc-potion-stars')!.getAttribute('aria-hidden'),
+      ).toBe('true');
     });
   });
 

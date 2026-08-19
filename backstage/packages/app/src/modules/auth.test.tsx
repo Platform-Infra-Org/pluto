@@ -31,10 +31,10 @@ describe('PlatformSignInPage', () => {
     const { container } = renderPage(jest.fn(async () => undefined));
     await screen.findByText(/press start/i);
     expect(container.querySelectorAll('.sc-login-pick')).toHaveLength(1);
-    // The whole shelf, not a single bottle behind a tray: a lone 26px potion
-    // under the button did not read as the picker.
-    expect(container.querySelectorAll('.sc-potion').length).toBeGreaterThan(1);
-    expect(container.querySelector('.sc-picker-toggle')).toBeNull();
+    // One bottle plus a toggle: the sign-in card uses the same collapsed box
+    // the app does, because a flat shelf of every scheme outgrew the card.
+    expect(container.querySelectorAll('.sc-potion')).toHaveLength(1);
+    expect(container.querySelector('.sc-picker-toggle')).not.toBeNull();
   });
 
   it('shows no picker while it is still restoring a session', () => {
