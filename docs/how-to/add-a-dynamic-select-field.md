@@ -158,8 +158,8 @@ The only difference from a real deployment is where the tree comes from —
 ## Notes
 
 - Options refresh on `intervalMs`; the current selection is preserved across
-  refreshes, and the last good list is kept if a refresh fails. (`intervalMs`
-  is ignored once `treePath` is set — the cascade re-derives its options from
-  the cached tree instead of polling.)
+  refreshes, and the last good list is kept if a refresh fails. This applies to
+  a `treePath` cascade too — see **Dependent selects** above, where the poll is
+  shared across every level rather than run once per field.
 - The field is registered by the `platform-ui` plugin
   (`platformScaffolderFieldsModule`) — no per-template setup beyond `ui:field`.
