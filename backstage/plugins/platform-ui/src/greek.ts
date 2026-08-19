@@ -26,7 +26,6 @@
  * a decal applied over it.
  */
 import {
-  COLUMN,
   FRET,
   MEANDER,
   PALMETTE,
@@ -192,20 +191,34 @@ export function greekCss(): string {
   --sc-header-art: ${art(MEANDER, GOLD)};
 }
 
-/* The sign-in page as a temple facade: a fluted Doric column standing at each
-   side of the card, running the full height of the viewport.
-   Deliberately only here. Columns down the sidebar and a key along every table
-   header turned the ornament into wallpaper — a motif reads as intent when it
-   appears where it means something and as noise when it appears everywhere. A
-   threshold is worth a facade; a data grid is not. */
+/* The sign-in page as a temple wall: a frieze along the top edge, and a field
+   of palmettes printed across the rest of it.
+
+   NOT the two columns this used to be. A 14px sprite tiled down each edge of
+   the viewport is a 14px-wide vertical strip, and at most window sizes that is
+   what it looked like — two glitch artefacts rather than a facade. The failure
+   is structural and worth stating, because the fluted column is a genuinely
+   good sprite: a tall narrow motif needs to be tall on the SCREEN, and a
+   repeat-y tile is not tall, it is one short tile stacked over and over with a
+   visible seam at every joint. Whatever the tile draws, the eye reads the
+   seams.
+
+   A field has no seams to find, and a frieze runs along an edge the way a
+   frieze actually does. The palmette ground is in the tint for the reason the
+   sidebar's is: a full-page pattern in bronze is a page of pattern with a
+   sign-in form somewhere behind it.
+
+   Deliberately only here, which is the restraint the columns already kept: a
+   motif reads as intent where it means something and as wallpaper everywhere
+   else. A threshold is worth a facade; a data grid is not. */
 :root.sc-greek .sc-login {
-  background-image: ${art(COLUMN, BRONZE)}, ${art(COLUMN, BRONZE)};
-  background-repeat: repeat-y, repeat-y;
-  background-size: 14px 36px, 14px 36px;
-  background-position: left 18px top, right 18px top;
+  background-image: ${art(MEANDER, BRONZE)}, ${art(PALMETTE, CHALK)};
+  background-repeat: repeat-x, repeat;
+  background-size: 24px 12px, 32px 32px;
+  background-position: left top, left top;
 }
 :root.sc-greek.sc-dark .sc-login {
-  background-image: ${art(COLUMN, GOLD)}, ${art(COLUMN, GOLD)};
+  background-image: ${art(MEANDER, GOLD)}, ${art(PALMETTE, SHADE)};
 }
 
 /* A meander rule under section headings, the same band at half height.
@@ -279,10 +292,16 @@ export function greekCss(): string {
    outside the border box, where a background is never painted. The mark keeps
    its accent tile; the ornament goes around it, not on it. */
 
+/* The fluted COLUMN is no longer drawn anywhere in this mode, and that is a
+   decision rather than an oversight: see the note on the sign-in page above.
+   The sprite stays in sprites.ts, unreferenced, beside the pomegranate and the
+   owl — it is a good drawing that has no place at the size CSS can give it. */
+
 /* The sign-in card carries no watermark. The pomegranate sat in its corner and
    read as a stray dot on a form rather than as the fruit it is — at 28px there
-   is not enough of it left to be recognisable, and the columns flanking the
-   card already say Greek. The sprite stays in sprites.ts, unreferenced. */
+   is not enough of it left to be recognisable, and the frieze and palmette
+   field behind the card already say Greek. The sprite stays in sprites.ts,
+   unreferenced. */
 
 /* The tour box carries no ornament: it is a coach mark that sits over live
    content, and the owl that used to perch in its corner competed with the

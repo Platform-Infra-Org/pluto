@@ -298,6 +298,37 @@ describe('greek ornament renders inside its box', () => {
     expect(dark).toContain(spriteDataUri(FRET, 'hsl(265 20% 15%)'));
   });
 
+  it('fields the sign-in page instead of tiling strips down its edges', () => {
+    // What shipped before: a 14px column sprite on repeat-y down each edge of
+    // the viewport. A repeat-y tile is not a tall ornament, it is a short one
+    // stacked with a seam at every joint, and at most window sizes that read
+    // as a glitch rather than as a facade. Whatever the tile draws, the eye
+    // finds the seams.
+    // A frieze along the top edge and a palmette field behind everything else
+    // have no seam to find — and the field is in the ground tint, because a
+    // full-page pattern in bronze is a page of pattern with a form behind it.
+    const css = greekCss();
+    const login = /:root\.sc-greek \.sc-login \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(login).not.toMatch(/repeat-y/);
+    expect(login).toContain(spriteDataUri(PALMETTE, 'hsl(40 38% 94%)'));
+    expect(login).toContain(spriteDataUri(MEANDER, 'hsl(40 55% 46%)'));
+    const dark = /:root\.sc-greek\.sc-dark \.sc-login \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(dark).toContain(spriteDataUri(PALMETTE, 'hsl(265 20% 15%)'));
+    expect(dark).toContain(spriteDataUri(MEANDER, 'hsl(43 62% 46%)'));
+    // Every layer keeps a repeat of its own, or the frieze becomes a field too.
+    expect((login.match(/ORNAMENT|url\("data:/g) ?? []).length).toBe(2);
+    expect(login).toMatch(/background-repeat:\s*repeat-x,\s*repeat;/);
+  });
+
+  it('draws no ornament it does not render, and renders none twice over', () => {
+    // COLUMN left the sheet with the sign-in strips. It is deliberately still
+    // in sprites.ts and deliberately not imported here: an unused import is
+    // the shape a half-finished revert leaves behind, and lint would not catch
+    // it in the test file.
+    expect(greekCss()).not.toContain(spriteDataUri(COLUMN, 'hsl(40 55% 46%)'));
+    expect(greekCss()).not.toContain(spriteDataUri(COLUMN, 'hsl(43 62% 46%)'));
+  });
+
   it('keeps every ornament paired with a repeat', () => {
     // A background-image with no background-repeat tiles across the whole
     // surface: a corner medallion becomes wallpaper, a header band becomes a
@@ -343,7 +374,6 @@ describe('greek ornament is drawn from sprites', () => {
     for (const [name, sprite] of Object.entries({
       MEANDER,
       PALMETTE,
-      COLUMN,
       ROSETTE,
     })) {
       const light = spriteDataUri(sprite, 'hsl(40 55% 46%)');
