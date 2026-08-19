@@ -103,8 +103,20 @@ Two rules:
   coordinate nobody can resolve. A field is disabled with a "Pick `<parent>`
   first" placeholder until every field it `dependsOn` has a value.
 
-All five levels share one request to the same `proxyPath` (cached for 30s) —
-five fields asking the same endpoint for the same tree is not five fetches.
+All five levels share one request to the same `proxyPath` — five fields asking
+the same endpoint for the same tree is not five fetches.
+
+`intervalMs` works here too, and it is shared the same way: one timer and one
+request for the whole cascade, however many levels are reading it. Every level
+is handed the same snapshot from the same response, so a refresh can never
+leave one field offering an island that its parent's tree no longer contains.
+If levels disagree about the interval, the most eager one wins; when the last
+level unmounts, the timer stops. A refresh that fails keeps the last good tree
+and leaves the form usable, exactly as a flat field does.
+
+Note that polling can clear a selection: if a refresh removes the coordinate
+someone had chosen, the field is emptied rather than left naming something that
+no longer exists.
 
 A level that resolves to exactly **one** value is filled in for you, and the
 cascade continues to the next. One option is not a choice, and in a chain it
