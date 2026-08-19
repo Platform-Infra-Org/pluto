@@ -112,6 +112,49 @@ describe('greekCss', () => {
     expect(css).toMatch(/@keyframes sc-greek-flicker \{\s*0%, 100% \{ opacity: 1; \}/);
   });
 
+  it('throws enough sparks, and big enough ones, to be seen', () => {
+    // The reported defect: the ember animation was invisible. Six 4px squares
+    // in mid-gold on 96% parchment is a spark every few hundred pixels of
+    // viewport, below the size at which movement registers at all, in an ink
+    // that barely leaves the page. All three had to move together — a bigger
+    // square in a paler ink is still invisible — so all three are pinned.
+    const css = greekCss();
+    const placed = Array.from(
+      css.matchAll(/\.sc-greek-embers i:nth-child\((\d+)\) \{ left:/g),
+      m => Number(m[1]),
+    );
+    // The count here and EMBERS in SchemeRoot.tsx are two halves of one thing:
+    // an ember with no nth-child rule of its own sits at the default position
+    // on the default clock, so the extras stack up in one spot in lockstep.
+    expect(placed).toEqual(Array.from({ length: 12 }, (_, i) => i + 1));
+    const spark = /\.sc-greek-embers i \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    const size = Number(/width:\s*(\d+)px/.exec(spark)?.[1]);
+    expect(size).toBeGreaterThanOrEqual(6);
+    expect(spark).toContain(`height: ${size}px`);
+    // Still a hard square in a flat ink. The fix for "too faint" is never a
+    // blur, in this design system.
+    expect(spark).not.toMatch(/border-radius|radial-gradient/);
+    // And every ember still travels on a clock of its own.
+    const timed = (css.match(/\.sc-greek-embers i:nth-child\(\d+\) \{ animation-duration:/g) ?? []).length;
+    expect(timed).toBe(placed.length - 1);
+  });
+
+  it('burns the ember in an ink that is not the failure badge', () => {
+    // Decoration carries no contrast requirement, but it does carry this one:
+    // a warm square rising up the page must not be mistaken for a status
+    // colour coming loose. The ember hue has to stay clear of destructive.
+    const css = greekCss();
+    const hueOf = (token: string, selector: string) => {
+      const start = css.indexOf(`${selector} {`);
+      const body = css.slice(start, css.indexOf('}', start));
+      return Number(new RegExp(`--sc-${token}:\\s*([\\d.]+)`).exec(body)?.[1]);
+    };
+    for (const register of [':root.sc-greek', ':root.sc-greek.sc-dark']) {
+      const gap = Math.abs(hueOf('ember', register) - hueOf('destructive', register));
+      expect(`${register}:${gap >= 20}`).toBe(`${register}:true`);
+    }
+  });
+
   it('uses steps() for any animation, never ease', () => {
     expect(greekCss()).not.toMatch(/animation:[^;]*\bease\b/);
   });

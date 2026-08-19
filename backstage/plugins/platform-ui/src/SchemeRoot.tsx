@@ -947,9 +947,13 @@ export function SchemeRoot() {
 
 /** Nine petals: enough for a drift, few enough that none of them overlap. */
 const PETALS = Array.from({ length: 9 }, (_, i) => i);
-/* Six, not nine: a hearth throws fewer sparks than a tree drops petals, and
-   each one is a 4px square rather than a 16px sprite. */
-const EMBERS = Array.from({ length: 6 }, (_, i) => i);
+/* Twelve. It was six, and at six 4px squares nobody could see the animation at
+   all — a spark every few hundred pixels of viewport reads as a rendering
+   glitch rather than as a hearth. greek.ts carries the rest of that reasoning,
+   and it holds the per-ember placement and timing: this count and the
+   nth-child list there have to agree, or the last few sparks pile up on one
+   spot in lockstep. greek.test.ts pins the count for that reason. */
+const EMBERS = Array.from({ length: 12 }, (_, i) => i);
 
 /**
  * The host for the animated mode ornaments.

@@ -88,6 +88,11 @@ export function greekCss(): string {
   --sc-gold: 40 55% 46%;
   /* The ground tint the sidebar field is printed in. Not a shadcn token. */
   --sc-ground: 40 38% 94%;
+  /* The hearth ember. Deep bronze rather than the filigree gold: gold at 46%
+     lightness on 96% parchment is a spark nobody can see, which is exactly
+     what was reported. 26deg off the destructive hue and far darker, so a
+     rising ember never reads as a failure badge drifting up the page. */
+  --sc-ember: 38 78% 34%;
 }
 /* ===== dark register: the Underworld ===== */
 :root.sc-greek.sc-dark {
@@ -115,6 +120,8 @@ export function greekCss(): string {
   --sc-destructive: 12 78% 50%;
   --sc-gold: 43 62% 46%;
   --sc-ground: 265 20% 15%;
+  /* Gold, unchanged: against the Underworld violet it already reads. */
+  --sc-ember: 43 62% 46%;
 }
 
 /* ===== Ornate chrome. One grammar, two brightnesses: the light register is
@@ -348,9 +355,19 @@ export function greekCss(): string {
    hearth in it. It RISES, which is also what keeps it from reading as the
    sakura overlay recoloured: the two motions are opposites at a glance.
 
-   An ember is a pixel. No sprite and no gradient — a hard 4px square in the
-   mode's own gold, with a single-pixel ring for the glow. A soft radial here
-   would be the one blurred thing in the whole design system.
+   An ember is a pixel. No sprite and no gradient — a hard 7px square, with a
+   ring of glow around it. A soft radial here would be the one blurred thing in
+   the whole design system.
+
+   SIZE AND COUNT ARE THE DESIGN, not defaults nobody revisited. This shipped
+   as six 4px squares in the filigree gold, and the report back was that the
+   animation could not be seen at all: 4px is below the size at which a moving
+   speck registers in peripheral vision, six of them across a desktop viewport
+   is a spark every few hundred pixels, and mid-gold on 96% parchment has
+   almost nothing to separate it from the page. All three had to move together
+   — a bigger square in a paler ink is still invisible. Twelve at 7px in the
+   deep bronze --sc-ember reads as a hearth throwing sparks; more than that, or
+   larger, and the page is a fireworks display with a form on it.
 
    The still frame is designed, not frozen: outside the motion query the embers
    are a scattered arrangement resting near the hearth line at full opacity,
@@ -359,21 +376,29 @@ export function greekCss(): string {
 :root.sc-greek .sc-greek-embers i {
   position: absolute;
   display: block;
-  width: 4px;
-  height: 4px;
+  width: 7px;
+  height: 7px;
   opacity: 1;
-  background: hsl(var(--sc-gold));
+  background: hsl(var(--sc-ember));
   /* drop-shadow, not box-shadow, for the same reason the button ember uses it:
      styles.ts sets box-shadow with !important on MUI surfaces, and an important
-     author declaration beats both a normal one and the animation origin. */
-  filter: drop-shadow(0 0 2px hsl(var(--sc-gold) / .45));
+     author declaration beats both a normal one and the animation origin.
+     3px of glow rather than 2: the halo has to stay proportionate to a square
+     that is now most of twice the size, or the ember looks like a lost pixel. */
+  filter: drop-shadow(0 0 3px hsl(var(--sc-ember) / .5));
 }
-:root.sc-greek .sc-greek-embers i:nth-child(1) { left: 11%; bottom: 14%; }
-:root.sc-greek .sc-greek-embers i:nth-child(2) { left: 26%; bottom: 7%; }
-:root.sc-greek .sc-greek-embers i:nth-child(3) { left: 43%; bottom: 19%; }
-:root.sc-greek .sc-greek-embers i:nth-child(4) { left: 58%; bottom: 9%; }
-:root.sc-greek .sc-greek-embers i:nth-child(5) { left: 73%; bottom: 16%; }
-:root.sc-greek .sc-greek-embers i:nth-child(6) { left: 89%; bottom: 6%; }
+:root.sc-greek .sc-greek-embers i:nth-child(1) { left: 4%; bottom: 12%; }
+:root.sc-greek .sc-greek-embers i:nth-child(2) { left: 13%; bottom: 5%; }
+:root.sc-greek .sc-greek-embers i:nth-child(3) { left: 21%; bottom: 18%; }
+:root.sc-greek .sc-greek-embers i:nth-child(4) { left: 30%; bottom: 8%; }
+:root.sc-greek .sc-greek-embers i:nth-child(5) { left: 38%; bottom: 15%; }
+:root.sc-greek .sc-greek-embers i:nth-child(6) { left: 47%; bottom: 4%; }
+:root.sc-greek .sc-greek-embers i:nth-child(7) { left: 55%; bottom: 20%; }
+:root.sc-greek .sc-greek-embers i:nth-child(8) { left: 63%; bottom: 10%; }
+:root.sc-greek .sc-greek-embers i:nth-child(9) { left: 72%; bottom: 6%; }
+:root.sc-greek .sc-greek-embers i:nth-child(10) { left: 80%; bottom: 17%; }
+:root.sc-greek .sc-greek-embers i:nth-child(11) { left: 88%; bottom: 9%; }
+:root.sc-greek .sc-greek-embers i:nth-child(12) { left: 94%; bottom: 13%; }
 
 @media (prefers-reduced-motion: no-preference) {
   /* Each steps() is load-bearing. rise moves whole pixel rows, so a 4px square
@@ -399,13 +424,20 @@ export function greekCss(): string {
                sc-greek-waver 3.4s steps(3) infinite alternate,
                sc-greek-flicker 1.4s steps(2) infinite;
   }
-  /* Negative delays start each ember mid-climb: six sparks leaving the hearth
-     in formation would read as a machine, not a fire. */
+  /* Negative delays start each ember mid-climb, and no two share a triple:
+     twelve sparks leaving the hearth in formation would read as a machine, not
+     a fire, and the more of them there are the more obvious the formation. */
   :root.sc-greek .sc-greek-embers i:nth-child(2) { animation-duration: 16s, 4.1s, 1.9s; animation-delay: -4s, -.6s, -.5s; }
   :root.sc-greek .sc-greek-embers i:nth-child(3) { animation-duration: 11s, 2.8s, 1.1s; animation-delay: -8s, -1.2s, -.9s; }
   :root.sc-greek .sc-greek-embers i:nth-child(4) { animation-duration: 15s, 3.7s, 1.6s; animation-delay: -2s, -.3s, -.2s; }
   :root.sc-greek .sc-greek-embers i:nth-child(5) { animation-duration: 12s, 3.1s, 1.3s; animation-delay: -10s, -1.7s, -.7s; }
   :root.sc-greek .sc-greek-embers i:nth-child(6) { animation-duration: 14s, 4.4s, 1.8s; animation-delay: -6s, -.9s, -1.1s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(7) { animation-duration: 17s, 3.4s, 1.5s; animation-delay: -12s, -2.1s, -.4s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(8) { animation-duration: 10s, 4.7s, 1.2s; animation-delay: -3s, -1.5s, -1s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(9) { animation-duration: 13s, 2.6s, 1.7s; animation-delay: -9s, -.4s, -.6s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(10) { animation-duration: 18s, 3.9s, 1.4s; animation-delay: -5s, -2.4s, -1.2s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(11) { animation-duration: 11s, 4.2s, 2s; animation-delay: -14s, -1.1s, -.3s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(12) { animation-duration: 15s, 2.9s, 1.5s; animation-delay: -7s, -1.9s, -.8s; }
 }
 `;
 }
