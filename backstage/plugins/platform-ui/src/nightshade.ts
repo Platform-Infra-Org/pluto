@@ -35,6 +35,13 @@
  * - **Selene silver is an ornament colour.** It is not a second text tone; two
  *   near-white inks on one surface is how a hierarchy stops meaning anything.
  *
+ * The ornament is what carries the mode, not the palette: a sprig band under
+ * every page title and the same vine turned upright down the sidebar, filigree
+ * medallions at the corners of a command window, a corner bracket at each
+ * corner of the sign-in card, crescent and torch flanking it, a cauldron on an
+ * empty shelf, and the moon going through its phases in the corner of the
+ * viewport.
+ *
  * Kept out of styles.ts for the reason greek.ts records: that file is one
  * template literal and a stray backtick truncates the lot.
  */
@@ -43,7 +50,10 @@ import {
   CRESCENT_FLAME,
   FILIGREE,
   MOON_STRIP,
+  SCROLL_CORNER,
   SPRIG,
+  TORCH,
+  rotateSprite,
   spriteUrl,
 } from './sprites';
 
@@ -61,6 +71,24 @@ const WITCH = 'hsl(142 67% 66.3%)';
 const WITCH_DAY = 'hsl(152 62% 26%)';
 const SELENE = 'hsl(219 40% 84.9%)';
 const SELENE_DAY = 'hsl(219 30% 60%)';
+
+/**
+ * The four corner brackets of the nouveau frame.
+ *
+ * One authored grid and three quarter turns, rather than four hand-drawn
+ * corners that drift apart the first time one of them is edited. This is the
+ * other half of the corner problem: FILIGREE is symmetric under a quarter turn
+ * so ONE tile serves four corners, and the price of that symmetry is that it
+ * has no corner in it — it is a medallion sitting near one. A bracket has two
+ * rails meeting at an elbow, so it has to know which corner it is on.
+ */
+const CORNER_TL = SCROLL_CORNER;
+const CORNER_TR = rotateSprite(CORNER_TL);
+const CORNER_BR = rotateSprite(CORNER_TR);
+const CORNER_BL = rotateSprite(CORNER_BR);
+
+/** The sprig, turned to run down a panel edge instead of along a rail. */
+const VINE = rotateSprite(SPRIG);
 
 export function nightshadeCss(): string {
   return `
@@ -212,25 +240,67 @@ export function nightshadeCss(): string {
 }
 
 /* The sign-in page as a crossroads shrine: a crescent cradling a green flame
-   standing at each side. Two layers means two URIs per side and four
-   background layers in total — a data URI inherits no custom property, so a
-   two-colour motif is two images that have to stay in step by hand.
+   standing at each side, and a witchfire torch planted below each of them —
+   the crescent-and-torch pair the whole mode is built on, and the one place
+   both halves of it are shown together. Two layers means two URIs per crescent
+   and six background layers in total — a data URI inherits no custom property,
+   so a two-colour motif is two images that have to stay in step by hand.
+   The torches burn green rather than gold: the flame is the light in this
+   mode, and gold beside green is the one pairing this mode does not make.
    Deliberately only here, the same restraint greek keeps: a motif reads as
    intent where it means something and as wallpaper everywhere else. */
 :root.sc-nightshade .sc-login {
   background-image:
     ${spriteUrl(CRESCENT_FLAME, SELENE_DAY)}, ${spriteUrl(CRESCENT_FLAME, WITCH_DAY, '~')},
-    ${spriteUrl(CRESCENT_FLAME, SELENE_DAY)}, ${spriteUrl(CRESCENT_FLAME, WITCH_DAY, '~')};
+    ${spriteUrl(CRESCENT_FLAME, SELENE_DAY)}, ${spriteUrl(CRESCENT_FLAME, WITCH_DAY, '~')},
+    ${spriteUrl(TORCH, WITCH_DAY)}, ${spriteUrl(TORCH, WITCH_DAY)};
   background-repeat: no-repeat;
   background-size: 32px 32px;
   background-position:
     left 20px center, left 20px center,
-    right 20px center, right 20px center;
+    right 20px center, right 20px center,
+    left 24px bottom 32px, right 24px bottom 32px;
 }
 :root.sc-nightshade.sc-dark .sc-login {
   background-image:
     ${spriteUrl(CRESCENT_FLAME, SELENE)}, ${spriteUrl(CRESCENT_FLAME, WITCH, '~')},
-    ${spriteUrl(CRESCENT_FLAME, SELENE)}, ${spriteUrl(CRESCENT_FLAME, WITCH, '~')};
+    ${spriteUrl(CRESCENT_FLAME, SELENE)}, ${spriteUrl(CRESCENT_FLAME, WITCH, '~')},
+    ${spriteUrl(TORCH, WITCH)}, ${spriteUrl(TORCH, WITCH)};
+}
+
+/* The sign-in card inside its own frame: a corner bracket at each of the four
+   corners, each one the authored top-left grid turned to face its corner.
+   On the CARD rather than on the dialog, which keeps its filigree medallions:
+   a bracket needs two rails and an elbow, and the dialog's own gold rule is
+   already those rails. Doubling them would draw a frame inside a frame. */
+:root.sc-nightshade .sc-login-card {
+  background-image: ${spriteUrl(CORNER_TL, GOLD_DAY)}, ${spriteUrl(CORNER_TR, GOLD_DAY)},
+    ${spriteUrl(CORNER_BR, GOLD_DAY)}, ${spriteUrl(CORNER_BL, GOLD_DAY)};
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  background-position:
+    left 4px top 4px, right 4px top 4px,
+    right 4px bottom 4px, left 4px bottom 4px;
+}
+:root.sc-nightshade.sc-dark .sc-login-card {
+  background-image: ${spriteUrl(CORNER_TL, GOLD)}, ${spriteUrl(CORNER_TR, GOLD)},
+    ${spriteUrl(CORNER_BR, GOLD)}, ${spriteUrl(CORNER_BL, GOLD)};
+}
+
+/* The sidebar takes the sprig turned upright, running down its inner edge.
+   The same vine as the page-title band and the section rule, which is the
+   point: one botanical motif, three places, rather than three ornaments. It
+   sits against the inner edge in a 16px column, so the rail survives the nav
+   collapsing to its icon width — an ornament centred in a panel that changes
+   width is an ornament that moves. */
+:root.sc-nightshade .sc-nav {
+  background-image: ${spriteUrl(VINE, GOLD_DAY)};
+  background-repeat: repeat-y;
+  background-size: 16px 16px;
+  background-position: right 2px top;
+}
+:root.sc-nightshade.sc-dark .sc-nav {
+  background-image: ${spriteUrl(VINE, GOLD)};
 }
 
 /* An empty shelf gets the cauldron, iron in silver and brew in witch green.
@@ -249,7 +319,39 @@ export function nightshadeCss(): string {
     ${spriteUrl(CAULDRON, SELENE)}, ${spriteUrl(CAULDRON, WITCH, '~')};
 }
 
-/* ===== The moon =====
+/* Primary buttons take the gold rule the cards and the frame carry, and a
+   moonlight bloom behind it.
+   VIOLET, not witch green, and that is the mode's own adjacency rule rather
+   than a colour whim: the button is already gold, and gold beside green is the
+   pairing this mode does not make — the two are both mid-light and they
+   vibrate. Violet is what the dialog blooms with, so the two lit surfaces in
+   the mode agree.
+   filter: drop-shadow(), not box-shadow: styles.ts claims box-shadow with
+   !important on the button root, and an important author declaration beats
+   both a normal one at any specificity AND the animation origin, so a
+   box-shadow glow here would never paint. Nothing claims filter.
+   The unanimated declaration below is the LIT frame, so a reader who asked for
+   stillness gets the intended picture rather than a glow frozen halfway. */
+:root.sc-nightshade [class*="MuiButton-containedPrimary"],
+:root.sc-nightshade .sc-btn-primary,
+:root.sc-nightshade [data-variant="primary"][class*="bui-Button"] {
+  border: var(--sc-border-w) solid hsl(var(--sc-filigree)) !important;
+  filter: drop-shadow(0 0 5px hsl(var(--sc-moonlight) / .5));
+}
+@media (prefers-reduced-motion: no-preference) {
+  /* Two frames, stepped. A candle gutters; it does not fade. */
+  @keyframes sc-nightshade-gutter {
+    0%, 100% { filter: drop-shadow(0 0 5px hsl(var(--sc-moonlight) / .5)); }
+    50% { filter: drop-shadow(0 0 9px hsl(var(--sc-moonlight) / .8)); }
+  }
+  :root.sc-nightshade [class*="MuiButton-containedPrimary"],
+  :root.sc-nightshade .sc-btn-primary,
+  :root.sc-nightshade [data-variant="primary"][class*="bui-Button"] {
+    animation: sc-nightshade-gutter 1.8s steps(2) infinite;
+  }
+}
+
+/* ===== The moon =====/* ===== The moon =====
    SchemeRoot mounts .sc-mode-art once for every mode; this claims the moon.
    The still frame comes FIRST and is a designed picture: frame one of the
    strip, one crescent, at full opacity. Someone who asked for less motion gets

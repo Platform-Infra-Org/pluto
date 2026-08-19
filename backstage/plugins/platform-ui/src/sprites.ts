@@ -72,6 +72,22 @@ export function spriteDataUri(
 }
 
 /**
+ * A sprite turned a quarter turn clockwise.
+ *
+ * CSS cannot rotate a background image, so a motif that is NOT symmetric under
+ * a quarter turn — a corner bracket, a vine that runs one way — needs one grid
+ * per orientation. Generating the other three from the authored one is what
+ * keeps them from drifting apart the first time the authored one is edited.
+ *
+ * Reads column x from bottom to top, which is the clockwise turn: the top-left
+ * corner ornament comes back as the top-right one.
+ */
+export const rotateSprite = (sprite: Sprite): Sprite =>
+  Array.from({ length: sprite[0]?.length ?? 0 }, (_, y) =>
+    sprite.map(row => row[y]).reverse().join(''),
+  );
+
+/**
  * A sprite as a CSS `url()`, ready to interpolate into a mode sheet.
  *
  * The fill is baked, so a two-colour motif is two calls — see spriteDataUri.
@@ -875,6 +891,37 @@ export const FILIGREE: Sprite = [
   '#.#..#.#',
   '.#....#.',
   '..####..',
+];
+
+/**
+ * A corner bracket with a knot in its elbow — the nouveau frame corner.
+ *
+ * Deliberately NOT symmetric under a quarter turn, which is the opposite of
+ * what ROSETTE, BLOSSOM and FILIGREE are for: those exist so one tile can serve
+ * four corners, and the price of that trick is that a rotationally symmetric
+ * ornament has no corner in it. This one has two rails meeting at an elbow, so
+ * it reads as a frame rather than as a dot, and the other three orientations
+ * come from rotateSprite.
+ *
+ * Authored as the TOP-LEFT corner: rails along the top and left edges.
+ */
+export const SCROLL_CORNER: Sprite = [
+  '################',
+  '################',
+  '##..............',
+  '##...######.....',
+  '##..##....##....',
+  '##.##..##..##...',
+  '##.##.####.##...',
+  '##.##..##..##...',
+  '##..##....##....',
+  '##...######.....',
+  '##..............',
+  '##..............',
+  '##..............',
+  '##..............',
+  '##..............',
+  '##..............',
 ];
 
 /**

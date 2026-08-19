@@ -1,4 +1,5 @@
 import {
+  rotateSprite,
   spriteRects,
   STATE_SPRITES,
   TEMPLE,
@@ -26,6 +27,7 @@ import {
   CAULDRON,
   FILIGREE,
   SPRIG,
+  SCROLL_CORNER,
   MOON_STRIP,
   FUTHARK,
   YGGDRASIL,
@@ -59,12 +61,25 @@ describe('spriteRects', () => {
   });
 });
 
+describe('rotateSprite', () => {
+  it('turns the grid a quarter turn clockwise', () => {
+    // The top-left cell has to arrive top-right, or every derived corner
+    // ornament is mirrored and the frame reads inside out.
+    expect(rotateSprite(grid('#.', '..'))).toEqual(['.#', '..']);
+  });
+
+  it('comes back to itself in four turns', () => {
+    const four = [1, 2, 3, 4].reduce(acc => rotateSprite(acc), SCROLL_CORNER as string[]);
+    expect(four.join('/')).toBe(SCROLL_CORNER.join('/'));
+  });
+});
+
 describe('sprite data', () => {
   it('every sprite is a square grid of the declared size', () => {
     const items = {
       AMPHORA, KEY, LAUREL, HELM, TORCH, SCROLL, POTION, RUPEE,
       SEIGAIHA, TORII, ASANOHA, KOI, CRESCENT_FLAME, CAULDRON, SPRIG,
-      FUTHARK, YGGDRASIL, KNOTWORK,
+      FUTHARK, YGGDRASIL, KNOTWORK, SCROLL_CORNER,
     };
     for (const [name, sprite] of Object.entries({
       TEMPLE,
@@ -223,6 +238,17 @@ describe('mode ornament sprites', () => {
       );
       expect(`${name}:${turned.join('/')}`).toBe(`${name}:${sprite.join('/')}`);
     }
+  });
+
+  it('keeps the corner bracket asymmetric, which is why it needs four of them', () => {
+    // The inverse of the medallion test below. A bracket that survives a
+    // quarter turn unchanged has no corner in it, and the four rotations it is
+    // drawn for would all look the same.
+    const turned = rotateSprite(SCROLL_CORNER);
+    expect(turned.join('/')).not.toBe(SCROLL_CORNER.join('/'));
+    // Rails on the top and left edges: that is what makes it a top-left corner.
+    expect(SCROLL_CORNER[0]).toBe('#'.repeat(16));
+    expect(SCROLL_CORNER.every(row => row.startsWith('##'))).toBe(true);
   });
 
   it('keeps the koi notched, which is the only reason it reads as a fish', () => {
