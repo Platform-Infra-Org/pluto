@@ -1599,23 +1599,17 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* The sign-in card has its own shelf under the button, so the corner one would
    be a second identical picker on the same screen. */
 :root.sc-signed-out .sc-picker-float { display: none; }
-/* The tray opens DOWNWARD from the sign-in card, and upward everywhere else.
+/* The sign-in tray keeps the default upward direction, and that is measured
+   rather than assumed. The card is centred, so the bottle sits ~372px down a
+   558px viewport: opening up has 372px to work with, opening down has 136px
+   and the tray needs 138. Downward was tried and overflowed the fold by 2px.
 
-   Two reasons, both consequences of .sc-login being a scroll container. First,
-   a scroll container clips its descendants: opening upward from a bottle near
-   the card's bottom puts the top of the tray — the first schemes in the list —
-   under the clip on any viewport that is not tall. Second, and worse, upward
-   overflow does not add to a scroller's scrollHeight, so the clipped part
-   cannot be scrolled to either. It is simply gone.
-
-   Downward overflow does extend scrollHeight, so on a viewport too short to
-   show the whole tray it stays reachable by scrolling instead of vanishing.
-   Below the bottle there is also far more room: the card's own padding and
-   then the entire lower half of the screen.
-
-   The floating picker keeps opening upward, which is correct for something
-   anchored to the bottom-left corner of the viewport. */
-.sc-login-pick .sc-picker-inv { bottom: auto; top: calc(100% + 10px); }
+   The clipping risk that made downward look safer — .sc-login is a scroll
+   container, and upward overflow does not extend scrollHeight, so anything
+   above the top edge is unreachable — is real but does not bite here, because
+   the card is centred rather than pinned to the top. If the card ever moves
+   up, re-measure: the direction is a consequence of where the bottle sits, not
+   a preference. */
 
 /* Short viewports — a phone in landscape, or a window with devtools docked
    along the bottom. The card is ~352px plus the wrapper's padding, so under

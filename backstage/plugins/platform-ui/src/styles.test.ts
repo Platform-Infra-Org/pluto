@@ -240,15 +240,14 @@ describe('SHADCN_CSS', () => {
     );
   });
 
-  it('opens the sign-in tray downward, where it can still be reached', () => {
-    // .sc-login is a scroll container, so it clips its descendants — and
-    // upward overflow does not extend scrollHeight, meaning a tray clipped at
-    // the top cannot be scrolled to at all. Downward overflow can.
+  it('leaves the sign-in tray opening upward, where the room is', () => {
+    // Measured in Firefox at 1280x558: the bottle sits at 372, so upward has
+    // 372px and downward has 136 for a tray that needs 138. An override here
+    // would push it past the fold.
+    expect(SHADCN_CSS).not.toMatch(/\.sc-login-pick \.sc-picker-inv \{/);
+    // The base rule it therefore inherits.
     expect(SHADCN_CSS).toMatch(
-      /\.sc-login-pick \.sc-picker-inv \{[^}]*top:\s*calc\(100% \+ 10px\)/,
-    );
-    expect(SHADCN_CSS).toMatch(
-      /\.sc-login-pick \.sc-picker-inv \{[^}]*bottom:\s*auto/,
+      /\.sc-picker-inv \{[^}]*bottom:\s*calc\(100% \+ 10px\)/,
     );
   });
 
