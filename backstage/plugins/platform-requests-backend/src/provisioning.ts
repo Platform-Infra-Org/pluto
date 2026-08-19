@@ -184,6 +184,7 @@ export function createSubmitWorkflow(deps: {
           dataPath: string;
           data: Record<string, unknown>;
           owner: string;
+          title: string;
         }>
       | undefined;
 
@@ -221,6 +222,14 @@ export function createSubmitWorkflow(deps: {
         // '' rather than absent, so every element has the same shape and a
         // workflow can read `{{item.owner}}` without a conditional.
         owner: resolved[i].owner ?? '',
+        // Read off the entity we already resolved — no second catalog call.
+        // Display text only: `name` above stays the resolution key, because a
+        // title is neither unique nor what the catalog is keyed on.
+        // `entity` is Record<string, unknown> here, so metadata is narrowed at
+        // the read rather than widening the whole resolver's type for one field.
+        title:
+          (resolved[i].entity?.metadata as { title?: string } | undefined)
+            ?.title ?? '',
       }));
       // The scalar tokens stay populated from the first (and, for a single
       // request, only) resource, so `<< resourceData >>`, `<< resourcePath >>`

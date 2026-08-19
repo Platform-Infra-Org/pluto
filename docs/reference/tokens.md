@@ -23,7 +23,7 @@ by the platform backend — **no escaping needed**.
 | `<< resourceData.<field> >>` | one field of the resource data |
 | `<< resourcePath >>` | the resource's catalog file path in Git (for `git-ops` delete) |
 | `<< resourceDataPath >>` | the resource's data-file path in Git (for `git-ops` update/delete) |
-| `<< resourcesJson >>` | every resource the request acts on, as `[{name, path, dataPath, data, owner}]` — **one element for a single-resource request**, several for a bulk one |
+| `<< resourcesJson >>` | every resource the request acts on, as `[{name, path, dataPath, data, owner, title}]` — **one element for a single-resource request**, several for a bulk one |
 | `<< secretName >>` | the per-request Kubernetes Secret's name, for the WorkflowTemplate to `secretKeyRef`; `''` when the request declares no secrets |
 | `<< entityJson >>` | the resource's whole catalog entity as JSON; `{}` for CREATE |
 | `<< entity.<path> >>` | one field of that entity, by dotted path |
@@ -50,6 +50,14 @@ The scalar tokens are still populated from the first resource, so
 working unchanged — `verb-update` uses them and needs no migration.
 
 Each element's `data` is a **nested object**, not a JSON string.
+
+`title` is the resource's `metadata.title`, verbatim, and `''` when it declares
+none — so `{{item.title}}` reads without a conditional, the same rule `owner`
+follows. It is **display text and nothing else**: a workflow uses it to say
+*"Deleting Orders Database (primary)"* instead of *"Deleting 8f14e45f"*. `name`
+remains the only key anything may resolve, delete, or build a path from. Titles
+are not unique and are not what the catalog is keyed on, so a workflow that
+acted on a title would act on the wrong resource, or on none.
 
 `owner` is the resource's own `spec.owner`, verbatim, and `''` when it declares
 none. It is **not** `<< ownerGroup >>`: that is the team that owns the
