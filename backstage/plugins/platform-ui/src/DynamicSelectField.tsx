@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   discoveryApiRef,
   fetchApiRef,
@@ -146,6 +146,30 @@ export function DynamicSelectFieldComponent(props: any) {
     }
   }, [levelValues, formData, onChange, opts.treePath, blockedBy, treeLoaded]);
 
+  // One option is not a choice. When a level resolves to exactly one value and
+  // the field is still empty, pick it: asking someone to open a dropdown to
+  // confirm the only answer is friction, and in a cascade it compounds — a
+  // space with one network, one region and one island would be four clicks
+  // that could never have gone differently. Auto-filling those lets the reader
+  // stop at the first level that actually branches.
+  //
+  // Only when empty, so this never overrides a deliberate pick, and never
+  // fights the clearing effect above: a value it sets is by definition in the
+  // list, so nothing clears it back. Once set, formData is non-empty and this
+  // cannot fire again for the same level.
+  const autoSelect = useCallback(
+    (values: string[] | undefined) => {
+      if (!values || values.length !== 1 || formData) return;
+      onChange(values[0]);
+    },
+    [formData, onChange],
+  );
+
+  useEffect(() => {
+    if (!opts.treePath || blockedBy || !treeLoaded) return;
+    autoSelect(levelValues);
+  }, [levelValues, opts.treePath, blockedBy, treeLoaded, autoSelect]);
+
   if (err) {
     return <div style={{ color: 'hsl(var(--sc-destructive))' }}>{err}</div>;
   }
@@ -163,6 +187,12 @@ export function DynamicSelectFieldComponent(props: any) {
           value={(formData as string) ?? ''}
           onChange={v => onChange(v)}
           disabled={Boolean(opts.treePath) && !options}
+          // The flat path fetches inside the component, so the only way this
+          // field learns what came back is the callback DynamicSelect already
+          // exposes for exactly this — "keep a form's default valid".
+          onOptions={
+            opts.treePath ? undefined : o => autoSelect(o.map(c => c.value))
+          }
           placeholder={
             blockedBy
               ? `Pick ${blockedBy} first`

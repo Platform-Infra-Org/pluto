@@ -8,6 +8,11 @@ import { DynamicSelectFieldComponent } from './DynamicSelectField';
 const TREE = {
   coordinates: {
     prod: { core: { 'eu-west': { mgmt: ['dev'], paris: ['prod'] } } },
+    // aurora branches at every level; borealis narrows to one option at each.
+    // The pair is what lets the auto-select tests below prove both halves:
+    // a single option is filled in, a real choice is left to the reader.
+    aurora: { core: { 'eu-west': { mgmt: ['dev'] } }, edge: { 'ap-south': ['dev'] } },
+    borealis: { lab: { cork: ['sandbox'] } },
   },
 };
 
@@ -71,6 +76,65 @@ describe('DynamicSelectFieldComponent', () => {
     const select = await screen.findByRole('combobox');
     expect(select).toBeDisabled();
     expect(select).toHaveTextContent(/Pick network first/i);
+  });
+
+  it('picks the only value a level offers, without asking', async () => {
+    // borealis -> lab has exactly one region. Making someone open a dropdown to
+    // confirm the only answer is friction, and in a cascade it compounds.
+    const onChange = jest.fn();
+    renderField({
+      ...base,
+      onChange,
+      uiSchema: {
+        'ui:options': {
+          proxyPath: '/infra/coordinate-tree',
+          treePath: 'coordinates',
+          dependsOn: ['space', 'network'],
+        },
+      },
+      formContext: { formData: { space: 'borealis', network: 'lab' } },
+    });
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith('cork'));
+  });
+
+  it('leaves a branching level alone', async () => {
+    // Two options is a real choice and must stay the reader's.
+    const onChange = jest.fn();
+    renderField({
+      ...base,
+      onChange,
+      uiSchema: {
+        'ui:options': {
+          proxyPath: '/infra/coordinate-tree',
+          treePath: 'coordinates',
+          dependsOn: ['space'],
+        },
+      },
+      formContext: { formData: { space: 'aurora' } },
+    });
+    await screen.findByRole('option', { name: 'core' });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('never overrides a value the reader already chose', async () => {
+    // Auto-select fires only into an empty field, so a deliberate pick stands
+    // even where the level has since narrowed to one option.
+    const onChange = jest.fn();
+    renderField({
+      ...base,
+      onChange,
+      formData: 'cork',
+      uiSchema: {
+        'ui:options': {
+          proxyPath: '/infra/coordinate-tree',
+          treePath: 'coordinates',
+          dependsOn: ['space', 'network'],
+        },
+      },
+      formContext: { formData: { space: 'borealis', network: 'lab' } },
+    });
+    await screen.findByRole('option', { name: 'cork' });
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('drops a selection the new branch does not contain', async () => {

@@ -106,6 +106,13 @@ Two rules:
 All five levels share one request to the same `proxyPath` (cached for 30s) —
 five fields asking the same endpoint for the same tree is not five fetches.
 
+A level that resolves to exactly **one** value is filled in for you, and the
+cascade continues to the next. One option is not a choice, and in a chain it
+compounds: a space with a single network, region and island would otherwise be
+four clicks that could never have gone differently. It only ever fills an empty
+field, so a value you picked yourself is never overwritten — and it applies to a
+plain (non-`treePath`) field too, when its endpoint returns a single option.
+
 ## Notes
 
 - Options refresh on `intervalMs`; the current selection is preserved across
