@@ -3,11 +3,11 @@ import { MODE_CARDS } from './statusTokens';
 import { SHADCN_CSS } from './styles';
 import {
   ANKH,
+  ATEN_STRIP,
+  CARTOUCHE,
   DJED,
-  LOTUS_BAND,
+  GLYPH_BAND,
   PAPYRUS,
-  SCARAB_STRIP,
-  SUN_DISK,
   WEDJAT,
   mirrorSprite,
   spriteDataUri,
@@ -111,12 +111,11 @@ describe('egyptian ornament', () => {
   const css = egyptianCss();
   const INKS = [
     'hsl(221 62% 32%)', // lapis
-    'hsl(40 70% 38%)', // ochre gold, by day
+    'hsl(204 68% 33%)', // Egyptian blue, darkened for the light register
     'hsl(44 82% 55%)', // gold leaf, by night
-    'hsl(204 62% 50%)', // Egyptian blue
+    'hsl(40 80% 36%)', // the gold accent, by day
     'hsl(168 52% 26%)', // malachite, by day
     'hsl(168 45% 55%)', // malachite, by night
-    'hsl(10 72% 42%)', // carnelian
   ];
 
   it('renders every motif it claims, in one register or the other', () => {
@@ -125,11 +124,11 @@ describe('egyptian ornament', () => {
     // The derived form counts: the left-hand eye is the right one mirrored.
     for (const [name, sprite] of Object.entries({
       ANKH,
+      ATEN_STRIP,
+      CARTOUCHE,
       DJED,
-      LOTUS_BAND,
+      GLYPH_BAND,
       PAPYRUS,
-      SCARAB_STRIP,
-      SUN_DISK,
       WEDJAT,
     })) {
       const drawn = INKS.some(
@@ -145,9 +144,9 @@ describe('egyptian ornament', () => {
     // Two eyes looking the same way are one drawing used twice, which is the
     // first thing anyone notices. The mirror is generated so the pair cannot
     // drift; this is what catches it being dropped.
-    const ochre = 'hsl(40 70% 38%)';
-    expect(css).toContain(spriteDataUri(WEDJAT, ochre));
-    expect(css).toContain(spriteDataUri(mirrorSprite(WEDJAT), ochre));
+    const gold = 'hsl(40 80% 36%)';
+    expect(css).toContain(spriteDataUri(WEDJAT, gold));
+    expect(css).toContain(spriteDataUri(mirrorSprite(WEDJAT), gold));
   });
 
   it('bakes ornament ink that matches the register it is used in', () => {
@@ -155,11 +154,11 @@ describe('egyptian ornament', () => {
     // custom property, so every literal tracks its token by hand.
     expect(tokenIn(css, ':root.sc-egyptian', 'sc-primary')).toBe('221 62% 32%');
     expect(tokenIn(css, ':root.sc-egyptian.sc-dark', 'sc-primary')).toBe('44 82% 55%');
-    expect(tokenIn(css, ':root.sc-egyptian', 'sc-border')).toBe('40 70% 38%');
+    expect(tokenIn(css, ':root.sc-egyptian', 'sc-border')).toBe('204 68% 33%');
     expect(tokenIn(css, ':root.sc-egyptian.sc-dark', 'sc-border')).toBe('204 62% 50%');
     expect(tokenIn(css, ':root.sc-egyptian', 'sc-malachite')).toBe('168 52% 26%');
     expect(tokenIn(css, ':root.sc-egyptian.sc-dark', 'sc-malachite')).toBe('168 45% 55%');
-    expect(tokenIn(css, ':root.sc-egyptian', 'sc-sun-ink')).toBe('10 72% 42%');
+    expect(tokenIn(css, ':root.sc-egyptian', 'sc-sun-ink')).toBe('40 80% 36%');
     expect(tokenIn(css, ':root.sc-egyptian.sc-dark', 'sc-sun-ink')).toBe('44 82% 55%');
   });
 
@@ -243,13 +242,13 @@ describe('egyptian motion', () => {
   });
 
   it('paints a designed still frame, not a frozen one', () => {
-    // Outside the motion query Khepri must still be a deliberate picture: the
-    // beetle and the disk at rest near the horizon, fully painted, on frame
-    // one — which is what background-position 0 0 pins.
-    // The LAST query, not the first: the button glow opens one query above
-    // Khepri's own rules, so slicing at the first one cuts them off.
+    // Outside the motion query the Aten must still be a deliberate picture:
+    // fully painted, in its corner, with its rays on the axes — which is what
+    // background-position 0 0 pins.
+    // The LAST query, not the first: the button glow opens one query above the
+    // Aten's own rules, so slicing at the first one cuts them off.
     const before = css.slice(0, css.lastIndexOf(QUERY));
-    const still = /\.sc-khepri \{([^}]*)\}/.exec(before)?.[1] ?? '';
+    const still = /\.sc-aten \{([^}]*)\}/.exec(before)?.[1] ?? '';
     expect(still).toMatch(/opacity:\s*1/);
     expect(still).toMatch(/background-position:\s*0 0/);
     expect(still).toMatch(/display:\s*block/);
@@ -276,20 +275,25 @@ describe('egyptian motion', () => {
     expect(frames![1]).not.toMatch(/box-shadow/);
   });
 
-  it('walks the scarab a whole number of frames per loop', () => {
-    // The strip is two 22px frames, so the loop has to close on 44px. Any
-    // other distance leaves the beetle mid-frame at the wrap and it smears.
-    expect(css).toMatch(/background-size:\s*44px 22px/);
-    expect(css).toMatch(/sc-khepri-walk \{ to \{ background-position: -44px 0; \} \}/);
-    expect(css).toMatch(/sc-khepri-walk 1s steps\(2\)/);
+  it('steps the Aten a whole number of frames per loop', () => {
+    // The strip is two 26px frames, so the loop has to close on 52px. Any
+    // other distance leaves the sun mid-frame at the wrap and it smears.
+    expect(css).toMatch(/background-size:\s*52px 26px/);
+    expect(css).toMatch(
+      /sc-egyptian-aten \{ to \{ background-position: -52px 0; \} \}/,
+    );
+    expect(css).toMatch(/sc-egyptian-aten 1\.6s steps\(2\)/);
   });
 
-  it('sends Khepri in from off-screen with a transform, not a negative offset', () => {
-    // A negative `left` would work, but a background hung outside the border
-    // box paints nothing, and this mode keeps ornament on positive
-    // coordinates so the two rules cannot be confused. Keyframes are the one
-    // place a negative belongs.
-    expect(css).toMatch(/from \{ transform: translateX\(-80px\); \}/);
-    expect(css).toMatch(/\.sc-khepri \{[^}]*left: 24px/);
+  it('keeps the Aten in one place, because it is not a creature on a rail', () => {
+    // The scarab this replaced travelled the whole bottom rail, which pulled
+    // the eye off the page. The Aten is anchored: nothing here may translate,
+    // and the only thing the keyframes move is the background position.
+    expect(css).not.toContain('sc-khepri');
+    expect(css).not.toMatch(/\.sc-aten[^}]*translate/);
+    const frames = /@keyframes sc-egyptian-aten \{([^}]*\}[^}]*)\}/.exec(css);
+    expect(frames).toBeTruthy();
+    expect(frames![1]).not.toMatch(/transform/);
   });
+
 });

@@ -36,11 +36,11 @@ import {
   RAVEN,
   AURORA,
   ANKH,
+  ATEN_STRIP,
+  CARTOUCHE,
   DJED,
-  LOTUS_BAND,
+  GLYPH_BAND,
   PAPYRUS,
-  SCARAB_STRIP,
-  SUN_DISK,
   WEDJAT,
 } from './sprites';
 
@@ -104,7 +104,7 @@ describe('sprite data', () => {
       AMPHORA, KEY, LAUREL, HELM, TORCH, SCROLL, POTION, RUPEE,
       SEIGAIHA, TORII, ASANOHA, KOI, CRESCENT_FLAME, CAULDRON, SPRIG,
       FUTHARK, YGGDRASIL, KNOTWORK, SCROLL_CORNER, RAVEN,
-      ANKH, WEDJAT, LOTUS_BAND, PAPYRUS, DJED, SUN_DISK,
+      ANKH, WEDJAT, CARTOUCHE, PAPYRUS, DJED,
     };
     for (const [name, sprite] of Object.entries({
       TEMPLE,
@@ -285,29 +285,64 @@ describe('mode ornament sprites', () => {
     expect(KOI[5][13]).toBe('#');
   });
 
-  it('keeps the scarab strip on the 16px grid, at a whole number of frames', () => {
-    // The one strip authored at the full grid rather than the small one: a
-    // beetle at 8px is a bean. Width still has to be an exact multiple of the
-    // height, or the walk cycle lands mid-frame and smears.
-    expect(SCARAB_STRIP).toHaveLength(SPRITE_SIZE);
-    for (const row of SCARAB_STRIP) {
-      expect(`${row.length % SPRITE_SIZE}`).toBe('0');
-      expect(`${row.length}`).toBe(`${SCARAB_STRIP[0].length}`);
+  it('keeps the wide Egyptian sprites on the 16px grid, at whole cells', () => {
+    // Both are authored at the full grid rather than the small one: a legible
+    // hieroglyph at 8px is a smudge. Width still has to be an exact multiple
+    // of the height, or the last animation step lands mid-frame and smears,
+    // and the last band tile is cut through a sign.
+    for (const [name, strip] of Object.entries({ ATEN_STRIP, GLYPH_BAND })) {
+      expect(`${name}:${strip.length}`).toBe(`${name}:${SPRITE_SIZE}`);
+      for (const row of strip) {
+        expect(`${name}:${row.length % SPRITE_SIZE}`).toBe(`${name}:0`);
+        expect(`${name}:${row.length}`).toBe(`${name}:${strip[0].length}`);
+      }
     }
   });
 
-  it('gives the scarab strip two distinct frames', () => {
-    // Identical frames animate into a beetle skating on its belly.
+  it('gives the Aten two distinct frames', () => {
+    // Identical frames animate into a sun that just sits there, which is the
+    // still frame rather than the animation.
     const frames = Array.from({ length: 2 }, (_, f) =>
-      SCARAB_STRIP.map(r => r.slice(f * 16, f * 16 + 16)).join(''),
+      ATEN_STRIP.map(r => r.slice(f * 16, f * 16 + 16)).join(''),
     );
     expect(new Set(frames).size).toBe(2);
   });
 
-  it('keeps the ankh and the sun disk symmetric about their axis', () => {
-    // Both are single centred glyphs: one drifted pixel and the ankh leans and
-    // the disk looks tipped. The wedjat is deliberately NOT in this list.
-    for (const [name, sprite] of Object.entries({ ANKH, SUN_DISK, DJED, PAPYRUS })) {
+  it('turns the Aten rays 45 degrees between its two frames', () => {
+    // The whole reason two frames is the entire rotation: eight rays map onto
+    // themselves under a 45deg turn. Frame one puts them on the axes (so the
+    // middle rows reach the edge), frame two on the diagonals (so they do
+    // not). Lose that and it is a disk blinking.
+    const axis = ATEN_STRIP.map(r => r.slice(0, 16));
+    const diagonal = ATEN_STRIP.map(r => r.slice(16));
+    expect(axis[7][0]).toBe('#');
+    expect(diagonal[7][0]).toBe('.');
+    expect(diagonal[1][1]).toBe('#');
+    expect(axis[1][1]).toBe('.');
+  });
+
+  it('lands the Egyptian band on four whole signs over a ground line', () => {
+    // The band is ornament made of legible signs, not writing — see the note
+    // in sprites.ts. What has to hold mechanically is that it tiles: the last
+    // two rows are the ground line, full width, and that is the seam.
+    expect(GLYPH_BAND[0].length).toBe(SPRITE_SIZE * 4);
+    expect(GLYPH_BAND[14]).toBe('#'.repeat(SPRITE_SIZE * 4));
+    expect(GLYPH_BAND[15]).toBe('#'.repeat(SPRITE_SIZE * 4));
+    // Each cell draws something, or one of the four is a blank gap.
+    for (let cell = 0; cell < 4; cell++) {
+      const glyph = GLYPH_BAND.slice(0, 14)
+        .map(r => r.slice(cell * 16, cell * 16 + 16))
+        .join('');
+      expect(`cell${cell}:${glyph.includes('#')}`).toBe(`cell${cell}:true`);
+    }
+  });
+
+  it('keeps the centred Egyptian glyphs symmetric about their axis', () => {
+    // Each is a single centred glyph: one drifted pixel and the ankh leans,
+    // the cartouche looks buckled. The wedjat is deliberately NOT in this
+    // list, and neither is the band — its signs are individually lopsided on
+    // purpose.
+    for (const [name, sprite] of Object.entries({ ANKH, CARTOUCHE, DJED, PAPYRUS })) {
       for (let y = 0; y < SPRITE_SIZE; y++) {
         const mirrored = [...sprite[y]].reverse().join('');
         expect(`${name} row${y}:${sprite[y]}`).toBe(`${name} row${y}:${mirrored}`);

@@ -187,20 +187,29 @@ a `BRAND_DEFS` row cannot express ornament or an animation:
   what the mode uses. `rimefast.test.ts` asserts the sheet never names the five,
   so completing the set in a year's time fails a test rather than a shipping
   review. This paragraph is the reason, kept next to the rule.
-- **Ancient Egyptian** (`egyptian.ts`) — pigment rather than sand. Egyptian
-  blue, lapis, gold leaf, malachite, carnelian and kohl over a papyrus and
-  limestone ground by day, and the same metals lit against black by night;
-  beige is what four thousand years of weathering left, not what anyone
-  painted. Both cards are solved backwards from the shared status set and both
-  are pinned: the light one cannot fall below 95% lightness (warning-on-cell is
-  4.99 at 94%) and the dark one cannot rise above 7% (4.90 at 8%). Lotus frieze
-  under every page title, papyrus down the sidebar, djed pillars and a facing
-  pair of wedjat eyes at the sign-in threshold, an ankh on an empty shelf, and
-  Khepri rolling the sun disk along the bottom rail on a two-frame walk, one
-  hop every half second. Malachite is confined to the sign-in page — it sits
-  16° from the success status hue, and green ornament beside a badge turns
-  decoration into state; `egyptian.test.ts` fails if it appears anywhere else.
-  Carnelian is a fill and never text, at 4.96 on the page ground.
+- **Ancient Egyptian** (`egyptian.ts`) — pigment rather than sand; beige is
+  what four thousand years of weathering left, not what anyone painted. The
+  light register is **lapis and Egyptian blue on a cool limestone white**, with
+  gold demoted to an accent, and it is that way on purpose: as papyrus-and-
+  ochre it read as the same room as Ancient Greek's parchment-and-bronze, and
+  two warm grounds carrying a warm metal is one design with two names. The dark
+  register is a tomb interior — gold leaf and Egyptian blue lit against black.
+  Both cards are solved backwards from the shared status set and both are
+  pinned: the light one cannot fall below 96% lightness (warning-on-cell is
+  4.99 at 95%) and the dark one cannot rise above 7% (4.90 at 8%). The ornament
+  is hieroglyphic: a four-sign glyph register (ankh, feather of Maat, water
+  ripple, reed over a ground line) under every page title and along both edges
+  of a command window, papyrus down the sidebar, djed pillars and a facing pair
+  of wedjat eyes at the sign-in threshold with a cartouche between them, an
+  ankh on an empty shelf, and the Aten stepping its rays in the bottom-right
+  corner on two frames, 800ms a frame. **The signs are real and the arrangement
+  is deliberately not a sentence** — a band of genuine glyphs in sequence spells
+  something and a decorative band that spells something spells it wrong, so the
+  cartouche holds one ankh rather than a name. `sprites.ts` says so beside the
+  grids, because the obvious later "fix" is to make it read. Malachite is
+  confined to the sign-in page — it sits 16° from the success status hue, and
+  green ornament beside a badge turns decoration into state;
+  `egyptian.test.ts` fails if it appears anywhere else.
 
 The mechanism is specificity alone. The injected accent sheet writes `:root`,
 which is (0,1,0); `:root.sc-greek` is (0,2,0) and wins whatever the injection

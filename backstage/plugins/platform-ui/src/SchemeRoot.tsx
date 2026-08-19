@@ -940,12 +940,7 @@ function ModeArt() {
       </div>
       <div className="sc-moon" />
       <div className="sc-rune-rule" />
-      {/* The scarab and, as its own box, the disk it pushes: a background layer
-          wide enough for both would show the second walk frame beside the
-          first, because a background is clipped to its element. */}
-      <div className="sc-khepri">
-        <i />
-      </div>
+      <div className="sc-aten" />
       <div className="sc-greek-embers">
         {EMBERS.map(i => (
           <i key={i} />

@@ -182,10 +182,12 @@ export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   // Rimefast's dark card is pinned at 5.5% for the same reason as hanami's:
   // at 8% the worst status pair is 4.78 and at 10% it is 4.54. See rimefast.ts.
   rimefast: { light: '44 40% 98%', dark: '205 43% 5.5%' },
-  // Egyptian is pinned at both ends: the light card cannot drop below 95%
-  // (warning-on-cell is 4.99 at 94%) and the dark card cannot rise above 7%
-  // (4.90 at 8%). Both ship one notch inside the limit. See egyptian.ts.
-  egyptian: { light: '40 44% 96%', dark: '212 44% 6%' },
+  // Egyptian is pinned at both ends: the light card cannot drop below 96%
+  // (warning-on-cell is 4.99 at 95%) and the dark card cannot rise above 7%
+  // (4.90 at 8%). Both ship one notch inside the limit. The light floor moved
+  // with the ground: the register is cool limestone now, not warm papyrus, and
+  // the whole set had to be re-solved against it. See egyptian.ts.
+  egyptian: { light: '205 32% 97%', dark: '212 44% 6%' },
 };
 
 /** The `:root` declarations for every mode, for interpolation into SHADCN_CSS. */

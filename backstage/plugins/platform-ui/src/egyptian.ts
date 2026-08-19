@@ -10,27 +10,38 @@
  * carnelian, kohl black, and the two grounds this mode is built on — limestone
  * and papyrus. Nothing here is faded on purpose.
  *
- * Light register is a scribe's page in daylight: papyrus ground, limestone
- * card, lapis and gold ornament. Dark register is a tomb interior with a lamp
- * in it: gold leaf and Egyptian blue lit against black.
+ * **The light register is blue, not paper.** It used to be papyrus and ochre
+ * gold, and it read as the same room as greek's parchment-and-bronze: two warm
+ * neutral grounds carrying a warm metal is one design with two names. So the
+ * light register moved somewhere greek cannot follow it — lapis and Egyptian
+ * blue against a COOL limestone white, with gold demoted from the structure to
+ * an accent. Blue carries the rules, the inputs, the focus ring and the
+ * friezes; gold is left for the four things that are meant to catch the eye
+ * (the eyes over the sign-in card, the cartouche under it, the ankh on an
+ * empty shelf, and the Aten). Dark register is unchanged — a tomb interior
+ * with a lamp in it, gold leaf and Egyptian blue lit against black.
  *
  * Colour values are solved backwards from the status set, not chosen:
  *
- * - **The light card is 96% and the floor is 95%.** Warning ink on its
- *   dithered badge cell measures 5.08 at 95% and 4.99 at 94%, so 94% would
- *   break the shared status tokens outright. Shipped at 96% (5.15) for the
- *   margin. Measured there: success 7.65 card / 5.71 cell, warning 6.86 /
- *   5.15, error 8.10 / 5.71, muted 7.15 / 5.15.
+ * - **The light card is 97% and the floor is 96%.** Moving the ground from
+ *   warm papyrus to cool limestone re-opened this, so it was re-solved: on
+ *   `205 32% L` warning ink on its dithered badge cell measures 5.08 at 96%
+ *   and 4.99 at 95%, so 95% would break the shared status tokens outright.
+ *   Shipped at 97% (5.17) for the margin. Measured there: success 7.70 card /
+ *   5.75 cell, warning 6.91 / 5.17, error 8.15 / 5.73, muted 7.20 / 5.18.
  * - **The dark card is 6% and the ceiling is 7%.** At 8% the worst pair drops
  *   to 4.90 and fails; at 7% it is 5.01, which is a coin toss rather than a
  *   value. Measured at 6%: success 7.13 / 5.17, warning 8.19 / 5.21, error
  *   6.24 / 5.15, muted 10.02 / 5.13.
  *
- * Two colours are **decorative only** and must never carry text or a
+ * The rest of the light register, measured: fg on bg 13.99, fg on card 16.05,
+ * muted-fg on card 7.39, primary-fg on primary 9.98, accent-fg on accent
+ * 10.18, border on card 6.36 and on bg 5.54 — the rule clears the 3:1 UI
+ * guideline on both surfaces, which the old ochre one did not.
+ *
+ * One colour is **decorative only** and must never carry text or a
  * meaning-bearing border:
  *
- * - **Carnelian** (10 72% 42%) measures 4.96 against the page ground. That is
- *   AA and not this repo's 5.0 bar, so it fills the sun disk and nothing else.
  * - **Malachite** is placement-restricted rather than contrast-restricted. Its
  *   hue sits 16deg from the success status hue, and green ornament in the same
  *   sight line as a badge turns decoration into state — the trap greek
@@ -38,23 +49,29 @@
  *   only, which is the one screen in the app with no status badge on it, and
  *   it may not move anywhere else.
  *
- * The ornament is what carries the mode: a lotus frieze under every page
- * title and along both edges of a command window, papyrus stalks down the
- * sidebar, djed pillars flanking the sign-in page, a pair of wedjat eyes
- * facing in over the sign-in card, an ankh on an empty shelf, and Khepri
- * rolling the sun disk along the bottom rail. Which motifs were drawn and
- * dropped, and why, is recorded in sprites.ts beside the grids.
+ * (Carnelian is gone with the scarab it filled. The gold accent that replaced
+ * it measures 3.34 on the page ground and 3.83 on the card, so unlike
+ * carnelian it would survive being a rule — it is still only ever a fill.)
+ *
+ * The ornament is what carries the mode, and it is **hieroglyphic**: a glyph
+ * register under every page title and along both edges of a command window, a
+ * cartouche and a facing pair of wedjat eyes on the sign-in card, djed pillars
+ * flanking the sign-in page, papyrus stalks down the sidebar, an ankh on an
+ * empty shelf, and the Aten stepping its rays in the corner. The signs are
+ * real and individually legible; the arrangement deliberately is not a
+ * sentence. sprites.ts states that at length beside the grids and says why
+ * turning it into one would be the bug.
  *
  * Kept out of styles.ts for the reason greek.ts records: that file is one
  * template literal and a stray backtick truncates the lot.
  */
 import {
   ANKH,
+  ATEN_STRIP,
+  CARTOUCHE,
   DJED,
-  LOTUS_BAND,
+  GLYPH_BAND,
   PAPYRUS,
-  SCARAB_STRIP,
-  SUN_DISK,
   WEDJAT,
   mirrorSprite,
   spriteUrl,
@@ -65,17 +82,22 @@ import {
  *
  * Baked rather than read from a custom property: these are painted into SVG
  * data URIs, and a data URI is its own document — it inherits neither
- * currentColor nor var(). Two registers, two sets. The first four track
- * --sc-primary and --sc-border in their register; the last three track the
- * two ornament tokens below. egyptian.test.ts checks that they stay in step.
+ * currentColor nor var(). Two registers, two sets: LAPIS and NILE_BLUE are
+ * the light register's --sc-primary and --sc-border, GOLD_LEAF is the dark
+ * register's --sc-primary, and the last three track the two ornament tokens
+ * below. egyptian.test.ts checks that every one of them stays in step.
+ *
+ * There is no dark-register blue ink. The dark ornament is gold on black
+ * throughout, and the Egyptian blue down there is the RULE colour only —
+ * baking it into a sprite as well would put the same blue on the divider and
+ * on the thing beside the divider.
  */
 const LAPIS = 'hsl(221 62% 32%)';
-const OCHRE = 'hsl(40 70% 38%)';
+const NILE_BLUE = 'hsl(204 68% 33%)';
 const GOLD_LEAF = 'hsl(44 82% 55%)';
-const EGYPT_BLUE = 'hsl(204 62% 50%)';
+const GOLD_DAY = 'hsl(40 80% 36%)';
 const MALACHITE_DAY = 'hsl(168 52% 26%)';
 const MALACHITE_NIGHT = 'hsl(168 45% 55%)';
-const CARNELIAN = 'hsl(10 72% 42%)';
 
 /**
  * The pair over the door.
@@ -90,26 +112,28 @@ const WEDJAT_R = WEDJAT;
 
 export function egyptianCss(): string {
   return `
-/* ===== Ancient Egyptian — light register: a scribe's page in daylight ===== */
+/* ===== Ancient Egyptian — light register: lapis on cool limestone ===== */
 :root.sc-egyptian {
-  /* Papyrus for the page, limestone for the card: the card is the LIGHTER of
-     the two, which is the opposite of how these two materials weather and the
-     right way round for a surface that has to hold status ink. */
-  --sc-bg: 40 34% 92%;
-  --sc-fg: 25 14% 10%;
-  /* 96%. The floor is 95% and 94% fails outright — see the docstring. */
-  --sc-card: 40 44% 96%;
-  --sc-card-fg: 25 14% 10%;
-  --sc-muted: 40 28% 88%;
-  --sc-muted-fg: 30 10% 35%;
-  --sc-border: 40 70% 38%;
-  --sc-input: 40 70% 38%;
+  /* Cool limestone for the page, a cooler white for the card. Cool is the
+     whole point: warm paper under a warm metal is greek's room, and this mode
+     kept walking into it. */
+  --sc-bg: 205 24% 91%;
+  --sc-fg: 220 30% 12%;
+  /* 97%. The floor is 96% and 95% fails outright — see the docstring. */
+  --sc-card: 205 32% 97%;
+  --sc-card-fg: 220 30% 12%;
+  --sc-muted: 205 20% 86%;
+  --sc-muted-fg: 215 14% 33%;
+  /* Egyptian blue, darkened until it works as a rule: 6.36 on the card and
+     5.54 on the page. Every divider, input outline and focus ring takes it. */
+  --sc-border: 204 68% 33%;
+  --sc-input: 204 68% 33%;
   --sc-primary: 221 62% 32%;
   --sc-primary-fg: 0 0% 100%;
   --sc-primary-shade: 240 10% 8%;
   --sc-ring: 221 62% 32%;
-  --sc-accent: 40 30% 89%;
-  --sc-accent-fg: 25 14% 20%;
+  --sc-accent: 204 42% 87%;
+  --sc-accent-fg: 221 62% 22%;
   /* Status stays stock. Every mode since greek maps to STATUS_TOKENS, and
      these three are the dither CELL colours those tokens were measured
      against — move one and contrast.test.ts stops describing the screen. */
@@ -118,12 +142,13 @@ export function egyptianCss(): string {
   --sc-destructive: 0 60% 51%;
   /* Ornament inks. Not shadcn tokens — the chrome reads them.
      Malachite is SIGN-IN ONLY: 16deg from the success status hue, so it may
-     never share a screen with a badge. The sun ink is carnelian by day, and it
-     is a fill and never text: 4.96 on the page ground, under the 5.0 bar. */
+     never share a screen with a badge. The sun ink is the gold accent, and it
+     is the ONLY gold in the light register that is not on a small ornament —
+     which is what keeps gold from becoming the structure again. */
   --sc-malachite: 168 52% 26%;
-  --sc-sun-ink: 10 72% 42%;
+  --sc-sun-ink: 40 80% 36%;
 }
-/* ===== dark register: the tomb interior, which is the designed one ===== */
+/* ===== dark register: the tomb interior, unchanged and still the best one = */
 :root.sc-egyptian.sc-dark {
   --sc-bg: 212 48% 4.5%;
   --sc-fg: 44 32% 90%;
@@ -149,13 +174,13 @@ export function egyptianCss(): string {
   --sc-warning: 35 68% 47%;
   --sc-destructive: 0 60% 51%;
   --sc-malachite: 168 45% 55%;
-  /* Gold leaf, not a lifted carnelian: a red disk on a black ground reads as a
-     stop light, and the tomb registers paint the sun in metal anyway. */
+  /* Gold leaf: the tomb registers paint the sun in metal, and a red disk on a
+     black ground reads as a stop light. */
   --sc-sun-ink: 44 82% 55%;
 }
 
-/* ===== Chrome. Lapis and gold on limestone by day, gold leaf and Egyptian
-   blue on black by night. ===== */
+/* ===== Chrome. Lapis and Egyptian blue on cool limestone by day, gold leaf
+   and Egyptian blue on black by night. ===== */
 
 /* Cards take the rule and a thin inner line.
    Substring form on the MUI names, so these reach the routes that render under
@@ -174,11 +199,14 @@ export function egyptianCss(): string {
     var(--sc-shadow) !important;
 }
 
-/* The command window as a painted wall: the rule doubled, and the lotus frieze
-   running along its top and bottom edges.
+/* The command window as a painted wall: the rule doubled, and the glyph
+   register running along its top and bottom edges.
    A band rather than four corner medallions — which is what greek does — for
-   the reason a frieze exists at all: the ornament is the repetition, and one
-   flower cropped into an 8x8 corner is a smudge with a stem.
+   the reason a register exists at all: the ornament is the repetition, and one
+   sign cropped into an 8x8 corner is a smudge.
+   The tile is 64x16 and holds four signs, so it is laid at 64px wide: at
+   anything narrower the signs stop being individually legible, which is the
+   only thing keeping this from reading as a texture.
    Inset 4px rather than outset, because styles.ts sets overflow: hidden here
    and anything outside the padding box is clipped. */
 :root.sc-egyptian [class*="bui-DialogInner"],
@@ -190,32 +218,32 @@ export function egyptianCss(): string {
     0 0 0 4px hsl(var(--sc-border)),
     0 0 14px hsl(var(--sc-primary) / .22),
     var(--sc-shadow) !important;
-  background-image: ${spriteUrl(LOTUS_BAND, LAPIS)}, ${spriteUrl(LOTUS_BAND, LAPIS)};
+  background-image: ${spriteUrl(GLYPH_BAND, LAPIS)}, ${spriteUrl(GLYPH_BAND, LAPIS)};
   background-repeat: repeat-x;
-  background-size: 16px 16px;
+  background-size: 64px 16px;
   background-position: left top 4px, left bottom 4px;
 }
 :root.sc-egyptian.sc-dark [class*="bui-DialogInner"],
 :root.sc-egyptian.sc-dark [class*="MuiDialog-paper"] {
-  background-image: ${spriteUrl(LOTUS_BAND, GOLD_LEAF)}, ${spriteUrl(LOTUS_BAND, GOLD_LEAF)};
+  background-image: ${spriteUrl(GLYPH_BAND, GOLD_LEAF)}, ${spriteUrl(GLYPH_BAND, GOLD_LEAF)};
 }
 
-/* The frieze under every page title. Read by theme.tsx through these
+/* The register under every page title. Read by theme.tsx through these
    variables, because a selector naming the page-header component is dead in a
    production build — its makeStyles class hashes to jss<n>. */
 :root.sc-egyptian {
-  --sc-header-art: ${spriteUrl(LOTUS_BAND, OCHRE)};
-  --sc-header-art-size: 24px 24px;
+  --sc-header-art: ${spriteUrl(GLYPH_BAND, NILE_BLUE)};
+  --sc-header-art-size: 96px 24px;
   --sc-header-art-repeat: repeat-x;
   --sc-header-art-pos: left bottom;
 }
 :root.sc-egyptian.sc-dark {
-  --sc-header-art: ${spriteUrl(LOTUS_BAND, GOLD_LEAF)};
+  --sc-header-art: ${spriteUrl(GLYPH_BAND, GOLD_LEAF)};
 }
 
-/* The same frieze, smaller, as the rule under a section heading. round, not
+/* The same register, smaller, as the rule under a section heading. round, not
    repeat-x: the band is exactly as wide as the words and a title is rarely a
-   whole number of tiles, so the last flower would be cut in half. The caret is
+   whole number of tiles, so the last sign would be cut in half. The caret is
    taken out of the flow for the reason greek.ts records at length — its glyph
    carries about 30px of side bearing. */
 :root.sc-egyptian .sc-h1 {
@@ -223,9 +251,9 @@ export function egyptianCss(): string {
   width: fit-content;
   max-width: 100%;
   padding-bottom: 6px;
-  background-image: ${spriteUrl(LOTUS_BAND, OCHRE)};
+  background-image: ${spriteUrl(GLYPH_BAND, NILE_BLUE)};
   background-repeat: round no-repeat;
-  background-size: 16px 16px;
+  background-size: 64px 16px;
   background-position: left bottom;
 }
 :root.sc-egyptian .sc-h1::after {
@@ -234,7 +262,7 @@ export function egyptianCss(): string {
   top: 0;
 }
 :root.sc-egyptian.sc-dark .sc-h1 {
-  background-image: ${spriteUrl(LOTUS_BAND, GOLD_LEAF)};
+  background-image: ${spriteUrl(GLYPH_BAND, GOLD_LEAF)};
 }
 
 /* The sign-in page between two djed pillars, running the full height.
@@ -254,20 +282,25 @@ export function egyptianCss(): string {
   background-image: ${spriteUrl(DJED, MALACHITE_NIGHT)}, ${spriteUrl(DJED, MALACHITE_NIGHT)};
 }
 
-/* A wedjat at each top corner of the sign-in card, facing inward — the eye
-   that guards a threshold, which is exactly what a sign-in card is.
+/* A wedjat at each top corner of the sign-in card facing inward, and a
+   cartouche centred under them — the eye that guards a threshold, over the
+   ring that would carry a name. Both in gold, which is the whole of gold's job
+   in the light register now: small things, on purpose.
+   The cartouche holds an ankh and NOT a name, and not a plausible-looking
+   string of signs either. See sprites.ts: the glyph vocabulary is used as
+   ornament, and any name we could put in a name-ring would be a lie.
    On the CARD and nowhere else: a pair of eyes at a door is a ward, and the
    same pair on every panel is a poster.
-   The mirror is generated, so the two cannot drift apart when either is
+   The mirror is generated, so the two eyes cannot drift apart when either is
    edited. */
 :root.sc-egyptian .sc-login-card {
-  background-image: ${spriteUrl(WEDJAT_L, OCHRE)}, ${spriteUrl(WEDJAT_R, OCHRE)};
+  background-image: ${spriteUrl(WEDJAT_L, GOLD_DAY)}, ${spriteUrl(WEDJAT_R, GOLD_DAY)}, ${spriteUrl(CARTOUCHE, GOLD_DAY)};
   background-repeat: no-repeat;
-  background-size: 20px 20px;
-  background-position: left 8px top 8px, right 8px top 8px;
+  background-size: 20px 20px, 20px 20px, 18px 18px;
+  background-position: left 8px top 8px, right 8px top 8px, center top 6px;
 }
 :root.sc-egyptian.sc-dark .sc-login-card {
-  background-image: ${spriteUrl(WEDJAT_L, GOLD_LEAF)}, ${spriteUrl(WEDJAT_R, GOLD_LEAF)};
+  background-image: ${spriteUrl(WEDJAT_L, GOLD_LEAF)}, ${spriteUrl(WEDJAT_R, GOLD_LEAF)}, ${spriteUrl(CARTOUCHE, GOLD_LEAF)};
 }
 
 /* Papyrus stalks down the inner edge of the sidebar — the marsh the whole
@@ -276,7 +309,7 @@ export function egyptianCss(): string {
    nav collapsing to icon width: an ornament centred in a panel that changes
    width is an ornament that moves. */
 :root.sc-egyptian .sc-nav {
-  background-image: ${spriteUrl(PAPYRUS, OCHRE)};
+  background-image: ${spriteUrl(PAPYRUS, NILE_BLUE)};
   background-repeat: repeat-y;
   background-size: 16px 32px;
   background-position: right 3px top;
@@ -289,7 +322,7 @@ export function egyptianCss(): string {
    rectangle. It is also the only glyph in the set that is unmistakable at 32px
    to someone who has never seen the others. */
 :root.sc-egyptian .sc-empty {
-  background-image: ${spriteUrl(ANKH, OCHRE)};
+  background-image: ${spriteUrl(ANKH, GOLD_DAY)};
   background-repeat: no-repeat;
   background-position: center 12px;
   background-size: 32px 32px;
@@ -326,76 +359,56 @@ export function egyptianCss(): string {
   }
 }
 
-/* ===== Khepri =====
-   SchemeRoot mounts .sc-mode-art once for every mode; this claims the scarab
-   and the disk it pushes. The beetle rolling the sun is the whole of what
-   Khepri means, so the mode's one scene animation is that and not a texture.
+/* ===== The Aten =====
+   SchemeRoot mounts .sc-mode-art once for every mode; this claims the sun.
 
-   On the BOTTOM rail, not the top one. The mythology would prefer the sky, but
-   the app header owns the top 64px and .sc-mode-art sits at z-index 1 beneath
-   it — a scarab crossing up there spends most of its walk behind a toolbar.
-   The bottom rail is empty on every route.
+   WHY THIS AND NOT A CREATURE. The mode used to walk a scarab along the bottom
+   rail pushing a disk, and a beetle crossing the screen is a thing moving
+   THROUGH the page rather than a thing the page is made of — it pulled the eye
+   off whatever was being read, and it read as a bug on the monitor. The Aten
+   does not travel. It sits in one corner and its rays step.
 
-   The disk is a child rather than a second background layer because it needs
-   its own box: a background layer wide enough to hold both would show the
-   second walk frame beside the first, since a background is clipped to the
-   element and nothing else. Being a child, it inherits the parent transform
-   and is pushed rather than followed.
+   That is also why it is cheap: eight rays around a disk map onto themselves
+   under a 45deg turn, so the entire rotation is TWO frames — rays on the axes,
+   then rays on the diagonals. There is no in-between position for a smooth
+   interpolation to invent, which is the argument for steps() made by the
+   subject rather than by the style guide. The disk itself never moves.
 
-   The still frame comes FIRST and is a designed picture: beetle and disk at
-   rest a little in from the left, fully painted and on walk frame one.
-   Someone who asked for less motion gets Khepri at the horizon, not a gap. */
-:root.sc-egyptian .sc-khepri {
+   Bottom right, not the sky the mythology would prefer: the app header owns
+   the top 64px and .sc-mode-art sits at z-index 1 beneath it, so anything up
+   there spends its life behind a toolbar. The bottom rail is empty on every
+   route, and a sun low on the right is a designed picture rather than a
+   compromise.
+
+   The still frame comes FIRST and is deliberate: the Aten fully painted with
+   its rays on the axes, which is frame one. Someone who asked for less motion
+   gets the sun, not a gap. */
+:root.sc-egyptian .sc-aten {
   display: block;
-  left: 24px;
-  bottom: 14px;
-  width: 22px;
-  height: 22px;
+  right: 28px;
+  bottom: 20px;
+  width: 26px;
+  height: 26px;
   opacity: 1;
-  background-image: ${spriteUrl(SCARAB_STRIP, LAPIS)};
+  background-image: ${spriteUrl(ATEN_STRIP, GOLD_DAY)};
   background-repeat: no-repeat;
-  /* The 32x16 strip at 22px a frame, so the box shows exactly one beetle. */
-  background-size: 44px 22px;
+  /* The 32x16 strip at 26px a frame, so the box shows exactly one sun. */
+  background-size: 52px 26px;
   background-position: 0 0;
 }
-:root.sc-egyptian .sc-khepri i {
-  position: absolute;
-  display: block;
-  left: 24px;
-  bottom: 0;
-  width: 28px;
-  height: 28px;
-  opacity: 1;
-  background-image: ${spriteUrl(SUN_DISK, CARNELIAN)};
-  background-repeat: no-repeat;
-  background-size: 28px 28px;
-}
-:root.sc-egyptian.sc-dark .sc-khepri {
-  background-image: ${spriteUrl(SCARAB_STRIP, EGYPT_BLUE)};
-}
-:root.sc-egyptian.sc-dark .sc-khepri i {
-  background-image: ${spriteUrl(SUN_DISK, GOLD_LEAF)};
+:root.sc-egyptian.sc-dark .sc-aten {
+  background-image: ${spriteUrl(ATEN_STRIP, GOLD_LEAF)};
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  /* 48 steps over 24 seconds is one hop every half second, and on a 1440px
-     screen each hop is about 30px — a third of the pair's own width, so the
-     beetle visibly shoves rather than slides. A smooth translate here would be
-     the one gliding thing in an app whose every other motion is stepped.
-     The walk is 1s over two frames, which puts a new leg position under every
-     single hop; any other duration and the legs beat against the steps.
-     translateX starts off-screen so the loop has no pop-in. It is done with a
-     transform rather than a negative left, because ornament in this mode is
-     positioned on positive coordinates only and a background hung outside the
-     border box paints nothing at all. */
-  @keyframes sc-khepri-roll {
-    from { transform: translateX(-80px); }
-    to { transform: translateX(100vw); }
-  }
-  @keyframes sc-khepri-walk { to { background-position: -44px 0; } }
-  :root.sc-egyptian .sc-khepri {
-    animation: sc-khepri-roll 24s steps(48) infinite,
-               sc-khepri-walk 1s steps(2) infinite;
+  /* 1.6s over two frames is a ray position held for 800ms — slow enough to
+     read as light turning rather than as a flicker, and nothing else in the
+     mode beats against it. The loop has to close on exactly 52px, which is the
+     strip's own width at this scale: any other distance leaves the sun
+     mid-frame at the wrap and it smears. */
+  @keyframes sc-egyptian-aten { to { background-position: -52px 0; } }
+  :root.sc-egyptian .sc-aten {
+    animation: sc-egyptian-aten 1.6s steps(2) infinite;
   }
 }
 `;

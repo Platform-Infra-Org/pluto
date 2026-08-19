@@ -1127,10 +1127,19 @@ export const AURORA: Sprite = [
      it says Egypt that a play button does not also say.
    - The winged sun disk loses the feathering that makes the wings wings, and
      comes back as a disk with a moustache.
-   - Real hieroglyph text is dropped on purpose rather than for legibility: a
-     band of genuine glyphs spells something, and a decorative band that spells
-     something spells it wrong. The lotus frieze below is ornament, not writing
-     — the same call rimefast made with its non-semantic futhark band. */
+   - The lotus frieze was drawn, shipped, and then replaced by GLYPH_BAND: the
+     mode is meant to read as hieroglyphic and a flower border reads as a
+     flower border.
+
+   ON THE GLYPHS, AND DO NOT "FIX" THIS LATER. The signs below are real and
+   individually legible on purpose, and their ARRANGEMENT is deliberately not.
+   A band of genuine glyphs in sequence spells something, and a decorative band
+   that spells something spells it wrong — so the band is a repeating ornamental
+   register (ankh, feather, water, reed, over a ground line) chosen for how the
+   four shapes alternate, never for what they would transliterate to. The
+   cartouche holds one ankh rather than a name for exactly the same reason: a
+   cartouche is a name-ring, and any name we could put in it would be a lie.
+   This is the same call rimefast made with its non-semantic futhark band. */
 
 /**
  * The ankh, the one Egyptian glyph that is unmistakable at any size.
@@ -1184,29 +1193,62 @@ export const WEDJAT: Sprite = [
 ];
 
 /**
- * The lotus frieze: an open flower and a closed bud on a ground line, the
- * border ornament that runs along the top of half the tomb walls there are.
+ * The glyph register: four signs over a ground line, 64x16 — ankh, feather of
+ * Maat, water ripple, reed — each on its own 16px cell.
  *
- * Tiles horizontally — the outer columns carry nothing but the ground line, so
- * two tiles butt together with no seam and no half-cut flower.
+ * ORNAMENT, NOT WRITING. See the note above the ankh: the signs are real and
+ * the order is not a sentence, and turning it into one is the bug. The order
+ * here is chosen so no two similar silhouettes touch, at the seam included —
+ * the reed ends one tile and the ankh opens the next.
+ *
+ * The ground line runs the full width on the last two rows, which is both what
+ * puts the signs in a register and what makes the tile butt seamlessly against
+ * its neighbour.
  */
-export const LOTUS_BAND: Sprite = [
+export const GLYPH_BAND: Sprite = [
+  '.........................##.....................................',
+  '......####..............####..........................###.......',
+  '.....##..##............#####.........................####.......',
+  '.....##..##...........######.......##..##..##.......#####.......',
+  '......####...........#######......#..##..##..#.....######.......',
+  '.......##............#######.......................#####........',
+  '..############.......#######........................####........',
+  '..############.......#######.......##..##..##........###........',
+  '.......##............#######......#..##..##..#........##........',
+  '.......##............#######..........................##........',
+  '.......##.............######..........................##........',
+  '.......##.............#####........##..##..##.........##........',
+  '.......##..............###........#..##..##..#........##........',
+  '.......##...............#.............................##........',
+  '################################################################',
+  '################################################################',
+];
+
+/**
+ * A cartouche: the name-ring, with a single ankh inside it.
+ *
+ * An ankh and not a name, and not a plausible-looking string of signs either.
+ * A cartouche means "the thing inside this is a royal name", so filling it
+ * with ornament we cannot read is the honest version — see the note above.
+ * Mirror-symmetric about the stem, so it never looks like it is leaning.
+ */
+export const CARTOUCHE: Sprite = [
   '................',
-  '................',
-  '................',
-  '................',
-  '................',
-  '................',
-  '#.....#.........',
-  '#..##..#........',
-  '#.####.#...##...',
-  '.######...####..',
-  '..####....####..',
-  '...##.....####..',
-  '...##......##...',
-  '...##......##...',
-  '################',
-  '################',
+  '.....######.....',
+  '....##....##....',
+  '...##..##..##...',
+  '...##.#..#.##...',
+  '...##..##..##...',
+  '...##..##..##...',
+  '...##.####.##...',
+  '...##..##..##...',
+  '...##..##..##...',
+  '...##..##..##...',
+  '...##..##..##...',
+  '...##..##..##...',
+  '....##....##....',
+  '.....######.....',
+  '..############..',
 ];
 
 /**
@@ -1261,57 +1303,33 @@ export const DJED: Sprite = [
 ];
 
 /**
- * The sun disk with eight rays, four-fold symmetric so it never looks tipped.
+ * The Aten as a two-frame strip: 16x16 frames side by side, so 32x16.
  *
- * The rays are stubs with a gap before the disk rather than spokes touching
- * it: joined to the body they thicken it into a cog, and the gap is the only
- * thing at this size that says light rather than machinery.
- */
-export const SUN_DISK: Sprite = [
-  '.......##.......',
-  '.#.....##.....#.',
-  '..#....##....#..',
-  '....########....',
-  '...##########...',
-  '..############..',
-  '..############..',
-  '#.############.#',
-  '#.############.#',
-  '..############..',
-  '..############..',
-  '...##########...',
-  '....########....',
-  '..#....##....#..',
-  '.#.....##.....#.',
-  '.......##.......',
-];
-
-/**
- * The scarab from above, as a two-frame walk strip: 16x16 frames side by side,
- * so 32x16.
+ * Eight rays around a disk map onto themselves under a 45deg turn, so the
+ * whole of the rotation is two frames — rays on the axes, then rays on the
+ * diagonals — and the disk itself never moves. That is what makes this the
+ * cheap animation to step: there is no in-between position to interpolate to,
+ * only the two the rays are ever in.
  *
- * A strip rather than two sprites for the reason PETAL_STRIP records — CSS
- * advances one background-position in whole steps, and two images would need
- * two elements. The frames differ only in which rows the legs leave the body
- * on, which is what a beetle actually does: the body is still, the legs
- * alternate. The seam down the elytra is a two-pixel gap, and it is the only
- * thing separating this from an olive.
+ * The rays stand clear of the disk in both frames, for the reason the frieze
+ * records: joined to the body they thicken it into a cog, and the gap is the
+ * only thing at this size that says light rather than machinery.
  */
-export const SCARAB_STRIP: Sprite = [
-  '.....######..........######.....',
-  '....########........########....',
-  '...##########...##.##########.##',
-  '##.##########.##...##########...',
-  '...####..####...#..####..####..#',
-  '#..####..####..#...####..####...',
-  '..#####..#####....#####..#####..',
-  '..#####..#####....#####..#####..',
-  '..#####..#####..#.#####..#####.#',
-  '#.#####..#####....#####..#####..',
-  '..#####..#####....#####..#####..',
-  '##.####..####.##...####..####...',
-  '...####..####...##.####..####.##',
-  '....########........########....',
-  '.....######..........######.....',
+export const ATEN_STRIP: Sprite = [
+  '.......##.......................',
+  '.......##........##..........##.',
+  '.................##..........##.',
   '................................',
+  '......####............####......',
+  '.....######..........######.....',
+  '....########........########....',
+  '##..########..##....########....',
+  '##..########..##....########....',
+  '....########........########....',
+  '.....######..........######.....',
+  '......####............####......',
+  '................................',
+  '.................##..........##.',
+  '.......##........##..........##.',
+  '.......##.......................',
 ];
