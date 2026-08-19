@@ -92,6 +92,25 @@ describe('greekCss', () => {
     expect(dark).toEqual(light);
   });
 
+  it('gives the mode a scene ornament, and one that rises', () => {
+    // The counterpart to hanami's petals and rimefast's aurora. Rising is what
+    // stops it reading as the sakura overlay recoloured, so the direction is
+    // part of the design, not an implementation detail.
+    const css = greekCss();
+    expect(css).toContain('.sc-greek-embers');
+    expect(css).toMatch(/@keyframes sc-greek-rise[\s\S]{0,120}translateY\(-10\dvh\)/);
+    // An ember is a pixel: a hard square, never a gradient.
+    expect(css).not.toMatch(/\.sc-greek-embers i \{[^}]*radial-gradient/);
+  });
+
+  it('lets the embers rest at full opacity when motion is declined', () => {
+    // The still frame is designed, not frozen: the flicker's 0%/100% has to
+    // equal the static rule, or reduced-motion readers get a half-dimmed spark.
+    const css = greekCss();
+    expect(css).toMatch(/\.sc-greek-embers i \{[^}]*opacity: 1/);
+    expect(css).toMatch(/@keyframes sc-greek-flicker \{\s*0%, 100% \{ opacity: 1; \}/);
+  });
+
   it('uses steps() for any animation, never ease', () => {
     expect(greekCss()).not.toMatch(/animation:[^;]*\bease\b/);
   });
@@ -227,8 +246,14 @@ describe('greek motion', () => {
     const css = greekCss().replace(/\/\*[\s\S]*?\*\//g, '');
     const beforeMedia = css.slice(0, css.indexOf('@media (prefers-reduced-motion: no-preference)'));
     const staticGlow = beforeMedia.slice(beforeMedia.lastIndexOf('{'));
+    // Scoped to the button ember's own keyframes. The mode has a second
+    // animation now (the hearth embers), whose frames carry opacity rather
+    // than a glow — matching every 0%/50% block in the sheet would fail on it
+    // for no reason, and would stop guarding the thing this test is about.
+    const emberFrames = css.match(/@keyframes sc-greek-ember\s*{([\s\S]*?)\n\s*}/);
+    if (!emberFrames) throw new Error('sc-greek-ember keyframes missing');
     const frames = Array.from(
-      css.matchAll(/(?:0%,\s*100%|50%)\s*{([^}]*)}/g),
+      emberFrames[1].matchAll(/(?:0%,\s*100%|50%)\s*{([^}]*)}/g),
       m => m[1],
     );
 

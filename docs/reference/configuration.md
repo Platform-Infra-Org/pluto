@@ -140,6 +140,51 @@ enable. See **[Customise the home page](../how-to/customise-the-home-page.md)**.
 entry is tried on decrypt, which is how the key rotates without re-encrypting
 held blobs. See **[Secret lifecycle](../explanation/secrets-lifecycle.md)**.
 
+## `platform.demoOptions`
+
+```yaml
+platform:
+  demoOptions: true
+```
+
+Serves the demo option sets at `/options/:name` — the stand-in "external" API
+the DynamicSelect examples reach through the `/demo-options` proxy, including
+the nested `coordinate-tree` the cascading example walks.
+
+**Off unless set**, and it should stay off in production: this is demo data
+living in a production binary, so the default is the safe one and every
+environment that wants it says so. The dev stack switches it on in the
+gitignored `app-config.local.yaml` that `scripts/backstage-up.sh` writes. With
+it off the route answers 404 naming this key, so an example that goes quiet
+explains itself.
+
+## `platform.uploads`
+
+```yaml
+platform:
+  uploads:
+    bucket: platform-uploads
+    region: eu-west-1
+    endpoint: http://localhost:9000   # optional — S3-compatible (e.g. MinIO); omit for real AWS S3
+    keyPrefix: scaffolder
+    maxBytes: 10485760                # 10 MiB
+    allowedExtensions: ['.yaml', '.yml', '.json', '.txt', '.csv']
+    urlTtlSeconds: 300
+```
+
+Backs `POST /uploads/presign`, which signs a single S3 `PutObjectCommand` for
+the `ui:field: PlatformFile` scaffolder field — bytes go straight from the
+browser to S3, never through Backstage. Unset (the default): the route
+returns 501 rather than failing inside the AWS SDK, and `PlatformFile` reports
+"not configured".
+
+Content-Length is signed as part of the URL, so `maxBytes` is enforced by S3,
+not merely advised to the browser. Content-Type is **not** taken from the
+caller — it is derived server-side from the (validated) extension, so a
+caller cannot sign an upload as a type the bucket would later serve as HTML.
+See **[File uploads](../how-to/author-a-template.md#file-uploads)** for the
+CORS, CSP and bucket-lifecycle requirements this needs on the S3 side.
+
 ## `platform.requests.retention`
 
 Off by default — deleting rows cannot be undone.
@@ -196,6 +241,14 @@ and a `schedule`. See **[Identity & LDAP](../explanation/identity-and-ldap.md)**
 
 Server-side proxy routes (e.g. `/demo-options` for DynamicSelect, `/argo-workflows`
 for Argo). Inject upstream auth here so secrets never reach the browser/plugin.
+
+The `/infra` route feeds the cascading `DynamicSelect` example
+(`provision-database`, see **[Add a DynamicSelect
+field](../how-to/add-a-dynamic-select-field.md)**). It needs two env vars:
+
+- `INFRA_CONFIG_API_URL` — base URL of the coordinate-tree API.
+- `INFRA_CONFIG_API_TOKEN` — bearer token the proxy injects server-side; the
+  browser only ever calls `/api/proxy/infra/...` and never sees it.
 
 ## Auth
 

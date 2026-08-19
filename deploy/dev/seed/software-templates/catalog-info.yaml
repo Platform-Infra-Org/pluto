@@ -6,6 +6,7 @@ metadata:
 spec:
   type: url
   targets:
+    - ./templates/coordinate-demo/template.yaml
     - ./templates/demo-resource/template.yaml
     - ./templates/provision-database/template.yaml
     - ./templates/provision-postgres/template.yaml

@@ -18,7 +18,7 @@ metadata:
   # verb-update / verb-delete annotations enable edit/delete (see below)
 spec:
   owner: group:default/<team>                     # THIS team owns approvals
-  type: resource
+  type: database                                  # the Create page category
   parameters:
     - title: Details
       required: [name]
@@ -54,6 +54,22 @@ Two templating layers meet here — keep them straight:
 `${{ parameters.x }}` is **Scaffolder** (form input); `<< token >>` is resolved by
 **the backend at submit time**. See **[Submit tokens](../reference/tokens.md)**.
 
+### `spec.type` is the Create page category
+
+`spec.type` is free text, and it is what the Create page's category filter
+lists — the seed templates use `database`, `service`, `git`, `bulk` and `demo`.
+Pick the family the template belongs to, not a name unique to this one
+template: a category with a single member filters nothing. Backstage renders it
+capitalised, so prefer a single lowercase word (`database`, not
+`managed-database`, which shows as "Managed-database").
+
+It is **not** `platform.io/resource-type`. That annotation is what resolves the
+owning team, and therefore who may approve a request — two templates claiming
+the same one can hand approval rights to the wrong group. `spec.type` has no
+effect on approvals, resolvers, RBAC or the request lifecycle; it is a label for
+humans browsing the Create page. Several templates may share a category while
+each keeps its own resource type.
+
 ### Your own workflow: no `parameters` block at all
 
 Every request param is forwarded to Argo as its own named parameter, so a
@@ -82,13 +98,14 @@ same name; `forwardParams: false` suppresses the forwarding entirely. See
 
 ### Worked examples you can run
 
-Two templates in `deploy/dev/` exist only to demonstrate this, and both are
-runnable against the dev stack:
+Three templates in `deploy/dev/` exist only to demonstrate a mechanism, and all
+are runnable against the dev stack:
 
 | Template | Shows |
 |---|---|
 | **Param Forwarding (demo)** — `templates/param-forwarding-demo` with `argo/param-echo.yaml` | Five form fields mapped **once** under `params`, four of them reaching Argo with no second mapping. It names only `note` in `argoSubmit.parameters`, which collides with the form field on purpose, so one run proves both forwarding and precedence. The workflow writes nothing; it prints what it received, so the run log is the evidence — a number arriving as a string, an array as compact JSON, and a blank field absent rather than empty. |
 | **Provision Git Resources (bulk)** — `templates/bulk-provision` with `argo/bulk-provision.yaml` | One request creating several resources, returning their names as a JSON array so the request page links to each. |
+| **Coordinates (demo)** — `templates/coordinate-demo` | Five dependent `DynamicSelect` fields walking one tree: changing a parent clears the children it invalidates, a level with a single option fills itself, and all five share one request. Needs `platform.demoOptions: true`. See **How-to → Add a live (DynamicSelect) field**. |
 
 The mapping lives in **one** place, the request's `params`:
 
@@ -105,6 +122,66 @@ One thing to expect when testing: a WorkflowTemplate's own
 back to its default rather than disappearing. The step still receives a value —
 just the template's, not yours. Delete the default too if you want its absence
 to be an error.
+
+### File uploads
+
+`ui:field: PlatformFile` puts a browser-picked file straight in S3 and gives
+the form the object's path — the bytes never pass through Backstage:
+
+```yaml
+valuesFile:
+  type: string
+  title: Values file
+  ui:field: PlatformFile
+  ui:options:
+    accept: .yaml,.yml,.json
+  description: Uploaded to S3; the workflow receives the s3:// path.
+```
+
+Forward it like any other field (`valuesFile: ${{ parameters.valuesFile }}`
+under `params`) — the workflow receives the value as an ordinary string:
+`s3://<bucket>/<key>`.
+
+It needs a `platform.uploads` block on the backend (bucket, region, `keyPrefix`,
+`maxBytes`, `allowedExtensions`, `urlTtlSeconds` — see
+[Configuration](../reference/configuration.md)) and three things on the S3 side:
+
+- **CORS** on the bucket allowing `PUT` from the Backstage origin, with
+  `Content-Type` and `Content-Length` in `AllowedHeaders` — the upload signs
+  both, so a stricter CORS policy rejects the browser's PUT before it reaches
+  the length check.
+- The S3 endpoint added to `backend.csp.connect-src`, or the browser's PUT is
+  blocked by Backstage's own CSP before it leaves the page.
+- A lifecycle rule on the key prefix so an upload nobody ever submits (the user
+  picked a file, then abandoned the form) eventually expires instead of
+  accumulating forever.
+
+A file is **not** a secret. Anything sensitive belongs in `ui:field:
+PlatformSecret` instead, which encrypts it and keeps it out of params, logs and
+Git — `PlatformFile`'s value is a plain S3 path, visible wherever the request's
+params are.
+
+### Repeating rows the user can duplicate
+
+An array field gets a per-row copy button — which duplicates the row *with its
+current values* — from one option:
+
+```yaml
+mounts:
+  type: array
+  title: Mounts
+  ui:options:
+    copyable: true
+  items:
+    type: object
+    properties:
+      path: { type: string, title: Path }
+      readOnly: { type: boolean, title: Read only, default: false }
+```
+
+This is RJSF's own feature, not a platform field extension. Making **Add**
+itself copy the previous row is not supported, and would remove the only way to
+get an empty row.
 
 ## 2. Enable edit & delete
 

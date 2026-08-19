@@ -72,4 +72,30 @@ describe('DynamicSelect', () => {
     render(<DynamicSelect url="/api/bad" fetcher={fetcher} />);
     await screen.findByText(/Could not load options/i);
   });
+
+  it('renders given options without fetching', async () => {
+    const fetcher = mockFetcher([['never-used']]);
+    render(
+      <DynamicSelect
+        url="/api/regions"
+        options={[{ label: 'eu-west', value: 'eu-west' }]}
+        fetcher={fetcher}
+      />,
+    );
+    await screen.findByRole('option', { name: 'eu-west' });
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it('reports fresh options so a caller can drop a stale selection', async () => {
+    const onOptions = jest.fn();
+    const fetcher = mockFetcher([['us-east-1']]);
+    render(
+      <DynamicSelect url="/api/regions" fetcher={fetcher} onOptions={onOptions} />,
+    );
+    await waitFor(() =>
+      expect(onOptions).toHaveBeenCalledWith([
+        { label: 'us-east-1', value: 'us-east-1' },
+      ]),
+    );
+  });
 });

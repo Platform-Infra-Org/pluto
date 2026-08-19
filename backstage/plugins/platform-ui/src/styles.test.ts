@@ -24,6 +24,9 @@ describe('SHADCN_CSS', () => {
       // Proves greekCss() is actually interpolated. Without this, greek.ts can
       // be perfectly correct and simply never reach the page.
       ':root.sc-greek',
+      ':root.sc-hanami',
+      ':root.sc-nightshade',
+      ':root.sc-rimefast',
     ]) {
       expect(`${marker}:${SHADCN_CSS.includes(marker)}`).toBe(`${marker}:true`);
     }
@@ -237,12 +240,80 @@ describe('SHADCN_CSS', () => {
     );
   });
 
-  it('drops the type subtitle from a template card', () => {
-    // The card led with its type rather than its name; the type repeats what
-    // the template's own copy already says.
+  it('leaves the sign-in tray opening upward, where the room is', () => {
+    // Measured in Firefox at 1280x558: the bottle sits at 372, so upward has
+    // 372px and downward has 136 for a tray that needs 138. An override here
+    // would push it past the fold.
+    expect(SHADCN_CSS).not.toMatch(/\.sc-login-pick \.sc-picker-inv \{/);
+    // The base rule it therefore inherits.
     expect(SHADCN_CSS).toMatch(
-      /\.sc-route-create[^{]*> h3\s*\{\s*display:\s*none/,
+      /\.sc-picker-inv \{[^}]*bottom:\s*calc\(100% \+ 10px\)/,
     );
+  });
+
+  it('shrinks the sign-in card on a short viewport instead of scrolling it', () => {
+    // Landscape phones and windows with devtools docked along the bottom. The
+    // trim comes out of spacing, never content: the picker is the last element
+    // in the card, so anything that makes the card overflow hides it first.
+    const short = SHADCN_CSS.slice(
+      SHADCN_CSS.indexOf('@media (max-height: 480px)'),
+    );
+    expect(short).toContain('@media (max-height: 480px)');
+    expect(short.slice(0, 500)).toMatch(/\.sc-login-card \{[^}]*padding/);
+    expect(short.slice(0, 500)).toMatch(/\.sc-login-pick \{[^}]*margin-top/);
+  });
+
+  it('keeps the sign-in screen to one viewport that does not scroll', () => {
+    // The card's last element is the scheme picker. When the document grew past
+    // the fold the picker went with it, and a control that is merely off-screen
+    // looks exactly like one that was never rendered.
+    expect(SHADCN_CSS).toMatch(
+      /:root\.sc-signed-out[^{]*\{[^}]*overflow:\s*hidden/,
+    );
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    // Anchored to the start of a line: the mode sheets are interpolated ahead
+    // of this rule and carry selectors like `:root.sc-greek .sc-login {`, which
+    // an unanchored match finds first and reads the wrong block from.
+    const login = rules.match(/(?:^|\n)\.sc-login \{([^}]*)\}/);
+    expect(login).toBeTruthy();
+    // dvh, not vh: a collapsing mobile URL bar makes vh taller than the screen.
+    expect(login![1]).toMatch(/height:\s*100dvh/);
+    // The card scrolls if the viewport is too short for it; the page never does.
+    expect(login![1]).toMatch(/overflow-y:\s*auto/);
+  });
+
+  it('drops the type text from a template card but keeps its buttons', () => {
+    // The card led with its type rather than its name, and the type repeats
+    // what the template's own copy already says. Hiding the whole h3 also hid
+    // the detail and favourite buttons that live in it, which are the only way
+    // from a card to the Template entity — and so does hiding its single
+    // subtitleWrapper child, which is why the selector descends twice.
+    // What this cannot prove: it reads the CSS string and never renders the
+    // card, so a well-formed selector aimed at the wrong node still passes.
+    // That has happened once already; the DOM is in the rule's own comment.
+    expect(SHADCN_CSS).toMatch(
+      /\.sc-route-create[^{]*> h3 > div > div:first-child \{\s*display:\s*none/,
+    );
+    expect(SHADCN_CSS).not.toMatch(
+      /\.sc-route-create[^{]*> h3 \{[^}]*display:\s*none/,
+    );
+  });
+
+  it('keeps the card actions on the title line, pinned right', () => {
+    // The name reads top left and the two actions sit top right on the same
+    // row. The actions must not be the flexible half: an icon that reflowed
+    // under a long name would move every time a template was renamed.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    const header = rules.match(
+      /\.sc-route-create[^{]*> \.MuiBox-root:first-child \{([^}]*)\}/,
+    );
+    expect(header).toBeTruthy();
+    expect(header![1]).toMatch(/flex-flow:\s*row wrap/);
+
+    const h3 = rules.match(/\.sc-route-create[^{]*> h3 \{([^}]*)\}/);
+    expect(h3).toBeTruthy();
+    expect(h3![1]).toMatch(/flex:\s*0 0 auto/);
+    expect(h3![1]).toMatch(/margin:\s*0 0 0 auto/);
   });
 
   it('lets the visualizer follow whatever theme is live', () => {
@@ -523,16 +594,39 @@ describe('SHADCN_CSS', () => {
     expect(SHADCN_CSS).toMatch(
       /\.sc-route-create[^{]*> h4 \{[^}]*font-size:\s*22px/,
     );
-    // The PLATE is what shrinks, never the type. 4px of vertical padding made a
-    // 34.39px band over a 90px header scene while the line box needs only
-    // 26.4px; at 1px the descender still has 2.24px of clearance. Comments are
-    // stripped first — the rule's own comment quotes the old value.
+    // Comments are stripped first — the rule's own comment quotes old values.
     const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
     const block = rules.match(/\.sc-route-create[^{]*> h4 \{([^}]*)\}/);
     expect(block).toBeTruthy();
-    const padding = /padding:\s*(\d+(?:\.\d+)?)px/.exec(block![1]);
-    expect(padding).not.toBeNull();
-    expect(parseFloat(padding![1])).toBeLessThanOrEqual(2);
+    const body = block![1];
+
+    // No plate. White over the generated header scene measures as low as
+    // 1.27:1 on the bright art, so something must carry the title — but it is
+    // the shadow that does it now, not a filled box behind the words.
+    expect(body).not.toMatch(/background(-color)?:/);
+    expect(body).not.toMatch(/padding:/);
+
+    // The shadow is what replaced it, and it has to be the hard kind: a blurred
+    // halo would be the one soft edge on a pixel card. Every offset is a whole
+    // pixel with a 0 blur radius.
+    const shadow = /text-shadow:([^;]*);/.exec(body);
+    expect(shadow).not.toBeNull();
+    const offsets = shadow![1].trim().split(',');
+    expect(offsets.length).toBeGreaterThanOrEqual(8);
+    for (const offset of offsets) {
+      // Unitless zero is legal for an offset, so the unit is optional — what
+      // is not optional is the third value, the blur radius, being 0.
+      expect(offset.trim()).toMatch(/^-?\d+(?:px)? -?\d+(?:px)? 0 /);
+    }
+
+    // Flush left, sharing the header's top line with the action icons.
+    expect(body).toMatch(/text-align:\s*left/);
+    // The title is the flexible half of that line. min-width 0 is the part
+    // that is easy to drop and impossible to notice: without it a flex item
+    // refuses to shrink below its content width, so a long name pushes the
+    // icons off the card instead of wrapping underneath itself.
+    expect(body).toMatch(/flex:\s*1 1 auto/);
+    expect(body).toMatch(/min-width:\s*0/);
   });
 
   it('uses no class name that a production build discards', () => {
@@ -634,5 +728,17 @@ describe('SHADCN_CSS', () => {
     // The stars are drawn lit by a plain rule, so the still frame is the
     // designed one rather than a half-finished pop.
     expect(SHADCN_CSS).toMatch(/\.sc-cast-stars svg\s*\{[^}]*color:/);
+  });
+
+  it('never repositions an outlined label, whose notch geometry MUI owns', () => {
+    // The standard variant needs left: 10px to sit inside our boxed field.
+    // The outlined variant must not be touched: its label is placed by a
+    // transform and its <legend> is cut to match, so moving one and not the
+    // other puts the text on the border. Selecting an entity in a
+    // MultiEntityPicker is what makes it visible.
+    const offenders = SHADCN_CSS.split('}')
+      .filter(block => /left:\s*var\(--sc-field-x\)/.test(block))
+      .filter(block => /MuiInputLabel-root|MuiFormLabel-root/.test(block));
+    expect(offenders).toEqual([]);
   });
 });

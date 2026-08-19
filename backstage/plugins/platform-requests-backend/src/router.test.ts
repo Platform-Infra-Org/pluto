@@ -11,6 +11,7 @@ import {
 } from '@internal/plugin-platform-common';
 import express from 'express';
 import request from 'supertest';
+import { RootConfigService } from '@backstage/backend-plugin-api';
 import { createRouter, PrincipalResolver } from './router';
 import { RequestsStore } from './store';
 import { Cipher, createCipher } from './crypto';
@@ -40,6 +41,7 @@ describe('createRouter', () => {
     suspendedNodesFor?: (name: string, ns?: string) => Promise<SuspendedNode[]>;
     resumeNode?: jest.Mock<Promise<void>, [string, string, object]>;
     stopWorkflow?: jest.Mock<Promise<void>, [string, object]>;
+    config?: RootConfigService;
   }) {
     const knex = await databases.init('SQLITE_3');
     const store = await RequestsStore.create(mockServices.database({ knex }));
@@ -56,6 +58,7 @@ describe('createRouter', () => {
       stopWorkflow: opts.stopWorkflow,
       suspendedNodesFor: opts.suspendedNodesFor,
       resumeNode: opts.resumeNode,
+      config: opts.config,
     });
     const app = express();
     app.use(router);
@@ -933,4 +936,144 @@ describe('createRouter', () => {
       expect(resumeNode).not.toHaveBeenCalled();
     });
   });
+
+  describe('POST /uploads/presign', () => {
+    // Presigning is a pure local SigV4 computation — no network call — but the
+    // SDK's credential provider chain still needs *something* to sign with.
+    // Static test creds, not a real deployment's IAM role/env, so this stays
+    // hermetic.
+    beforeAll(() => {
+      process.env.AWS_ACCESS_KEY_ID ??= 'test-access-key-id';
+      process.env.AWS_SECRET_ACCESS_KEY ??= 'test-secret-access-key';
+    });
+
+    const UPLOAD_CONFIG = {
+      platform: {
+        uploads: {
+          bucket: 'platform-uploads',
+          region: 'eu-west-1',
+          endpoint: 'http://localhost:9000',
+          keyPrefix: 'scaffolder',
+          maxBytes: 1024,
+          allowedExtensions: ['.yaml', '.json'],
+          urlTtlSeconds: 300,
+        },
+      },
+    };
+    const configuredApp = () =>
+      makeApp({
+        result: AuthorizeResult.ALLOW,
+        config: mockServices.rootConfig({ data: UPLOAD_CONFIG }),
+      });
+
+    it('refuses an unauthenticated request', async () => {
+      const { app } = await configuredApp();
+      const res = await request(app)
+        .post('/uploads/presign')
+        .set('Authorization', mockCredentials.none.header())
+        .send({ filename: 'values.yaml', size: 10, contentType: 'text/yaml' });
+      expect(res.status).toBe(401);
+    });
+
+    it('rejects a banned extension with 400 and the message', async () => {
+      const { app } = await configuredApp();
+      const res = await request(app)
+        .post('/uploads/presign')
+        .set('Authorization', mockCredentials.user.header())
+        .send({ filename: 'run.sh', size: 10, contentType: 'text/x-sh' });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/extension/i);
+    });
+
+    it('signs a valid request: url has the bucket, key is namespaced by requester', async () => {
+      const { app } = await configuredApp();
+      const res = await request(app)
+        .post('/uploads/presign')
+        .set('Authorization', mockCredentials.user.header())
+        .send({ filename: 'values.yaml', size: 10, contentType: 'text/yaml' });
+      expect(res.status).toBe(200);
+      expect(res.body.url).toContain('platform-uploads');
+      expect(res.body.key).toMatch(/^scaffolder\/mock\//);
+    });
+
+    it('never signs a caller-supplied Content-Type — it is derived from the extension', async () => {
+      const { app } = await configuredApp();
+      const res = await request(app)
+        .post('/uploads/presign')
+        .set('Authorization', mockCredentials.user.header())
+        // Asks to have a .json file signed (and later served) as HTML.
+        .send({ filename: 'values.json', size: 10, contentType: 'text/html' });
+      expect(res.status).toBe(200);
+      expect(res.body.contentType).toBe('application/json');
+      expect(res.body.contentType).not.toBe('text/html');
+    });
+
+    it('denies an unauthorized principal (403)', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.DENY,
+        config: mockServices.rootConfig({ data: UPLOAD_CONFIG }),
+      });
+      const res = await request(app)
+        .post('/uploads/presign')
+        .set('Authorization', mockCredentials.user.header())
+        .send({ filename: 'values.yaml', size: 10, contentType: 'text/yaml' });
+      expect(res.status).toBe(403);
+    });
+
+    it('returns 501 when platform.uploads is not configured', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        config: mockServices.rootConfig(),
+      });
+      const res = await request(app)
+        .post('/uploads/presign')
+        .set('Authorization', mockCredentials.user.header())
+        .send({ filename: 'values.yaml', size: 10, contentType: 'text/yaml' });
+      expect(res.status).toBe(501);
+    });
+  });
+  describe('demo option sets', () => {
+    // Demo data living in a production binary, so the route is opt-in. The
+    // default matters more than the enabled path: an environment that never
+    // heard of this key must not serve it.
+    it('is off unless the config says otherwise', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        config: mockServices.rootConfig(),
+      });
+      const res = await request(app).get('/options/regions');
+      expect(res.status).toBe(404);
+      // The 404 names the key, so a developer whose DynamicSelect example went
+      // quiet is told why instead of hunting a typo'd path.
+      expect(res.body.error).toMatch(/platform\.demoOptions/);
+    });
+
+    it('serves the sets when explicitly enabled', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        config: mockServices.rootConfig({ data: { platform: { demoOptions: true } } }),
+      });
+      const res = await request(app).get('/options/regions');
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({
+        'US East (N. Virginia)': 'us-east-1',
+        'EU West (Ireland)': 'eu-west-1',
+        'AP South (Mumbai)': 'ap-south-1',
+      });
+    });
+
+    it('serves the coordinate tree the cascading select reads', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        config: mockServices.rootConfig({ data: { platform: { demoOptions: true } } }),
+      });
+      const res = await request(app).get('/options/coordinate-tree');
+      expect(res.status).toBe(200);
+      // Shape matters more than the values: nested objects to the island, with
+      // the environments as a leaf array. That is what walkTree expects.
+      expect(Object.keys(res.body.coordinates)).toEqual(['aurora', 'borealis']);
+      expect(res.body.coordinates.borealis.lab['eu-west'].cork).toEqual(['sandbox']);
+    });
+  });
+
 });

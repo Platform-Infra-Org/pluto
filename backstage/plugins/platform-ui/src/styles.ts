@@ -8,6 +8,9 @@ import { foudreCss } from './foudre';
 import { slushCss } from './slush';
 import { brandsCss } from './brands';
 import { spiderverseCss } from './spiderverse';
+import { hanamiCss } from './hanami';
+import { nightshadeCss } from './nightshade';
+import { rimefastCss } from './rimefast';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
@@ -28,6 +31,13 @@ export const SHADCN_CSS = `
   font-display: swap;
 }
 .sc, .sc * { box-sizing: border-box; }
+/* The host for the animated mode ornaments — SchemeRoot mounts it once, and a
+   mode sheet turns on the child it wants. Hidden by default and pointer-events
+   none, so a mode that claims nothing costs one empty fixed box. Kept OUT of
+   the mode sheets because the default must be off for every mode at once, and
+   a per-mode default is a per-mode chance to forget one. */
+.sc-mode-art { position: fixed; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+.sc-mode-art > * { display: none; position: absolute; }
 /* Tokens live on :root so BOTH our .sc components and the MUI/Backstage reskin
    below read the same variables (and follow the color picker). */
 :root {
@@ -87,6 +97,9 @@ ${foudreCss()}
 ${slushCss()}
 ${brandsCss()}
 ${spiderverseCss()}
+${hanamiCss()}
+${nightshadeCss()}
+${rimefastCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because
@@ -743,8 +756,19 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    this orderable without naming a class a production build would discard.
    The type is dropped outright: it repeats what the template's own copy
    already says and it was reading as the card's headline. */
-.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child { display: flex; flex-direction: column; }
-.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > * { order: 3; }
+/* The header is one wrapping row, not a column: the name reads top left and the
+   two actions sit top right on the same line, which is the arrangement a card
+   grid is scanned in. Wrapping is what makes it safe — a name too long to share
+   the line lets the title box shrink and its text run onto a second line rather
+   than sliding under the buttons or being clipped. Anything else the header
+   renders is forced onto its own full-width row below by the catch-all. */
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: flex-start;
+  column-gap: 8px;
+}
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > * { order: 3; flex: 0 0 100%; }
 .sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h4 {
   order: 1;
   /* The name IS the card. It arrived at the header's inherited size, which read
@@ -753,26 +777,59 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   font-weight: 600 !important;
   line-height: 1.2 !important;
   letter-spacing: -0.02em;
-  /* The title sits directly on the header scene, and a scene is not a colour:
-     the same white ran over a night sky on one card and over the sun on the
-     next, where it measured 1.27:1. The plate is what makes the title legible
-     without touching the art — it darkens only the band the words occupy, and
-     white over it clears AA whatever is painted underneath. */
   color: hsl(0 0% 100%) !important;
-  background-color: hsl(240 12% 6% / .72);
-  /* The PLATE shrinks, never the type: 4px 8px made a 34.39px band over a 90px
-     header scene. At 1px 6px it is 28.4px (-17%) and the descender still has
-     2.24px of clearance inside the 26.4px line box, so nothing is clipped.
-     line-height 1.2 stays; 1.05 is available if 28.4px is still too tall and
-     1.0 is the true floor. font-size is pinned at 22px by styles.test.ts and
-     the pin is correct — the title is the card's headline. */
-  padding: 1px 6px;
+  /* No plate at all now — the darkening is a shadow cast by the letters.
+
+     The plate existed because white over the generated header scene measures as
+     low as 1.27:1 on the bright art, and something has to carry that. A filled
+     box is the blunt way to do it; an outline is the pixel way, and this is a
+     pixel interface. Eight hard offsets at 1-2px wrap every glyph in the same
+     near-black the plate used to be, and a 3px offset behind them reads as the
+     drop shadow. No blur anywhere: a soft halo would be the one out-of-language
+     thing on the card.
+
+     Solved for the worst case rather than the average one. The sun scene is the
+     brightest ground a title lands on, and white over it is the 1.27:1 measured
+     above. With the outline, the glyph edge always meets near-black first, so
+     what the reader resolves is white against the shadow — not white against
+     whatever the scene happens to paint underneath.
+
+     Set flush left, sharing the top line with the action icons on the right.
+     22px is pinned by styles.test.ts. */
+  text-shadow:
+    1px 1px 0 hsl(240 12% 6% / .95),
+    -1px 1px 0 hsl(240 12% 6% / .95),
+    1px -1px 0 hsl(240 12% 6% / .95),
+    -1px -1px 0 hsl(240 12% 6% / .95),
+    2px 0 0 hsl(240 12% 6% / .95),
+    -2px 0 0 hsl(240 12% 6% / .95),
+    0 2px 0 hsl(240 12% 6% / .95),
+    0 -2px 0 hsl(240 12% 6% / .95),
+    3px 3px 0 hsl(240 12% 6% / .8);
   margin: 0;
-  align-self: flex-start;
-  max-width: 100%;
-  border-radius: var(--sc-radius-sm);
+  /* Takes the space the actions leave and gives it back when the name is long:
+     min-width 0 is what lets a flex item shrink below its content width at all,
+     and break-word is the last resort for a single unbreakable token. */
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  overflow-wrap: break-word;
 }
-.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h3 { display: none; }
+/* The h3 holds ONE child, CardHeader's subtitleWrapper, and that wrapper holds
+   two: the type text, then the detail + favourite buttons. Only the type text
+   is unwanted, so the rule has to reach two levels down — hiding the h3, or
+   hiding the wrapper, takes the buttons with it and removes the only route
+   from a card to its Template entity. Both have been shipped by mistake.
+   The row never shrinks and never wraps: margin-left auto pushes it to the
+   card's right edge, and the title beside it is the flexible one. An icon that
+   reflowed under a long name would move every time a template was renamed. */
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h3 {
+  order: 2;
+  flex: 0 0 auto;
+  margin: 0 0 0 auto;
+  line-height: 1;
+}
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h3 > div > div:first-child { display: none; }
 
 .sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child {
   /* Ancient Greek, drawn entirely with hard colour stops.
@@ -952,23 +1009,12 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   border-radius: var(--sc-radius);
   padding: 3px var(--sc-field-x);
 }
-/* The scaffolder's fields are MUI's *standard* variant, whose label is absolutely
-   positioned at left: 0 — correct for a bare underline, wrong the moment the
-   field has a box and a corner. Unfixed, the label sat on the rounded corner
-   while the value it named was inset 10px, so the two read as belonging to
-   different fields. Measured at inset 0 against a padding of 10 on every label
-   of every scaffolder form; no other page in the app has a boxed standard field.
-   Both states move together: at rest the label sits in the box beside the value,
-   and shrunk it floats above the border on the same left edge. */
-.sc-route-create [class*="MuiInputLabel-root"],
-.sc-route-create [class*="MuiFormLabel-root"] {
-  left: var(--sc-field-x);
-}
-/* MUI shrinks by scaling about the top-left, so a shrunk label keeps that same
-   left edge and needs only clearance from the border it now sits on. */
-.sc-route-create [class*="MuiInputLabel-shrink"] {
-  padding-inline-end: 4px;
-}
+/* Label position, notch and outline geometry used to live here, scoped to
+   .sc-route-create. They now live in theme.tsx (MuiInputLabel /
+   MuiOutlinedInput), because a route-scoped rule cannot tell MUI's standard
+   variant from its outlined one: the inset that a boxed standard field needs
+   pushed the outlined label off its own <legend> notch. This sheet may still
+   colour an input; it must not move its label. */
 .sc-route-create [class*="MuiInput-underline"]::before,
 .sc-route-create [class*="MuiInput-underline"]::after {
   display: none !important;
@@ -1302,7 +1348,20 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 :root.sc-dark .sc-notice-fail { color: hsl(0 75% 80%); }
 
 /* login gate */
-.sc-login { min-height: 100vh; display: flex; align-items: center; justify-content: center;
+/* The sign-in screen is one viewport and does not scroll. min-height alone was
+   not that: whatever the app shell contributed sat on top of the 100vh, the
+   document grew past the fold, and the last element in the card — the scheme
+   picker — ended up below it. It read as a missing picker rather than an
+   off-screen one, which is the worst kind of layout bug: nothing is hidden, so
+   nothing looks wrong in the markup.
+   dvh rather than vh because on mobile a collapsing URL bar makes vh taller
+   than what is actually on screen, which is the same bug with a different
+   trigger. Each is declared twice, vh first: a browser without dvh drops that
+   declaration entirely, and without the fallback beneath it the wrapper would
+   be left with no height at all — worse than the bug being fixed. The inner overflow is the safety valve: on a viewport too short for
+   the card the card scrolls, never the page, and nothing is clipped away. */
+.sc-login { height: 100vh; height: 100dvh; min-height: 100vh; min-height: 100dvh; overflow-y: auto;
+  display: flex; align-items: center; justify-content: center;
   background: hsl(var(--sc-bg)); padding: 24px; }
 .sc-login-card { width: 360px; max-width: 100%; padding: 36px 32px; text-align: center;
   background: hsl(var(--sc-card)); border: var(--sc-border-w) solid hsl(var(--sc-border));
@@ -1426,13 +1485,16 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   box-shadow: var(--sc-shadow); }
 .sc-nav-mark svg, .sc-nav-mark img { width: 17px; height: 17px; color: hsl(var(--sc-primary-fg)); object-fit: contain; }
 .sc-nav-word { font-weight: 700; font-size: 17px; letter-spacing: -0.02em; color: hsl(var(--sc-fg)); white-space: nowrap; }
-/* The picker's own controls are the same object as the sidebar's toggle — one
-   26px square, same rule, so the two never drift apart. Only placement below. */
-.sc-nav-toggle, .sc-picker-toggle { flex: 0 0 auto; width: 26px; height: 26px; border-radius: var(--sc-radius); border: var(--sc-border-w) solid hsl(var(--sc-border));
+/* The sidebar's collapse control: one 26px square.
+   .sc-picker-toggle used to share this rule, back when the picker had a
+   separate chevron. It does not any more — the class now marks the equipped
+   bottle that opens the tray, which is a .sc-potion and takes that rule's
+   geometry. A bordered box drawn behind it would be a second control. */
+.sc-nav-toggle { flex: 0 0 auto; width: 26px; height: 26px; border-radius: var(--sc-radius); border: var(--sc-border-w) solid hsl(var(--sc-border));
   background: transparent; color: hsl(var(--sc-muted-fg)); cursor: pointer; font-size: 13px; line-height: 1;
   display: flex; align-items: center; justify-content: center; }
-.sc-nav-toggle:hover, .sc-picker-toggle:hover { background: hsl(var(--sc-accent)); color: hsl(var(--sc-fg)); }
-.sc-nav-toggle:focus-visible, .sc-picker-toggle:focus-visible {
+.sc-nav-toggle:hover { background: hsl(var(--sc-accent)); color: hsl(var(--sc-fg)); }
+.sc-nav-toggle:focus-visible {
   outline: var(--sc-border-w) solid hsl(var(--sc-ring)); outline-offset: 2px; }
 .sc-nav-list { display: flex; flex-direction: column; gap: 2px; }
 .sc-nav-item { position: relative; display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: var(--sc-radius);
@@ -1491,6 +1553,11 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    its scheme as liquid. The shelf floor is a hard 3px rule the potions stand
    on, so they read as objects placed rather than icons laid out. */
 .sc-picker { display: flex; align-items: flex-end; gap: 2px;
+  /* The tray is position: absolute and opens against its shelf. The floating
+     instance resolves it off .sc-picker-float's fixed placement; the sign-in
+     card's has no positioned ancestor at all, so without this the tray escapes
+     to the viewport. Harmless for the floating one, which overrides it. */
+  position: relative;
   padding: 8px 10px 5px; border-radius: var(--sc-radius);
   background: hsl(var(--sc-card));
   border: var(--sc-border-w) solid hsl(var(--sc-border));
@@ -1532,6 +1599,38 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* The sign-in card has its own shelf under the button, so the corner one would
    be a second identical picker on the same screen. */
 :root.sc-signed-out .sc-picker-float { display: none; }
+/* The sign-in tray keeps the default upward direction, and that is measured
+   rather than assumed. The card is centred, so the bottle sits ~372px down a
+   558px viewport: opening up has 372px to work with, opening down has 136px
+   and the tray needs 138. Downward was tried and overflowed the fold by 2px.
+
+   The clipping risk that made downward look safer — .sc-login is a scroll
+   container, and upward overflow does not extend scrollHeight, so anything
+   above the top edge is unreachable — is real but does not bite here, because
+   the card is centred rather than pinned to the top. If the card ever moves
+   up, re-measure: the direction is a consequence of where the bottle sits, not
+   a preference. */
+
+/* Short viewports — a phone in landscape, or a window with devtools docked
+   along the bottom. The card is ~352px plus the wrapper's padding, so under
+   about 400px of height it no longer fits and the wrapper scrolls it, which
+   puts the scheme picker back below the fold. Everything here is trimmed from
+   spacing rather than from content: nothing is hidden, the card just stops
+   being generous. Saves roughly 100px, which covers landscape down to ~300px. */
+@media (max-height: 480px) {
+  .sc-login { padding: 12px; }
+  .sc-login-card { padding: 20px 24px; gap: 4px; }
+  .sc-login-mark { width: 40px; height: 40px; margin-bottom: 4px; }
+  .sc-login-mark svg, .sc-login-mark img { width: 26px; height: 26px; }
+  .sc-login-sub { margin-bottom: 10px; }
+  .sc-login-pick { margin-top: 12px; padding-top: 10px; }
+}
+
+/* Same class, second job: while the gate is up the document itself must not
+   scroll. .sc-login already fills the viewport and scrolls internally when it
+   has to, so a scrollbar on the page can only mean something is pushing past
+   the fold — and what falls off the bottom is the picker. */
+:root.sc-signed-out, :root.sc-signed-out body { height: 100%; overflow: hidden; }
 
 /* Shut, the shelf carries one bottle and its two controls, and must never fold
    that to a second row. There is no transition on the collapse: it swaps one
@@ -1722,10 +1821,11 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    carry declarations the global sheet does not. */
 /* The repository-URL field is the page's one real input; it arrives bare. It
    sits in the Paper above, which is --sc-card, so it inherits that ground
-   rather than naming --sc-bg — see the note on .sc-input. */
+   rather than naming --sc-bg — see the note on .sc-input. Colour only: the
+   radius this rule used to repeat is already set app-wide above, and the
+   label/notch geometry it might otherwise have grown lives in theme.tsx. */
 .sc-route-import [class*="MuiOutlinedInput-root"] {
   background: transparent;
-  border-radius: var(--sc-radius);
 }
 .sc-route-import [class*="MuiListItem-root"] {
   border-bottom: var(--sc-border-w) solid hsl(var(--sc-border) / .6);

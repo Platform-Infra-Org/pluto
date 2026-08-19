@@ -247,6 +247,86 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
           },
         },
       },
+      // Input geometry lives here, not in styles.ts: MUI publishes these slots,
+      // and createUnifiedTheme runs transformV5ComponentThemesToV4 over every
+      // Mui* key, so a v5-shaped override reaches the MUI v4 scaffolder form.
+      // The outlined/notchedOutline corrections below are app-wide on purpose
+      // (slot-scoped, not route-scoped) — that is what makes them cover
+      // EntityPicker/OwnedEntityPicker/RepoUrlPicker wherever a template uses
+      // one, not just on the create route.
+      MuiInputLabel: {
+        styleOverrides: {
+          // `formControl` is NOT the standard variant only: MUI v4 puts that
+          // class on every label inside a FormControl, so an outlined label
+          // carries both formControl and outlined. What separates them is
+          // cascade order — MUI declares `outlined` after `formControl` in its
+          // own styles object, that key order survives the theme merge, and at
+          // equal specificity the later rule wins. Hence the explicit reset in
+          // the outlined slot below.
+          //
+          // The `var(--sc-field-x)` inset itself is nested under
+          // `.sc-route-create &`, not applied bare: it exists only to align
+          // with the boxed standard-variant field
+          // (`.sc-route-create [class*="MuiInput-root"]` in styles.ts, padding
+          // `3px var(--sc-field-x)`) that exists on the scaffolder create route
+          // and nowhere else. Applied bare it shifted every standard MUI label
+          // in the app — catalog filters, the import page, table pagination —
+          // by 10px, none of which was ever measured against this box.
+          formControl: {
+            // Standard-variant labels only. The :not() pair is load-bearing:
+            // this selector is (0,2,0) and the `outlined` reset below is
+            // (0,1,0), so without them the inset wins on the create route and
+            // an outlined label sits 10px right of the notch that was cut for
+            // it. Matched by substring because MUI v4 suffixes its class names
+            // (MuiInputLabel-outlined-234), the same reason styles.ts uses
+            // [class*=] throughout.
+            '.sc-route-create &:not([class*="MuiInputLabel-outlined"]):not([class*="MuiInputLabel-filled"])':
+              {
+                left: 'var(--sc-field-x)',
+              },
+          },
+          shrink: {
+            paddingInlineEnd: '4px',
+          },
+          outlined: {
+            // left: 0 is load-bearing, not redundant. It cancels the
+            // .sc-route-create standard-variant inset that formControl above
+            // also applies to this label there; delete it and the label
+            // desyncs from its <legend> notch again on that route, which is
+            // the exact bug this block exists to fix. The shrunk state then
+            // gets one more pixel of clearance than MUI's -6px, which assumes
+            // a 1px border where ours is 2px. This correction stays app-wide
+            // — it is corrective (undoing the create-route inset), not
+            // decorative, so every outlined label needs it, not just create's.
+            left: '0',
+            '&.MuiInputLabel-shrink': {
+              paddingInlineEnd: '0',
+              transform: 'translate(14px, -7px) scale(0.75)',
+            },
+          },
+        },
+      },
+      MuiOutlinedInput: {
+        styleOverrides: {
+          notchedOutline: {
+            // The label is uppercased (styles.ts) but the <legend> MUI generates
+            // from the raw title is not, so the notch was cut too narrow for the
+            // text sitting in it.
+            // MUI already sizes the notch to the label: legendLabelled is
+            // width:auto at fontSize .75em, matching the label's scale(.75)
+            // (NotchedOutline.js). It only fits if the legend renders the same
+            // string with the same metrics — so every property styles.ts forces
+            // on the label has to be mirrored here, or the two measure
+            // differently and the error grows with the title's length.
+            '& legend': {
+              textTransform: 'uppercase',
+              fontFamily: 'var(--sc-font-ui)',
+              letterSpacing: 0,
+              fontWeight: 400,
+            },
+          },
+        },
+      },
       BackstageSidebarPage: {
         styleOverrides: {
           root: {
@@ -293,7 +373,13 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
   });
 }
 
-const platformLight = makeTheme('light', LIGHT);
+/**
+ * Exported for theme.test.ts only. Input geometry lives in these override keys
+ * rather than in styles.ts (design-system.md), and a selector here that never
+ * matches fails silently — no test rendered this file before, which is how a
+ * label sat 10px outside its own notch on a shipped build.
+ */
+export const platformLight = makeTheme('light', LIGHT);
 const platformDark = makeTheme('dark', DARK);
 
 function themeExt(id: string, title: string, variant: 'light' | 'dark', theme: unknown) {

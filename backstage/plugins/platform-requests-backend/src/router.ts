@@ -3,6 +3,7 @@ import {
   HttpAuthService,
   LoggerService,
   PermissionsService,
+  RootConfigService,
 } from '@backstage/backend-plugin-api';
 import { InputError, NotAllowedError, NotFoundError } from '@backstage/errors';
 import { AuthorizeResult } from '@backstage/plugin-permission-common';
@@ -19,6 +20,7 @@ import {
   requestApprovePermission,
   requestCreatePermission,
   requestDeletePermission,
+  uploadCreatePermission,
 } from './permissions';
 // Type-only: plugin.ts imports createRouter from here, and a type import is
 // erased at compile time, so the cycle never exists at runtime.
@@ -28,6 +30,7 @@ import { actorIdOf, mayStopWorkflow } from '@internal/plugin-platform-common';
 import { RequestsStore } from './store';
 import { Cipher } from './crypto';
 import { filterSuppliedOutputs } from './suspend';
+import { presignUpload, UploadConfig, validateUpload } from './uploads';
 
 /**
  * Resolves the acting user's admin flag + raw group memberships (from their
@@ -41,6 +44,8 @@ export interface RouterOptions {
   httpAuth: HttpAuthService;
   permissions: PermissionsService;
   store: RequestsStore;
+  /** Optional so the router stays constructible from tests without a config fixture. Backs `platform.uploads`. */
+  config?: RootConfigService;
   /**
    * Optional so the router stays constructible from tests with three lines of
    * fakes. Only the delete route uses it, and there it is the point: the row is
@@ -137,6 +142,12 @@ const newRequestSchema = z.object({
 });
 
 const decisionSchema = z.object({ note: z.string().optional() });
+
+const presignSchema = z.object({
+  filename: z.string().min(1),
+  size: z.number().int().positive(),
+  contentType: z.string().min(1),
+});
 
 /**
  * Stopping, optionally from one gate.
@@ -284,10 +295,95 @@ export async function createRouter(
       'AP South (Mumbai)': 'ap-south-1',
     },
     sizes: ['small', 'medium', 'large'],
+    // Demo coordinate hierarchy for the cascading DynamicSelect, in the shape
+    // the real config API returns: space -> network -> region -> island, with
+    // the island's environments as the leaf. Served from here rather than as a
+    // file under packages/app/public/, because everything in that folder is
+    // copied into dist and served publicly by EVERY deployment — a demo
+    // fixture would have shipped to production. This route is demo data that
+    // already exists, and it sits behind the same auth as its neighbours.
+    'coordinate-tree': {
+      coordinates: {
+        aurora: {
+          core: {
+            'eu-west': {
+              mgmt: ['dev', 'staging', 'prod'],
+              paris: ['prod'],
+              dublin: ['dev', 'prod'],
+            },
+            'us-east': { ashburn: ['dev', 'staging'], reston: ['prod'] },
+          },
+          edge: {
+            'eu-north': { stockholm: ['dev'] },
+            'ap-south': { mumbai: ['dev', 'prod'] },
+          },
+        },
+        borealis: {
+          core: { 'eu-central': { frankfurt: ['staging', 'prod'], munich: ['dev'] } },
+          // One region, one island: the branch that shows auto-select filling
+          // the rest of the chain from a single pick.
+          lab: { 'eu-west': { cork: ['sandbox'] } },
+        },
+      },
+      projects: ['checkout', 'payments', 'search'],
+    },
   };
+  // Demo data in a production binary, so it is opt-in rather than opt-out.
+  // Answering 404 with the reason beats registering nothing: a developer whose
+  // DynamicSelect example returns "could not load options" gets told which key
+  // turns it on, instead of a bare Express 404 that looks like a typo.
+  const demoOptions =
+    options.config?.getOptionalBoolean('platform.demoOptions') ?? false;
   router.get('/options/:name', async (req, res) => {
     await httpAuth.credentials(req, { allow: ['user', 'service'] });
+    if (!demoOptions) {
+      res.status(404).json({
+        error:
+          'demo option sets are disabled; set platform.demoOptions: true to serve them',
+      });
+      return;
+    }
     res.json(OPTION_SETS[req.params.name] ?? []);
+  });
+
+  // Mints a presigned S3 PUT for the PlatformFile scaffolder field. Bytes go
+  // browser -> S3 directly; credentials never reach the browser.
+  router.post('/uploads/presign', async (req, res) => {
+    const credentials = await httpAuth.credentials(req, { allow: ['user'] });
+    // Per-object size and extension are capped by platform.uploads, but
+    // nothing caps object count — authorize the same way every other
+    // mutating route here does, so this isn't unbounded for any signed-in user.
+    const [authz] = await permissions.authorize(
+      [{ permission: uploadCreatePermission }],
+      { credentials },
+    );
+    if (authz.result !== AuthorizeResult.ALLOW) {
+      throw new NotAllowedError('Not allowed to request uploads');
+    }
+    const raw = options.config?.getOptionalConfig('platform.uploads');
+    if (!raw) {
+      // Fail loudly rather than 500ing somewhere inside the AWS SDK: an
+      // unconfigured deployment is a deployment decision, not a bug.
+      res.status(501).json({ error: 'platform.uploads is not configured' });
+      return;
+    }
+    const uploads: UploadConfig = {
+      bucket: raw.getString('bucket'),
+      region: raw.getString('region'),
+      endpoint: raw.getOptionalString('endpoint'),
+      keyPrefix: raw.getString('keyPrefix'),
+      maxBytes: raw.getNumber('maxBytes'),
+      allowedExtensions: raw.getStringArray('allowedExtensions'),
+      urlTtlSeconds: raw.getNumber('urlTtlSeconds'),
+    };
+    const input = presignSchema.parse(req.body);
+    const rejection = validateUpload(input, uploads);
+    if (rejection) {
+      res.status(400).json({ error: rejection });
+      return;
+    }
+    const requester = actorId(credentials.principal.userEntityRef);
+    res.json(await presignUpload(input, uploads, requester));
   });
 
   // Resolved resource data (ref'd file or spec.resourceData) for the tab + edit.

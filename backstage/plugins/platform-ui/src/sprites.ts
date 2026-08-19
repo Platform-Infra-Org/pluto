@@ -71,6 +71,14 @@ export function spriteDataUri(
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
 
+/**
+ * A sprite as a CSS `url()`, ready to interpolate into a mode sheet.
+ *
+ * The fill is baked, so a two-colour motif is two calls — see spriteDataUri.
+ */
+export const spriteUrl = (sprite: Sprite, fill: string, layer?: string) =>
+  `url("${spriteDataUri(sprite, fill, layer)}")`;
+
 /** The platform mark: a temple on its raised platform, pixel-drawn. */
 export const TEMPLE: Sprite = [
   '.......##.......',
@@ -639,3 +647,320 @@ export const STATE_SPRITES: Record<RequestState, Sprite> = {
   REJECTED: CROSS,
   EXPIRED: HOURGLASS_SPENT,
 };
+
+/* ===== Hanami ornament =====
+   Objects and patterns, not creatures: the koi and the kitsune mask were both
+   drawn and both dropped, for the reason already recorded above the item
+   vocabulary — a 16x16 silhouette that has to read as a living thing takes
+   several attempts and still reads as a blob, while a torii or a wave says
+   what it is at a glance. Asanoha went the same way: the hemp leaf needs three
+   distinguishable line weights across one hexagon and collapses into a grey
+   mesh at this size. */
+
+/**
+ * Seigaiha — the blue-sea-wave scale pattern, as a true unit cell.
+ *
+ * Two half-offset rows of nested arcs in one 16x16 tile, so it tiles in both
+ * directions with no seam: the second row is the first shifted by half a
+ * scale, which is exactly what the pattern does on a kimono bolt.
+ */
+export const SEIGAIHA: Sprite = [
+  '......####......',
+  '....##....##....',
+  '...#........#...',
+  '..#...####...#..',
+  '..#..#....#..#..',
+  '.#..#..##..#..#.',
+  '.#..#.#..#.#..#.',
+  '#...#.#..#.#...#',
+  '##............##',
+  '..##........##..',
+  '....#......#....',
+  '##...#....#...##',
+  '..#..#....#..#..',
+  '#..#..#..#..#..#',
+  '.#.#..#..#..#.#.',
+  '.#.#...##...#.#.',
+];
+
+/** A torii: kasagi over nuki over two pillars. The threshold, so it marks one. */
+export const TORII: Sprite = [
+  '################',
+  '.##############.',
+  '................',
+  '.##############.',
+  '.##############.',
+  '...##......##...',
+  '...##......##...',
+  '...##......##...',
+  '...##......##...',
+  '...##......##...',
+  '...##......##...',
+  '...##......##...',
+  '...##......##...',
+  '...##......##...',
+  '..####....####..',
+  '..####....####..',
+];
+
+/**
+ * A blossom on the small 8px grid, symmetric under a quarter turn.
+ *
+ * The symmetry is the point, the same as ROSETTE: one sprite serves all four
+ * corners of a frame as four background layers, which is how a two-pseudo-
+ * element ceiling gets sidestepped entirely.
+ */
+export const BLOSSOM: Sprite = [
+  '...##...',
+  '..####..',
+  '.##..##.',
+  '##.##.##',
+  '##.##.##',
+  '.##..##.',
+  '..####..',
+  '...##...',
+];
+
+/**
+ * The falling petal, as a four-frame tumble strip: 8x8 frames laid side by
+ * side, so 32x8.
+ *
+ * A strip rather than four sprites because CSS advances one background-position
+ * in whole steps; four images would need four elements. Frames run flat, part
+ * turned, edge on, part turned the other way — the whole of a petal's tumble.
+ */
+export const PETAL_STRIP: Sprite = [
+  '................................',
+  '..####.....##......##.....##....',
+  '.######...####.....##.....###...',
+  '.######...####.....##.....####..',
+  '.######...####.....##......###..',
+  '..####.....##......##.......##..',
+  '................................',
+  '................................',
+];
+
+/* ===== Nightshade ornament =====
+   The moth went the way of the koi: a creature silhouette at this size reads as
+   a smudge with antennae. What survived are objects and a pattern, which is the
+   same rule the item vocabulary above already follows. */
+
+/**
+ * A crescent cradling a witch-green flame: '#' is the moon, '~' the fire.
+ *
+ * Two layers rather than two sprites, so the flame cannot drift out of the
+ * crescent's mouth when one of them is edited.
+ */
+export const CRESCENT_FLAME: Sprite = [
+  '.....#####......',
+  '...###...###....',
+  '..##.......##...',
+  '.##.......~~....',
+  '.##......~~~~...',
+  '##......~~~~~~..',
+  '##......~~~~~~..',
+  '##.....~~~~~~~~.',
+  '##.....~~~~~~~~.',
+  '##......~~~~~~..',
+  '##......~~~~~~..',
+  '.##......~~~~...',
+  '.##.......~~....',
+  '..##.......##...',
+  '...###...###....',
+  '.....#####......',
+];
+
+/**
+ * A cauldron with three bubbles rising: '#' is the iron, '~' the brew.
+ *
+ * The bubbles are the brew colour and sit clear of the rim, or the whole thing
+ * reads as a cooking pot with crumbs on it.
+ */
+export const CAULDRON: Sprite = [
+  '....~.......~...',
+  '................',
+  '.......~........',
+  '................',
+  '################',
+  '#~~~~~~~~~~~~~~#',
+  '#~~~~~~~~~~~~~~#',
+  '.##############.',
+  '.##############.',
+  '.##############.',
+  '..############..',
+  '..############..',
+  '...##########...',
+  '....########....',
+  '...##......##...',
+  '..###......###..',
+];
+
+/**
+ * A filigree medallion on the small 8px grid, symmetric under a quarter turn.
+ *
+ * Same trick as ROSETTE and BLOSSOM: one sprite serves all four corners of a
+ * frame as four background layers, which sidesteps the two-pseudo-element
+ * ceiling rather than settling for two corners.
+ */
+export const FILIGREE: Sprite = [
+  '..####..',
+  '.#....#.',
+  '#.#..#.#',
+  '#..##..#',
+  '#..##..#',
+  '#.#..#.#',
+  '.#....#.',
+  '..####..',
+];
+
+/**
+ * A nightshade sprig, tiling horizontally along the stem in the middle row.
+ *
+ * Leaves above and below so the band has vertical weight — a vine drawn only
+ * along its stem reads as a dotted rule.
+ */
+export const SPRIG: Sprite = [
+  '....##....##....',
+  '...####..####...',
+  '....##....##....',
+  '.....#....#.....',
+  '......#..#......',
+  '.......##.......',
+  '..##...##...##..',
+  '#####..##..#####',
+  '..##...##...##..',
+  '.......##.......',
+  '......#..#......',
+  '.....#....#.....',
+  '....##....##....',
+  '...####..####...',
+  '....##....##....',
+  '................',
+];
+
+/**
+ * The eight phases of the moon as one 64x8 strip: eight 8x8 frames.
+ *
+ * A strip because CSS advances one background-position in whole steps; eight
+ * images would need eight elements. New moon is drawn as an outline rather
+ * than left blank, so the ornament never simply disappears for an eighth of
+ * the cycle.
+ */
+export const MOON_STRIP: Sprite = [
+  '......#.....##....####....####....####....##.....#........####..',
+  '.....##.....###...#####..######..#####...###.....##......#....#.',
+  '......##....####.######################.####....##......#......#',
+  '......##....####.######################.####....##......#......#',
+  '......##....####.######################.####....##......#......#',
+  '......##....####.######################.####....##......#......#',
+  '.....##.....###...#####..######..#####...###.....##......#....#.',
+  '......#.....##....####....####....####....##.....#........####..',
+];
+
+/* ===== Rimefast ornament =====
+   EXCLUDED, DELIBERATELY, AND NOT BY OVERSIGHT: the Valknut, Othala,
+   Sowilo (the sig-rune), the Tyr rune and the sunwheel. Every one of them is a
+   genuine Norse form, and every one is catalogued as an appropriated extremist
+   symbol. Nobody should add one later thinking the set was left incomplete.
+   Ravens, Yggdrasil, knotwork and a generic futhark band carry no such
+   freight, and rimefast.test.ts asserts the sheet never names the five.
+   The raven itself went the way of the koi and the moth: a bird silhouette at
+   eight pixels reads as a comma. */
+
+/**
+ * A decorative rune band, tiling horizontally with a period of four pixels.
+ *
+ * Two alternating stave glyphs with upward branches — a pattern, not a word.
+ * Runes were carved without horizontals, which is exactly what a pixel grid
+ * renders cleanly, and it is also why nothing here needs anti-aliasing.
+ */
+export const FUTHARK: Sprite = [
+  '................',
+  '#...#...#...#...',
+  '##..#...##..#...',
+  '#.#.##..#.#.##..',
+  '#...#.#.#...#.#.',
+  '##..#...##..#...',
+  '#.#.##..#.#.##..',
+  '#...#.#.#...#.#.',
+  '#...#...#...#...',
+  '#...#...#...#...',
+  '#...#...#...#...',
+  '#...#...#...#...',
+  '#...#...#...#...',
+  '#...#...#...#...',
+  '#...#...#...#...',
+  '................',
+];
+
+/**
+ * Yggdrasil: a 2px trunk, three branches, three roots, symmetric about the
+ * trunk.
+ *
+ * The mirror between crown and roots is the point of the tree — nine worlds
+ * above and below one axis — and it also means the sprite reads the same way
+ * up if anyone ever flips it.
+ */
+export const YGGDRASIL: Sprite = [
+  '..##...##...##..',
+  '...#...##...#...',
+  '....#..##..#....',
+  '.....#.##.#.....',
+  '......####......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '......####......',
+  '.....#.##.#.....',
+  '....#..##..#....',
+  '...#...##...#...',
+  '..##...##...##..',
+];
+
+/**
+ * Urnes-style interlace, as two 2px bands crossing with a 1px break where one
+ * passes under the other.
+ *
+ * 16x16 is the floor for this and not a preference: an interlace needs three
+ * distinguishable bands across a crossing — over, gap, under — and below that
+ * the crossing closes up into a solid blob and the knot stops being a knot.
+ */
+export const KNOTWORK: Sprite = [
+  '##......##......',
+  '.##......##.....',
+  '..##..##..##..##',
+  '...##......##...',
+  '....##......##..',
+  '.....##......##.',
+  '..##..##..##..##',
+  '#......##......#',
+  '##......##......',
+  '.##......##.....',
+  '..##..##..##..##',
+  '...##......##...',
+  '....##......##..',
+  '.....##......##.',
+  '..##..##..##..##',
+  '#......##......#',
+];
+
+/**
+ * The aurora, as a 32x8 dithered curtain that tiles horizontally.
+ *
+ * Dithered rather than faded, because this design system has no gradients in
+ * its ornament: the soft edge is a checkerboard, which is how an 8-bit machine
+ * drew one and how this app draws every other translucent fill.
+ */
+export const AURORA: Sprite = [
+  '###########.#################.##',
+  '##########.#.###############.#.#',
+  '#########.....###.#####.#.#.#...',
+  '##########...#.#.#######.#.#....',
+  '###.#.###.........#####.........',
+  '.#.#...#...........###..........',
+  '....................#...........',
+  '................................',
+];

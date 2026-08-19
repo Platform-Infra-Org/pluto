@@ -15,7 +15,7 @@ metadata:
   # git-resource owner. See the same note in bulk-delete-resources.
 spec:
   owner: group:default/checkout
-  type: resource
+  type: demo
   parameters:
     - title: Anything you type here is forwarded
       required:
@@ -42,6 +42,28 @@ spec:
           items: { type: string }
           default: [prod, tier-1]
           description: An array — arrives as compact JSON.
+        mounts:
+          type: array
+          title: Mounts
+          description: >
+            An array of objects — arrives as compact JSON. Use the copy button
+            on a row to duplicate it with its values, then edit the copy.
+          ui:options:
+            copyable: true
+          default:
+            - path: /data
+              readOnly: false
+          items:
+            type: object
+            required: [path]
+            properties:
+              path:
+                type: string
+                title: Path
+              readOnly:
+                type: boolean
+                title: Read only
+                default: false
         note:
           type: string
           title: Note
@@ -67,6 +89,7 @@ spec:
           size: ${{ parameters.size }}
           replicas: ${{ parameters.replicas }}
           tags: ${{ parameters.tags }}
+          mounts: ${{ parameters.mounts }}
           note: ${{ parameters.note }}
         argoSubmit:
           namespace: argo

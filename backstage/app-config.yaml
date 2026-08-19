@@ -71,6 +71,10 @@ backend:
     connect-src: ["'self'", 'http:', 'https:']
     # Content-Security-Policy directives follow the Helmet format: https://helmetjs.github.io/#reference
     # Default Helmet Content-Security-Policy values can be removed by setting the key to false
+    # Uncomment alongside platform.grafana above (both need GRAFANA_BASE_URL
+    # set) so the embedded dashboard iframe is allowed to load. Left off in dev
+    # so an unset var doesn't put an unresolved placeholder in a live header.
+    # frame-src: ["'self'", '${GRAFANA_BASE_URL}']
   cors:
     origin: http://localhost:3000
     methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
@@ -113,11 +117,29 @@ proxy:
     # proxy forwards to the upstream and injects its auth header server-side
     # (here, the static token our /options endpoint requires — a real API would
     # put its own key/token here). Secrets never reach the browser.
+    # Stand-in for an external options API: the proxy points back at this same
+    # backend, whose /options/:name route serves the demo sets the DynamicSelect
+    # examples read. That route is OFF unless `platform.demoOptions` is true —
+    # the dev stack turns it on in app-config.local.yaml, production leaves it
+    # off, and this endpoint then proxies to a 404 rather than to demo data.
     '/demo-options':
       target: http://localhost:7007/api/platform-requests/options
       changeOrigin: true
       # `headers.Authorization` is supplied by app-config.local.yaml alongside
       # the token it has to match, so the two cannot drift apart.
+
+    # Infra coordinate-tree API for the cascading DynamicSelect example
+    # (provision-database). The token stays server-side; the browser only
+    # ever calls /api/proxy/infra/... Uncomment and set INFRA_CONFIG_API_URL
+    # (+ INFRA_CONFIG_API_TOKEN) when that API is available: an unset
+    # ${INFRA_CONFIG_API_URL} is dropped by the config-loader, leaving this
+    # endpoint with no `target`, and proxy-backend refuses to boot the whole
+    # backend over one invalid route (skipInvalidProxies defaults to false).
+    # '/infra':
+    #   target: ${INFRA_CONFIG_API_URL}
+    #   changeOrigin: true
+    #   headers:
+    #     Authorization: Bearer ${INFRA_CONFIG_API_TOKEN}
 
     # Production: route Argo REST calls through the proxy so the token/mTLS is
     # injected here (server-side) and never lives in the plugin. Point
@@ -258,6 +280,32 @@ platform:
       - recentlyVisited
       - favouriteTemplates
     maxItems: 8
+  # An existing Grafana dashboard, embedded on /dashboard and on request pages
+  # (scoped to that request's own time window). See
+  # docs/how-to/embed-a-grafana-dashboard.md for the allow_embedding
+  # requirement and the authentication trade-offs. Unset in dev — GrafanaFrame
+  # renders nothing when platform.grafana is absent.
+  # grafana:
+  #   baseUrl: ${GRAFANA_BASE_URL}
+  #   dashboard:
+  #     uid: ${GRAFANA_DASHBOARD_UID}
+  #     slug: ${GRAFANA_DASHBOARD_SLUG}
+  #   theme: dark
+  #   kiosk: true
+  # Presigned S3 uploads for the `ui:field: PlatformFile` scaffolder field.
+  # Bytes go straight from the browser to S3; Backstage credentials never
+  # touch them (see docs/how-to/author-a-template.md#file-uploads for the CORS
+  # + CSP + bucket lifecycle-rule requirements on the S3 side). Unset in dev —
+  # POST /uploads/presign 501s and PlatformFile reports "not configured"
+  # rather than 500ing inside the AWS SDK.
+  # uploads:
+  #   bucket: platform-uploads
+  #   region: eu-west-1
+  #   # endpoint: http://localhost:9000  # optional — S3-compatible (e.g. MinIO); omit for real AWS S3
+  #   keyPrefix: scaffolder
+  #   maxBytes: 10485760                 # 10 MiB
+  #   allowedExtensions: ['.yaml', '.yml', '.json', '.txt', '.csv']
+  #   urlTtlSeconds: 300
   # Request retention. Off by default: deleting rows cannot be undone.
   # Expiry moves an undecided request to EXPIRED; the windows below then delete
   # terminal requests. APPROVED and IN_PROGRESS are never deleted.

@@ -66,7 +66,8 @@ const oidcAuthApi = ApiBlueprint.make({
 
 // Custom sign-in page: fully shadcn-themed so the accent (brand mark + button)
 // follows the color picker — which is rendered right on the login screen.
-function PlatformSignInPage(props: SignInPageProps) {
+/** Exported for auth.test.tsx — nothing else should mount this directly. */
+export function PlatformSignInPage(props: SignInPageProps) {
   const oidc = useApi(oidcAuthApiRef);
   const errorApi = useApi(errorApiRef);
   const [busy, setBusy] = useState(false);
@@ -151,7 +152,7 @@ function PlatformSignInPage(props: SignInPageProps) {
           {busy ? 'Signing in…' : 'Sign in with Keycloak'}
         </Button>
         <div className="sc-login-pick">
-          <SchemePicker />
+          <SchemePicker compact />
         </div>
       </div>
     </div>

@@ -281,5 +281,74 @@ export function greekCss(): string {
     animation: sc-greek-ember 1.6s steps(2) infinite;
   }
 }
+
+/* ===== Hestia's hearth: embers rising off the base of the screen.
+
+   This mode's counterpart to hanami's petals, nightshade's moon and rimefast's
+   aurora — the scene ornament that carries the theme when nothing is happening.
+   Fire rather than weather, because every other Greek ornament here is stone or
+   metal (meander, fluting, rosette, palmette) and the room they furnish wants a
+   hearth in it. It RISES, which is also what keeps it from reading as the
+   sakura overlay recoloured: the two motions are opposites at a glance.
+
+   An ember is a pixel. No sprite and no gradient — a hard 4px square in the
+   mode's own gold, with a single-pixel ring for the glow. A soft radial here
+   would be the one blurred thing in the whole design system.
+
+   The still frame is designed, not frozen: outside the motion query the embers
+   are a scattered arrangement resting near the hearth line at full opacity,
+   which is the picture a reader who asked for less motion is meant to get. ===== */
+:root.sc-greek .sc-greek-embers { display: block; }
+:root.sc-greek .sc-greek-embers i {
+  position: absolute;
+  display: block;
+  width: 4px;
+  height: 4px;
+  opacity: 1;
+  background: hsl(var(--sc-gold));
+  /* drop-shadow, not box-shadow, for the same reason the button ember uses it:
+     styles.ts sets box-shadow with !important on MUI surfaces, and an important
+     author declaration beats both a normal one and the animation origin. */
+  filter: drop-shadow(0 0 2px hsl(var(--sc-gold) / .45));
+}
+:root.sc-greek .sc-greek-embers i:nth-child(1) { left: 11%; bottom: 14%; }
+:root.sc-greek .sc-greek-embers i:nth-child(2) { left: 26%; bottom: 7%; }
+:root.sc-greek .sc-greek-embers i:nth-child(3) { left: 43%; bottom: 19%; }
+:root.sc-greek .sc-greek-embers i:nth-child(4) { left: 58%; bottom: 9%; }
+:root.sc-greek .sc-greek-embers i:nth-child(5) { left: 73%; bottom: 16%; }
+:root.sc-greek .sc-greek-embers i:nth-child(6) { left: 89%; bottom: 6%; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Each steps() is load-bearing. rise moves whole pixel rows, so a 4px square
+     never straddles two of them and turns into an 8px smudge; waver is the
+     thermal wander, on three coarse steps rather than the petals four because
+     a spark is lighter than a leaf and jumps rather than glides; flicker is the
+     ember dimming, and its 0%/100% equals the static opacity above so the
+     designed frame and the animated one agree. */
+  /* The climb starts below the fold via the transform, never via a negative
+     offset — ornament in this mode is positioned on positive coordinates only,
+     which greek.test.ts enforces. */
+  @keyframes sc-greek-rise { from { transform: translateY(6px); } to { transform: translateY(-104vh); } }
+  /* Sways right from its resting column rather than either side of it: a
+     symmetric wander would need a negative margin-left, and this mode bans
+     negative offsets on ornament. That rule's word-boundary match reaches
+     inside margin-left too, which is the point: it catches the shorthand. */
+  @keyframes sc-greek-waver { from { margin-left: 0; } to { margin-left: 18px; } }
+  @keyframes sc-greek-flicker { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+
+  :root.sc-greek .sc-greek-embers i {
+    bottom: 0;
+    animation: sc-greek-rise 13s steps(26) infinite,
+               sc-greek-waver 3.4s steps(3) infinite alternate,
+               sc-greek-flicker 1.4s steps(2) infinite;
+  }
+  /* Negative delays start each ember mid-climb: six sparks leaving the hearth
+     in formation would read as a machine, not a fire. */
+  :root.sc-greek .sc-greek-embers i:nth-child(2) { animation-duration: 16s, 4.1s, 1.9s; animation-delay: -4s, -.6s, -.5s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(3) { animation-duration: 11s, 2.8s, 1.1s; animation-delay: -8s, -1.2s, -.9s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(4) { animation-duration: 15s, 3.7s, 1.6s; animation-delay: -2s, -.3s, -.2s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(5) { animation-duration: 12s, 3.1s, 1.3s; animation-delay: -10s, -1.7s, -.7s; }
+  :root.sc-greek .sc-greek-embers i:nth-child(6) { animation-duration: 14s, 4.4s, 1.8s; animation-delay: -6s, -.9s, -1.1s; }
+}
 `;
 }

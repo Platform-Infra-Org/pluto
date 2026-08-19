@@ -260,6 +260,10 @@ export const PLATFORM_PERMISSIONS = {
   requestApprove: 'platform.request.approve',
   requestRead: 'platform.request.read',
   requestDelete: 'platform.request.delete',
+  // Minting a presigned upload URL — its own permission because PlatformFile
+  // uploads a file while the form is still being filled in, before any
+  // request exists to attach requestCreate's gate to.
+  uploadCreate: 'platform.upload.create',
 } as const;
 
 /** A request in a terminal state is "finished". */

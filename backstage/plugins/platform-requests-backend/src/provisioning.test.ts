@@ -212,6 +212,7 @@ describe('submitWorkflow resource resolution', () => {
         dataPath: 'resources/bucket-a-data.json',
         data: { region: 'eu-west-1', tags: ['prod'] },
         owner: 'group:default/payments',
+        title: '',
       },
     ]);
   });
@@ -241,6 +242,7 @@ describe('submitWorkflow resource resolution', () => {
       dataPath: 'resources/bucket-a-data.json',
       data: { region: 'eu-west-1', tags: ['prod'] },
       owner: 'group:default/payments',
+      title: '',
     });
     // A batch can span owners, which is the reason this is per-resource rather
     // than one value on the request.
@@ -248,6 +250,37 @@ describe('submitWorkflow resource resolution', () => {
     // Not a JSON string: Argo escapes a string field's quotes when it
     // substitutes {{item.data}}, an object it serialises cleanly.
     expect(typeof ctx.resources[0].data).toBe('object');
+  });
+
+  it('carries the resource title beside the name, never instead of it', async () => {
+    // Display text for a workflow that wants to say "Deleting Orders Database"
+    // rather than "Deleting 8f14e45f". `name` stays the only resolution key:
+    // titles are not unique and are not what the catalog is keyed on, so a
+    // workflow that deleted by title would delete the wrong thing or nothing.
+    // deps() takes no overrides, so the resolver is replaced on the spread.
+    const submit = createSubmitWorkflow({
+      ...deps(),
+      resolveResource: jest.fn(async (name: string) => ({
+        data: {},
+        resourcePath: `resources/${name}.yaml`,
+        dataPath: `resources/${name}-data.json`,
+        owner: 'group:default/payments',
+        entity: { metadata: { name, title: 'Orders Database (primary)' } },
+      })),
+    });
+    await submit(request({ resourceName: 'orders-db' }));
+    const ctx = submitSpec.mock.calls[0][1] as any;
+    expect(ctx.resources[0].title).toBe('Orders Database (primary)');
+    expect(ctx.resources[0].name).toBe('orders-db');
+  });
+
+  it('gives a titleless resource an empty title, not a missing key', async () => {
+    // Same shape for every element, so a workflow can read {{item.title}}
+    // without a conditional — the rule `owner` already follows.
+    const submit = createSubmitWorkflow(deps());
+    await submit(request({ resourceName: 'bucket-a' }));
+    const ctx = submitSpec.mock.calls[0][1] as any;
+    expect(ctx.resources[0]).toHaveProperty('title', '');
   });
 
   it('refuses a single-resource delete whose resource cannot be resolved', async () => {

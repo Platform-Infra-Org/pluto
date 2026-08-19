@@ -29,6 +29,12 @@ const defaultFetcher: Fetcher = (url, signal) => fetch(url, { signal });
 export interface DynamicSelectProps {
   /** Endpoint returning a JSON list or map of options. */
   url: string;
+  /**
+   * Pre-resolved options. When given, nothing is fetched — the caller already
+   * has the data (e.g. a cascade that resolved this level from a tree it holds).
+   * `url` is still required so the component keeps one shape.
+   */
+  options?: ChoiceOption[];
   /** Poll interval in ms. Omit or <= 0 to fetch once (no polling). */
   intervalMs?: number;
   value?: string;
@@ -49,6 +55,7 @@ export interface DynamicSelectProps {
  */
 export function DynamicSelect({
   url,
+  options: givenOptions,
   intervalMs,
   value,
   onChange,
@@ -58,8 +65,9 @@ export function DynamicSelect({
   className = '',
   onOptions,
 }: DynamicSelectProps) {
-  const [options, setOptions] = useState<ChoiceOption[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [fetched, setFetched] = useState<ChoiceOption[]>([]);
+  const options = givenOptions ?? fetched;
+  const [loading, setLoading] = useState(!givenOptions);
   const [error, setError] = useState<string>();
 
   // Keep the latest callbacks/fetcher in refs so an inline function identity
@@ -70,6 +78,7 @@ export function DynamicSelect({
   onOptionsRef.current = onOptions;
 
   useEffect(() => {
+    if (givenOptions) return undefined;
     let cancelled = false;
     let controller: AbortController | undefined;
 
@@ -81,7 +90,7 @@ export function DynamicSelect({
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`.trim());
         const next = toChoiceOptions(await res.json());
         if (cancelled) return;
-        setOptions(next);
+        setFetched(next);
         setError(undefined);
         setLoading(false);
         onOptionsRef.current?.(next);
@@ -100,7 +109,7 @@ export function DynamicSelect({
       controller?.abort();
       if (id) clearInterval(id);
     };
-  }, [url, intervalMs]);
+  }, [url, intervalMs, givenOptions]);
 
   const showError = !!error && options.length === 0;
   let placeholderText = placeholder;

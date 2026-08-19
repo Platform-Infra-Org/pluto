@@ -1,0 +1,90 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: coordinate-demo
+  title: Coordinates (demo)
+  description: >
+    Exercises the cascading DynamicSelect: space -> network -> region -> island
+    -> environment, all five reading ONE endpoint that returns the whole tree.
+    Pick a space and watch the next field fill; change it and watch every field
+    below it clear. Creates nothing.
+  tags:
+    - platform
+    - demo
+  # No platform.io/resource-type: this template must not shadow the real
+  # git-resource owner. Same note as bulk-delete-resources.
+spec:
+  owner: group:default/checkout
+  type: demo
+  parameters:
+    - title: Where should it live?
+      required:
+        - space
+        - network
+        - region
+        - island
+        - environment
+      properties:
+        # Same wiring a real deployment uses: proxyPath through the Backstage
+        # proxy, so the upstream's credentials stay server-side. Here it points
+        # at the platform backend's own demo options route; in production it
+        # points at the config API (/infra/coordinate-tree).
+        space:
+          type: string
+          title: Space
+          ui:field: DynamicSelect
+          ui:options: { proxyPath: /demo-options/coordinate-tree, treePath: coordinates }
+        network:
+          type: string
+          title: Network
+          ui:field: DynamicSelect
+          ui:options:
+            { proxyPath: /demo-options/coordinate-tree, treePath: coordinates, dependsOn: [space] }
+        region:
+          type: string
+          title: Region
+          ui:field: DynamicSelect
+          ui:options:
+            { proxyPath: /demo-options/coordinate-tree, treePath: coordinates, dependsOn: [space, network] }
+        island:
+          type: string
+          title: Island
+          ui:field: DynamicSelect
+          ui:options:
+            {
+              proxyPath: /demo-options/coordinate-tree,
+              treePath: coordinates,
+              dependsOn: [space, network, region],
+            }
+        environment:
+          type: string
+          title: Environment
+          ui:field: DynamicSelect
+          ui:options:
+            {
+              proxyPath: /demo-options/coordinate-tree,
+              treePath: coordinates,
+              dependsOn: [space, network, region, island],
+            }
+  steps:
+    - id: submit
+      name: Submit request
+      action: platform:request:submit
+      input:
+        resourceType: git-resource
+        resourceName: ${{ parameters.space }}-${{ parameters.island }}-demo
+        kind: CREATE
+        params:
+          space: ${{ parameters.space }}
+          network: ${{ parameters.network }}
+          region: ${{ parameters.region }}
+          island: ${{ parameters.island }}
+          environment: ${{ parameters.environment }}
+        argoSubmit:
+          namespace: argo
+          workflowTemplate: param-echo
+          entrypoint: echo-params
+  output:
+    links:
+      - title: Open request
+        url: /requests/${{ steps.submit.output.requestId }}

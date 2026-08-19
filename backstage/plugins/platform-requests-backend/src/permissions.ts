@@ -29,9 +29,24 @@ export const requestDeletePermission = createPermission({
   attributes: { action: 'delete' },
 });
 
+/**
+ * Minting a presigned S3 upload URL (the PlatformFile field).
+ *
+ * Object *size* and *extension* are capped per-object by `platform.uploads`,
+ * but nothing caps object *count* — without this gate any signed-in user
+ * could mint unbounded presigned URLs. Its own permission rather than a reuse
+ * of `requestCreate`: an upload can happen before the request it belongs to
+ * is ever submitted.
+ */
+export const uploadCreatePermission = createPermission({
+  name: PLATFORM_PERMISSIONS.uploadCreate,
+  attributes: { action: 'create' },
+});
+
 export const platformPermissions = [
   requestCreatePermission,
   requestApprovePermission,
   requestReadPermission,
   requestDeletePermission,
+  uploadCreatePermission,
 ];

@@ -18,7 +18,7 @@ spec:
   # The template owner IS the service owner. `sam` is a member of this team, so
   # sam can approve checkout-service requests; requester/other owners cannot.
   owner: group:default/checkout
-  type: resource
+  type: service
   parameters:
     - title: Checkout service details
       required:

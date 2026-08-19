@@ -19,7 +19,7 @@ spec:
   # The same owning team that approves the request also resumes the suspended
   # step — resuming is the same act of approval, later in the run.
   owner: group:default/platform-admins
-  type: resource
+  type: demo
   parameters:
     - title: What to provision
       required:

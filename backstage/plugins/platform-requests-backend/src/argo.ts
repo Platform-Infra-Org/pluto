@@ -71,6 +71,16 @@ export interface ResolveCtx {
     data: Record<string, unknown>;
     /** The resource's own `spec.owner`; '' when it has none. */
     owner: string;
+    /**
+     * The resource's `metadata.title`, or '' when it declares none.
+     *
+     * Display text, never an identifier. `name` stays the only key a workflow
+     * may resolve, delete or write a path from — titles are not unique and are
+     * not what the catalog is keyed on. This is here so a workflow can say
+     * "Deleting Orders Database (primary)" in a notification instead of
+     * "Deleting 8f14e45f", not so it can look anything up.
+     */
+    title: string;
   }>;
 }
 

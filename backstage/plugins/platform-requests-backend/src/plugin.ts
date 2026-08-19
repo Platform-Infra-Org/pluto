@@ -360,6 +360,7 @@ export const platformRequestsPlugin = createBackendPlugin({
             permissions,
             store,
             logger,
+            config,
             submitWorkflow,
             onCreated: notify.approvalNeeded,
             onDecided: notify.decided,
