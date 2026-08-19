@@ -1129,28 +1129,42 @@ export const MOON_STRIP: Sprite = [
    pattern needs pixels the moth does not have. */
 
 /**
- * A decorative rune band, tiling horizontally with a period of four pixels.
+ * A decorative rune band: two letterforms standing on a carved rule, tiling
+ * horizontally.
  *
- * Two alternating stave glyphs with upward branches — a pattern, not a word.
- * Runes were carved without horizontals, which is exactly what a pixel grid
- * renders cleanly, and it is also why nothing here needs anti-aliasing.
+ * DECORATIVE AND NON-SEMANTIC, and that is a design constraint rather than a
+ * shrug — a band that spells something spells it wrong, in a language nobody
+ * here writes, on every page of a corporate portal. Two glyphs alternating
+ * with even spacing read as a carved border; a longer sequence starts to look
+ * like text and invites being read as one.
+ *
+ * The two are Gebo (the X) and Ehwaz (the M), chosen because they are the
+ * cleanest straight-stroke forms in the row and because neither appears on the
+ * excluded list above. Elder Futhark has no horizontals at all — staves and
+ * diagonals only, so a chisel never runs along the grain of the wood — which
+ * is exactly the discipline a pixel grid renders without a single soft edge.
+ * The one horizontal here is the rule the runes stand on, at row 13, and it
+ * runs the full width so the band joins across its own seam.
+ *
+ * The previous version packed four narrow staves into the same sixteen pixels
+ * at a period of four, which at 16px was a picket fence rather than writing.
  */
 export const FUTHARK: Sprite = [
   '................',
-  '#...#...#...#...',
-  '##..#...##..#...',
-  '#.#.##..#.#.##..',
-  '#...#.#.#...#.#.',
-  '##..#...##..#...',
-  '#.#.##..#.#.##..',
-  '#...#.#.#...#.#.',
-  '#...#...#...#...',
-  '#...#...#...#...',
-  '#...#...#...#...',
-  '#...#...#...#...',
-  '#...#...#...#...',
-  '#...#...#...#...',
-  '#...#...#...#...',
+  '................',
+  '.#...#...#...#..',
+  '.#...#...#...#..',
+  '..#.#....##.##..',
+  '..#.#....##.##..',
+  '...#.....#.#.#..',
+  '...#.....#.#.#..',
+  '..#.#....#...#..',
+  '..#.#....#...#..',
+  '.#...#...#...#..',
+  '.#...#...#...#..',
+  '................',
+  '################',
+  '................',
   '................',
 ];
 

@@ -293,6 +293,23 @@ describe('mode ornament sprites', () => {
     }
   });
 
+  it('carves the rune band with no horizontal stroke but its own rule', () => {
+    // Elder Futhark has no horizontals: a chisel never runs along the grain,
+    // so every letterform is a stave plus diagonals. It is also what makes the
+    // band render cleanly on a pixel grid, and it is the first thing lost when
+    // someone thickens a glyph to "make it read" — at which point the band
+    // turns back into the picket fence this replaced.
+    // The one exception is the rule the runes stand on, which is full width so
+    // the band joins across its own tile seam.
+    const rule = FUTHARK.filter(row => row === '#'.repeat(SPRITE_SIZE));
+    expect(rule).toHaveLength(1);
+    for (const row of FUTHARK) {
+      if (row === rule[0]) continue;
+      const longest = Math.max(0, ...(row.match(/#+/g) ?? []).map(r => r.length));
+      expect(`${row}:${longest <= 2}`).toBe(`${row}:true`);
+    }
+  });
+
   it('keeps Yggdrasil symmetric about its trunk, crown to root', () => {
     // The mirror IS the tree: nine worlds above and below one axis. A drifted
     // branch reads as a lopsided shrub.
