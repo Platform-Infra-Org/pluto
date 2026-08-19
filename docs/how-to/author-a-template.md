@@ -98,13 +98,14 @@ same name; `forwardParams: false` suppresses the forwarding entirely. See
 
 ### Worked examples you can run
 
-Two templates in `deploy/dev/` exist only to demonstrate this, and both are
-runnable against the dev stack:
+Three templates in `deploy/dev/` exist only to demonstrate a mechanism, and all
+are runnable against the dev stack:
 
 | Template | Shows |
 |---|---|
 | **Param Forwarding (demo)** — `templates/param-forwarding-demo` with `argo/param-echo.yaml` | Five form fields mapped **once** under `params`, four of them reaching Argo with no second mapping. It names only `note` in `argoSubmit.parameters`, which collides with the form field on purpose, so one run proves both forwarding and precedence. The workflow writes nothing; it prints what it received, so the run log is the evidence — a number arriving as a string, an array as compact JSON, and a blank field absent rather than empty. |
 | **Provision Git Resources (bulk)** — `templates/bulk-provision` with `argo/bulk-provision.yaml` | One request creating several resources, returning their names as a JSON array so the request page links to each. |
+| **Coordinates (demo)** — `templates/coordinate-demo` | Five dependent `DynamicSelect` fields walking one tree: changing a parent clears the children it invalidates, a level with a single option fills itself, and all five share one request. Needs `platform.demoOptions: true`. See **How-to → Add a live (DynamicSelect) field**. |
 
 The mapping lives in **one** place, the request's `params`:
 

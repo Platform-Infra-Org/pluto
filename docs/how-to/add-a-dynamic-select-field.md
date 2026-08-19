@@ -113,6 +113,36 @@ four clicks that could never have gone differently. It only ever fills an empty
 field, so a value you picked yourself is never overwritten — and it applies to a
 plain (non-`treePath`) field too, when its endpoint returns a single option.
 
+## Try it against the dev stack
+
+`templates/coordinate-demo` (**Coordinates (demo)** on the Create page) wires all
+five levels against a tree the platform backend serves itself, so the cascade is
+clickable without an external API:
+
+```yaml
+ui:options: { proxyPath: /demo-options/coordinate-tree, treePath: coordinates }
+```
+
+It needs `platform.demoOptions: true` — the demo option sets are off unless
+asked for (see **Reference → Configuration**), and `scripts/backstage-up.sh`
+turns them on in the gitignored `app-config.local.yaml` it writes. Without it
+the field reports that it could not load its options, and the route says which
+key to set.
+
+Three things are worth doing in that form, because each is a behaviour the
+plain example cannot show:
+
+- Pick `aurora` → `core` → `eu-west`, then switch the region. The island and
+  environment below it clear, because their values no longer exist on the new
+  branch.
+- Pick `borealis` → `lab`. That branch has one region and one island, so both
+  fill themselves and you land on the environment in a single click.
+- Watch the network tab: five fields, one request.
+
+The only difference from a real deployment is where the tree comes from —
+`proxyPath` points at the demo route here and at the config API
+(`/infra/coordinate-tree`) there. The field cannot tell them apart.
+
 ## Notes
 
 - Options refresh on `intervalMs`; the current selection is preserved across
