@@ -189,7 +189,24 @@ describe('SchemePicker', () => {
       expect(container.querySelector('.sc-picker-inv')).not.toBeNull();
     });
 
-    it('gives the sign-in card the same one-bottle box as the app', () => {
+    it('never wears the floating shelf dragged position', () => {
+    // The drag position is restored from localStorage and belongs to the
+    // corner shelf alone. The sign-in card's picker is position: relative, so
+    // an unguarded inline top/left offset it out of the card entirely while
+    // leaving its layout space behind — invisible to every check that looks at
+    // the DOM rather than at where the pixels landed.
+    localStorage.setItem('platform-picker-pos', JSON.stringify({ x: 240, y: 569 }));
+    try {
+      const { container } = render(<SchemePicker />);
+      const el = container.querySelector('.sc-picker') as HTMLElement;
+      expect(el.style.top).toBe('');
+      expect(el.style.left).toBe('');
+    } finally {
+      localStorage.removeItem('platform-picker-pos');
+    }
+  });
+
+  it('gives the sign-in card the same one-bottle box as the app', () => {
       // The card is 296px of content box; twelve bottles need 358px and fifteen
       // need 442px, so the flat shelf squeezed the sprites below their 16px grid
       // and got worse with every potion added. The tray is the same interaction

@@ -708,7 +708,15 @@ export function SchemePicker({
     <div
       ref={ref}
       className={`sc sc-picker${floating ? ' sc-picker-float' : ''}`}
-      style={pos ? { left: pos.x, top: pos.y } : undefined}
+      // `pos` is the FLOATING shelf's dragged position, restored from
+      // localStorage. Applying it here unguarded put it on the sign-in card's
+      // picker too — which is position: relative, so it inherited the offset
+      // and painted wherever the corner shelf had last been parked, hundreds
+      // of pixels from the card, while keeping its layout space inside it.
+      // Every other use of `pos` is already gated on `floating`; this was the
+      // one that was not, and it only shows up for someone who has actually
+      // dragged the shelf, which is why no fresh browser reproduces it.
+      style={floating && pos ? { left: pos.x, top: pos.y } : undefined}
       data-dragging={dragging ? 'true' : undefined}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
