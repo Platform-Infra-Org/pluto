@@ -240,15 +240,15 @@ describe('SHADCN_CSS', () => {
     );
   });
 
-  it('opens the sign-in tray downward, where it can still be reached', () => {
-    // .sc-login is a scroll container, so it clips its descendants — and
-    // upward overflow does not extend scrollHeight, meaning a tray clipped at
-    // the top cannot be scrolled to at all. Downward overflow can.
+  it('wraps the sign-in shelf instead of overflowing the card', () => {
+    // Every scheme is visible on the sign-in card. Fifteen 26px bottles need
+    // more than the card's 296px content box, so the row wraps — the card grows
+    // by a row rather than the shelf running off the edge.
     expect(SHADCN_CSS).toMatch(
-      /\.sc-login-pick \.sc-picker-inv \{[^}]*top:\s*calc\(100% \+ 10px\)/,
+      /\.sc-login-pick \.sc-picker \{[^}]*flex-wrap:\s*wrap/,
     );
     expect(SHADCN_CSS).toMatch(
-      /\.sc-login-pick \.sc-picker-inv \{[^}]*bottom:\s*auto/,
+      /\.sc-login-pick \.sc-picker \{[^}]*max-width:\s*100%/,
     );
   });
 

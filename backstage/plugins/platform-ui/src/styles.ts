@@ -1599,23 +1599,15 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* The sign-in card has its own shelf under the button, so the corner one would
    be a second identical picker on the same screen. */
 :root.sc-signed-out .sc-picker-float { display: none; }
-/* The tray opens DOWNWARD from the sign-in card, and upward everywhere else.
-
-   Two reasons, both consequences of .sc-login being a scroll container. First,
-   a scroll container clips its descendants: opening upward from a bottle near
-   the card's bottom puts the top of the tray — the first schemes in the list —
-   under the clip on any viewport that is not tall. Second, and worse, upward
-   overflow does not add to a scroller's scrollHeight, so the clipped part
-   cannot be scrolled to either. It is simply gone.
-
-   Downward overflow does extend scrollHeight, so on a viewport too short to
-   show the whole tray it stays reachable by scrolling instead of vanishing.
-   Below the bottle there is also far more room: the card's own padding and
-   then the entire lower half of the screen.
-
-   The floating picker keeps opening upward, which is correct for something
-   anchored to the bottom-left corner of the viewport. */
-.sc-login-pick .sc-picker-inv { bottom: auto; top: calc(100% + 10px); }
+/* The sign-in card shows every bottle, wrapped, rather than one that opens a
+   tray. The tray version was correct about space and wrong about people: a
+   lone 26px bottle under the button did not read as the colour picker, and was
+   reported missing repeatedly. Wrapping costs one extra row of card height and
+   nothing else, and .sc-login shrinks on short viewports to pay for it.
+   Only the non-floating instance wraps; the corner shelf keeps its single
+   bottle and its tray, where one bottle is unambiguous because it is the
+   thing you dragged there. */
+.sc-login-pick .sc-picker { flex-wrap: wrap; justify-content: center; max-width: 100%; }
 
 /* Short viewports — a phone in landscape, or a window with devtools docked
    along the bottom. The card is ~352px plus the wrapper's padding, so under
