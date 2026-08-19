@@ -1486,8 +1486,18 @@ objects keyed by name, four levels deep, with a sorted array of leaf values
   coordinate nobody can resolve. A field is disabled with a "Pick <code>&lt;parent&gt;</code>
   first" placeholder until every field it <code>dependsOn</code> has a value.</li>
 </ul>
-<p>All five levels share one request to the same <code>proxyPath</code> (cached for 30s) —
-five fields asking the same endpoint for the same tree is not five fetches.</p>
+<p>All five levels share one request to the same <code>proxyPath</code> — five fields asking
+the same endpoint for the same tree is not five fetches.</p>
+<p><code>intervalMs</code> works here too, and it is shared the same way: one timer and one
+request for the whole cascade, however many levels are reading it. Every level
+is handed the same snapshot from the same response, so a refresh can never
+leave one field offering an island that its parent's tree no longer contains.
+If levels disagree about the interval, the most eager one wins; when the last
+level unmounts, the timer stops. A refresh that fails keeps the last good tree
+and leaves the form usable, exactly as a flat field does.</p>
+<p>Note that polling can clear a selection: if a refresh removes the coordinate
+someone had chosen, the field is emptied rather than left naming something that
+no longer exists.</p>
 <p>A level that resolves to exactly <strong>one</strong> value is filled in for you, and the
 cascade continues to the next. One option is not a choice, and in a chain it
 compounds: a space with a single network, region and island would otherwise be
@@ -1521,9 +1531,9 @@ plain example cannot show:</p>
 <h2 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Options refresh on <code>intervalMs</code>; the current selection is preserved across
-  refreshes, and the last good list is kept if a refresh fails. (<code>intervalMs</code>
-  is ignored once <code>treePath</code> is set — the cascade re-derives its options from
-  the cached tree instead of polling.)</li>
+  refreshes, and the last good list is kept if a refresh fails. This applies to
+  a <code>treePath</code> cascade too — see <strong>Dependent selects</strong> above, where the poll is
+  shared across every level rather than run once per field.</li>
 <li>The field is registered by the <code>platform-ui</code> plugin
   (<code>platformScaffolderFieldsModule</code>) — no per-template setup beyond <code>ui:field</code>.</li>
 </ul>

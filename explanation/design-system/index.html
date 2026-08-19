@@ -1560,9 +1560,9 @@ and running moves to a cold 188° cyan that no other scheme uses.</p>
 <h2 id="mode-potions">Mode potions<a class="headerlink" href="#mode-potions" title="Permanent link">&para;</a></h2>
 <p>Every bottle on the shelf is now a <em>mode</em>: it carries a whole palette and its
 own chrome, hung off a single <code>sc-&lt;id&gt;</code> class on the root element. There are
-fifteen, and they arrived in two kinds. Eight are <strong>table-driven</strong> — a row in
+fifteen, and they arrived in two kinds. Seven are <strong>table-driven</strong> — a row in
 <code>brands.ts</code> with two registers of colour and a radius, which is all a mode needs
-when it is a recolour. Seven are <strong>hand-written sheets</strong>, one file each, because
+when it is a recolour. Eight are <strong>hand-written sheets</strong>, one file each, because
 a <code>BRAND_DEFS</code> row cannot express ornament or an animation:</p>
 <ul>
 <li><strong>Ancient Greek</strong> (<code>greek.ts</code>) — bronze on bone, gold on obsidian; meander,
@@ -1602,7 +1602,30 @@ corporate portal cannot control how one of them is read. Ravens, Yggdrasil,
 knotwork and a generic non-semantic futhark band carry no such freight and are
 what the mode uses. <code>rimefast.test.ts</code> asserts the sheet never names the five,
 so completing the set in a year's time fails a test rather than a shipping
-review. This paragraph is the reason, kept next to the rule.</p>
+review. This paragraph is the reason, kept next to the rule.
+- <strong>Ancient Egyptian</strong> (<code>egyptian.ts</code>) — pigment rather than sand; beige is
+what four thousand years of weathering left, not what anyone painted. The
+light register is <strong>lapis and Egyptian blue on a cool limestone white</strong>, with
+gold demoted to an accent, and it is that way on purpose: as papyrus-and-
+ochre it read as the same room as Ancient Greek's parchment-and-bronze, and
+two warm grounds carrying a warm metal is one design with two names. The dark
+register is a tomb interior — gold leaf and Egyptian blue lit against black.
+Both cards are solved backwards from the shared status set and both are
+pinned: the light one cannot fall below 96% lightness (warning-on-cell is
+4.99 at 95%) and the dark one cannot rise above 7% (4.90 at 8%). The ornament
+is hieroglyphic: a four-sign glyph register (ankh, feather of Maat, water
+ripple, reed over a ground line) under every page title and along both edges
+of a command window, papyrus down the sidebar, djed pillars and a facing pair
+of wedjat eyes at the sign-in threshold with a cartouche between them, an
+ankh on an empty shelf, and the Aten stepping its rays in the bottom-right
+corner on two frames, 800ms a frame. <strong>The signs are real and the arrangement
+is deliberately not a sentence</strong> — a band of genuine glyphs in sequence spells
+something and a decorative band that spells something spells it wrong, so the
+cartouche holds one ankh rather than a name. <code>sprites.ts</code> says so beside the
+grids, because the obvious later "fix" is to make it read. Malachite is
+confined to the sign-in page — it sits 16° from the success status hue, and
+green ornament beside a badge turns decoration into state;
+<code>egyptian.test.ts</code> fails if it appears anywhere else.</p>
 </li>
 </ul>
 <p>The mechanism is specificity alone. The injected accent sheet writes <code>:root</code>,
@@ -1626,7 +1649,7 @@ the mode must be added to <code>contrast.test.ts</code> by hand, because hand-wr
 sheets are not discovered from <code>BRAND_DEFS</code>; and a baked sprite fill is a
 literal inside an SVG data URI, which inherits neither <code>currentColor</code> nor a
 custom property, so a two-colour motif is two URIs that have to be kept in step.</p>
-<p>The three animated modes share one host. <code>SchemeRoot</code> mounts <code>.sc-mode-art</code>
+<p>The five animated modes share one host. <code>SchemeRoot</code> mounts <code>.sc-mode-art</code>
 once, unconditionally and <code>aria-hidden</code>, and each mode sheet turns on the child
 it draws. It is not branched on the picked scheme because <code>applyScheme</code> runs
 before React and writes a class on the root element — a React copy of "which
@@ -1652,11 +1675,14 @@ exception rather than a hole:</p>
   inside the query, and the still frame is still designed.</li>
 <li><strong>Nothing conveys state through motion alone</strong>, which was never negotiable.</li>
 </ul>
-<p>The default theme keeps <code>steps()</code>, and so do Ancient Greek, Hanami, Nightshade and Rimefast — in the three animated modes the stepping is
-load-bearing rather than stylistic. A petal interpolated between pixel rows
-blurs, a moon strip interpolated between frames shows two half-moons at
-once, and an aurora interpolated across its tile reads as a banner sliding
-past rather than a curtain moving.</p>
+<p>The default theme keeps <code>steps()</code>, and so do Ancient Greek, Hanami,
+Nightshade, Rimefast and Ancient Egyptian — in all five animated modes the
+stepping is load-bearing rather than stylistic. A petal interpolated between
+pixel rows blurs, a moon strip interpolated between frames shows two
+half-moons at once, an aurora interpolated across its tile reads as a banner
+sliding past rather than a curtain moving, and the Aten has nowhere to
+interpolate <em>to</em>: its two frames are the same eight rays turned 45°, so an
+in-between position is a position the rays are never in.</p>
 <p>Everything timed sits inside <code>@media (prefers-reduced-motion: no-preference)</code>,
 and the reduced case is designed rather than merely disabled: the tour's
 sparkles simply appear instead of blinking, and the creatures on the experience
