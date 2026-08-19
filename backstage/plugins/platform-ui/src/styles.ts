@@ -1348,7 +1348,18 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 :root.sc-dark .sc-notice-fail { color: hsl(0 75% 80%); }
 
 /* login gate */
-.sc-login { min-height: 100vh; display: flex; align-items: center; justify-content: center;
+/* The sign-in screen is one viewport and does not scroll. min-height alone was
+   not that: whatever the app shell contributed sat on top of the 100vh, the
+   document grew past the fold, and the last element in the card — the scheme
+   picker — ended up below it. It read as a missing picker rather than an
+   off-screen one, which is the worst kind of layout bug: nothing is hidden, so
+   nothing looks wrong in the markup.
+   dvh rather than vh because on mobile a collapsing URL bar makes vh taller
+   than what is actually on screen, which is the same bug with a different
+   trigger. The inner overflow is the safety valve: on a viewport too short for
+   the card the card scrolls, never the page, and nothing is clipped away. */
+.sc-login { height: 100dvh; min-height: 100dvh; overflow-y: auto;
+  display: flex; align-items: center; justify-content: center;
   background: hsl(var(--sc-bg)); padding: 24px; }
 .sc-login-card { width: 360px; max-width: 100%; padding: 36px 32px; text-align: center;
   background: hsl(var(--sc-card)); border: var(--sc-border-w) solid hsl(var(--sc-border));
@@ -1586,6 +1597,11 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* The sign-in card has its own shelf under the button, so the corner one would
    be a second identical picker on the same screen. */
 :root.sc-signed-out .sc-picker-float { display: none; }
+/* Same class, second job: while the gate is up the document itself must not
+   scroll. .sc-login already fills the viewport and scrolls internally when it
+   has to, so a scrollbar on the page can only mean something is pushing past
+   the fold — and what falls off the bottom is the picker. */
+:root.sc-signed-out, :root.sc-signed-out body { height: 100%; overflow: hidden; }
 
 /* Shut, the shelf carries one bottle and its two controls, and must never fold
    that to a second row. There is no transition on the collapse: it swaps one

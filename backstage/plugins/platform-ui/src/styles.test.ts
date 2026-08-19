@@ -240,6 +240,25 @@ describe('SHADCN_CSS', () => {
     );
   });
 
+  it('keeps the sign-in screen to one viewport that does not scroll', () => {
+    // The card's last element is the scheme picker. When the document grew past
+    // the fold the picker went with it, and a control that is merely off-screen
+    // looks exactly like one that was never rendered.
+    expect(SHADCN_CSS).toMatch(
+      /:root\.sc-signed-out[^{]*\{[^}]*overflow:\s*hidden/,
+    );
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    // Anchored to the start of a line: the mode sheets are interpolated ahead
+    // of this rule and carry selectors like `:root.sc-greek .sc-login {`, which
+    // an unanchored match finds first and reads the wrong block from.
+    const login = rules.match(/(?:^|\n)\.sc-login \{([^}]*)\}/);
+    expect(login).toBeTruthy();
+    // dvh, not vh: a collapsing mobile URL bar makes vh taller than the screen.
+    expect(login![1]).toMatch(/height:\s*100dvh/);
+    // The card scrolls if the viewport is too short for it; the page never does.
+    expect(login![1]).toMatch(/overflow-y:\s*auto/);
+  });
+
   it('drops the type text from a template card but keeps its buttons', () => {
     // The card led with its type rather than its name, and the type repeats
     // what the template's own copy already says. Hiding the whole h3 also hid
