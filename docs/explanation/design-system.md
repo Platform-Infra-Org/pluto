@@ -144,9 +144,9 @@ and running moves to a cold 188° cyan that no other scheme uses.
 
 Every bottle on the shelf is now a *mode*: it carries a whole palette and its
 own chrome, hung off a single `sc-<id>` class on the root element. There are
-fifteen, and they arrived in two kinds. Eight are **table-driven** — a row in
+sixteen, and they arrived in two kinds. Eight are **table-driven** — a row in
 `brands.ts` with two registers of colour and a radius, which is all a mode needs
-when it is a recolour. Seven are **hand-written sheets**, one file each, because
+when it is a recolour. Eight are **hand-written sheets**, one file each, because
 a `BRAND_DEFS` row cannot express ornament or an animation:
 
 - **Ancient Greek** (`greek.ts`) — bronze on bone, gold on obsidian; meander,
@@ -187,6 +187,20 @@ a `BRAND_DEFS` row cannot express ornament or an animation:
   what the mode uses. `rimefast.test.ts` asserts the sheet never names the five,
   so completing the set in a year's time fails a test rather than a shipping
   review. This paragraph is the reason, kept next to the rule.
+- **Ancient Egyptian** (`egyptian.ts`) — pigment rather than sand. Egyptian
+  blue, lapis, gold leaf, malachite, carnelian and kohl over a papyrus and
+  limestone ground by day, and the same metals lit against black by night;
+  beige is what four thousand years of weathering left, not what anyone
+  painted. Both cards are solved backwards from the shared status set and both
+  are pinned: the light one cannot fall below 95% lightness (warning-on-cell is
+  4.99 at 94%) and the dark one cannot rise above 7% (4.90 at 8%). Lotus frieze
+  under every page title, papyrus down the sidebar, djed pillars and a facing
+  pair of wedjat eyes at the sign-in threshold, an ankh on an empty shelf, and
+  Khepri rolling the sun disk along the bottom rail on a two-frame walk, one
+  hop every half second. Malachite is confined to the sign-in page — it sits
+  16° from the success status hue, and green ornament beside a badge turns
+  decoration into state; `egyptian.test.ts` fails if it appears anywhere else.
+  Carnelian is a fill and never text, at 4.96 on the page ground.
 
 The mechanism is specificity alone. The injected accent sheet writes `:root`,
 which is (0,1,0); `:root.sc-greek` is (0,2,0) and wins whatever the injection

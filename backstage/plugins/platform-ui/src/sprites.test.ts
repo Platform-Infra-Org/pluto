@@ -35,6 +35,13 @@ import {
   KNOTWORK,
   RAVEN,
   AURORA,
+  ANKH,
+  DJED,
+  LOTUS_BAND,
+  PAPYRUS,
+  SCARAB_STRIP,
+  SUN_DISK,
+  WEDJAT,
 } from './sprites';
 
 const grid = (...rows: string[]) => rows;
@@ -97,6 +104,7 @@ describe('sprite data', () => {
       AMPHORA, KEY, LAUREL, HELM, TORCH, SCROLL, POTION, RUPEE,
       SEIGAIHA, TORII, ASANOHA, KOI, CRESCENT_FLAME, CAULDRON, SPRIG,
       FUTHARK, YGGDRASIL, KNOTWORK, SCROLL_CORNER, RAVEN,
+      ANKH, WEDJAT, LOTUS_BAND, PAPYRUS, DJED, SUN_DISK,
     };
     for (const [name, sprite] of Object.entries({
       TEMPLE,
@@ -275,6 +283,51 @@ describe('mode ornament sprites', () => {
     expect(KOI[5][12]).toBe('.');
     expect(KOI[5][11]).toBe('#');
     expect(KOI[5][13]).toBe('#');
+  });
+
+  it('keeps the scarab strip on the 16px grid, at a whole number of frames', () => {
+    // The one strip authored at the full grid rather than the small one: a
+    // beetle at 8px is a bean. Width still has to be an exact multiple of the
+    // height, or the walk cycle lands mid-frame and smears.
+    expect(SCARAB_STRIP).toHaveLength(SPRITE_SIZE);
+    for (const row of SCARAB_STRIP) {
+      expect(`${row.length % SPRITE_SIZE}`).toBe('0');
+      expect(`${row.length}`).toBe(`${SCARAB_STRIP[0].length}`);
+    }
+  });
+
+  it('gives the scarab strip two distinct frames', () => {
+    // Identical frames animate into a beetle skating on its belly.
+    const frames = Array.from({ length: 2 }, (_, f) =>
+      SCARAB_STRIP.map(r => r.slice(f * 16, f * 16 + 16)).join(''),
+    );
+    expect(new Set(frames).size).toBe(2);
+  });
+
+  it('keeps the ankh and the sun disk symmetric about their axis', () => {
+    // Both are single centred glyphs: one drifted pixel and the ankh leans and
+    // the disk looks tipped. The wedjat is deliberately NOT in this list.
+    for (const [name, sprite] of Object.entries({ ANKH, SUN_DISK, DJED, PAPYRUS })) {
+      for (let y = 0; y < SPRITE_SIZE; y++) {
+        const mirrored = [...sprite[y]].reverse().join('');
+        expect(`${name} row${y}:${sprite[y]}`).toBe(`${name} row${y}:${mirrored}`);
+      }
+    }
+  });
+
+  it('keeps the wedjat asymmetric, which is what makes the pair a pair', () => {
+    // The tail hangs off the outer corner only. A symmetric eye mirrors into
+    // itself, and the two guarding the sign-in card become one drawing twice.
+    expect(mirrorSprite(WEDJAT).join('/')).not.toBe(WEDJAT.join('/'));
+  });
+
+  it('joins the two vertical Egyptian tiles through their own shaft', () => {
+    // Both repeat-y. If the last row does not carry the shaft the next tile
+    // starts with, the pillar comes apart every 16 pixels.
+    for (const [name, sprite] of Object.entries({ DJED, PAPYRUS })) {
+      const seam = `${sprite[15][7]}${sprite[15][8]}${sprite[0][7]}${sprite[0][8]}`;
+      expect(`${name}:${seam}`).toBe(`${name}:####`);
+    }
   });
 
   it('draws both layers of every two-colour motif', () => {

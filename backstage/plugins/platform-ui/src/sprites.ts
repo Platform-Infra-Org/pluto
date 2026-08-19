@@ -1117,3 +1117,201 @@ export const AURORA: Sprite = [
   '....................#...........',
   '................................',
 ];
+
+/* ===== Ancient Egyptian ornament =====
+   Four candidates were drawn and dropped, for the same reason the koi note
+   above records: a shape has to survive a 16x16 grid.
+   - The sphinx and the jackal are creatures with a profile: at this size a
+     lion body under a human head is a lump with a hat, and Anubis is a dog.
+   - The pyramid is a triangle, and a triangle reads as a triangle. Nothing in
+     it says Egypt that a play button does not also say.
+   - The winged sun disk loses the feathering that makes the wings wings, and
+     comes back as a disk with a moustache.
+   - Real hieroglyph text is dropped on purpose rather than for legibility: a
+     band of genuine glyphs spells something, and a decorative band that spells
+     something spells it wrong. The lotus frieze below is ornament, not writing
+     — the same call rimefast made with its non-semantic futhark band. */
+
+/**
+ * The ankh, the one Egyptian glyph that is unmistakable at any size.
+ *
+ * Mirror-symmetric about the stem, which is what keeps it from reading as a
+ * lopsided key: the loop, the crossbar and the shaft all share one axis.
+ */
+export const ANKH: Sprite = [
+  '......####......',
+  '....##....##....',
+  '...##......##...',
+  '...##......##...',
+  '...##......##...',
+  '....##....##....',
+  '......####......',
+  '.##############.',
+  '.##############.',
+  '......####......',
+  '......####......',
+  '......####......',
+  '......####......',
+  '......####......',
+  '......####......',
+  '......####......',
+];
+
+/**
+ * The wedjat, the Eye of Horus, facing right: brow, lidded eye, and the tail
+ * and teardrop that hang below it.
+ *
+ * Deliberately asymmetric — the tail drops from the outer corner only — so
+ * mirrorSprite() gives a genuine pair rather than the same drawing twice.
+ */
+export const WEDJAT: Sprite = [
+  '................',
+  '..############..',
+  '................',
+  '....########....',
+  '..###......###..',
+  '.###..####..###.',
+  '.##...####...##.',
+  '.###..####..###.',
+  '..###......###..',
+  '....########....',
+  '.###.....##.....',
+  '.##......##.....',
+  '.##.......##....',
+  '.##.......##....',
+  '.####.....###...',
+  '................',
+];
+
+/**
+ * The lotus frieze: an open flower and a closed bud on a ground line, the
+ * border ornament that runs along the top of half the tomb walls there are.
+ *
+ * Tiles horizontally — the outer columns carry nothing but the ground line, so
+ * two tiles butt together with no seam and no half-cut flower.
+ */
+export const LOTUS_BAND: Sprite = [
+  '................',
+  '................',
+  '................',
+  '................',
+  '................',
+  '................',
+  '#.....#.........',
+  '#..##..#........',
+  '#.####.#...##...',
+  '.######...####..',
+  '..####....####..',
+  '...##.....####..',
+  '...##......##...',
+  '...##......##...',
+  '################',
+  '################',
+];
+
+/**
+ * A papyrus stalk with its umbel, tiling vertically.
+ *
+ * The shaft holds columns 7 and 8 on every row including the last, so the tile
+ * above joins the tile below through the middle of the spray rather than
+ * stopping short of it.
+ */
+export const PAPYRUS: Sprite = [
+  '..#..#.##.#..#..',
+  '..#..#.##.#..#..',
+  '...##.####.##...',
+  '.....######.....',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+];
+
+/**
+ * The djed pillar: four crossbars over a shaft, tiling vertically.
+ *
+ * Stability, and the one Egyptian column form that is a repeating unit already
+ * — the bars are the tile, the shaft is what carries it into the next one.
+ */
+export const DJED: Sprite = [
+  '......####......',
+  '..############..',
+  '......####......',
+  '..############..',
+  '......####......',
+  '..############..',
+  '......####......',
+  '..############..',
+  '......####......',
+  '......####......',
+  '......####......',
+  '......####......',
+  '......####......',
+  '......####......',
+  '......####......',
+  '......####......',
+];
+
+/**
+ * The sun disk with eight rays, four-fold symmetric so it never looks tipped.
+ *
+ * The rays are stubs with a gap before the disk rather than spokes touching
+ * it: joined to the body they thicken it into a cog, and the gap is the only
+ * thing at this size that says light rather than machinery.
+ */
+export const SUN_DISK: Sprite = [
+  '.......##.......',
+  '.#.....##.....#.',
+  '..#....##....#..',
+  '....########....',
+  '...##########...',
+  '..############..',
+  '..############..',
+  '#.############.#',
+  '#.############.#',
+  '..############..',
+  '..############..',
+  '...##########...',
+  '....########....',
+  '..#....##....#..',
+  '.#.....##.....#.',
+  '.......##.......',
+];
+
+/**
+ * The scarab from above, as a two-frame walk strip: 16x16 frames side by side,
+ * so 32x16.
+ *
+ * A strip rather than two sprites for the reason PETAL_STRIP records — CSS
+ * advances one background-position in whole steps, and two images would need
+ * two elements. The frames differ only in which rows the legs leave the body
+ * on, which is what a beetle actually does: the body is still, the legs
+ * alternate. The seam down the elytra is a two-pixel gap, and it is the only
+ * thing separating this from an olive.
+ */
+export const SCARAB_STRIP: Sprite = [
+  '.....######..........######.....',
+  '....########........########....',
+  '...##########...##.##########.##',
+  '##.##########.##...##########...',
+  '...####..####...#..####..####..#',
+  '#..####..####..#...####..####...',
+  '..#####..#####....#####..#####..',
+  '..#####..#####....#####..#####..',
+  '..#####..#####..#.#####..#####.#',
+  '#.#####..#####....#####..#####..',
+  '..#####..#####....#####..#####..',
+  '##.####..####.##...####..####...',
+  '...####..####...##.####..####.##',
+  '....########........########....',
+  '.....######..........######.....',
+  '................................',
+];

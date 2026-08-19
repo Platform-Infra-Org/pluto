@@ -88,6 +88,7 @@ const MODES = [
   'hanami',
   'nightshade',
   'rimefast',
+  'egyptian',
 ] as const;
 type Mode = (typeof MODES)[number];
 
@@ -146,6 +147,13 @@ export const SCHEMES: Scheme[] = [
     hsl: '41 75% 51%',
     fg: '240 10% 8%', // 8.46 — orpiment is far too light to take white
     mode: 'rimefast',
+  },
+  {
+    id: 'egyptian',
+    label: 'Ancient Egyptian',
+    hsl: '221 62% 32%',
+    fg: WHITE, // 9.98 — lapis, the light register's primary
+    mode: 'egyptian',
   },
   // The table-driven brand modes, from brands.ts.
   ...BRAND_DEFS.map(b => ({
@@ -932,6 +940,12 @@ function ModeArt() {
       </div>
       <div className="sc-moon" />
       <div className="sc-rune-rule" />
+      {/* The scarab and, as its own box, the disk it pushes: a background layer
+          wide enough for both would show the second walk frame beside the
+          first, because a background is clipped to its element. */}
+      <div className="sc-khepri">
+        <i />
+      </div>
       <div className="sc-greek-embers">
         {EMBERS.map(i => (
           <i key={i} />

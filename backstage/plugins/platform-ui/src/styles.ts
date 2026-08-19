@@ -11,6 +11,7 @@ import { spiderverseCss } from './spiderverse';
 import { hanamiCss } from './hanami';
 import { nightshadeCss } from './nightshade';
 import { rimefastCss } from './rimefast';
+import { egyptianCss } from './egyptian';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
@@ -100,6 +101,7 @@ ${spiderverseCss()}
 ${hanamiCss()}
 ${nightshadeCss()}
 ${rimefastCss()}
+${egyptianCss()}
 .sc, .sc * {
   /* Full arcade: the pixel face is the base font everywhere, not only on
      chrome. 12px is the floor — kept as a legibility choice, not because

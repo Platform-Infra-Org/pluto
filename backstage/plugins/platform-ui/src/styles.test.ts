@@ -27,6 +27,7 @@ describe('SHADCN_CSS', () => {
       ':root.sc-hanami',
       ':root.sc-nightshade',
       ':root.sc-rimefast',
+      ':root.sc-egyptian',
     ]) {
       expect(`${marker}:${SHADCN_CSS.includes(marker)}`).toBe(`${marker}:true`);
     }

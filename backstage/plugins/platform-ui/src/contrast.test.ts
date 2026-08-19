@@ -1,4 +1,5 @@
 import { BRAND_DEFS } from './brands';
+import { egyptianCss } from './egyptian';
 import { foudreCss } from './foudre';
 import { greekCss } from './greek';
 import { hanamiCss } from './hanami';
@@ -241,6 +242,7 @@ describe('dark rules', () => {
         registerOf(nightshadeCss(), ':root.sc-nightshade.sc-dark'),
       ],
       ['rimefast', registerOf(rimefastCss(), ':root.sc-rimefast.sc-dark')],
+      ['egyptian', registerOf(egyptianCss(), ':root.sc-egyptian.sc-dark')],
     ];
 
     for (const [mode, tokens] of registers) {
