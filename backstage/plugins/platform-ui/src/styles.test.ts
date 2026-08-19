@@ -257,6 +257,23 @@ describe('SHADCN_CSS', () => {
     );
   });
 
+  it('keeps the card actions on the title line, pinned right', () => {
+    // The name reads top left and the two actions sit top right on the same
+    // row. The actions must not be the flexible half: an icon that reflowed
+    // under a long name would move every time a template was renamed.
+    const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
+    const header = rules.match(
+      /\.sc-route-create[^{]*> \.MuiBox-root:first-child \{([^}]*)\}/,
+    );
+    expect(header).toBeTruthy();
+    expect(header![1]).toMatch(/flex-flow:\s*row wrap/);
+
+    const h3 = rules.match(/\.sc-route-create[^{]*> h3 \{([^}]*)\}/);
+    expect(h3).toBeTruthy();
+    expect(h3![1]).toMatch(/flex:\s*0 0 auto/);
+    expect(h3![1]).toMatch(/margin:\s*0 0 0 auto/);
+  });
+
   it('lets the visualizer follow whatever theme is live', () => {
     // The four DependencyGraph override keys carried hardcoded hex chosen for
     // one dark palette, so the graph stayed that colour in every mode and in
@@ -560,9 +577,14 @@ describe('SHADCN_CSS', () => {
       expect(offset.trim()).toMatch(/^-?\d+(?:px)? -?\d+(?:px)? 0 /);
     }
 
-    // Centred: without a plate there is no box edge left to align to.
-    expect(body).toMatch(/align-self:\s*center/);
-    expect(body).toMatch(/text-align:\s*center/);
+    // Flush left, sharing the header's top line with the action icons.
+    expect(body).toMatch(/text-align:\s*left/);
+    // The title is the flexible half of that line. min-width 0 is the part
+    // that is easy to drop and impossible to notice: without it a flex item
+    // refuses to shrink below its content width, so a long name pushes the
+    // icons off the card instead of wrapping underneath itself.
+    expect(body).toMatch(/flex:\s*1 1 auto/);
+    expect(body).toMatch(/min-width:\s*0/);
   });
 
   it('uses no class name that a production build discards', () => {

@@ -756,8 +756,19 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    this orderable without naming a class a production build would discard.
    The type is dropped outright: it repeats what the template's own copy
    already says and it was reading as the card's headline. */
-.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child { display: flex; flex-direction: column; }
-.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > * { order: 3; }
+/* The header is one wrapping row, not a column: the name reads top left and the
+   two actions sit top right on the same line, which is the arrangement a card
+   grid is scanned in. Wrapping is what makes it safe — a name too long to share
+   the line lets the title box shrink and its text run onto a second line rather
+   than sliding under the buttons or being clipped. Anything else the header
+   renders is forced onto its own full-width row below by the catch-all. */
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: flex-start;
+  column-gap: 8px;
+}
+.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > * { order: 3; flex: 0 0 100%; }
 .sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h4 {
   order: 1;
   /* The name IS the card. It arrived at the header's inherited size, which read
@@ -783,9 +794,8 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
      what the reader resolves is white against the shadow — not white against
      whatever the scene happens to paint underneath.
 
-     Centred because without a plate there is no box edge left to align to: the
-     title is a caption over a scene now, and a caption sits in the middle of
-     it. 22px is pinned by styles.test.ts. */
+     Set flush left, sharing the top line with the action icons on the right.
+     22px is pinned by styles.test.ts. */
   text-shadow:
     1px 1px 0 hsl(240 12% 6% / .95),
     -1px 1px 0 hsl(240 12% 6% / .95),
@@ -797,21 +807,26 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
     0 -2px 0 hsl(240 12% 6% / .95),
     3px 3px 0 hsl(240 12% 6% / .8);
   margin: 0;
-  align-self: center;
-  text-align: center;
-  max-width: 100%;
+  /* Takes the space the actions leave and gives it back when the name is long:
+     min-width 0 is what lets a flex item shrink below its content width at all,
+     and break-word is the last resort for a single unbreakable token. */
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  overflow-wrap: break-word;
 }
 /* The h3 holds ONE child, CardHeader's subtitleWrapper, and that wrapper holds
    two: the type text, then the detail + favourite buttons. Only the type text
    is unwanted, so the rule has to reach two levels down — hiding the h3, or
    hiding the wrapper, takes the buttons with it and removes the only route
    from a card to its Template entity. Both have been shipped by mistake.
-   order 0 lifts the surviving button row above the title in the flex column,
-   and flex-end parks it against the card's right edge. */
+   The row never shrinks and never wraps: margin-left auto pushes it to the
+   card's right edge, and the title beside it is the flexible one. An icon that
+   reflowed under a long name would move every time a template was renamed. */
 .sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h3 {
-  order: 0;
-  align-self: flex-end;
-  margin: 0;
+  order: 2;
+  flex: 0 0 auto;
+  margin: 0 0 0 auto;
   line-height: 1;
 }
 .sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h3 > div > div:first-child { display: none; }
