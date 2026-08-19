@@ -762,7 +762,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   order: 1;
   /* The name IS the card. It arrived at the header's inherited size, which read
      as a caption on a card whose whole job is to be picked from a grid. */
-  font-size: 16px !important;
+  font-size: 19px !important;
   font-weight: 600 !important;
   line-height: 1.2 !important;
   letter-spacing: -0.02em;
@@ -772,19 +772,27 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
      without touching the art — it darkens only the band the words occupy, and
      white over it clears AA whatever is painted underneath. */
   color: hsl(0 0% 100%) !important;
-  background-color: hsl(240 12% 6% / .72);
-  /* The PLATE shrinks with the type, not instead of it: 22px over 4px 8px made
-     a 34.39px band on a 90px header scene, which was a banner rather than a
-     card title. At 16px over 1px 4px the band is 21.2px — the 19.2px line box
-     plus 1px top and bottom — and the descender keeps 1.6px of clearance
-     inside it, so nothing is clipped. line-height 1.2 stays; 1.05 is available
-     if 21.2px is still too tall and 1.0 is the true floor. The 16px is pinned
-     by styles.test.ts. */
-  padding: 1px 4px;
+  /* The plate stopped being a plate. It began as a filled band because white on
+     the generated header scene measures as low as 1.27:1 over the bright art,
+     and something had to carry that. But the header already outlines every one
+     of its glyphs on four sides and drops a hard 2px shadow behind them (see
+     the text-shadow block further down), so the fill was doing the same job
+     twice and reading as a sticker the title had been printed on.
+     What is left is a wash, not a box: no vertical padding at all, so its
+     height IS the line box, 3px either side so the outline is not clipped, and
+     a lower alpha that darkens the scene under the words without drawing an
+     edge around them. The corner radius drops to 2px for the same reason — at
+     the house radius a short title read as a chip.
+     The type grew as the plate shrank, which is the whole point: 19px over
+     line-height 1.2 is a 22.8px line box, still under the 34.39px banner the
+     original 22px/4px combination produced, and now it is type rather than
+     packaging. 19px is pinned by styles.test.ts. */
+  background-color: hsl(240 12% 6% / .5);
+  padding: 0 3px;
   margin: 0;
   align-self: flex-start;
   max-width: 100%;
-  border-radius: var(--sc-radius-sm);
+  border-radius: 2px;
 }
 /* The h3 holds ONE child, CardHeader's subtitleWrapper, and that wrapper holds
    two: the type text, then the detail + favourite buttons. Only the type text

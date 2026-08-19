@@ -533,18 +533,23 @@ describe('SHADCN_CSS', () => {
     // which read as a caption on a card whose whole job is to be picked out of
     // a grid.
     expect(SHADCN_CSS).toMatch(
-      /\.sc-route-create[^{]*> h4 \{[^}]*font-size:\s*16px/,
+      /\.sc-route-create[^{]*> h4 \{[^}]*font-size:\s*19px/,
     );
-    // The plate hugs the type. 4px of vertical padding made a 34.39px band over
-    // a 90px header scene; at 16px/1.2 the line box needs 19.2px and 1px of
-    // padding leaves the descender 1.6px of clearance. Comments are stripped
-    // first — the rule's own comment quotes the old values.
+    // The backing is a wash, not a plate: zero vertical padding, so its height
+    // is exactly the line box and it cannot band across the header scene. The
+    // legibility it used to provide alone now comes mostly from the four-way
+    // outline and hard drop shadow the header applies to every glyph. Comments
+    // are stripped first — the rule's own comment quotes the old values.
     const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
     const block = rules.match(/\.sc-route-create[^{]*> h4 \{([^}]*)\}/);
     expect(block).toBeTruthy();
-    const padding = /padding:\s*(\d+(?:\.\d+)?)px/.exec(block![1]);
+    // Unitless zero is legal CSS and is what this rule now uses, so the unit
+    // is optional in the match — requiring "px" would read the rule as having
+    // no padding at all and pass for the wrong reason.
+    const padding = /padding:\s*(\d+(?:\.\d+)?)(?:px)?/.exec(block![1]);
     expect(padding).not.toBeNull();
-    expect(parseFloat(padding![1])).toBeLessThanOrEqual(2);
+    // Vertical padding specifically: a band is what this guards against.
+    expect(parseFloat(padding![1])).toBe(0);
   });
 
   it('uses no class name that a production build discards', () => {
