@@ -117,6 +117,11 @@ proxy:
     # proxy forwards to the upstream and injects its auth header server-side
     # (here, the static token our /options endpoint requires — a real API would
     # put its own key/token here). Secrets never reach the browser.
+    # Stand-in for an external options API: the proxy points back at this same
+    # backend, whose /options/:name route serves the demo sets the DynamicSelect
+    # examples read. That route is OFF unless `platform.demoOptions` is true —
+    # the dev stack turns it on in app-config.local.yaml, production leaves it
+    # off, and this endpoint then proxies to a 404 rather than to demo data.
     '/demo-options':
       target: http://localhost:7007/api/platform-requests/options
       changeOrigin: true

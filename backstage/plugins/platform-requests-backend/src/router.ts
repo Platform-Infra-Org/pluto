@@ -328,8 +328,21 @@ export async function createRouter(
       projects: ['checkout', 'payments', 'search'],
     },
   };
+  // Demo data in a production binary, so it is opt-in rather than opt-out.
+  // Answering 404 with the reason beats registering nothing: a developer whose
+  // DynamicSelect example returns "could not load options" gets told which key
+  // turns it on, instead of a bare Express 404 that looks like a typo.
+  const demoOptions =
+    options.config?.getOptionalBoolean('platform.demoOptions') ?? false;
   router.get('/options/:name', async (req, res) => {
     await httpAuth.credentials(req, { allow: ['user', 'service'] });
+    if (!demoOptions) {
+      res.status(404).json({
+        error:
+          'demo option sets are disabled; set platform.demoOptions: true to serve them',
+      });
+      return;
+    }
     res.json(OPTION_SETS[req.params.name] ?? []);
   });
 

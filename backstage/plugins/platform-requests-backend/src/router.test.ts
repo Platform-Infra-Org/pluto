@@ -1032,4 +1032,48 @@ describe('createRouter', () => {
       expect(res.status).toBe(501);
     });
   });
+  describe('demo option sets', () => {
+    // Demo data living in a production binary, so the route is opt-in. The
+    // default matters more than the enabled path: an environment that never
+    // heard of this key must not serve it.
+    it('is off unless the config says otherwise', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        config: mockServices.rootConfig(),
+      });
+      const res = await request(app).get('/options/regions');
+      expect(res.status).toBe(404);
+      // The 404 names the key, so a developer whose DynamicSelect example went
+      // quiet is told why instead of hunting a typo'd path.
+      expect(res.body.error).toMatch(/platform\.demoOptions/);
+    });
+
+    it('serves the sets when explicitly enabled', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        config: mockServices.rootConfig({ data: { platform: { demoOptions: true } } }),
+      });
+      const res = await request(app).get('/options/regions');
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({
+        'US East (N. Virginia)': 'us-east-1',
+        'EU West (Ireland)': 'eu-west-1',
+        'AP South (Mumbai)': 'ap-south-1',
+      });
+    });
+
+    it('serves the coordinate tree the cascading select reads', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        config: mockServices.rootConfig({ data: { platform: { demoOptions: true } } }),
+      });
+      const res = await request(app).get('/options/coordinate-tree');
+      expect(res.status).toBe(200);
+      // Shape matters more than the values: nested objects to the island, with
+      // the environments as a leaf array. That is what walkTree expects.
+      expect(Object.keys(res.body.coordinates)).toEqual(['aurora', 'borealis']);
+      expect(res.body.coordinates.borealis.lab['eu-west'].cork).toEqual(['sandbox']);
+    });
+  });
+
 });

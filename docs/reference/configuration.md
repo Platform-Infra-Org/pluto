@@ -140,6 +140,24 @@ enable. See **[Customise the home page](../how-to/customise-the-home-page.md)**.
 entry is tried on decrypt, which is how the key rotates without re-encrypting
 held blobs. See **[Secret lifecycle](../explanation/secrets-lifecycle.md)**.
 
+## `platform.demoOptions`
+
+```yaml
+platform:
+  demoOptions: true
+```
+
+Serves the demo option sets at `/options/:name` — the stand-in "external" API
+the DynamicSelect examples reach through the `/demo-options` proxy, including
+the nested `coordinate-tree` the cascading example walks.
+
+**Off unless set**, and it should stay off in production: this is demo data
+living in a production binary, so the default is the safe one and every
+environment that wants it says so. The dev stack switches it on in the
+gitignored `app-config.local.yaml` that `scripts/backstage-up.sh` writes. With
+it off the route answers 404 naming this key, so an example that goes quiet
+explains itself.
+
 ## `platform.uploads`
 
 ```yaml

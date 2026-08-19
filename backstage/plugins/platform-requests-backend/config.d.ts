@@ -162,6 +162,16 @@ export interface Config {
      * S3 destination for scaffolder file uploads. Backend-only: the browser
      * receives a presigned URL, never a credential.
      */
+    /**
+     * Serve the demo option sets at `/options/:name` — the stand-in "external"
+     * API the DynamicSelect examples call through the `/demo-options` proxy.
+     *
+     * Off unless set. It is demo data living in a production binary, so the
+     * default is the safe one and every environment that wants it says so.
+     * The dev stack enables it in app-config.local.yaml; production should
+     * leave it alone.
+     */
+    demoOptions?: boolean;
     uploads?: {
       bucket: string;
       region: string;

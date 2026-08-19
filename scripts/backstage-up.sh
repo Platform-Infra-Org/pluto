@@ -41,6 +41,10 @@ proxy:
     '/demo-options':
       headers:
         Authorization: Bearer ${SMOKE_TOKEN}
+# The option sets behind that proxy are demo data and ship disabled, so the dev
+# stack is where they get switched on. Production leaves this unset.
+platform:
+  demoOptions: true
 EOF
 )"
   if [ -s "$LOCAL_CONFIG" ]; then
