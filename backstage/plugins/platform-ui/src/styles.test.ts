@@ -240,6 +240,30 @@ describe('SHADCN_CSS', () => {
     );
   });
 
+  it('opens the sign-in tray downward, where it can still be reached', () => {
+    // .sc-login is a scroll container, so it clips its descendants — and
+    // upward overflow does not extend scrollHeight, meaning a tray clipped at
+    // the top cannot be scrolled to at all. Downward overflow can.
+    expect(SHADCN_CSS).toMatch(
+      /\.sc-login-pick \.sc-picker-inv \{[^}]*top:\s*calc\(100% \+ 10px\)/,
+    );
+    expect(SHADCN_CSS).toMatch(
+      /\.sc-login-pick \.sc-picker-inv \{[^}]*bottom:\s*auto/,
+    );
+  });
+
+  it('shrinks the sign-in card on a short viewport instead of scrolling it', () => {
+    // Landscape phones and windows with devtools docked along the bottom. The
+    // trim comes out of spacing, never content: the picker is the last element
+    // in the card, so anything that makes the card overflow hides it first.
+    const short = SHADCN_CSS.slice(
+      SHADCN_CSS.indexOf('@media (max-height: 480px)'),
+    );
+    expect(short).toContain('@media (max-height: 480px)');
+    expect(short.slice(0, 500)).toMatch(/\.sc-login-card \{[^}]*padding/);
+    expect(short.slice(0, 500)).toMatch(/\.sc-login-pick \{[^}]*margin-top/);
+  });
+
   it('keeps the sign-in screen to one viewport that does not scroll', () => {
     // The card's last element is the scheme picker. When the document grew past
     // the fold the picker went with it, and a control that is merely off-screen

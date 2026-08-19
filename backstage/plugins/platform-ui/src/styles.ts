@@ -1599,6 +1599,39 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* The sign-in card has its own shelf under the button, so the corner one would
    be a second identical picker on the same screen. */
 :root.sc-signed-out .sc-picker-float { display: none; }
+/* The tray opens DOWNWARD from the sign-in card, and upward everywhere else.
+
+   Two reasons, both consequences of .sc-login being a scroll container. First,
+   a scroll container clips its descendants: opening upward from a bottle near
+   the card's bottom puts the top of the tray — the first schemes in the list —
+   under the clip on any viewport that is not tall. Second, and worse, upward
+   overflow does not add to a scroller's scrollHeight, so the clipped part
+   cannot be scrolled to either. It is simply gone.
+
+   Downward overflow does extend scrollHeight, so on a viewport too short to
+   show the whole tray it stays reachable by scrolling instead of vanishing.
+   Below the bottle there is also far more room: the card's own padding and
+   then the entire lower half of the screen.
+
+   The floating picker keeps opening upward, which is correct for something
+   anchored to the bottom-left corner of the viewport. */
+.sc-login-pick .sc-picker-inv { bottom: auto; top: calc(100% + 10px); }
+
+/* Short viewports — a phone in landscape, or a window with devtools docked
+   along the bottom. The card is ~352px plus the wrapper's padding, so under
+   about 400px of height it no longer fits and the wrapper scrolls it, which
+   puts the scheme picker back below the fold. Everything here is trimmed from
+   spacing rather than from content: nothing is hidden, the card just stops
+   being generous. Saves roughly 100px, which covers landscape down to ~300px. */
+@media (max-height: 480px) {
+  .sc-login { padding: 12px; }
+  .sc-login-card { padding: 20px 24px; gap: 4px; }
+  .sc-login-mark { width: 40px; height: 40px; margin-bottom: 4px; }
+  .sc-login-mark svg, .sc-login-mark img { width: 26px; height: 26px; }
+  .sc-login-sub { margin-bottom: 10px; }
+  .sc-login-pick { margin-top: 12px; padding-top: 10px; }
+}
+
 /* Same class, second job: while the gate is up the document itself must not
    scroll. .sc-login already fills the viewport and scrolls internally when it
    has to, so a scrollbar on the page can only mean something is pushing past
