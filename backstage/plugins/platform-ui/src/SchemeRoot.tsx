@@ -12,7 +12,7 @@ import {
   AMPHORA_VESSEL,
   CANOPIC_VESSEL,
   CAULDRON_VESSEL,
-  HORN_VESSEL,
+  TANKARD_VESSEL,
   Sprite,
   SPRITE_SIZE,
   spriteRects,
@@ -116,7 +116,7 @@ export const MODE_VESSELS: Partial<Record<Mode, Sprite>> = {
   greek: AMPHORA_VESSEL,
   hanami: TOKKURI_VESSEL,
   nightshade: CAULDRON_VESSEL,
-  rimefast: HORN_VESSEL,
+  rimefast: TANKARD_VESSEL,
   egyptian: CANOPIC_VESSEL,
 };
 

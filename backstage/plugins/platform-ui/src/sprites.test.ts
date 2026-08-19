@@ -44,7 +44,7 @@ import {
   WEDJAT,
   TOKKURI_VESSEL,
   CAULDRON_VESSEL,
-  HORN_VESSEL,
+  TANKARD_VESSEL,
   CANOPIC_VESSEL,
 } from './sprites';
 
@@ -109,7 +109,7 @@ describe('sprite data', () => {
       SEIGAIHA, TORII, ASANOHA, KOI, CRESCENT_FLAME, CAULDRON, SPRIG,
       FUTHARK, YGGDRASIL, KNOTWORK, SCROLL_CORNER, RAVEN,
       ANKH, WEDJAT, CARTOUCHE, PAPYRUS, DJED,
-      TOKKURI_VESSEL, CAULDRON_VESSEL, HORN_VESSEL, CANOPIC_VESSEL,
+      TOKKURI_VESSEL, CAULDRON_VESSEL, TANKARD_VESSEL, CANOPIC_VESSEL,
     };
     for (const [name, sprite] of Object.entries({
       TEMPLE,
@@ -208,7 +208,7 @@ describe('sprite data', () => {
       AMPHORA_VESSEL,
       TOKKURI_VESSEL,
       CAULDRON_VESSEL,
-      HORN_VESSEL,
+      TANKARD_VESSEL,
       CANOPIC_VESSEL,
     };
     for (const [name, sprite] of Object.entries(vessels)) {
@@ -232,7 +232,7 @@ describe('sprite data', () => {
       AMPHORA_VESSEL,
       TOKKURI_VESSEL,
       CAULDRON_VESSEL,
-      HORN_VESSEL,
+      TANKARD_VESSEL,
       CANOPIC_VESSEL,
     };
     for (const [name, sprite] of Object.entries(vessels)) {
@@ -252,7 +252,7 @@ describe('sprite data', () => {
       AMPHORA_VESSEL,
       TOKKURI_VESSEL,
       CAULDRON_VESSEL,
-      HORN_VESSEL,
+      TANKARD_VESSEL,
       CANOPIC_VESSEL,
     ].map(s => s.join('/'));
     expect(new Set(shapes).size).toBe(shapes.length);

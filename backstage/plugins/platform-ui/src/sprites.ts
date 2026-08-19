@@ -390,31 +390,33 @@ export const CAULDRON_VESSEL: Sprite = [
 ];
 
 /**
- * Rimefast: a drinking horn, mouth at the top right, curving down to a tip at
- * the lower left.
+ * Rimefast: a stave tankard — the banded wooden cup, not the drinking horn.
  *
- * The curve is the whole of it: a straight diagonal cone reads as an arrow.
- * The wall steps back out by one pixel near the tip, which is the flick a horn
- * has and a funnel does not, and the mead pools at the bottom — the only
- * vessel here whose liquid is low because gravity says so rather than because
- * the shelf does.
+ * The horn was the obvious Norse vessel and the wrong one for this shelf: a
+ * long tapering curve reads as a crescent or a claw at 16px, and beside four
+ * upright vessels it was the one shape that did not look like it belonged to
+ * the set. A tankard keeps the culture (coopered staves, iron hoops, a mead
+ * cup) and the family silhouette: upright, hairline walls, liquid sitting low.
+ * The two full-width bands are the hoops, and they double as the only place
+ * the wall reads as thick, which is what makes it read as wood rather than
+ * glass.
  */
-export const HORN_VESSEL: Sprite = [
-  '.......########.',
-  '......#~~~~~~~#.',
-  '.....#~~~~~~~#..',
-  '....#~~~~~~~#...',
-  '....#~~~~~~#....',
+export const TANKARD_VESSEL: Sprite = [
+  '................',
+  '...########.....',
+  '...#......#.....',
+  '...#......#.###.',
+  '...#......#...#.',
+  '...########...#.',
+  '...#......#...#.',
+  '...#~~~~~~#...#.',
+  '...#~~~~~~#...#.',
+  '...########...#.',
+  '...#~~~~~~#.###.',
   '...#~~~~~~#.....',
-  '...#~~~~~#......',
-  '..#~~~~~#.......',
-  '..#~~~~#........',
-  '..#~~~#.........',
-  '.#~~~~#.........',
-  '.#~~~#..........',
-  '.#~~#...........',
-  '.#~#............',
-  '.##.............',
+  '...#~~~~~~#.....',
+  '...########.....',
+  '................',
   '................',
 ];
 

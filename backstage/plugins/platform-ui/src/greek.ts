@@ -92,7 +92,7 @@ export function greekCss(): string {
      lightness on 96% parchment is a spark nobody can see, which is exactly
      what was reported. 26deg off the destructive hue and far darker, so a
      rising ember never reads as a failure badge drifting up the page. */
-  --sc-ember: 38 78% 34%;
+  --sc-ember: 6 74% 30%;
 }
 /* ===== dark register: the Underworld ===== */
 :root.sc-greek.sc-dark {

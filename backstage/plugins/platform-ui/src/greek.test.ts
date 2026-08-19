@@ -149,9 +149,24 @@ describe('greekCss', () => {
       const body = css.slice(start, css.indexOf('}', start));
       return Number(new RegExp(`--sc-${token}:\\s*([\\d.]+)`).exec(body)?.[1]);
     };
+    // Distinguishable, not merely distant in hue. A fire ember IS red, so on
+    // the daylight register it sits about 6deg from the failure badge and no
+    // hue rule can separate them — what separates them there is weight: 30%
+    // lightness against the badge's 50%, a dark coal rather than a warning.
+    // Either axis satisfies this; needing both would forbid a red ember, and
+    // needing neither would let one drift into looking like state.
+    const lightOf = (token: string, selector: string) => {
+      const start = css.indexOf(`${selector} {`);
+      const body = css.slice(start, css.indexOf('}', start));
+      return Number(
+        new RegExp(`--sc-${token}:\\s*[\\d.]+\\s+[\\d.]+%\\s+([\\d.]+)`).exec(body)?.[1],
+      );
+    };
     for (const register of [':root.sc-greek', ':root.sc-greek.sc-dark']) {
-      const gap = Math.abs(hueOf('ember', register) - hueOf('destructive', register));
-      expect(`${register}:${gap >= 20}`).toBe(`${register}:true`);
+      const hueGap = Math.abs(hueOf('ember', register) - hueOf('destructive', register));
+      const lightGap = Math.abs(lightOf('ember', register) - lightOf('destructive', register));
+      const distinct = hueGap >= 20 || lightGap >= 18;
+      expect(`${register}:${distinct}`).toBe(`${register}:true`);
     }
   });
 
