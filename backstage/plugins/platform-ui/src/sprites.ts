@@ -289,24 +289,28 @@ export const AMPHORA: Sprite = [
  * Two layers rather than reusing AMPHORA, which is a solid silhouette and has
  * nothing for the picker to fill with the scheme colour. Same reason POTION
  * and RUPEE carry a second layer.
+ *
+ * Drawn to the shelf proportions the note below sets out: a flared lip, a
+ * collared neck, the handles hung off the shoulder rather than the belly, and
+ * a foot that tapers to four pixels instead of sitting flat.
  */
 export const AMPHORA_VESSEL: Sprite = [
   '.....######.....',
   '.....#~~~~#.....',
   '......####......',
+  '......#~~#......',
   '..##..#~~#..##..',
-  '.####.#~~#.####.',
-  '.##.##~~~~##.##.',
+  '.##..#~~~~#..##.',
   '.##.#~~~~~~#.##.',
-  '..#~~~~~~~~~~#..',
-  '..#~~~~~~~~~~#..',
-  '..#~~~~~~~~~~#..',
-  '..#~~~~~~~~~~#..',
+  '..###~~~~~~###..',
+  '...#~~~~~~~~#...',
+  '...#~~~~~~~~#...',
   '...#~~~~~~~~#...',
   '....#~~~~~~#....',
   '.....#~~~~#.....',
+  '......#~~#......',
   '......####......',
-  '.....######.....',
+  '................',
 ];
 
 /* The rest of the vessel shelf: one bottle per ornamented mode.
@@ -316,7 +320,23 @@ export const AMPHORA_VESSEL: Sprite = [
    the whole of what these exist to avoid. Silhouette is what separates them
    at 16px, not detail: a flask, a pot on legs, a tapering horn and a lidded
    jar with a head on it are four different shapes at a glance, and the
-   generic POTION is still what every unornamented mode gets. */
+   generic POTION is still what every unornamented mode gets.
+
+   THEY ARE READ AS A ROW, not one at a time — five of them sit side by side in
+   the picker tray — so the shelf keeps four rules and each vessel varies only
+   within them. Break one and that vessel stops belonging to the set:
+
+   - a one-pixel margin all round, and the bottom row empty. A shape that
+     touches the edge of its box reads as cropped rather than drawn, and next
+     to four that do not, it reads as the odd one out.
+   - hairline walls: one pixel, never two. The old shelf mixed both weights,
+     which is most of what made it look chunky.
+   - the liquid mass sits low, in the belly. It is the only coloured thing in
+     the sprite and it is what the tray is actually showing.
+   - taller than wide where the vessel allows it: nothing spans more than
+     twelve of the sixteen columns.
+
+   sprites.test.ts pins the margin, which is the one a redraw loses silently. */
 
 /** Hanami: a tokkuri, the sake flask — flared lip, collared neck, round belly. */
 export const TOKKURI_VESSEL: Sprite = [
@@ -325,89 +345,105 @@ export const TOKKURI_VESSEL: Sprite = [
   '......####......',
   '......#~~#......',
   '......#~~#......',
+  '......#~~#......',
   '.....#~~~~#.....',
   '....#~~~~~~#....',
   '...#~~~~~~~~#...',
   '..#~~~~~~~~~~#..',
   '..#~~~~~~~~~~#..',
   '..#~~~~~~~~~~#..',
-  '..#~~~~~~~~~~#..',
   '...#~~~~~~~~#...',
-  '...#~~~~~~~~#...',
-  '....########....',
+  '....#~~~~~~#....',
+  '.....######.....',
   '................',
 ];
 
 /**
- * Nightshade: the cauldron, on legs and under its bail handle.
+ * Nightshade: the cauldron, slung under its bail handle and standing on two
+ * feet.
  *
  * Not the CAULDRON above, which is a solid iron body with three bubbles over
  * it: at bottle scale that reads as a black pot and the scheme colour barely
- * appears. This one is filled to the rim, so the brew is most of the sprite.
+ * appears. Here the pot is an outline and the brew fills it.
+ *
+ * The one vessel on the shelf that is wider than it is tall in the body, which
+ * is what a cauldron is. It keeps to the shelf by carrying the height in the
+ * handle above and the legs below instead of in a neck.
  */
 export const CAULDRON_VESSEL: Sprite = [
-  '................',
-  '...##########...',
-  '..#..........#..',
-  '.#............#.',
-  '################',
-  '#~~~~~~~~~~~~~~#',
-  '#~~~~~~~~~~~~~~#',
-  '#~~~~~~~~~~~~~~#',
-  '.#~~~~~~~~~~~~#.',
-  '.#~~~~~~~~~~~~#.',
+  '......####......',
+  '....##....##....',
+  '...#........#...',
+  '...#........#...',
+  '.##############.',
+  '..#~~~~~~~~~~#..',
   '..#~~~~~~~~~~#..',
   '..#~~~~~~~~~~#..',
   '...#~~~~~~~~#...',
-  '....########....',
-  '...##......##...',
-  '..###......###..',
+  '...#~~~~~~~~#...',
+  '....#~~~~~~#....',
+  '.....######.....',
+  '....##....##....',
+  '....##....##....',
+  '...####..####...',
+  '................',
 ];
 
-/** Rimefast: a drinking horn, mouth at the top right and tapering to a tip. */
+/**
+ * Rimefast: a drinking horn, mouth at the top right, curving down to a tip at
+ * the lower left.
+ *
+ * The curve is the whole of it: a straight diagonal cone reads as an arrow.
+ * The wall steps back out by one pixel near the tip, which is the flick a horn
+ * has and a funnel does not, and the mead pools at the bottom — the only
+ * vessel here whose liquid is low because gravity says so rather than because
+ * the shelf does.
+ */
 export const HORN_VESSEL: Sprite = [
-  '........######..',
-  '.......#~~~~~~#.',
-  '......#~~~~~~#..',
-  '.....#~~~~~~#...',
-  '.....#~~~~~#....',
-  '....#~~~~~#.....',
-  '....#~~~~#......',
-  '...#~~~~#.......',
-  '...#~~~~#.......',
+  '.......########.',
+  '......#~~~~~~~#.',
+  '.....#~~~~~~~#..',
+  '....#~~~~~~~#...',
+  '....#~~~~~~#....',
+  '...#~~~~~~#.....',
+  '...#~~~~~#......',
+  '..#~~~~~#.......',
   '..#~~~~#........',
   '..#~~~#.........',
-  '..#~~~#.........',
-  '..#~~#..........',
-  '..#~#...........',
-  '..##............',
+  '.#~~~~#.........',
+  '.#~~~#..........',
+  '.#~~#...........',
+  '.#~#............',
+  '.##.............',
   '................',
 ];
 
 /**
  * Egyptian: a canopic jar, the head-stoppered vessel of the burial set.
  *
- * The lid is the whole of the recognition at this size, so it is drawn solid
- * with two pixels knocked out for the eyes, and the liquid starts under the
- * shoulder where a stoppered jar would actually hold it.
+ * The lid is the whole of the recognition at this size. It is the jackal, and
+ * it is drawn as an outline with two upright ears and a knocked-out pair of
+ * eyes rather than as a solid block: a filled head at 16px is a domino, and
+ * the ears are what separate this from the tokkuri's stopper across the tray.
+ * The liquid starts under the lid rim, where a stoppered jar would hold it.
  */
 export const CANOPIC_VESSEL: Sprite = [
-  '......####......',
-  '.....######.....',
-  '....########....',
+  '....##....##....',
   '....##....##....',
   '....########....',
+  '....#.####.#....',
+  '....########....',
   '.....######.....',
   '......####......',
   '..############..',
+  '...#~~~~~~~~#...',
   '..#~~~~~~~~~~#..',
-  '.#~~~~~~~~~~~~#.',
-  '.#~~~~~~~~~~~~#.',
-  '.#~~~~~~~~~~~~#.',
-  '.#~~~~~~~~~~~~#.',
   '..#~~~~~~~~~~#..',
-  '..############..',
+  '..#~~~~~~~~~~#..',
+  '..#~~~~~~~~~~#..',
+  '...#~~~~~~~~#...',
   '...##########...',
+  '................',
 ];
 
 /** A secret: what a request carries that must not be printed. */

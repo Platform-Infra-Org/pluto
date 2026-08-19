@@ -223,6 +223,27 @@ describe('sprite data', () => {
     }
   });
 
+  it('keeps every vessel inside a one-pixel margin, which is what makes them a set', () => {
+    // The five sit side by side in the picker tray, so they are read as a row.
+    // A shape that touches the edge of its grid reads as cropped next to four
+    // that do not, and nothing else in the sprite says which one is wrong —
+    // the vessel simply looks heavier than its neighbours.
+    const vessels = {
+      AMPHORA_VESSEL,
+      TOKKURI_VESSEL,
+      CAULDRON_VESSEL,
+      HORN_VESSEL,
+      CANOPIC_VESSEL,
+    };
+    for (const [name, sprite] of Object.entries(vessels)) {
+      expect(`${name} last row:${sprite[SPRITE_SIZE - 1]}`).toBe(
+        `${name} last row:${'.'.repeat(SPRITE_SIZE)}`,
+      );
+      const edges = sprite.map(row => row[0] + row[SPRITE_SIZE - 1]).join('');
+      expect(`${name} sides:${edges.replace(/\./g, '')}`).toBe(`${name} sides:`);
+    }
+  });
+
   it('gives every vessel a silhouette of its own', () => {
     // Two modes sharing a grid is the same bottle twice, which is what the
     // generic POTION already does for everything unornamented.
