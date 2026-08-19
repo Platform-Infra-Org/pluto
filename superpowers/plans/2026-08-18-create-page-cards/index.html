@@ -21,7 +21,7 @@
     
     
       
-        <title>Seven modes, a bigger template title, and the visualizer — Plan - Platform Plugin Suite</title>
+        <title>Create Page Cards Implementation Plan - Platform Plugin Suite</title>
       
     
     
@@ -62,7 +62,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#seven-modes-a-bigger-template-title-and-the-visualizer-plan" class="md-skip">
+        <a href="#create-page-cards-implementation-plan" class="md-skip">
           Skip to content
         </a>
       
@@ -98,7 +98,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Seven modes, a bigger template title, and the visualizer — Plan
+              Create Page Cards Implementation Plan
             
           </span>
         </div>
@@ -1171,99 +1171,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#what-the-sites-actually-use" class="md-nav__link">
+  <a href="#global-constraints" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What the sites actually use
+        Global Constraints
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#decisions-taken-before-coding" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Decisions taken before coding
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#task-list" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Task list
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Task list">
+    <nav class="md-nav" aria-label="Global Constraints">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#task-1-template-title-and-the-visualizer" class="md-nav__link">
+  <a href="#task-1-shrink-the-title-and-restore-the-buttons" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Task 1: Template title, and the visualizer
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#task-2-measure-six-palettes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Task 2: Measure six palettes
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#task-3-the-brand-table" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Task 3: The brand table
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#task-4-spider-verse" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Task 4: Spider-Verse
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#task-5-verify-in-a-browser" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Task 5: Verify in a browser
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#task-6-ci-and-the-image" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Task 6: CI and the image
+        Task 1: Shrink the title and restore the buttons
       
     </span>
   </a>
@@ -1272,17 +1195,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#risks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Risks
-      
-    </span>
-  </a>
   
 </li>
       
@@ -1303,136 +1215,153 @@
 
 
 
-<h1 id="seven-modes-a-bigger-template-title-and-the-visualizer-plan">Seven modes, a bigger template title, and the visualizer — Plan<a class="headerlink" href="#seven-modes-a-bigger-template-title-and-the-visualizer-plan" title="Permanent link">&para;</a></h1>
+<h1 id="create-page-cards-implementation-plan">Create Page Cards Implementation Plan<a class="headerlink" href="#create-page-cards-implementation-plan" title="Permanent link">&para;</a></h1>
 <blockquote>
-<p><strong>For agentic workers:</strong> Steps use checkbox (<code>- [ ]</code>) syntax for tracking.</p>
+<p><strong>For agentic workers:</strong> REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (<code>- [ ]</code>) syntax for tracking.</p>
 </blockquote>
-<p><strong>Goal:</strong> Add seven mode potions, enlarge the template-card title, and bring the app visualizer onto the design system — without breaking the three modes that exist.</p>
-<p><strong>Architecture:</strong> Six of the seven are palette-plus-shape and live as a table (<code>brands.ts</code>); Spider-Verse is hand-written because its identity is a set of effects, not a palette. The visualizer is reached through <code>theme.tsx</code> typed override keys, which is the only hook that survives a production build.</p>
-<hr />
-<h2 id="what-the-sites-actually-use">What the sites actually use<a class="headerlink" href="#what-the-sites-actually-use" title="Permanent link">&para;</a></h2>
-<p>Measured by driving each with a browser and reading computed styles across the DOM. Counts are elements resolving to that value.</p>
-<table>
-<thead>
-<tr>
-<th>Mode</th>
-<th>Ground</th>
-<th>Accent</th>
-<th>Shape</th>
-<th>Rules</th>
-<th>Elevation</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>New Form</strong> <code>newform</code></td>
-<td><code>#121613</code> ink / <code>#fafffa</code> paper</td>
-<td><strong><code>#2bee4b</code></strong> electric green</td>
-<td>10px (18), 50% (6)</td>
-<td>1px <code>#516254</code></td>
-<td><strong>green-tinted glow</strong> <code>rgba(16,94,29,.45) 1px 8px 20px</code></td>
-</tr>
-<tr>
-<td><strong>Hungry Tiger</strong> <code>tiger</code></td>
-<td><code>#402011</code> spice (65 bg)</td>
-<td><strong><code>#faae33</code></strong> gold (847 text)</td>
-<td><strong>100% (94)</strong>, 6px, pills</td>
-<td>1px <code>#402011</code> (37)</td>
-<td>none</td>
-</tr>
-<tr>
-<td><strong>Hermes</strong> <code>hermes</code></td>
-<td><code>#f5f5f5</code></td>
-<td><strong><code>#0000f2</code></strong> pure blue</td>
-<td><strong>4px — square</strong></td>
-<td>1px and <strong>33px</strong> <code>#0000f2</code></td>
-<td>none</td>
-</tr>
-<tr>
-<td><strong>Flying Papers</strong> <code>papers</code></td>
-<td><code>#f9f5f2</code> paper / <code>#1a1a1a</code></td>
-<td><strong><code>#f4ed36</code></strong> acid yellow + <code>#8584bd</code> periwinkle</td>
-<td>6px (11), 100px (10)</td>
-<td><strong>3px <code>#1a1a1a</code> (32)</strong></td>
-<td>none</td>
-</tr>
-<tr>
-<td><strong>Discord</strong> <code>discord</code></td>
-<td>white / black</td>
-<td><strong><code>#5865f2</code></strong> blurple</td>
-<td><strong>16px (76)</strong>, 12, 40, 50, 120</td>
-<td>2px white/.1</td>
-<td>none</td>
-</tr>
-<tr>
-<td><strong>Claude</strong> <code>claude</code></td>
-<td>see note</td>
-<td><code>#d97757</code> clay</td>
-<td>soft</td>
-<td>hairline</td>
-<td>none</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Claude is the one I could not measure.</strong> <code>claude.ai/new</code> serves a Cloudflare interstitial to an automated browser — the DOM I got back was the challenge page, not the app. Rather than pass that off as research, this mode is built from Anthropic's <strong>published design tokens</strong> (Slate Dark <code>#141413</code>, Ivory Medium <code>#f0eee6</code>, Ivory Light <code>#faf9f5</code>, Cloud/Stone greys, Clay <code>#d97757</code>), and the file says so. Its three stated negatives — no drop shadows, no gradients, no pure white — are the character.</p>
-<p><strong>Spider-Verse has no site to inspect</strong>, so it is built from the film's art direction rather than measured: halftone/Ben-Day dots, chromatic aberration (red/cyan offset), heavy panel rules, and comic-primary colour. It is the only mode here whose identity is <em>effects</em> rather than palette, which is why it is hand-written.</p>
-<hr />
-<h2 id="decisions-taken-before-coding">Decisions taken before coding<a class="headerlink" href="#decisions-taken-before-coding" title="Permanent link">&para;</a></h2>
-<ol>
-<li><strong>Six in a table, one hand-written.</strong> The five measured sites plus Claude differ by palette, radius, rule weight and one glow. That is a row each. Spider-Verse needs halftone backgrounds, offset text shadows and panel borders — expressible only as its own sheet.</li>
-<li><strong>One typeface throughout.</strong> Clash Grotesk stays the only family, per the standing instruction. Every mode differentiates by weight, size and case. No mode declares <code>--sc-font-ui</code> or a <code>@font-face</code>.</li>
-<li><strong>Accents get measured before use, not after.</strong> Every one of these sites uses its accent as a <em>fill behind large display type</em>, which is a different job from carrying a 13px button label. Expect several to need darkening for the button and to keep their published value for badges and marks. Record each figure beside the value.</li>
-<li><strong>Motion only where the reference has it.</strong> The design system permits a mode to own its easing. New Form's glow and Discord's soft radii suggest gentle motion; Hermes is brutalist and gets none. Adding motion to a mode whose reference has none would be inventing character rather than reproducing it.</li>
-<li><strong>The visualizer is a fix, not a redesign.</strong> It renders through four <code>BackstageDependencyGraph*</code> override keys carrying <strong>hardcoded hex</strong> (<code>#17171f</code>, <code>#32303e</code>, <code>#e7e7ef</code>). Those were chosen for one dark palette and are wrong in every mode and in light mode. They become <code>hsl(var(--sc-*))</code> so the graph follows whatever theme is live — the same lesson as the header art.</li>
-</ol>
-<hr />
-<h2 id="task-list">Task list<a class="headerlink" href="#task-list" title="Permanent link">&para;</a></h2>
-<h3 id="task-1-template-title-and-the-visualizer">Task 1: Template title, and the visualizer<a class="headerlink" href="#task-1-template-title-and-the-visualizer" title="Permanent link">&para;</a></h3>
-<ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Enlarge the template-card title.</strong> <code>.sc-route-create … &gt; h4</code> is the name. Give it a size and weight that make it the card's headline rather than a caption, and confirm the type scale below it still reads.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Re-point the four visualizer override keys</strong> in <code>theme.tsx</code> from hardcoded hex to <code>hsl(var(--sc-card))</code>, <code>hsl(var(--sc-border))</code>, <code>hsl(var(--sc-fg))</code> and a <code>--sc-border</code>-derived edge. MUI freezes these at theme construction, so a variable is the only way they can follow a mode.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Test.</strong> A <code>styles.test.ts</code> case that the create title carries an explicit size, and a <code>theme</code> assertion that no <code>BackstageDependencyGraph*</code> override contains a <code>#</code> literal.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Commit.</strong></li>
-</ul>
-<h3 id="task-2-measure-six-palettes">Task 2: Measure six palettes<a class="headerlink" href="#task-2-measure-six-palettes" title="Permanent link">&para;</a></h3>
-<ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Write one checker</strong> reusing <code>contrast.test.ts</code> maths.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: For each mode and register</strong>, check <code>fg/bg</code>, <code>fg/card</code>, <code>muted-fg/card</code>, <code>muted-fg/muted</code>, <code>accent-fg/accent</code>, <code>primary-fg/primary</code> ≥ 4.5, <code>border/card</code> ≥ 3.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Re-measure the default status ink against every new card</strong> — twelve new surfaces.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Iterate until all pass</strong>, and record the departures (which accents had to darken, and by how much).</li>
-</ul>
-<h3 id="task-3-the-brand-table">Task 3: The brand table<a class="headerlink" href="#task-3-the-brand-table" title="Permanent link">&para;</a></h3>
-<ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Create <code>brands.ts</code></strong> with a row per mode: id, label, bottle colour, both registers, radius set, border width, optional glow, optional easing.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Generate</strong> <code>:root.sc-&lt;id&gt;</code> and <code>:root.sc-&lt;id&gt;.sc-dark</code>, plus card/button shapes and the <code>:has(table)</code> zero-radius rule every mode needs.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Wire</strong> into <code>statusTokens.ts</code> (<code>SchemeMode</code>, <code>MODE_TOKENS</code>, <code>MODE_CARDS</code>), <code>styles.ts</code> and <code>SchemeRoot.tsx</code>.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Test</strong> — both registers emitted, token parity with base <code>:root</code>, cards matching <code>MODE_CARDS</code>, no <code>#</code> literals bypassing tokens, no mode declaring a font.</li>
-</ul>
-<h3 id="task-4-spider-verse">Task 4: Spider-Verse<a class="headerlink" href="#task-4-spider-verse" title="Permanent link">&para;</a></h3>
-<ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Write <code>spiderverse.ts</code>.</strong> Halftone as a repeating radial-gradient at low alpha; chromatic aberration as a two-colour <code>text-shadow</code> on display type only; panel rules at 3px; comic primaries.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Keep it legible.</strong> The aberration goes on headings, never body copy, and the halftone stays under 6% alpha or it eats the text beneath it. Measure the card and text pairs like any other mode.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Motion</strong> — a short "panel snap" entrance on dialogs, stepped rather than eased, because comic panels cut rather than glide. Behind the reduced-motion query.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Test</strong>, including that the aberration never lands on <code>.sc</code>-body text and that halftone alpha stays under the ceiling.</li>
-</ul>
-<h3 id="task-5-verify-in-a-browser">Task 5: Verify in a browser<a class="headerlink" href="#task-5-verify-in-a-browser" title="Permanent link">&para;</a></h3>
-<ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: For every mode</strong>, in both registers: table surface radius 0 with no clipping ancestor; one font family across headings, body and table cells; card radius and border width match the row.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Check the visualizer page</strong> actually recolours per mode.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Fix the sheet where the browser disagrees.</strong> The browser is the authority — three separate fixes in this repo's history looked right in CSS and were wrong on screen.</li>
-</ul>
-<h3 id="task-6-ci-and-the-image">Task 6: CI and the image<a class="headerlink" href="#task-6-ci-and-the-image" title="Permanent link">&para;</a></h3>
-<ul class="task-list">
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1:</strong> <code>CI=true yarn tsc &amp;&amp; yarn lint:all &amp;&amp; yarn test &amp;&amp; yarn build:all</code>.</li>
-<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2:</strong> <code>bash scripts/prod-image-up.sh</code>. Docker's disk fills after repeated rebuilds and takes Postgres down with it; <code>docker image prune -f &amp;&amp; docker builder prune -f</code> is the documented remedy and must never include <code>--volumes</code>.</li>
-</ul>
-<hr />
-<h2 id="risks">Risks<a class="headerlink" href="#risks" title="Permanent link">&para;</a></h2>
+<p><strong>Goal:</strong> Shrink the template card's oversized title and its translucent plate, and bring back the two top-right buttons that reach the Template entity and favourite it.</p>
+<p><strong>Architecture:</strong> CSS only. There is no custom template card in this repo — the Create page is stock Backstage and the whole treatment is route-scoped CSS in <code>styles.ts</code>. The buttons are Backstage's own <code>TemplateDetailButton</code> and <code>FavoriteEntity</code>, which live inside the card header's <code>&lt;h3&gt;</code> subtitle; one rule hides that <code>&lt;h3&gt;</code> to drop the type text and takes the buttons with it. The fix narrows the rule instead of replacing the component, so no page override and no new upgrade surface.</p>
+<p><strong>Tech Stack:</strong> CSS in a TypeScript template literal, jest assertions over the generated stylesheet.</p>
+<p><strong>Spec:</strong> <code>docs/superpowers/specs/2026-08-18-create-page-design.md</code></p>
+<h2 id="global-constraints">Global Constraints<a class="headerlink" href="#global-constraints" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>Ten new modes' worth of contrast</strong> is where the time goes, and where a silent AA failure would hide. The checker is not optional.</li>
-<li><strong>Spider-Verse can become unreadable fast.</strong> Chromatic aberration on body text and halftone at full strength are both illegible; the ceilings in Task 4 are the guard.</li>
-<li><strong>Nothing may break.</strong> Greek, Foudre and Slush stay exactly as they are; the mode list, <code>MODE_CARDS</code> and the tests that pin them are the tripwire.</li>
+<li>All Node commands run from <code>backstage/</code> (Yarn 4 via corepack, Node 22).</li>
+<li><code>plugins/platform-ui/src/styles.ts</code> is <strong>one template literal</strong>: no backticks anywhere inside it, including CSS comments, and no backslash immediately before a digit.</li>
+<li><code>styles.test.ts</code> asserts against the raw CSS string. Two of its assertions pin exactly what this plan changes; updating them is part of the work, not collateral.</li>
+<li>Comments in <code>styles.ts</code> state measured values. If a value changes, its comment changes with it — a stale comment here is worse than none, because the next person will trust it.</li>
+<li>The categories half of the spec (<code>spec.type</code> per template) is <strong>already done</strong>; this plan is only the cards.</li>
 </ul>
+<hr />
+<h3 id="task-1-shrink-the-title-and-restore-the-buttons">Task 1: Shrink the title and restore the buttons<a class="headerlink" href="#task-1-shrink-the-title-and-restore-the-buttons" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>backstage/plugins/platform-ui/src/styles.ts:746-775</code>
+- Test: <code>backstage/plugins/platform-ui/src/styles.test.ts:240-247</code> and <code>:519-537</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: nothing.
+- Produces: nothing importable. Behavioural contract: the card header's <code>&lt;h3&gt;</code> is visible and holds only its button group; the <code>&lt;h4&gt;</code> title renders at 16px.</p>
+<p>Background the implementer needs: <code>ItemCardHeader</code> renders the subtitle (<code>component="h3"</code>) before the title (<code>component="h4"</code>), which is why the CSS reorders them with flex. Commit <code>edc2ef1</code> hid the whole <code>&lt;h3&gt;</code> to kill the type text.</p>
+<p><strong>The DOM, verified against <code>@backstage/plugin-scaffolder-react@2.0.2</code></strong> (<code>CardHeader.esm.js</code>, <code>ItemCardHeader.esm.js</code>) — an earlier revision of this plan described it wrongly and produced a selector that hid the buttons too:</p>
+<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code>h3
+└── div.subtitleWrapper        &lt;- the h3&#39;s ONLY child (flex, space-between)
+    ├── div                    &lt;- the type text
+    └── div                    &lt;- TemplateDetailButton + FavoriteEntity
+</code></pre></div></td></tr></table></div>
+<p>So the type text is <code>h3 &gt; div &gt; div:first-child</code>, <strong>not</strong> <code>h3 &gt; div:first-child</code> — the latter is the wrapper, and hiding it hides everything.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Write the failing tests</strong></li>
+</ul>
+<p>In <code>backstage/plugins/platform-ui/src/styles.test.ts</code>, <strong>replace</strong> the test at <code>:240</code> (<code>drops the type subtitle from a template card</code>) with:</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;drops the type text from a template card but keeps its buttons&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// The card led with its type rather than its name, and the type repeats</span>
+<span class="w">    </span><span class="c1">// what the template&#39;s own copy already says. Hiding the whole h3 also hid</span>
+<span class="w">    </span><span class="c1">// the detail and favourite buttons that live in it, which are the only way</span>
+<span class="w">    </span><span class="c1">// from a card to the Template entity.</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">SHADCN_CSS</span><span class="p">).</span><span class="nx">toMatch</span><span class="p">(</span>
+<span class="w">      </span><span class="sr">/\.sc-route-create[^{]*&gt; h3 &gt; div &gt; div:first-child \{\s*display:\s*none/</span><span class="p">,</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">SHADCN_CSS</span><span class="p">).</span><span class="nx">not</span><span class="p">.</span><span class="nx">toMatch</span><span class="p">(</span>
+<span class="w">      </span><span class="sr">/\.sc-route-create[^{]*&gt; h3 \{[^}]*display:\s*none/</span><span class="p">,</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+</code></pre></div></td></tr></table></div>
+<p>And in the test at <code>:519</code> (<code>makes the template name the card headline</code>), change the font-size expectation:</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">SHADCN_CSS</span><span class="p">).</span><span class="nx">toMatch</span><span class="p">(</span>
+<span class="w">      </span><span class="sr">/\.sc-route-create[^{]*&gt; h4 \{[^}]*font-size:\s*16px/</span><span class="p">,</span>
+<span class="w">    </span><span class="p">);</span>
+</code></pre></div></td></tr></table></div>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Run tests to verify they fail</strong></li>
+</ul>
+<p>Run: <code>cd backstage &amp;&amp; yarn test plugins/platform-ui/src/styles.test.ts -t 'template'</code>
+Expected: two FAILs — the <code>h3 &gt; div:first-child</code> rule does not exist yet, and the title is still 22px.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Narrow the hiding rule</strong></li>
+</ul>
+<p>In <code>backstage/plugins/platform-ui/src/styles.ts</code>, replace the rule at <code>:775</code>:</p>
+<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code>.sc-route-create [class*=&quot;MuiCard-root&quot;] &gt; .MuiBox-root:first-child &gt; h3 { display: none; }
+</code></pre></div></td></tr></table></div>
+<p>with:</p>
+<div class="language-text highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code>/* The h3 wraps ONE flex row holding two children: the type text, and the
+   detail + favourite buttons. Only the type text is unwanted — hiding the
+   whole h3 (as this rule did until now) also removed the only route from a
+   card to its Template entity, and hiding the wrapper does the same thing.
+   order 0 lifts the surviving button row above the title in the flex column,
+   and flex-end parks it against the card&#39;s right edge. */
+.sc-route-create [class*=&quot;MuiCard-root&quot;] &gt; .MuiBox-root:first-child &gt; h3 {
+  order: 0;
+  align-self: flex-end;
+  margin: 0;
+  line-height: 1;
+}
+.sc-route-create [class*=&quot;MuiCard-root&quot;] &gt; .MuiBox-root:first-child &gt; h3 &gt; div &gt; div:first-child { display: none; }
+</code></pre></div></td></tr></table></div>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Shrink the title and the plate</strong></li>
+</ul>
+<p>In the <code>&gt; h4</code> block at <code>:748-774</code>, change <code>font-size: 22px !important;</code> to <code>font-size: 16px !important;</code> and <code>padding: 1px 6px;</code> to <code>padding: 1px 4px;</code>.</p>
+<p>Then fix the two comments that now misstate the facts:</p>
+<ul>
+<li>the comment above <code>font-size</code> says the name arrived at the header's inherited size — still true, keep it, but drop any implication that 22px is the answer;</li>
+<li>the plate comment ends with <em>"font-size is pinned at 22px by styles.test.ts and the pin is correct"</em>. Rewrite that sentence to name 16px, and recompute the band: at <code>font-size: 16px</code> and <code>line-height: 1.2</code> the line box is 19.2px, so <code>padding: 1px</code> gives a 21.2px band rather than the 28.4px quoted.</li>
+</ul>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 5: Run tests to verify they pass</strong></li>
+</ul>
+<p>Run: <code>cd backstage &amp;&amp; yarn test plugins/platform-ui/src/styles.test.ts</code>
+Expected: PASS — the two edited assertions plus every existing guard (truncation, balanced braces, no control characters, the <code>.sc-route-*</code> scoping audit).</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 6: Type-check and lint</strong></li>
+</ul>
+<p>Run: <code>cd backstage &amp;&amp; yarn tsc &amp;&amp; yarn lint:all</code>
+Expected: clean.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 7: Verify in the browser</strong></li>
+</ul>
+<p>Run: <code>bash scripts/backstage-up.sh</code> then <code>cd backstage &amp;&amp; yarn start</code>, and open <code>/create</code>. Confirm:</p>
+<ol>
+<li>every card shows two icons at the top right, and the type text is gone;</li>
+<li>the detail icon navigates to the Template entity page, the star toggles a favourite;</li>
+<li>both icons are keyboard-reachable — the header art must not have swallowed pointer or focus events;</li>
+<li>the title is visibly smaller and its plate hugs the text;</li>
+<li>a long template title still wraps inside the card rather than escaping the plate;</li>
+<li>the icons are legible against all three cycling header scenes (<code>styles.ts:777-872</code> cycles <code>3n+1/3n+2/3n+3</code>), in light and dark.</li>
+</ol>
+<p>If the icons are hard to see on a scene, add colour — not geometry — to the <code>h3</code> rule: the header art is fixed, the icons are not.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 8: Commit</strong></li>
+</ul>
+<div class="language-bash highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>backstage/plugins/platform-ui/src/styles.ts<span class="w"> </span>backstage/plugins/platform-ui/src/styles.test.ts
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;fix: restore template card actions and shrink the title plate&quot;</span>
+</code></pre></div></td></tr></table></div>
 
 
 

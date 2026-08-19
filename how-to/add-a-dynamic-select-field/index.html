@@ -508,6 +508,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#dependent-selects" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependent selects
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#try-it-against-the-dev-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try it against the dev stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#notes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -570,6 +592,34 @@
     
   
     Customise the home page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../embed-a-grafana-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embed a Grafana dashboard
   
 
     
@@ -1251,6 +1301,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#dependent-selects" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dependent selects
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#try-it-against-the-dev-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Try it against the dev stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#notes" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1323,10 +1395,135 @@ browser. Define the endpoint in <code>app-config.yaml</code>:</p>
 <span class="w">        </span><span class="nt">Authorization</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Bearer ${OPTIONS_API_TOKEN}</span>
 </code></pre></div></td></tr></table></div>
 <p>Use <code>url:</code> (direct) only for public, unauthenticated endpoints.</p>
+<h2 id="dependent-selects">Dependent selects<a class="headerlink" href="#dependent-selects" title="Permanent link">&para;</a></h2>
+<p>Five fields can cascade over one API call that returns a whole hierarchy,
+rather than each level having its own endpoint. <code>provision-database</code> is the
+worked example:</p>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">properties</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">space</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">        </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Space</span>
+<span class="w">        </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DynamicSelect</span>
+<span class="w">        </span><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/infra/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">        </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Network</span>
+<span class="w">        </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DynamicSelect</span>
+<span class="w">        </span><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/infra/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="p p-Indicator">,</span><span class="nt"> dependsOn</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">space</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">region</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">        </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Region</span>
+<span class="w">        </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DynamicSelect</span>
+<span class="w">        </span><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/infra/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="p p-Indicator">,</span><span class="nt"> dependsOn</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">space</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">network</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">island</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">        </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Island</span>
+<span class="w">        </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DynamicSelect</span>
+<span class="w">        </span><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/infra/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="p p-Indicator">,</span><span class="nt"> dependsOn</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">space</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">network</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">region</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">        </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Environment</span>
+<span class="w">        </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DynamicSelect</span>
+<span class="w">        </span><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/infra/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="p p-Indicator">,</span><span class="nt"> dependsOn</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">space</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">network</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">region</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">island</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="p p-Indicator">}</span>
+</code></pre></div></td></tr></table></div>
+<p>The endpoint at <code>treePath</code> returns the whole hierarchy in one call — nested
+objects keyed by name, four levels deep, with a sorted array of leaf values
+(e.g. environment names) at the bottom:</p>
+<div class="language-json highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;coordinates&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;prod&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;core&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;eu-west&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;mgmt&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dev&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;prod&quot;</span><span class="p">],</span><span class="w"> </span><span class="nt">&quot;paris&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;prod&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+<span class="w">        </span><span class="nt">&quot;us-east&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;ashburn&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;dev&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<p>Two rules:</p>
+<ul>
+<li><code>dependsOn</code> lists the sibling field names that are this level's ancestors,
+  <strong>outermost first</strong>. It is explicit rather than inferred from form order, so
+  reordering fields on the template never silently breaks the cascade.</li>
+<li>Changing a parent clears any child whose current value the new branch does
+  not contain — a value that survives an ancestor change would point at a
+  coordinate nobody can resolve. A field is disabled with a "Pick <code>&lt;parent&gt;</code>
+  first" placeholder until every field it <code>dependsOn</code> has a value.</li>
+</ul>
+<p>All five levels share one request to the same <code>proxyPath</code> (cached for 30s) —
+five fields asking the same endpoint for the same tree is not five fetches.</p>
+<p>A level that resolves to exactly <strong>one</strong> value is filled in for you, and the
+cascade continues to the next. One option is not a choice, and in a chain it
+compounds: a space with a single network, region and island would otherwise be
+four clicks that could never have gone differently. It only ever fills an empty
+field, so a value you picked yourself is never overwritten — and it applies to a
+plain (non-<code>treePath</code>) field too, when its endpoint returns a single option.</p>
+<h2 id="try-it-against-the-dev-stack">Try it against the dev stack<a class="headerlink" href="#try-it-against-the-dev-stack" title="Permanent link">&para;</a></h2>
+<p><code>templates/coordinate-demo</code> (<strong>Coordinates (demo)</strong> on the Create page) wires all
+five levels against a tree the platform backend serves itself, so the cascade is
+clickable without an external API:</p>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/demo-options/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="w"> </span><span class="p p-Indicator">}</span>
+</code></pre></div></td></tr></table></div>
+<p>It needs <code>platform.demoOptions: true</code> — the demo option sets are off unless
+asked for (see <strong>Reference → Configuration</strong>), and <code>scripts/backstage-up.sh</code>
+turns them on in the gitignored <code>app-config.local.yaml</code> it writes. Without it
+the field reports that it could not load its options, and the route says which
+key to set.</p>
+<p>Three things are worth doing in that form, because each is a behaviour the
+plain example cannot show:</p>
+<ul>
+<li>Pick <code>aurora</code> → <code>core</code> → <code>eu-west</code>, then switch the region. The island and
+  environment below it clear, because their values no longer exist on the new
+  branch.</li>
+<li>Pick <code>borealis</code> → <code>lab</code>. That branch has one region and one island, so both
+  fill themselves and you land on the environment in a single click.</li>
+<li>Watch the network tab: five fields, one request.</li>
+</ul>
+<p>The only difference from a real deployment is where the tree comes from —
+<code>proxyPath</code> points at the demo route here and at the config API
+(<code>/infra/coordinate-tree</code>) there. The field cannot tell them apart.</p>
 <h2 id="notes">Notes<a class="headerlink" href="#notes" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Options refresh on <code>intervalMs</code>; the current selection is preserved across
-  refreshes, and the last good list is kept if a refresh fails.</li>
+  refreshes, and the last good list is kept if a refresh fails. (<code>intervalMs</code>
+  is ignored once <code>treePath</code> is set — the cascade re-derives its options from
+  the cached tree instead of polling.)</li>
 <li>The field is registered by the <code>platform-ui</code> plugin
   (<code>platformScaffolderFieldsModule</code>) — no per-template setup beyond <code>ui:field</code>.</li>
 </ul>

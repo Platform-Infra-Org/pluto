@@ -11,7 +11,7 @@
       
       
       
-        <link rel="prev" href="../customise-the-home-page/">
+        <link rel="prev" href="../embed-a-grafana-dashboard/">
       
       
         <link rel="next" href="../upgrade-backstage/">
@@ -490,6 +490,34 @@
     
   
     Customise the home page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../embed-a-grafana-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embed a Grafana dashboard
   
 
     
@@ -1459,38 +1487,24 @@ user picked</strong> in the colour picker. Your image is drawn on top of it:</p>
 white background covers the tile completely and the picker will appear to do
 nothing — that is the single most common mistake here.</p>
 <h3 id="choosing-a-logo-that-works-with-every-swatch">Choosing a logo that works with every swatch<a class="headerlink" href="#choosing-a-logo-that-works-with-every-swatch" title="Permanent link">&para;</a></h3>
-<p>The six accents all sit in a narrow lightness band (40–55%):</p>
-<table>
-<thead>
-<tr>
-<th>Violet</th>
-<th>Blue</th>
-<th>Green</th>
-<th>Rose</th>
-<th>Amber</th>
-<th>Slate</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>250 52% 55%</code></td>
-<td><code>217 60% 52%</code></td>
-<td><code>152 42% 40%</code></td>
-<td><code>345 55% 52%</code></td>
-<td><code>32 70% 48%</code></td>
-<td><code>215 20% 40%</code></td>
-</tr>
-</tbody>
-</table>
+<p>There is no table here on purpose. <code>SCHEMES</code> in
+<code>plugins/platform-ui/src/SchemeRoot.tsx</code> is the single source of truth for what
+is on the shelf, and a list that has to be hand-synced with a code array goes
+stale — this one did, twice, while the shelf grew from six bottles to fifteen.
+Read the array.</p>
+<p>What matters for a logo is the <em>spread</em>, and it is wide: the tile behind your
+mark can be anything from Ancient Greek's deep terracotta through Rimefast's
+orpiment yellow to Nightshade's witch green.</p>
 <ul>
-<li>A <strong>white or light monochrome</strong> logo reads well against all six. This is what
-  the built-in glyph does, and what most portal logos already are.</li>
-<li>A <strong>mid-tone colour</strong> logo is a gamble — an amber mark on the Amber swatch
-  nearly disappears, a navy mark on Blue or Slate goes muddy.</li>
+<li>A <strong>white or light monochrome</strong> logo reads well against all of them. This is
+  what the built-in glyph does, and what most portal logos already are.</li>
+<li>A <strong>mid-tone colour</strong> logo is a gamble — an amber mark nearly disappears on
+  the yellow-accented modes, and a navy mark goes muddy on the blue ones.</li>
 <li>If the brand colours are non-negotiable and clash, set <code>favicon</code> explicitly and
   accept that the sidebar tile still recolours behind the mark.</li>
 </ul>
-<p>Check all six swatches before shipping. It takes ten seconds.</p>
+<p>Check a light one, a dark one and a saturated one before shipping. It takes ten
+seconds, and the picker's tray shows the whole shelf at once.</p>
 <h2 id="the-tab-icon">The tab icon<a class="headerlink" href="#the-tab-icon" title="Permanent link">&para;</a></h2>
 <p>The tab icon is <strong>generated</strong>, always: a 64×64 rounded tile in the picked accent
 colour with the logo drawn on it, redrawn every time the user changes swatch, so
@@ -1685,7 +1699,7 @@ to mush there. Simple marks win.</p>
       <nav class="md-footer__inner md-grid" aria-label="Footer" >
         
           
-          <a href="../customise-the-home-page/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Customise the home page">
+          <a href="../embed-a-grafana-dashboard/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Embed a Grafana dashboard">
             <div class="md-footer__button md-icon">
               
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
@@ -1695,7 +1709,7 @@ to mush there. Simple marks win.</p>
                 Previous
               </span>
               <div class="md-ellipsis">
-                Customise the home page
+                Embed a Grafana dashboard
               </div>
             </div>
           </a>

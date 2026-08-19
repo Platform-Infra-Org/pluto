@@ -508,6 +508,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../how-to/embed-a-grafana-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embed a Grafana dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../how-to/rebrand-the-portal/" class="md-nav__link">
         
   
@@ -1438,7 +1466,12 @@ backslash before digits is a legacy octal escape that fails the app build while
 <p><strong>Backstage's own components are styled through the theme</strong>, not by hashed
 class names — <code>theme.tsx</code> uses the published override keys, which are typed, so
 a renamed slot fails the build rather than silently unstyling a page. What is
-left in CSS targets stable MUI global classes and canon's <code>--bui-*</code> variables.</p>
+left in CSS targets stable MUI global classes and canon's <code>--bui-*</code> variables.
+Input geometry — label position, the outline notch, outline width — lives in
+<code>theme.tsx</code> override keys; <code>styles.ts</code> may colour an input but must not
+reposition its label, because a route-scoped selector cannot tell MUI's
+standard variant from its outlined one and the inset one needs knocks the other
+off its own notch.</p>
 <p><strong>A route gets a class so a general selector can be specific again.</strong>
 <code>routeClass.ts</code> maps a pathname to one <code>sc-route-*</code> class on the root element.
 Production builds discard <code>makeStyles</code> names, so a selector cannot name the
@@ -1465,6 +1498,15 @@ in <code>localStorage</code>, so they follow the browser rather than the account
 recently-visited and favourites, which are server-backed per user. The picker
 also renders on the sign-in gate, where there is no API to read from, which is
 what forces the choice.</p>
+<p><strong>The sign-in card carries the same box.</strong> It used to lay every bottle out flat,
+which worked while there were seven of them and stopped working at fifteen: the
+card is 296px of content box and a flat shelf needs 442px, so the sprites were
+squeezed below their own 16px grid and got worse with every potion added. Both
+instances now show one bottle and open the full inventory in a tray, which is
+the same interaction in both places and does not grow with the scheme count.
+The two behaviours are separately controlled — <code>floating</code> is the fixed
+placement and the drag, <code>compact</code> is the tray without them — because the login
+card wants the tray and must not become a floating shelf.</p>
 <p>Two details are load-bearing rather than decorative:</p>
 <ul>
 <li>A press only becomes a drag after 4px of travel. Without that threshold, any
@@ -1516,21 +1558,80 @@ that means <em>running</em> elsewhere. Success is pushed to 60° rather than a s
 gold, 22° from the amber text hue and 25° from the amber badge fill it sits on,
 and running moves to a cold 188° cyan that no other scheme uses.</p>
 <h2 id="mode-potions">Mode potions<a class="headerlink" href="#mode-potions" title="Permanent link">&para;</a></h2>
-<p>Six of the seven bottles are one accent hue. The seventh, Ancient Greek, is a
-<em>mode</em>: it carries a whole palette and its own chrome, hung off a single
-<code>sc-greek</code> class on the root element.</p>
-<p>That works on specificity alone. The injected accent sheet writes <code>:root</code>,
+<p>Every bottle on the shelf is now a <em>mode</em>: it carries a whole palette and its
+own chrome, hung off a single <code>sc-&lt;id&gt;</code> class on the root element. There are
+fifteen, and they arrived in two kinds. Eight are <strong>table-driven</strong> — a row in
+<code>brands.ts</code> with two registers of colour and a radius, which is all a mode needs
+when it is a recolour. Seven are <strong>hand-written sheets</strong>, one file each, because
+a <code>BRAND_DEFS</code> row cannot express ornament or an animation:</p>
+<ul>
+<li><strong>Ancient Greek</strong> (<code>greek.ts</code>) — bronze on bone, gold on obsidian; meander,
+  palmette, fluted column, rosette. The one mode that redefines status hue.</li>
+<li><strong>Agence Foudre</strong> (<code>foudre.ts</code>), <strong>Slush</strong> (<code>slush.ts</code>) and <strong>Spider-Verse</strong>
+  (<code>spiderverse.ts</code>) — three reference design systems rendered in this app's
+  furniture.</li>
+<li><strong>Hanami</strong> (<code>hanami.ts</code>) — the Japanese mode, and the only one that leads
+  <em>light</em>: gofun white ground, sumi ink, enji vermilion, ai-iro indigo
+  linework, all named traditional dyes rather than a hue wheel. Seigaiha runs
+  under every page title, a torii stands on an empty shelf, and sakura fall
+  across the viewport on a four-frame tumble strip. Two of its colours —
+  sakura-iro and yamabuki — are marked decorative-only in the sheet, because
+  both measure under 2:1 on the card and the pink is exactly what the next
+  person will reach for. Kurenai is <em>not</em> the primary: it clears AA at 4.96 and
+  misses this repo's 5.0 bar, so enji takes the slot.</li>
+<li><strong>Nightshade</strong> (<code>nightshade.ts</code>) — witch green over violet with gold
+  filigree, dark-first. The read is art nouveau, which is a documented lineage
+  rather than a guess: Jen Zee has named Mucha and Klimt as Supergiant's
+  reference, and the cool green shift is Hades II's own. It takes the grammar
+  and none of the assets — no Melinoe or Hecate silhouette, no logotype or
+  laurel lockup, no boon-rarity ramp, which would collide with our status
+  semantics anyway. Its motion is an eight-phase moon on <code>steps(8)</code>; anything
+  smoother slides the strip mid-frame and shows two half-moons at once.</li>
+<li>
+<p><strong>Rimefast</strong> (<code>rimefast.ts</code>) — the Norse mode, cold and much louder than the
+  screen convention. There is no brown in it on purpose: orpiment, lead-oxide
+  red, hematite, copper green, vivianite, madder, woad and lichen purple are
+  all identified from Viking Age finds, and "medieval brown" is a television
+  habit. Its motion is a dithered aurora across the top rail, six frames at
+  800ms, which reads as a shimmer where a smooth version reads as a banner
+  sliding past.</p>
+<p><strong>Rimefast excludes five genuine Norse forms, deliberately.</strong> The Valknut,
+Othala, Sowilo (the sig-rune), the Tyr rune and the sunwheel do not appear,
+because all five are catalogued as appropriated extremist symbols and a
+corporate portal cannot control how one of them is read. Ravens, Yggdrasil,
+knotwork and a generic non-semantic futhark band carry no such freight and are
+what the mode uses. <code>rimefast.test.ts</code> asserts the sheet never names the five,
+so completing the set in a year's time fails a test rather than a shipping
+review. This paragraph is the reason, kept next to the rule.</p>
+</li>
+</ul>
+<p>The mechanism is specificity alone. The injected accent sheet writes <code>:root</code>,
 which is (0,1,0); <code>:root.sc-greek</code> is (0,2,0) and wins whatever the injection
 order, and <code>:root.sc-greek.sc-dark</code> is (0,3,0) and settles the dark register
 over both. <code>sc-konami</code> has always worked this way — the mode potion is the same
 mechanism, persisted instead of thrown away on reload.</p>
-<p>Its CSS lives in <code>greek.ts</code>, not <code>styles.ts</code>. That is not tidiness: <code>styles.ts</code>
-is a single template literal that a stray backtick has silently truncated
-twice, and a second complete art direction inline makes a known hazard worse.
-<code>greek.test.ts</code> carries a parity check that every colour token the default
-<code>:root</code> declares is declared in both Greek registers — a half-declared mode
-inherits a colour from the wrong register and degrades into unreadable text
-rather than an obvious break.</p>
+<p>Each sheet lives in its own file, not in <code>styles.ts</code>. That is not tidiness:
+<code>styles.ts</code> is a single template literal that a stray backtick has silently
+truncated twice, and a whole art direction inline makes a known hazard worse.
+Only the import and one <code>${…}</code> interpolation go into <code>styles.ts</code>, and
+<code>styles.test.ts</code> names each <code>:root.sc-&lt;id&gt;</code> in its marker list — without that, a
+mode sheet can be perfectly correct and simply never reach the page. Every mode
+also carries a parity check that both its registers declare every colour token
+the default <code>:root</code> declares: a half-declared mode inherits a colour from the
+wrong register and degrades into unreadable text rather than an obvious break.</p>
+<p>Adding one touches ten files, and <code>docs/superpowers/plans/</code> records the
+checklist. The parts that catch people: <code>MODE_CARDS</code> must hold the <em>same</em> card
+value the sheet emits, or <code>contrast.test.ts</code> measures a colour nothing paints;
+the mode must be added to <code>contrast.test.ts</code> by hand, because hand-written
+sheets are not discovered from <code>BRAND_DEFS</code>; and a baked sprite fill is a
+literal inside an SVG data URI, which inherits neither <code>currentColor</code> nor a
+custom property, so a two-colour motif is two URIs that have to be kept in step.</p>
+<p>The three animated modes share one host. <code>SchemeRoot</code> mounts <code>.sc-mode-art</code>
+once, unconditionally and <code>aria-hidden</code>, and each mode sheet turns on the child
+it draws. It is not branched on the picked scheme because <code>applyScheme</code> runs
+before React and writes a class on the root element — a React copy of "which
+mode" would be a second source of truth that can disagree with the class
+actually applied.</p>
 <h2 id="motion">Motion<a class="headerlink" href="#motion" title="Permanent link">&para;</a></h2>
 <p>Every animation uses <code>steps()</code>, never <code>ease</code>. Smooth interpolation is what
 makes a pixel interface look like a modern interface wearing a costume, so the
@@ -1551,7 +1652,11 @@ exception rather than a hole:</p>
   inside the query, and the still frame is still designed.</li>
 <li><strong>Nothing conveys state through motion alone</strong>, which was never negotiable.</li>
 </ul>
-<p>The default theme and Ancient Greek keep <code>steps()</code>.</p>
+<p>The default theme keeps <code>steps()</code>, and so do Ancient Greek, Hanami, Nightshade and Rimefast — in the three animated modes the stepping is
+load-bearing rather than stylistic. A petal interpolated between pixel rows
+blurs, a moon strip interpolated between frames shows two half-moons at
+once, and an aurora interpolated across its tile reads as a banner sliding
+past rather than a curtain moving.</p>
 <p>Everything timed sits inside <code>@media (prefers-reduced-motion: no-preference)</code>,
 and the reduced case is designed rather than merely disabled: the tour's
 sparkles simply appear instead of blinking, and the creatures on the experience
@@ -1563,7 +1668,7 @@ smudge.</p>
 <li>Sprites are <code>aria-hidden</code>; state is always in text as well.</li>
 <li>Contrast is measured, not eyeballed. The dither pass found every badge
   variant already below WCAG AA — the worst at 1.84:1 — and fixed them; the
-  check samples the rendered pixel against its text in all six schemes.</li>
+  check samples the rendered pixel against its text in every scheme.</li>
 <li>
 <p><strong>One typeface.</strong> Clash Grotesk is the app's only family, self-hosted because
   the CSP is <code>font-src 'self'</code> — a CDN reference fails silently, the page

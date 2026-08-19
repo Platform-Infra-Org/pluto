@@ -508,6 +508,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../how-to/embed-a-grafana-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embed a Grafana dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../how-to/rebrand-the-portal/" class="md-nav__link">
         
   
@@ -1396,7 +1424,7 @@ by the platform backend — <strong>no escaping needed</strong>.</p>
 </tr>
 <tr>
 <td><code>&lt;&lt; resourcesJson &gt;&gt;</code></td>
-<td>every resource the request acts on, as <code>[{name, path, dataPath, data, owner}]</code> — <strong>one element for a single-resource request</strong>, several for a bulk one</td>
+<td>every resource the request acts on, as <code>[{name, path, dataPath, data, owner, title}]</code> — <strong>one element for a single-resource request</strong>, several for a bulk one</td>
 </tr>
 <tr>
 <td><code>&lt;&lt; secretName &gt;&gt;</code></td>
@@ -1430,6 +1458,13 @@ resolve yet.</p>
 <code>&lt;&lt; resourceData &gt;&gt;</code>, <code>&lt;&lt; resourcePath &gt;&gt;</code> and <code>&lt;&lt; resourceDataPath &gt;&gt;</code> keep
 working unchanged — <code>verb-update</code> uses them and needs no migration.</p>
 <p>Each element's <code>data</code> is a <strong>nested object</strong>, not a JSON string.</p>
+<p><code>title</code> is the resource's <code>metadata.title</code>, verbatim, and <code>''</code> when it declares
+none — so <code>{{item.title}}</code> reads without a conditional, the same rule <code>owner</code>
+follows. It is <strong>display text and nothing else</strong>: a workflow uses it to say
+<em>"Deleting Orders Database (primary)"</em> instead of <em>"Deleting 8f14e45f"</em>. <code>name</code>
+remains the only key anything may resolve, delete, or build a path from. Titles
+are not unique and are not what the catalog is keyed on, so a workflow that
+acted on a title would act on the wrong resource, or on none.</p>
 <p><code>owner</code> is the resource's own <code>spec.owner</code>, verbatim, and <code>''</code> when it declares
 none. It is <strong>not</strong> <code>&lt;&lt; ownerGroup &gt;&gt;</code>: that is the team that owns the
 <em>template</em>, which is who may approve the request. This is who owns the resource

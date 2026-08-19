@@ -386,6 +386,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#spectype-is-the-create-page-category" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        spec.type is the Create page category
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#your-own-workflow-no-parameters-block-at-all" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -401,6 +412,28 @@
     <span class="md-ellipsis">
       
         Worked examples you can run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-uploads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File uploads
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#repeating-rows-the-user-can-duplicate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repeating rows the user can duplicate
       
     </span>
   </a>
@@ -620,6 +653,34 @@
     
   
     Customise the home page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../embed-a-grafana-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embed a Grafana dashboard
   
 
     
@@ -1291,6 +1352,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#spectype-is-the-create-page-category" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        spec.type is the Create page category
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#your-own-workflow-no-parameters-block-at-all" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1306,6 +1378,28 @@
     <span class="md-ellipsis">
       
         Worked examples you can run
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#file-uploads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        File uploads
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#repeating-rows-the-user-can-duplicate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Repeating rows the user can duplicate
       
     </span>
   </a>
@@ -1432,7 +1526,7 @@ files a request and submits an Argo workflow.</p>
 <span class="w">  </span><span class="c1"># verb-update / verb-delete annotations enable edit/delete (see below)</span>
 <span class="nt">spec</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">owner</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">group:default/&lt;team&gt;</span><span class="w">                     </span><span class="c1"># THIS team owns approvals</span>
-<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">resource</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">database</span><span class="w">                                  </span><span class="c1"># the Create page category</span>
 <span class="w">  </span><span class="nt">parameters</span><span class="p">:</span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Details</span>
 <span class="w">      </span><span class="nt">required</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">name</span><span class="p p-Indicator">]</span>
@@ -1466,6 +1560,19 @@ files a request and submits an Argo workflow.</p>
 <p>Two templating layers meet here — keep them straight:
 <code>${{ parameters.x }}</code> is <strong>Scaffolder</strong> (form input); <code>&lt;&lt; token &gt;&gt;</code> is resolved by
 <strong>the backend at submit time</strong>. See <strong><a href="../../reference/tokens/">Submit tokens</a></strong>.</p>
+<h3 id="spectype-is-the-create-page-category"><code>spec.type</code> is the Create page category<a class="headerlink" href="#spectype-is-the-create-page-category" title="Permanent link">&para;</a></h3>
+<p><code>spec.type</code> is free text, and it is what the Create page's category filter
+lists — the seed templates use <code>database</code>, <code>service</code>, <code>git</code>, <code>bulk</code> and <code>demo</code>.
+Pick the family the template belongs to, not a name unique to this one
+template: a category with a single member filters nothing. Backstage renders it
+capitalised, so prefer a single lowercase word (<code>database</code>, not
+<code>managed-database</code>, which shows as "Managed-database").</p>
+<p>It is <strong>not</strong> <code>platform.io/resource-type</code>. That annotation is what resolves the
+owning team, and therefore who may approve a request — two templates claiming
+the same one can hand approval rights to the wrong group. <code>spec.type</code> has no
+effect on approvals, resolvers, RBAC or the request lifecycle; it is a label for
+humans browsing the Create page. Several templates may share a category while
+each keeps its own resource type.</p>
 <h3 id="your-own-workflow-no-parameters-block-at-all">Your own workflow: no <code>parameters</code> block at all<a class="headerlink" href="#your-own-workflow-no-parameters-block-at-all" title="Permanent link">&para;</a></h3>
 <p>Every request param is forwarded to Argo as its own named parameter, so a
 workflow of your own needs no wiring — just declare the fields it reads:</p>
@@ -1492,8 +1599,8 @@ parameters. Anything named in <code>parameters</code> wins over the forwarded va
 same name; <code>forwardParams: false</code> suppresses the forwarding entirely. See
 <strong><a href="../../reference/tokens/">Submit tokens</a></strong> for the coercion rules.</p>
 <h3 id="worked-examples-you-can-run">Worked examples you can run<a class="headerlink" href="#worked-examples-you-can-run" title="Permanent link">&para;</a></h3>
-<p>Two templates in <code>deploy/dev/</code> exist only to demonstrate this, and both are
-runnable against the dev stack:</p>
+<p>Three templates in <code>deploy/dev/</code> exist only to demonstrate a mechanism, and all
+are runnable against the dev stack:</p>
 <table>
 <thead>
 <tr>
@@ -1509,6 +1616,10 @@ runnable against the dev stack:</p>
 <tr>
 <td><strong>Provision Git Resources (bulk)</strong> — <code>templates/bulk-provision</code> with <code>argo/bulk-provision.yaml</code></td>
 <td>One request creating several resources, returning their names as a JSON array so the request page links to each.</td>
+</tr>
+<tr>
+<td><strong>Coordinates (demo)</strong> — <code>templates/coordinate-demo</code></td>
+<td>Five dependent <code>DynamicSelect</code> fields walking one tree: changing a parent clears the children it invalidates, a level with a single option fills itself, and all five share one request. Needs <code>platform.demoOptions: true</code>. See <strong>How-to → Add a live (DynamicSelect) field</strong>.</td>
 </tr>
 </tbody>
 </table>
@@ -1528,6 +1639,70 @@ runnable against the dev stack:</p>
 back to its default rather than disappearing. The step still receives a value —
 just the template's, not yours. Delete the default too if you want its absence
 to be an error.</p>
+<h3 id="file-uploads">File uploads<a class="headerlink" href="#file-uploads" title="Permanent link">&para;</a></h3>
+<p><code>ui:field: PlatformFile</code> puts a browser-picked file straight in S3 and gives
+the form the object's path — the bytes never pass through Backstage:</p>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">valuesFile</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">  </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Values file</span>
+<span class="w">  </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">PlatformFile</span>
+<span class="w">  </span><span class="nt">ui:options</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">accept</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.yaml,.yml,.json</span>
+<span class="w">  </span><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Uploaded to S3; the workflow receives the s3:// path.</span>
+</code></pre></div></td></tr></table></div>
+<p>Forward it like any other field (<code>valuesFile: ${{ parameters.valuesFile }}</code>
+under <code>params</code>) — the workflow receives the value as an ordinary string:
+<code>s3://&lt;bucket&gt;/&lt;key&gt;</code>.</p>
+<p>It needs a <code>platform.uploads</code> block on the backend (bucket, region, <code>keyPrefix</code>,
+<code>maxBytes</code>, <code>allowedExtensions</code>, <code>urlTtlSeconds</code> — see
+<a href="../../reference/configuration/">Configuration</a>) and three things on the S3 side:</p>
+<ul>
+<li><strong>CORS</strong> on the bucket allowing <code>PUT</code> from the Backstage origin, with
+  <code>Content-Type</code> and <code>Content-Length</code> in <code>AllowedHeaders</code> — the upload signs
+  both, so a stricter CORS policy rejects the browser's PUT before it reaches
+  the length check.</li>
+<li>The S3 endpoint added to <code>backend.csp.connect-src</code>, or the browser's PUT is
+  blocked by Backstage's own CSP before it leaves the page.</li>
+<li>A lifecycle rule on the key prefix so an upload nobody ever submits (the user
+  picked a file, then abandoned the form) eventually expires instead of
+  accumulating forever.</li>
+</ul>
+<p>A file is <strong>not</strong> a secret. Anything sensitive belongs in <code>ui:field:
+PlatformSecret</code> instead, which encrypts it and keeps it out of params, logs and
+Git — <code>PlatformFile</code>'s value is a plain S3 path, visible wherever the request's
+params are.</p>
+<h3 id="repeating-rows-the-user-can-duplicate">Repeating rows the user can duplicate<a class="headerlink" href="#repeating-rows-the-user-can-duplicate" title="Permanent link">&para;</a></h3>
+<p>An array field gets a per-row copy button — which duplicates the row <em>with its
+current values</em> — from one option:</p>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">mounts</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">array</span>
+<span class="w">  </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Mounts</span>
+<span class="w">  </span><span class="nt">ui:options</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">copyable</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">items</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="w">    </span><span class="nt">properties</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> type</span><span class="p">:</span><span class="w"> </span><span class="nv">string</span><span class="p p-Indicator">,</span><span class="nt"> title</span><span class="p">:</span><span class="w"> </span><span class="nv">Path</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">readOnly</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> type</span><span class="p">:</span><span class="w"> </span><span class="nv">boolean</span><span class="p p-Indicator">,</span><span class="nt"> title</span><span class="p">:</span><span class="w"> </span><span class="nv">Read only</span><span class="p p-Indicator">,</span><span class="nt"> default</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="w"> </span><span class="p p-Indicator">}</span>
+</code></pre></div></td></tr></table></div>
+<p>This is RJSF's own feature, not a platform field extension. Making <strong>Add</strong>
+itself copy the previous row is not supported, and would remove the only way to
+get an empty row.</p>
 <h2 id="2-enable-edit-delete">2. Enable edit &amp; delete<a class="headerlink" href="#2-enable-edit-delete" title="Permanent link">&para;</a></h2>
 <p>Add verb annotations so the resource's <strong>Manage resource</strong> card works. They point
 at <code>git-ops</code> update/delete and pass the paths the backend resolves for you:</p>

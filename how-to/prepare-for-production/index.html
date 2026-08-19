@@ -510,6 +510,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../embed-a-grafana-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embed a Grafana dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../rebrand-the-portal/" class="md-nav__link">
         
   
@@ -1448,6 +1476,17 @@ switch to a resolver keyed on a stable claim.</p>
   only for a dev argo-server running <code>--auth-mode=server --secure=false</code>.</li>
 <li><strong>TLS everywhere</strong>, and real <code>app.baseUrl</code> / <code>backend.baseUrl</code> values instead
   of <code>localhost:7007</code>.</li>
+<li><strong>Grafana</strong>, if the dashboard mounts are used: unset by default, so nothing
+  to do unless you want them. See
+  <a href="../embed-a-grafana-dashboard/">Embed a Grafana dashboard</a> for
+  <code>platform.grafana</code>, the matching <code>backend.csp.frame-src</code> entry, Grafana's own
+  <code>allow_embedding</code>, and the authentication trade-offs.</li>
+<li><strong>S3 uploads</strong>, if any template uses <code>ui:field: PlatformFile</code>: unset by
+  default, so nothing to do unless a template needs it — <code>POST
+  /uploads/presign</code> 501s until <code>platform.uploads</code> is set. See
+  <a href="../author-a-template/#file-uploads">Author a template</a> for
+  <code>platform.uploads</code> and the bucket-side CORS, CSP <code>connect-src</code> and
+  lifecycle-rule requirements.</li>
 </ul>
 <h2 id="4-hardening">4. Hardening<a class="headerlink" href="#4-hardening" title="Permanent link">&para;</a></h2>
 <ul>
@@ -1472,6 +1511,10 @@ page and <code>argoSubmit</code> / <code>resource-data</code> conventions.</p>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> IdP, LDAPS and Argo (TLS + auth) endpoints real; <code>platform.argo.proxyPath</code> set</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> TLS and real base URLs; <code>backend.reading.allow</code> scoped</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <code>platform.secrets.encryptionKey</code> set from the secret manager</li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> If embedding Grafana: <code>platform.grafana</code> set, <code>backend.csp.frame-src</code>
+      widened to match, and Grafana's own <code>allow_embedding = true</code></li>
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> If any template uses <code>PlatformFile</code>: <code>platform.uploads</code> set, and the
+      bucket's CORS, <code>backend.csp.connect-src</code> and lifecycle rule configured</li>
 <li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> A retention policy decided: either <code>platform.requests.retention.enabled</code>
       with windows that suit your compliance position, or a deliberate choice to
       keep every request forever</li>

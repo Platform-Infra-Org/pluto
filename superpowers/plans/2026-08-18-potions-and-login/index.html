@@ -1,0 +1,2040 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Docs for the internal developer platform (Backstage plugin suite)">
+      
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Potions and Login Implementation Plan - Platform Plugin Suite</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#potions-and-login-implementation-plan" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="Platform Plugin Suite" class="md-header__button md-logo" aria-label="Platform Plugin Suite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Platform Plugin Suite
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Potions and Login Implementation Plan
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="Platform Plugin Suite" class="md-nav__button md-logo" aria-label="Platform Plugin Suite" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Platform Plugin Suite
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../tutorials/provision-a-resource/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Provision your first resource
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/author-a-template/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Author a software template
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/configure-rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configure admins & per-team approval
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/set-resource-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Give a resource a data file
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/delete-resources-in-bulk/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Delete resources in bulk
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/add-a-dynamic-select-field/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a live (DynamicSelect) field
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/add-a-review-gate/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Add a mid-workflow review gate
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/customise-the-home-page/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customise the home page
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/embed-a-grafana-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embed a Grafana dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/rebrand-the-portal/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Change the logo, favicon and title
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/upgrade-backstage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade Backstage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/run-the-production-image/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Run the production image locally
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/deploy-with-helm/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deploy to Kubernetes with Helm
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../how-to/prepare-for-production/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prepare for production
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/plugins/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plugins
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/annotations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Annotations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/tokens/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Submit tokens (<< >>)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration keys
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../reference/request-model/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Request model
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Explanation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Explanation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/request-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Request lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/secrets-lifecycle/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Secret lifecycle
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/rbac/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Per-team RBAC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/workflows-and-git/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflows own Git
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/design-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The pixel design system
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/identity-and-ldap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Identity & LDAP
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../explanation/upgrade-surface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    What an upgrade can break
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#global-constraints" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global Constraints
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-mode-the-ten-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a mode: the ten files
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Adding a mode: the ten files">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#task-1-give-the-sign-in-card-the-apps-potion-box" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 1: Give the sign-in card the app's potion box
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-2-hanami-the-japanese-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 2: Hanami — the Japanese mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-3-nightshade-the-hades-2-witch-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 3: Nightshade — the Hades-2 witch mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-4-rimefast-the-norse-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 4: Rimefast — the Norse mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#task-5-make-the-design-system-docs-true-again" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Task 5: Make the design-system docs true again
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="potions-and-login-implementation-plan">Potions and Login Implementation Plan<a class="headerlink" href="#potions-and-login-implementation-plan" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p><strong>For agentic workers:</strong> REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (<code>- [ ]</code>) syntax for tracking.</p>
+</blockquote>
+<p><strong>Goal:</strong> Stop the sign-in page's potion shelf overflowing its card by giving it the same one-bottle-plus-tray box the app uses, then add three new schemes — Hanami (Japanese, sakura), Nightshade (Hades-2 witch) and Rimefast (Norse).</p>
+<p><strong>Architecture:</strong> The picker already has both behaviours in one component, branched on a single <code>floating</code> prop that conflates three things: the tray, the fixed position, and dragging. Task 1 separates the tray from the placement, which is what lets the login card have the tray without becoming a floating shelf. Each new scheme is a <strong>hand-written mode</strong> — its own file emitting <code>:root.sc-&lt;id&gt;</code> and <code>:root.sc-&lt;id&gt;.sc-dark</code>, interpolated into <code>styles.ts</code> — because all three carry an animation, and <code>BRAND_DEFS</code> rows cannot express one.</p>
+<p><strong>Tech Stack:</strong> TypeScript, React 18, CSS custom properties on root classes, jest + <code>@testing-library/react</code>, sprite grids rendered to SVG data URIs.</p>
+<p><strong>Spec:</strong> <code>docs/superpowers/specs/2026-08-18-potions-and-login-design.md</code></p>
+<h2 id="global-constraints">Global Constraints<a class="headerlink" href="#global-constraints" title="Permanent link">&para;</a></h2>
+<ul>
+<li>All Node commands run from <code>backstage/</code> (Yarn 4 via corepack, Node 22).</li>
+<li><strong>Ship Task 1 first.</strong> Every added potion widens the login shelf; at 12 bottles it needs 358px in a 296px box, and at 15 it needs 442px. Task 1 is what makes that arithmetic stop mattering.</li>
+<li><code>plugins/platform-ui/src/styles.ts</code> is <strong>one template literal</strong>: no backticks anywhere inside it, including CSS comments, and no backslash immediately before a digit. This is why each mode gets its own file.</li>
+<li>All motion lives inside <code>@media (prefers-reduced-motion: no-preference)</code> and uses <code>steps()</code>, never <code>ease</code>. Nothing may convey state through motion alone. The 0%/100% keyframe must equal the static rule outside the query — the still frame is designed, not frozen.</li>
+<li>A mode may <strong>not</strong> declare a typeface; <code>styles.test.ts:161,193</code> allows exactly one <code>@font-face</code>.</li>
+<li>Status ink must clear <strong>5.0:1</strong> against both the card and the dithered badge cell — above AA's 4.5, enforced by <code>contrast.test.ts</code>. Every card value below was solved backwards from that.</li>
+<li>Status colours stay stock: every new mode maps to <code>STATUS_TOKENS</code>. <code>SUCCEEDED</code>/<code>FAILED</code> keep their hue and their label in every scheme (<code>docs/explanation/design-system.md:7-24</code>).</li>
+<li>Both registers must declare <strong>every</strong> token base <code>:root</code> declares — <code>brands.test.ts:58</code> and each mode's parity test enforce it.</li>
+<li><code>contrast.test.ts:210</code>: the dark <code>border</code> must sit ≥20° from the dark <code>primary</code>, or have saturation ≤25.</li>
+</ul>
+<h2 id="adding-a-mode-the-ten-files">Adding a mode: the ten files<a class="headerlink" href="#adding-a-mode-the-ten-files" title="Permanent link">&para;</a></h2>
+<p>Every one of Tasks 2-4 touches exactly these. Written once here; each task below states only its own values.</p>
+<ol>
+<li><strong><code>plugins/platform-ui/src/&lt;id&gt;.ts</code></strong> — new. Exports <code>&lt;id&gt;Css(): string</code>, emitting <code>:root.sc-&lt;id&gt;</code> and <code>:root.sc-&lt;id&gt;.sc-dark</code>.</li>
+<li><strong><code>plugins/platform-ui/src/styles.ts</code></strong> — <code>import { &lt;id&gt;Css } from './&lt;id&gt;';</code> in the import block at <code>:5-11</code>, and <code>${&lt;id&gt;Css()}</code> in the interpolation block at <code>:84-89</code>.</li>
+<li><strong><code>plugins/platform-ui/src/statusTokens.ts</code></strong> — add <code>'&lt;id&gt;'</code> to the <code>SchemeMode</code> union (<code>:65</code>), a <code>&lt;id&gt;: STATUS_TOKENS</code> row in <code>MODE_TOKENS</code> (<code>:133</code>), and a <code>&lt;id&gt;: { light: '&lt;hsl&gt;', dark: '&lt;hsl&gt;' }</code> row in <code>MODE_CARDS</code> (<code>:153</code>) whose values <strong>equal</strong> the card values the sheet emits.</li>
+<li><strong><code>plugins/platform-ui/src/SchemeRoot.tsx</code></strong> — add <code>'&lt;id&gt;'</code> to the <code>MODES</code> tuple (<code>:75</code>) and a literal entry to <code>SCHEMES</code> (<code>:98-125</code>, alongside greek/foudre/slush/spiderverse).</li>
+<li><strong><code>plugins/platform-ui/src/SchemeRoot.test.ts</code></strong> — three hard-coded arrays: ids in order (<code>:34</code>), sorted mode names (<code>:39</code>), <code>sc-&lt;id&gt;</code> classes (<code>:56</code>).</li>
+<li><strong><code>plugins/platform-ui/src/&lt;id&gt;.test.ts</code></strong> — new. The standard suite (contents given in Task 2, Step 1; repeat it per mode with that mode's values).</li>
+<li><strong><code>plugins/platform-ui/src/brands.test.ts:216</code></strong> — add <code>['&lt;id&gt;', &lt;id&gt;Css()]</code> to the <code>sheets</code> array.</li>
+<li><strong><code>plugins/platform-ui/src/contrast.test.ts:222</code></strong> — add the mode to the <code>registers</code> list (hand-written modes are not auto-discovered from <code>BRAND_DEFS</code>).</li>
+<li><strong><code>plugins/platform-ui/src/sprites.ts</code> + <code>sprites.test.ts</code></strong> — any new motif grids; each must be exactly <code>SPRITE_SIZE</code>² or <code>SMALL_SPRITE_SIZE</code>².</li>
+<li><strong><code>plugins/platform-ui/src/styles.test.ts:18</code></strong> — optionally add <code>:root.sc-&lt;id&gt;</code> to the interpolation marker list (today only <code>:root.sc-greek</code> proves a mode sheet actually reaches the page).</li>
+</ol>
+<p>Baked sprite fills: a data URI inherits neither <code>currentColor</code> nor a custom property, so a two-colour motif is two URIs with literal fills, which must track the register's tokens. <code>greek.ts:37-45</code> (<code>BRONZE</code>/<code>GOLD</code>) is the working example, and <code>greek.test.ts</code> checks they stay in step.</p>
+<hr />
+<h3 id="task-1-give-the-sign-in-card-the-apps-potion-box">Task 1: Give the sign-in card the app's potion box<a class="headerlink" href="#task-1-give-the-sign-in-card-the-apps-potion-box" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>backstage/plugins/platform-ui/src/SchemeRoot.tsx:407</code> (signature), <code>:648</code> (shelf), and the <code>floating</code>-gated JSX below it
+- Modify: <code>backstage/plugins/platform-ui/src/styles.ts:1493</code> (<code>.sc-picker</code>)
+- Modify: <code>backstage/packages/app/src/modules/auth.tsx:143-145</code>
+- Test: <code>backstage/plugins/platform-ui/src/SchemePicker.test.tsx:224</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: nothing.
+- Produces: <code>SchemePicker({ floating, compact }: { floating?: boolean; compact?: boolean })</code>. <code>floating</code> keeps its current meaning (fixed placement + drag + tray). <code>compact</code> is the tray without the placement — what the sign-in card mounts.</p>
+<p>Today <code>floating</code> decides three unrelated things at once: <code>shelf = floating ? [equipped] : SCHEMES</code> (<code>:648</code>), the <code>sc-picker-float</code> class with its <code>position: fixed</code> and drag handlers, and the tray with its <code>aria-expanded</code>. The login card needs the first and third without the second.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Write the failing test</strong></li>
+</ul>
+<p>In <code>backstage/plugins/platform-ui/src/SchemePicker.test.tsx</code>, <strong>replace</strong> the test at <code>:224</code> (<code>keeps the sign-in card free of the tray</code>) with:</p>
+<div class="language-tsx highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;gives the sign-in card the same one-bottle box as the app&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// The card is 296px of content box; twelve bottles need 358px and fifteen</span>
+<span class="w">    </span><span class="c1">// need 442px, so the flat shelf squeezed the sprites below their 16px grid</span>
+<span class="w">    </span><span class="c1">// and got worse with every potion added. The tray is the same interaction</span>
+<span class="w">    </span><span class="c1">// the app already has, and it does not grow the card at all.</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">container</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">render</span><span class="p">(&lt;</span><span class="nt">SchemePicker</span><span class="w"> </span><span class="na">compact</span><span class="w"> </span><span class="p">/&gt;);</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">potions</span><span class="p">(</span><span class="nx">container</span><span class="p">)).</span><span class="nx">toHaveLength</span><span class="p">(</span><span class="mf">1</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s1">&#39;.sc-picker-toggle&#39;</span><span class="p">)).</span><span class="nx">not</span><span class="p">.</span><span class="nx">toBeNull</span><span class="p">();</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">querySelector</span><span class="p">(</span><span class="s1">&#39;.sc-picker-float&#39;</span><span class="p">)).</span><span class="nx">toBeNull</span><span class="p">();</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;opens the full inventory from the sign-in card&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">container</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">render</span><span class="p">(&lt;</span><span class="nt">SchemePicker</span><span class="w"> </span><span class="na">compact</span><span class="w"> </span><span class="p">/&gt;);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">toggle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">potions</span><span class="p">(</span><span class="nx">container</span><span class="p">)[</span><span class="mf">0</span><span class="p">];</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">toggle</span><span class="p">.</span><span class="nx">getAttribute</span><span class="p">(</span><span class="s1">&#39;aria-expanded&#39;</span><span class="p">)).</span><span class="nx">toBe</span><span class="p">(</span><span class="s1">&#39;false&#39;</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">fireEvent</span><span class="p">.</span><span class="nx">click</span><span class="p">(</span><span class="nx">toggle</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">toggle</span><span class="p">.</span><span class="nx">getAttribute</span><span class="p">(</span><span class="s1">&#39;aria-expanded&#39;</span><span class="p">)).</span><span class="nx">toBe</span><span class="p">(</span><span class="s1">&#39;true&#39;</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">container</span><span class="p">.</span><span class="nx">querySelectorAll</span><span class="p">(</span><span class="s1">&#39;.sc-inv-potion&#39;</span><span class="p">)).</span><span class="nx">toHaveLength</span><span class="p">(</span><span class="nx">SCHEMES</span><span class="p">.</span><span class="nx">length</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+</code></pre></div></td></tr></table></div>
+<p>Import <code>fireEvent</code> and <code>SCHEMES</code> at the top of the file if they are not already imported.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Run tests to verify they fail</strong></li>
+</ul>
+<p>Run: <code>cd backstage &amp;&amp; yarn test plugins/platform-ui/src/SchemePicker.test.tsx -t 'sign-in card'</code>
+Expected: FAIL — <code>compact</code> is not a prop, so all twelve bottles render flat and there is no toggle.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Separate the tray from the placement</strong></li>
+</ul>
+<p>In <code>backstage/plugins/platform-ui/src/SchemeRoot.tsx</code>:</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">SchemePicker</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">floating</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">compact</span><span class="p">,</span>
+<span class="p">}</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">floating?</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span><span class="w"> </span><span class="nx">compact?</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{})</span><span class="w"> </span><span class="p">{</span>
+</code></pre></div></td></tr></table></div>
+<p>Immediately after the props, derive the two independent behaviours:</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="c1">// `floating` used to mean three things at once: one bottle plus a tray, a</span>
+<span class="w">  </span><span class="c1">// fixed position, and drag. The sign-in card wants the first without the</span>
+<span class="w">  </span><span class="c1">// other two — its shelf is inside a 296px card and cannot grow.</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">collapsed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">floating</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">compact</span><span class="p">;</span>
+</code></pre></div></td></tr></table></div>
+<p>Then replace every <code>floating</code> reference that is about the <em>shelf or the tray</em> with <code>collapsed</code>, and leave the ones about <em>placement</em> alone:</p>
+<ul>
+<li><code>:648</code> becomes <code>const shelf = collapsed ? [equipped] : SCHEMES;</code></li>
+<li>the <code>ref={floating ? invBtn : undefined}</code> on the bottle becomes <code>collapsed</code></li>
+<li>the <code>aria-expanded</code> / <code>aria-controls</code> spread becomes <code>collapsed</code></li>
+<li>the tray render guard becomes <code>collapsed</code></li>
+<li>the <code>className</code> stays <code>sc-picker${floating ? ' sc-picker-float' : ''}</code></li>
+<li>the drag handlers (<code>onPointerDown</code>/<code>onPointerMove</code>/<code>endDrag</code>) and <code>style={pos ? ... : undefined}</code> stay gated on <code>floating</code></li>
+</ul>
+<p>Update the two comments that now describe the old rule: the docstring at <code>:400-406</code> ("Without it the picker sits in the flow, which is how the sign-in card carries its own") and the comment at <code>:642-645</code> ("there the shelf IS the whole card — every bottle is already on show, so there is nothing to open"). Both are about to become false.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Give the tray something to anchor to</strong></li>
+</ul>
+<p>In <code>backstage/plugins/platform-ui/src/styles.ts</code>, add <code>position: relative;</code> to <code>.sc-picker</code> (<code>:1493</code>).</p>
+<p><code>.sc-picker-inv</code> is <code>position: absolute</code> (<code>:1581</code>). For the floating picker it resolves against <code>.sc-picker-float</code>'s <code>position: fixed</code>; the login instance has no positioned ancestor, so without this the tray escapes to the viewport. Harmless for the floating one, which overrides with <code>fixed</code>.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 5: Mount it on the login card</strong></li>
+</ul>
+<p>In <code>backstage/packages/app/src/modules/auth.tsx</code>, change <code>&lt;SchemePicker /&gt;</code> (<code>:144</code>) to <code>&lt;SchemePicker compact /&gt;</code>.</p>
+<p>Leave the <code>sc-signed-out</code> effect at <code>:114-119</code> alone: it hides <code>.sc-picker-float</code> (<code>styles.ts:1534</code>), and the compact instance does not carry that class.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 6: Run tests to verify they pass</strong></li>
+</ul>
+<p>Run: <code>cd backstage &amp;&amp; yarn test plugins/platform-ui/src/SchemePicker.test.tsx</code>
+Expected: PASS, including the reduced-motion assertion at <code>:279</code> — <code>equip()</code> (<code>SchemeRoot.tsx:657-673</code>) still skips the 360ms cast when the reader asked for less motion.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 7: Check the tray's opening direction</strong></li>
+</ul>
+<p><code>.sc-picker-inv</code> opens upward (<code>bottom: calc(100% + 10px)</code>, <code>styles.ts:1581</code>) and is capped at <code>max-height: 56vh</code>. The login card is vertically centred, so on a short viewport the tray can run off the top. Verify at 1280x600 in the browser; if it clips, add a <code>.sc-login-pick .sc-picker-inv { bottom: auto; top: calc(100% + 10px); }</code> rule rather than changing the shared one.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 8: Verify in the browser</strong></li>
+</ul>
+<p>Sign out (or open a private window) and confirm: one bottle in the card, the tray opens with all schemes, picking one applies it immediately, the card does not grow or overflow, and the outer ring of the picker is not clipped by the card's border. Then sign in and confirm the floating shelf still drags.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 9: Commit</strong></li>
+</ul>
+<div class="language-bash highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>backstage<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>yarn<span class="w"> </span>tsc<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>yarn<span class="w"> </span>lint:all
+git<span class="w"> </span>add<span class="w"> </span>backstage/plugins/platform-ui/src/SchemeRoot.tsx<span class="w"> </span>backstage/plugins/platform-ui/src/styles.ts<span class="w"> </span>backstage/plugins/platform-ui/src/SchemePicker.test.tsx<span class="w"> </span>backstage/packages/app/src/modules/auth.tsx
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;fix: sign-in card uses the app&#39;s potion box&quot;</span>
+</code></pre></div></td></tr></table></div>
+<hr />
+<h3 id="task-2-hanami-the-japanese-mode">Task 2: Hanami — the Japanese mode<a class="headerlink" href="#task-2-hanami-the-japanese-mode" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong> the ten from "Adding a mode", with <code>&lt;id&gt;</code> = <code>hanami</code>.</p>
+<p><strong>Interfaces:</strong>
+- Consumes: nothing.
+- Produces: <code>export function hanamiCss(): string</code>; <code>SchemeMode</code> gains <code>'hanami'</code>; <code>SCHEMES</code> gains <code>{ id: 'hanami', label: 'Hanami', hsl: '355 59% 39%', fg: 'hsl(45 100% 98%)', mode: 'hanami' }</code>.</p>
+<p><strong>Do this one first of the three.</strong> It is the most complex sheet — light-led, the most motifs, and the petal animation — so it shakes out the checklist while the other two are still cheap to adjust.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Write the failing sheet test</strong></li>
+</ul>
+<p>Create <code>backstage/plugins/platform-ui/src/hanami.test.ts</code>:</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span>
+<span class="normal">13</span>
+<span class="normal">14</span>
+<span class="normal">15</span>
+<span class="normal">16</span>
+<span class="normal">17</span>
+<span class="normal">18</span>
+<span class="normal">19</span>
+<span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span>
+<span class="normal">59</span>
+<span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">hanamiCss</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;./hanami&#39;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">MODE_CARDS</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;./statusTokens&#39;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">SHADCN_CSS</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;./styles&#39;</span><span class="p">;</span>
+
+<span class="nx">describe</span><span class="p">(</span><span class="s1">&#39;hanamiCss&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">css</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">hanamiCss</span><span class="p">();</span>
+
+<span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;is not truncated and has balanced braces&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">css</span><span class="p">.</span><span class="nx">length</span><span class="p">).</span><span class="nx">toBeGreaterThan</span><span class="p">(</span><span class="mf">1000</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">open</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">css</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/{/g</span><span class="p">)</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="p">[]).</span><span class="nx">length</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">close</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">css</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/}/g</span><span class="p">)</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="p">[]).</span><span class="nx">length</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">open</span><span class="si">}</span><span class="sb">/</span><span class="si">${</span><span class="nx">close</span><span class="si">}</span><span class="sb">`</span><span class="p">).</span><span class="nx">toBe</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">close</span><span class="si">}</span><span class="sb">/</span><span class="si">${</span><span class="nx">close</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;has no control characters, which is what a bad escape leaves behind&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// eslint-disable-next-line no-control-regex</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">css</span><span class="p">).</span><span class="nx">not</span><span class="p">.</span><span class="nx">toMatch</span><span class="p">(</span><span class="sr">/[ -]/</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;declares both registers&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">css</span><span class="p">).</span><span class="nx">toContain</span><span class="p">(</span><span class="s1">&#39;:root.sc-hanami&#39;</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">css</span><span class="p">).</span><span class="nx">toContain</span><span class="p">(</span><span class="s1">&#39;:root.sc-hanami.sc-dark&#39;</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;declares the load-bearing tokens in both registers&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">light</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">css</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span>
+<span class="w">      </span><span class="nx">css</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">&#39;:root.sc-hanami&#39;</span><span class="p">),</span>
+<span class="w">      </span><span class="nx">css</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">&#39;:root.sc-hanami.sc-dark&#39;</span><span class="p">),</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">dark</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">css</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">css</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">&#39;:root.sc-hanami.sc-dark&#39;</span><span class="p">));</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">token</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="s1">&#39;--sc-bg&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="s1">&#39;--sc-fg&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="s1">&#39;--sc-card&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="s1">&#39;--sc-primary&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="s1">&#39;--sc-primary-fg&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="s1">&#39;--sc-border&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="s1">&#39;--sc-muted-fg&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="s1">&#39;--sc-accent&#39;</span><span class="p">,</span>
+<span class="w">    </span><span class="p">])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">expect</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">token</span><span class="si">}</span><span class="sb"> light:</span><span class="si">${</span><span class="nx">light</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">token</span><span class="si">}</span><span class="sb">:`</span><span class="p">)</span><span class="si">}</span><span class="sb">`</span><span class="p">).</span><span class="nx">toBe</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">token</span><span class="si">}</span><span class="sb"> light:true`</span><span class="p">);</span>
+<span class="w">      </span><span class="nx">expect</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">token</span><span class="si">}</span><span class="sb"> dark:</span><span class="si">${</span><span class="nx">dark</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">token</span><span class="si">}</span><span class="sb">:`</span><span class="p">)</span><span class="si">}</span><span class="sb">`</span><span class="p">).</span><span class="nx">toBe</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">token</span><span class="si">}</span><span class="sb"> dark:true`</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// Guards the base sheet still declaring these at all, so this test cannot</span>
+<span class="w">    </span><span class="c1">// pass vacuously after a token rename.</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">SHADCN_CSS</span><span class="p">).</span><span class="nx">toContain</span><span class="p">(</span><span class="s1">&#39;--sc-card:&#39;</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;emits the card value MODE_CARDS advertises&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">css</span><span class="p">).</span><span class="nx">toContain</span><span class="p">(</span><span class="sb">`--sc-card: </span><span class="si">${</span><span class="nx">MODE_CARDS</span><span class="p">.</span><span class="nx">hanami</span><span class="p">.</span><span class="nx">light</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">css</span><span class="p">).</span><span class="nx">toContain</span><span class="p">(</span><span class="sb">`--sc-card: </span><span class="si">${</span><span class="nx">MODE_CARDS</span><span class="p">.</span><span class="nx">hanami</span><span class="p">.</span><span class="nx">dark</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;declares no typeface&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">css</span><span class="p">).</span><span class="nx">not</span><span class="p">.</span><span class="nx">toContain</span><span class="p">(</span><span class="s1">&#39;@font-face&#39;</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">css</span><span class="p">).</span><span class="nx">not</span><span class="p">.</span><span class="nx">toMatch</span><span class="p">(</span><span class="sr">/font-family:/</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;keeps every petal animation behind prefers-reduced-motion and on steps()&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;@media (prefers-reduced-motion: no-preference)&#39;</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">css</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="s1">&#39;animation:&#39;</span><span class="p">)).</span><span class="nx">toBeGreaterThan</span><span class="p">(</span><span class="nx">css</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">query</span><span class="p">));</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">guarded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">css</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">css</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">query</span><span class="p">));</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">guarded</span><span class="p">).</span><span class="nx">toContain</span><span class="p">(</span><span class="s1">&#39;steps(&#39;</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">guarded</span><span class="p">).</span><span class="nx">not</span><span class="p">.</span><span class="nx">toMatch</span><span class="p">(</span><span class="sr">/animation:[^;]*ease/</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">guarded</span><span class="p">).</span><span class="nx">not</span><span class="p">.</span><span class="nx">toMatch</span><span class="p">(</span><span class="sr">/animation:[^;]*cubic-bezier/</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;paints a designed still frame, not a frozen one&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Outside the motion query the petals must still be a deliberate picture.</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">css</span><span class="p">).</span><span class="nx">toMatch</span><span class="p">(</span><span class="sr">/\.sc-sakura i \{[^}]*opacity:/</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;does not translate on :active&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">css</span><span class="p">).</span><span class="nx">not</span><span class="p">.</span><span class="nx">toMatch</span><span class="p">(</span><span class="sr">/:active[^{]*\{[^}]*transform:\s*translate/</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+<span class="p">});</span>
+</code></pre></div></td></tr></table></div>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd backstage &amp;&amp; yarn test plugins/platform-ui/src/hanami.test.ts</code>
+Expected: FAIL — module not found.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Write the sheet</strong></li>
+</ul>
+<p>Create <code>backstage/plugins/platform-ui/src/hanami.ts</code> following <code>greek.ts</code>'s shape: a file docstring explaining the art direction and why the values are solved rather than chosen, sprite fills as literals, and one exported <code>hanamiCss()</code> returning the template string.</p>
+<p>Light register (this mode leads light — Japanese traditional colour is a light-ground tradition):</p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Name / romaji</th>
+<th>HSL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--sc-bg</code></td>
+<td>sakura-gasumi</td>
+<td><code>20 69% 94.9%</code></td>
+</tr>
+<tr>
+<td><code>--sc-card</code></td>
+<td>gofun</td>
+<td><code>45 100% 98.4%</code></td>
+</tr>
+<tr>
+<td><code>--sc-fg</code></td>
+<td>sumi</td>
+<td><code>24 12% 8.0%</code></td>
+</tr>
+<tr>
+<td><code>--sc-muted-fg</code></td>
+<td>nando-iro</td>
+<td><code>180 8% 33.3%</code></td>
+</tr>
+<tr>
+<td><code>--sc-primary</code></td>
+<td>enji</td>
+<td><code>355 59% 38.8%</code></td>
+</tr>
+<tr>
+<td><code>--sc-primary-fg</code></td>
+<td>gofun</td>
+<td><code>45 100% 98.4%</code></td>
+</tr>
+<tr>
+<td><code>--sc-accent</code></td>
+<td>ai-iro</td>
+<td><code>189 31% 21.6%</code></td>
+</tr>
+</tbody>
+</table>
+<p>Dark register: <code>--sc-bg: 197 26% 5.3%</code>, <code>--sc-card: 195 29% 5.5%</code>, <code>--sc-fg: 45 100% 98.4%</code>, <code>--sc-muted-fg: 40 6% 63.5%</code>, <code>--sc-primary: beni 348 79% 70.2%</code>, <code>--sc-accent: asagi 187 38% 64.7%</code>.</p>
+<p>Two colours are <strong>decorative only</strong> and must never carry text or a meaning-bearing border: sakura-iro <code>#FCC9B9</code> (1.45 on the card) and yamabuki <code>#FFA400</code> (1.95 light; safe as text in the dark register only, 9.64). Say so in a comment beside them — the next person will otherwise reach for the pretty pink.</p>
+<p>Note in the docstring why kurenai <code>#C93756</code> is <em>not</em> the primary: 4.96 on the card clears AA but misses this repo's 5.0 bar, so enji takes the slot and kurenai stays a fill.</p>
+<p>The dark card sits at 5.5% lightness because error-on-cell lands at exactly 5.00 there. That is a floor, not a starting point — record it.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Add the petal animation</strong></li>
+</ul>
+<p>Inside the sheet, wholly within <code>@media (prefers-reduced-motion: no-preference)</code>:</p>
+<div class="language-css highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">@</span><span class="k">keyframes</span><span class="w"> </span><span class="nt">sc-petal-fall</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">from</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">transform</span><span class="p">:</span><span class="w"> </span><span class="nb">translateY</span><span class="p">(</span><span class="mi">-16</span><span class="kt">px</span><span class="p">);</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nt">to</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">transform</span><span class="p">:</span><span class="w"> </span><span class="nb">translateY</span><span class="p">(</span><span class="mi">102</span><span class="kt">vh</span><span class="p">);</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<span class="p">@</span><span class="k">keyframes</span><span class="w"> </span><span class="nt">sc-petal-drift</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">from</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">margin-left</span><span class="p">:</span><span class="w"> </span><span class="mi">-14</span><span class="kt">px</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="nt">to</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">margin-left</span><span class="p">:</span><span class="w"> </span><span class="mi">14</span><span class="kt">px</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<span class="p">@</span><span class="k">keyframes</span><span class="w"> </span><span class="nt">sc-petal-turn</span><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">to</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">background-position</span><span class="p">:</span><span class="w"> </span><span class="mi">-12</span><span class="kt">px</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+
+<span class="p">.</span><span class="nc">sc-sakura</span><span class="w"> </span><span class="nt">i</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">animation</span><span class="p">:</span><span class="w"> </span><span class="n">sc-petal-fall</span><span class="w"> </span><span class="mi">11</span><span class="kt">s</span><span class="w"> </span><span class="nb">steps</span><span class="p">(</span><span class="mi">28</span><span class="p">)</span><span class="w"> </span><span class="kc">infinite</span><span class="p">,</span>
+<span class="w">             </span><span class="n">sc-petal-drift</span><span class="w"> </span><span class="mf">2.6</span><span class="kt">s</span><span class="w"> </span><span class="nb">steps</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="kc">infinite</span><span class="w"> </span><span class="kc">alternate</span><span class="p">,</span>
+<span class="w">             </span><span class="n">sc-petal-turn</span><span class="w"> </span><span class="mf">1.2</span><span class="kt">s</span><span class="w"> </span><span class="nb">steps</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="w"> </span><span class="kc">infinite</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="p">.</span><span class="nc">sc-sakura</span><span class="w"> </span><span class="nt">i</span><span class="p">:</span><span class="nd">nth-child</span><span class="o">(</span><span class="nt">2</span><span class="o">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">animation-duration</span><span class="p">:</span><span class="w"> </span><span class="mi">14</span><span class="kt">s</span><span class="p">,</span><span class="w"> </span><span class="mf">3.1</span><span class="kt">s</span><span class="p">,</span><span class="w"> </span><span class="mf">1.6</span><span class="kt">s</span><span class="p">;</span><span class="w"> </span><span class="k">animation-delay</span><span class="p">:</span><span class="w"> </span><span class="mi">-3</span><span class="kt">s</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="kt">s</span><span class="p">,</span><span class="w"> </span><span class="mf">-.4</span><span class="kt">s</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">.</span><span class="nc">sc-sakura</span><span class="w"> </span><span class="nt">i</span><span class="p">:</span><span class="nd">nth-child</span><span class="o">(</span><span class="nt">3</span><span class="o">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">animation-duration</span><span class="p">:</span><span class="w"> </span><span class="mi">9</span><span class="kt">s</span><span class="p">,</span><span class="w"> </span><span class="mf">2.2</span><span class="kt">s</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="kt">s</span><span class="p">;</span><span class="w"> </span><span class="k">animation-delay</span><span class="p">:</span><span class="w"> </span><span class="mi">-6</span><span class="kt">s</span><span class="p">,</span><span class="w"> </span><span class="mi">-1</span><span class="kt">s</span><span class="p">,</span><span class="w"> </span><span class="mf">-.8</span><span class="kt">s</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<p>...continuing one line per petal for around nine petals. Each <code>steps()</code> is required, not stylistic: <code>fall</code> moves whole pixel rows so the sprite never lands on a sub-pixel and blurs; <code>turn</code> advances a 4-frame tumble strip that would otherwise smear. Negative delays start petals mid-flight so there is no synchronised burst on load.</p>
+<p>Outside the query, <code>.sc-sakura</code> and <code>.sc-sakura i</code> must still paint a deliberate arrangement — a few petals at rest, <code>opacity: 1</code>, <code>pointer-events: none</code> on the fixed overlay.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 5: Add the motifs</strong></li>
+</ul>
+<p>In <code>sprites.ts</code>, add 16x16 grids for seigaiha (tileable concentric arcs — a unit-cell pattern, so it tiles with zero seam), asanoha, a torii, a two-layer koi (gofun body + kurenai patches), a kitsune mask, plus an 8x8 blossom and a 3x4 petal for the animation. Add each to <code>sprites.test.ts</code>'s grid-size assertions.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 6: Register the mode</strong></li>
+</ul>
+<p>Do items 2, 3, 4, 5, 7, 8 and 10 from "Adding a mode" with <code>&lt;id&gt;</code> = <code>hanami</code>, <code>MODE_CARDS.hanami = { light: '45 100% 98.4%', dark: '195 29% 5.5%' }</code>, and <code>MODE_TOKENS.hanami = STATUS_TOKENS</code>.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 7: Run the full suite</strong></li>
+</ul>
+<p>Run: <code>cd backstage &amp;&amp; yarn test plugins/platform-ui</code>
+Expected: PASS. <code>contrast.test.ts</code> is the one that matters — it re-measures every status pair against the new card. If a pair fails, move the <strong>card</strong>, not the status token; a mode-specific <code>StatusToken[]</code> is an exception the design system has already spent on greek.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 8: Verify in the browser</strong></li>
+</ul>
+<p>Pick Hanami from the tray. Check: light and dark both readable; the petals fall in visible pixel steps rather than gliding; <code>SUCCEEDED</code> and <code>FAILED</code> badges keep their system hue; and with OS "reduce motion" on, the petals are a still arrangement rather than absent.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 9: Commit</strong></li>
+</ul>
+<div class="language-bash highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>backstage<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>yarn<span class="w"> </span>tsc<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>yarn<span class="w"> </span>lint:all
+git<span class="w"> </span>add<span class="w"> </span>backstage/plugins/platform-ui/src/hanami.ts<span class="w"> </span>backstage/plugins/platform-ui/src/hanami.test.ts<span class="w"> </span>backstage/plugins/platform-ui/src/styles.ts<span class="w"> </span>backstage/plugins/platform-ui/src/statusTokens.ts<span class="w"> </span>backstage/plugins/platform-ui/src/SchemeRoot.tsx<span class="w"> </span>backstage/plugins/platform-ui/src/SchemeRoot.test.ts<span class="w"> </span>backstage/plugins/platform-ui/src/brands.test.ts<span class="w"> </span>backstage/plugins/platform-ui/src/contrast.test.ts<span class="w"> </span>backstage/plugins/platform-ui/src/sprites.ts<span class="w"> </span>backstage/plugins/platform-ui/src/sprites.test.ts<span class="w"> </span>backstage/plugins/platform-ui/src/styles.test.ts
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat: hanami potion&quot;</span>
+</code></pre></div></td></tr></table></div>
+<hr />
+<h3 id="task-3-nightshade-the-hades-2-witch-mode">Task 3: Nightshade — the Hades-2 witch mode<a class="headerlink" href="#task-3-nightshade-the-hades-2-witch-mode" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong> the ten from "Adding a mode", with <code>&lt;id&gt;</code> = <code>nightshade</code>.</p>
+<p><strong>Interfaces:</strong>
+- Consumes: nothing.
+- Produces: <code>export function nightshadeCss(): string</code>; <code>SchemeMode</code> gains <code>'nightshade'</code>; <code>SCHEMES</code> gains <code>{ id: 'nightshade', label: 'Nightshade', hsl: '142 67% 66%', fg: 'hsl(240 10% 8%)', mode: 'nightshade' }</code>.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Write the failing sheet test</strong></li>
+</ul>
+<p>Create <code>backstage/plugins/platform-ui/src/nightshade.test.ts</code> with the same nine assertions listed in Task 2, Step 1, with <code>hanami</code> replaced by <code>nightshade</code> throughout, <code>MODE_CARDS.nightshade</code> in the card assertion, and the still-frame assertion naming <code>.sc-moon</code> instead of <code>.sc-sakura i</code>. Repeat the assertions in full — do not import them from the other test file; each mode's suite must be readable on its own.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd backstage &amp;&amp; yarn test plugins/platform-ui/src/nightshade.test.ts</code>
+Expected: FAIL — module not found.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Write the sheet</strong></li>
+</ul>
+<p>Create <code>backstage/plugins/platform-ui/src/nightshade.ts</code>. Dark-first.</p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Name</th>
+<th>HSL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--sc-bg</code></td>
+<td>Void</td>
+<td><code>251 41% 5.3%</code></td>
+</tr>
+<tr>
+<td><code>--sc-card</code></td>
+<td>Crossroads slate</td>
+<td><code>254 39% 6.5%</code></td>
+</tr>
+<tr>
+<td><code>--sc-fg</code></td>
+<td>Bone</td>
+<td><code>263 39% 93.5%</code></td>
+</tr>
+<tr>
+<td><code>--sc-muted-fg</code></td>
+<td>Ash lavender</td>
+<td><code>256 24% 69.6%</code></td>
+</tr>
+<tr>
+<td><code>--sc-primary</code></td>
+<td>Witch green</td>
+<td><code>142 67% 66.3%</code></td>
+</tr>
+<tr>
+<td><code>--sc-primary-fg</code></td>
+<td>ink</td>
+<td><code>240 10% 8%</code></td>
+</tr>
+<tr>
+<td><code>--sc-accent</code></td>
+<td>Filigree gold</td>
+<td><code>41 67% 54.9%</code></td>
+</tr>
+<tr>
+<td>second accent</td>
+<td>Moonlight violet</td>
+<td><code>269 68% 69.8%</code></td>
+</tr>
+</tbody>
+</table>
+<p>Light register: <code>--sc-bg: 40 20% 96%</code>, <code>--sc-card: 260 30% 99%</code>, <code>--sc-fg: 254 25% 12%</code>, <code>--sc-primary: 152 62% 26%</code>, gold <code>41 60% 40%</code>.</p>
+<p><code>MODE_CARDS.nightshade = { light: '260 30% 99%', dark: '254 39% 6.5%' }</code>, <code>MODE_TOKENS.nightshade = STATUS_TOKENS</code>. Verified status on the dark card: success 7.25 / cell 5.35, warn 8.35 / 5.35, error 6.35 / 5.06, muted 10.17 / 5.27.</p>
+<p>Never pair witch green with filigree gold directly — both mid-light. Separate them with the card. Selene silver <code>219 40% 84.9%</code> is an ornament colour; do not recruit it as a second text tone.</p>
+<p>In the docstring, state what this is and is not. The gold-filigree-on-saturated-dark read comes from Jen Zee's documented art-nouveau lineage (Mucha, Klimt), and the cool green/grey shift is Hades II's own. What must <strong>not</strong> appear: Melinoe or Hecate as characters or silhouettes (the bob-plus-crescent profile is a recognisable character mark), the four-goddess braid detail, the Hades II logotype or laurel lockup, the game's UI frame geometry, and the boon-rarity ramp (white/blue/purple/red) — which would also collide with our status semantics. Also note why this is not "greek at night": <code>greek</code> already owns gold-on-dark with meander and palmette, so Nightshade leads with witch green over violet.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Add the moon animation</strong></li>
+</ul>
+<p>Wholly inside <code>@media (prefers-reduced-motion: no-preference)</code>:</p>
+<div class="language-css highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">@</span><span class="k">keyframes</span><span class="w"> </span><span class="nt">sc-moonphase</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">to</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">background-position</span><span class="p">:</span><span class="w"> </span><span class="mi">-64</span><span class="kt">px</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<span class="p">.</span><span class="nc">sc-moon</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">animation</span><span class="p">:</span><span class="w"> </span><span class="n">sc-moonphase</span><span class="w"> </span><span class="mi">8</span><span class="kt">s</span><span class="w"> </span><span class="nb">steps</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span><span class="w"> </span><span class="kc">infinite</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<p><code>.sc-moon</code> outside the query is an 8x8 element with the strip's first frame showing — one crescent, deliberately chosen, <code>opacity: 1</code>. <code>steps(8)</code> is mandatory: interpolation slides the strip mid-frame and shows two half-moons at once.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 5: Add the motifs</strong></li>
+</ul>
+<p>In <code>sprites.ts</code>: a 16x16 crescent-and-torch as two layers (gold body, green flame); an 8x8 filigree corner scroll used at four rotations via <code>transform</code>; a 16x16 cauldron with three bubbles as two layers; an 8x8 moth; and a tileable nightshade sprig band for the sidebar. Add each to <code>sprites.test.ts</code>.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 6: Register the mode</strong></li>
+</ul>
+<p>Items 2, 3, 4, 5, 7, 8 and 10 from "Adding a mode" with <code>&lt;id&gt;</code> = <code>nightshade</code>.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 7: Run the full suite</strong></li>
+</ul>
+<p>Run: <code>cd backstage &amp;&amp; yarn test plugins/platform-ui</code>
+Expected: PASS, <code>contrast.test.ts</code> included.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 8: Verify in the browser</strong></li>
+</ul>
+<p>Pick Nightshade. Check both registers, confirm the moon steps rather than glides, and confirm status badges keep their hue against the new card.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 9: Commit</strong></li>
+</ul>
+<div class="language-bash highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>backstage<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>yarn<span class="w"> </span>tsc<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>yarn<span class="w"> </span>lint:all
+git<span class="w"> </span>add<span class="w"> </span>backstage/plugins/platform-ui/src/nightshade.ts<span class="w"> </span>backstage/plugins/platform-ui/src/nightshade.test.ts<span class="w"> </span>backstage/plugins/platform-ui/src/styles.ts<span class="w"> </span>backstage/plugins/platform-ui/src/statusTokens.ts<span class="w"> </span>backstage/plugins/platform-ui/src/SchemeRoot.tsx<span class="w"> </span>backstage/plugins/platform-ui/src/SchemeRoot.test.ts<span class="w"> </span>backstage/plugins/platform-ui/src/brands.test.ts<span class="w"> </span>backstage/plugins/platform-ui/src/contrast.test.ts<span class="w"> </span>backstage/plugins/platform-ui/src/sprites.ts<span class="w"> </span>backstage/plugins/platform-ui/src/sprites.test.ts<span class="w"> </span>backstage/plugins/platform-ui/src/styles.test.ts
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat: nightshade potion&quot;</span>
+</code></pre></div></td></tr></table></div>
+<hr />
+<h3 id="task-4-rimefast-the-norse-mode">Task 4: Rimefast — the Norse mode<a class="headerlink" href="#task-4-rimefast-the-norse-mode" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong> the ten from "Adding a mode", with <code>&lt;id&gt;</code> = <code>rimefast</code>.</p>
+<p><strong>Interfaces:</strong>
+- Consumes: nothing.
+- Produces: <code>export function rimefastCss(): string</code>; <code>SchemeMode</code> gains <code>'rimefast'</code>; <code>SCHEMES</code> gains <code>{ id: 'rimefast', label: 'Rimefast', hsl: '41 75% 51%', fg: 'hsl(240 10% 8%)', mode: 'rimefast' }</code>.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Write the failing sheet test</strong></li>
+</ul>
+<p>Create <code>backstage/plugins/platform-ui/src/rimefast.test.ts</code> with the same nine assertions listed in Task 2, Step 1, with <code>hanami</code> replaced by <code>rimefast</code> throughout, <code>MODE_CARDS.rimefast</code> in the card assertion, and the still-frame assertion naming <code>.sc-rune-rule</code>. Repeat them in full.</p>
+<p>Add one more, specific to this mode:</p>
+<div class="language-ts highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">&#39;names no rune that has been appropriated as an extremist symbol&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Genuine Norse forms, all catalogued by the ADL. Ravens, Yggdrasil,</span>
+<span class="w">    </span><span class="c1">// knotwork and generic futhark bands carry no such freight.</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">sheet</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">rimefastCss</span><span class="p">().</span><span class="nx">toLowerCase</span><span class="p">();</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">banned</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="p">[</span><span class="s1">&#39;valknut&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;othala&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;sowilo&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;sunwheel&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;sigrune&#39;</span><span class="p">])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">expect</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">banned</span><span class="si">}</span><span class="sb">:</span><span class="si">${</span><span class="nx">sheet</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="nx">banned</span><span class="p">)</span><span class="si">}</span><span class="sb">`</span><span class="p">).</span><span class="nx">toBe</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">banned</span><span class="si">}</span><span class="sb">:false`</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">});</span>
+</code></pre></div></td></tr></table></div>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Run test to verify it fails</strong></li>
+</ul>
+<p>Run: <code>cd backstage &amp;&amp; yarn test plugins/platform-ui/src/rimefast.test.ts</code>
+Expected: FAIL — module not found.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Write the sheet</strong></li>
+</ul>
+<p>Create <code>backstage/plugins/platform-ui/src/rimefast.ts</code>. Dark-first, cold and bright.</p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Name</th>
+<th>HSL</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--sc-bg</code></td>
+<td>Polar night</td>
+<td><code>205 50% 4.7%</code></td>
+</tr>
+<tr>
+<td><code>--sc-card</code></td>
+<td>Deep woad</td>
+<td><code>205 43% 5.5%</code></td>
+</tr>
+<tr>
+<td><code>--sc-fg</code></td>
+<td>Bone / lead white</td>
+<td><code>44 29% 87.3%</code></td>
+</tr>
+<tr>
+<td><code>--sc-muted-fg</code></td>
+<td>Frost slate</td>
+<td><code>201 12% 63.7%</code></td>
+</tr>
+<tr>
+<td><code>--sc-primary</code></td>
+<td>Orpiment</td>
+<td><code>41 75% 51.4%</code></td>
+</tr>
+<tr>
+<td><code>--sc-primary-fg</code></td>
+<td>ink</td>
+<td><code>240 10% 8%</code></td>
+</tr>
+<tr>
+<td><code>--sc-accent</code></td>
+<td>Aurora</td>
+<td><code>157 60% 59.8%</code></td>
+</tr>
+<tr>
+<td>second accent</td>
+<td>Lichen purple</td>
+<td><code>272 42% 68.2%</code></td>
+</tr>
+<tr>
+<td>third accent</td>
+<td>Madder, lifted</td>
+<td><code>9 68% 62.0%</code></td>
+</tr>
+</tbody>
+</table>
+<p>Light register: <code>--sc-bg: 44 30% 95%</code>, <code>--sc-card: 44 40% 98%</code>, <code>--sc-fg: 205 30% 12%</code>, <code>--sc-primary: 28 70% 34%</code>, border woad <code>205 45% 30%</code>.</p>
+<p><code>MODE_CARDS.rimefast = { light: '44 40% 98%', dark: '205 43% 5.5%' }</code>, <code>MODE_TOKENS.rimefast = STATUS_TOKENS</code>. Verified: success 7.15 / cell 5.17, warn 8.23 / 5.27, error 6.26 / 5.08, muted 10.02 / 5.16.</p>
+<p>Two facts to record in the docstring, because both look like mistakes otherwise:</p>
+<ul>
+<li>Madder's true pigment value <code>#C7503F</code> measures <strong>3.60 on the card and fails</strong>. It is lifted to <code>9 68% 62.0%</code> for anything carrying text; the true value is fills-only.</li>
+<li>The card is at 5.5% lightness deliberately. At 8% the worst status pair drops to 4.78 and at 10% to 4.54, which would force a mode-specific <code>StatusToken[]</code>.</li>
+</ul>
+<p>Also note why there is no brown: the Viking Age painted loudly — orpiment, lead-oxide red, hematite, copper green, vivianite blue, madder, woad and lichen purple are all identified from finds. "Medieval brown" is a modern screen convention.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Add the aurora animation</strong></li>
+</ul>
+<p>Wholly inside <code>@media (prefers-reduced-motion: no-preference)</code>:</p>
+<div class="language-css highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="p">@</span><span class="k">keyframes</span><span class="w"> </span><span class="nt">sc-aurora</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">to</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">background-position</span><span class="p">:</span><span class="w"> </span><span class="mi">-192</span><span class="kt">px</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">}</span>
+<span class="p">.</span><span class="nc">sc-rune-rule</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">animation</span><span class="p">:</span><span class="w"> </span><span class="n">sc-aurora</span><span class="w"> </span><span class="mf">4.8</span><span class="kt">s</span><span class="w"> </span><span class="nb">steps</span><span class="p">(</span><span class="mi">6</span><span class="p">)</span><span class="w"> </span><span class="kc">infinite</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div></td></tr></table></div>
+<p>800ms per frame reads as a shimmer rather than a scroll. Outside the query <code>.sc-rune-rule</code> is the same strip, fully painted and correctly coloured on frame one.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 5: Add the motifs</strong></li>
+</ul>
+<p>In <code>sprites.ts</code>: a 16x16 tileable Elder Futhark band using <strong>decorative, non-semantic</strong> rune sequences (runes were carved without horizontals, which is exactly what a pixel grid renders cleanly); a 16x16 Yggdrasil (2px trunk, three branches, three roots, symmetric); an 8x8 raven in profile; a 16x16 Urnes-style knotwork border with 2px strokes and a 1px gap at crossings (16x16 is the floor — interlace needs three distinguishable bands across a crossing); and a 32x8 dithered aurora strip. Add each to <code>sprites.test.ts</code>.</p>
+<p><strong>Excluded, deliberately:</strong> Valknut, Othala, Sowilo/sig-rune, Tyr rune, sunwheel. Put that list in a comment above the sprite grids so nobody adds one later thinking it was an oversight.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 6: Register the mode</strong></li>
+</ul>
+<p>Items 2, 3, 4, 5, 7, 8 and 10 from "Adding a mode" with <code>&lt;id&gt;</code> = <code>rimefast</code>.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 7: Run the full suite</strong></li>
+</ul>
+<p>Run: <code>cd backstage &amp;&amp; yarn test plugins/platform-ui</code>
+Expected: PASS.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 8: Check one adjacency by eye</strong></li>
+</ul>
+<p>Aurora <code>157 60% 59.8%</code> sits about 5 degrees from the success status hue. Put an aurora ornament next to a <code>SUCCEEDED</code> badge in the browser and confirm the decoration does not read as state. If it does, move the ornament, not the status colour. This is the same trap <code>greek</code> recorded when it pushed success 60 degrees to clear the stock amber.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 9: Commit</strong></li>
+</ul>
+<div class="language-bash highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>backstage<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>yarn<span class="w"> </span>tsc<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>yarn<span class="w"> </span>lint:all
+git<span class="w"> </span>add<span class="w"> </span>backstage/plugins/platform-ui/src/rimefast.ts<span class="w"> </span>backstage/plugins/platform-ui/src/rimefast.test.ts<span class="w"> </span>backstage/plugins/platform-ui/src/styles.ts<span class="w"> </span>backstage/plugins/platform-ui/src/statusTokens.ts<span class="w"> </span>backstage/plugins/platform-ui/src/SchemeRoot.tsx<span class="w"> </span>backstage/plugins/platform-ui/src/SchemeRoot.test.ts<span class="w"> </span>backstage/plugins/platform-ui/src/brands.test.ts<span class="w"> </span>backstage/plugins/platform-ui/src/contrast.test.ts<span class="w"> </span>backstage/plugins/platform-ui/src/sprites.ts<span class="w"> </span>backstage/plugins/platform-ui/src/sprites.test.ts<span class="w"> </span>backstage/plugins/platform-ui/src/styles.test.ts
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;feat: rimefast potion&quot;</span>
+</code></pre></div></td></tr></table></div>
+<hr />
+<h3 id="task-5-make-the-design-system-docs-true-again">Task 5: Make the design-system docs true again<a class="headerlink" href="#task-5-make-the-design-system-docs-true-again" title="Permanent link">&para;</a></h3>
+<p><strong>Files:</strong>
+- Modify: <code>docs/explanation/design-system.md</code>
+- Modify: <code>docs/how-to/rebrand-the-portal.md</code></p>
+<p><strong>Interfaces:</strong>
+- Consumes: the three modes from Tasks 2-4.
+- Produces: documentation that matches the code.</p>
+<p>Both files were already stale before this work — <code>design-system.md:130</code> says "Six of the seven bottles" and <code>:185</code> "all six schemes", and <code>rebrand-the-portal.md:45</code> has a table of "the six accents" that no longer exist. After Tasks 2-4 there are fifteen schemes, all of them modes.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 1: Fix the counts and the accents table</strong></li>
+</ul>
+<p>In <code>docs/explanation/design-system.md</code>, correct every count and rewrite the "Mode potions" section to name all the modes. In <code>docs/how-to/rebrand-the-portal.md</code>, replace the stale accents table with the current list, or delete it and point at <code>SCHEMES</code> as the single source of truth — a table that must be hand-synced with a code array will go stale again.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 2: Document the login picker change</strong></li>
+</ul>
+<p>Add a sentence to <code>docs/explanation/design-system.md</code> where the movable potion box is described: the sign-in card carries the same box, and both use the tray, because a flat shelf could not survive the scheme count.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 3: Document the three new modes</strong></li>
+</ul>
+<p>One short paragraph each — what the palette is rooted in, which motion it carries, and, for Rimefast, the excluded iconography with the reason. That last one is the paragraph that stops someone "completing the set" in a year's time.</p>
+<ul class="task-list">
+<li class="task-list-item"><label class="task-list-control"><input type="checkbox" disabled/><span class="task-list-indicator"></span></label> <strong>Step 4: Commit</strong></li>
+</ul>
+<div class="language-bash highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code>git<span class="w"> </span>add<span class="w"> </span>docs/explanation/design-system.md<span class="w"> </span>docs/how-to/rebrand-the-portal.md
+git<span class="w"> </span>commit<span class="w"> </span>-m<span class="w"> </span><span class="s2">&quot;docs: three new potions and the shared login picker&quot;</span>
+</code></pre></div></td></tr></table></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.footer", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../../search/main.js"></script>
+      
+    
+  </body>
+</html>

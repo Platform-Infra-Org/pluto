@@ -508,6 +508,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../how-to/embed-a-grafana-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embed a Grafana dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../how-to/rebrand-the-portal/" class="md-nav__link">
         
   
@@ -935,6 +963,28 @@
     <span class="md-ellipsis">
       
         platform.secrets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platformdemooptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.demoOptions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platformuploads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.uploads
       
     </span>
   </a>
@@ -1439,6 +1489,28 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#platformdemooptions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.demoOptions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#platformuploads" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        platform.uploads
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#platformrequestsretention" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1649,6 +1721,50 @@ enable. See <strong><a href="../../how-to/customise-the-home-page/">Customise th
 <p><code>encryptionKey</code> takes a string <strong>or a list</strong>: the first entry encrypts, every
 entry is tried on decrypt, which is how the key rotates without re-encrypting
 held blobs. See <strong><a href="../../explanation/secrets-lifecycle/">Secret lifecycle</a></strong>.</p>
+<h2 id="platformdemooptions"><code>platform.demoOptions</code><a class="headerlink" href="#platformdemooptions" title="Permanent link">&para;</a></h2>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">platform</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">demoOptions</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div></td></tr></table></div>
+<p>Serves the demo option sets at <code>/options/:name</code> — the stand-in "external" API
+the DynamicSelect examples reach through the <code>/demo-options</code> proxy, including
+the nested <code>coordinate-tree</code> the cascading example walks.</p>
+<p><strong>Off unless set</strong>, and it should stay off in production: this is demo data
+living in a production binary, so the default is the safe one and every
+environment that wants it says so. The dev stack switches it on in the
+gitignored <code>app-config.local.yaml</code> that <code>scripts/backstage-up.sh</code> writes. With
+it off the route answers 404 naming this key, so an example that goes quiet
+explains itself.</p>
+<h2 id="platformuploads"><code>platform.uploads</code><a class="headerlink" href="#platformuploads" title="Permanent link">&para;</a></h2>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span>
+<span class="normal">4</span>
+<span class="normal">5</span>
+<span class="normal">6</span>
+<span class="normal">7</span>
+<span class="normal">8</span>
+<span class="normal">9</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">platform</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">uploads</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">bucket</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">platform-uploads</span>
+<span class="w">    </span><span class="nt">region</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">eu-west-1</span>
+<span class="w">    </span><span class="nt">endpoint</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http://localhost:9000</span><span class="w">   </span><span class="c1"># optional — S3-compatible (e.g. MinIO); omit for real AWS S3</span>
+<span class="w">    </span><span class="nt">keyPrefix</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">scaffolder</span>
+<span class="w">    </span><span class="nt">maxBytes</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10485760</span><span class="w">                </span><span class="c1"># 10 MiB</span>
+<span class="w">    </span><span class="nt">allowedExtensions</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;.yaml&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;.yml&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;.json&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;.txt&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;.csv&#39;</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">urlTtlSeconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span>
+</code></pre></div></td></tr></table></div>
+<p>Backs <code>POST /uploads/presign</code>, which signs a single S3 <code>PutObjectCommand</code> for
+the <code>ui:field: PlatformFile</code> scaffolder field — bytes go straight from the
+browser to S3, never through Backstage. Unset (the default): the route
+returns 501 rather than failing inside the AWS SDK, and <code>PlatformFile</code> reports
+"not configured".</p>
+<p>Content-Length is signed as part of the URL, so <code>maxBytes</code> is enforced by S3,
+not merely advised to the browser. Content-Type is <strong>not</strong> taken from the
+caller — it is derived server-side from the (validated) extension, so a
+caller cannot sign an upload as a type the bucket would later serve as HTML.
+See <strong><a href="../../how-to/author-a-template/#file-uploads">File uploads</a></strong> for the
+CORS, CSP and bucket-lifecycle requirements this needs on the S3 side.</p>
 <h2 id="platformrequestsretention"><code>platform.requests.retention</code><a class="headerlink" href="#platformrequestsretention" title="Permanent link">&para;</a></h2>
 <p>Off by default — deleting rows cannot be undone.</p>
 <div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
@@ -1712,6 +1828,14 @@ and a <code>schedule</code>. See <strong><a href="../../explanation/identity-and
 <h2 id="proxyendpoints"><code>proxy.endpoints</code><a class="headerlink" href="#proxyendpoints" title="Permanent link">&para;</a></h2>
 <p>Server-side proxy routes (e.g. <code>/demo-options</code> for DynamicSelect, <code>/argo-workflows</code>
 for Argo). Inject upstream auth here so secrets never reach the browser/plugin.</p>
+<p>The <code>/infra</code> route feeds the cascading <code>DynamicSelect</code> example
+(<code>provision-database</code>, see <strong><a href="../../how-to/add-a-dynamic-select-field/">Add a DynamicSelect
+field</a></strong>). It needs two env vars:</p>
+<ul>
+<li><code>INFRA_CONFIG_API_URL</code> — base URL of the coordinate-tree API.</li>
+<li><code>INFRA_CONFIG_API_TOKEN</code> — bearer token the proxy injects server-side; the
+  browser only ever calls <code>/api/proxy/infra/...</code> and never sees it.</li>
+</ul>
 <h2 id="auth">Auth<a class="headerlink" href="#auth" title="Permanent link">&para;</a></h2>
 <p><code>auth.providers.oidc</code> (Keycloak), <code>auth.session.secret</code>. See
 <strong><a href="../../how-to/prepare-for-production/">Prepare for production</a></strong> for the
