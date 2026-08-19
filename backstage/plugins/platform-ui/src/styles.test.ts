@@ -533,23 +533,36 @@ describe('SHADCN_CSS', () => {
     // which read as a caption on a card whose whole job is to be picked out of
     // a grid.
     expect(SHADCN_CSS).toMatch(
-      /\.sc-route-create[^{]*> h4 \{[^}]*font-size:\s*19px/,
+      /\.sc-route-create[^{]*> h4 \{[^}]*font-size:\s*22px/,
     );
-    // The backing is a wash, not a plate: zero vertical padding, so its height
-    // is exactly the line box and it cannot band across the header scene. The
-    // legibility it used to provide alone now comes mostly from the four-way
-    // outline and hard drop shadow the header applies to every glyph. Comments
-    // are stripped first — the rule's own comment quotes the old values.
+    // Comments are stripped first — the rule's own comment quotes old values.
     const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
     const block = rules.match(/\.sc-route-create[^{]*> h4 \{([^}]*)\}/);
     expect(block).toBeTruthy();
-    // Unitless zero is legal CSS and is what this rule now uses, so the unit
-    // is optional in the match — requiring "px" would read the rule as having
-    // no padding at all and pass for the wrong reason.
-    const padding = /padding:\s*(\d+(?:\.\d+)?)(?:px)?/.exec(block![1]);
-    expect(padding).not.toBeNull();
-    // Vertical padding specifically: a band is what this guards against.
-    expect(parseFloat(padding![1])).toBe(0);
+    const body = block![1];
+
+    // No plate. White over the generated header scene measures as low as
+    // 1.27:1 on the bright art, so something must carry the title — but it is
+    // the shadow that does it now, not a filled box behind the words.
+    expect(body).not.toMatch(/background(-color)?:/);
+    expect(body).not.toMatch(/padding:/);
+
+    // The shadow is what replaced it, and it has to be the hard kind: a blurred
+    // halo would be the one soft edge on a pixel card. Every offset is a whole
+    // pixel with a 0 blur radius.
+    const shadow = /text-shadow:([^;]*);/.exec(body);
+    expect(shadow).not.toBeNull();
+    const offsets = shadow![1].trim().split(',');
+    expect(offsets.length).toBeGreaterThanOrEqual(8);
+    for (const offset of offsets) {
+      // Unitless zero is legal for an offset, so the unit is optional — what
+      // is not optional is the third value, the blur radius, being 0.
+      expect(offset.trim()).toMatch(/^-?\d+(?:px)? -?\d+(?:px)? 0 /);
+    }
+
+    // Centred: without a plate there is no box edge left to align to.
+    expect(body).toMatch(/align-self:\s*center/);
+    expect(body).toMatch(/text-align:\s*center/);
   });
 
   it('uses no class name that a production build discards', () => {

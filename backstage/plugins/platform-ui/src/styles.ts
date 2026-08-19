@@ -762,37 +762,44 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   order: 1;
   /* The name IS the card. It arrived at the header's inherited size, which read
      as a caption on a card whose whole job is to be picked from a grid. */
-  font-size: 19px !important;
+  font-size: 22px !important;
   font-weight: 600 !important;
   line-height: 1.2 !important;
   letter-spacing: -0.02em;
-  /* The title sits directly on the header scene, and a scene is not a colour:
-     the same white ran over a night sky on one card and over the sun on the
-     next, where it measured 1.27:1. The plate is what makes the title legible
-     without touching the art — it darkens only the band the words occupy, and
-     white over it clears AA whatever is painted underneath. */
   color: hsl(0 0% 100%) !important;
-  /* The plate stopped being a plate. It began as a filled band because white on
-     the generated header scene measures as low as 1.27:1 over the bright art,
-     and something had to carry that. But the header already outlines every one
-     of its glyphs on four sides and drops a hard 2px shadow behind them (see
-     the text-shadow block further down), so the fill was doing the same job
-     twice and reading as a sticker the title had been printed on.
-     What is left is a wash, not a box: no vertical padding at all, so its
-     height IS the line box, 3px either side so the outline is not clipped, and
-     a lower alpha that darkens the scene under the words without drawing an
-     edge around them. The corner radius drops to 2px for the same reason — at
-     the house radius a short title read as a chip.
-     The type grew as the plate shrank, which is the whole point: 19px over
-     line-height 1.2 is a 22.8px line box, still under the 34.39px banner the
-     original 22px/4px combination produced, and now it is type rather than
-     packaging. 19px is pinned by styles.test.ts. */
-  background-color: hsl(240 12% 6% / .5);
-  padding: 0 3px;
+  /* No plate at all now — the darkening is a shadow cast by the letters.
+
+     The plate existed because white over the generated header scene measures as
+     low as 1.27:1 on the bright art, and something has to carry that. A filled
+     box is the blunt way to do it; an outline is the pixel way, and this is a
+     pixel interface. Eight hard offsets at 1-2px wrap every glyph in the same
+     near-black the plate used to be, and a 3px offset behind them reads as the
+     drop shadow. No blur anywhere: a soft halo would be the one out-of-language
+     thing on the card.
+
+     Solved for the worst case rather than the average one. The sun scene is the
+     brightest ground a title lands on, and white over it is the 1.27:1 measured
+     above. With the outline, the glyph edge always meets near-black first, so
+     what the reader resolves is white against the shadow — not white against
+     whatever the scene happens to paint underneath.
+
+     Centred because without a plate there is no box edge left to align to: the
+     title is a caption over a scene now, and a caption sits in the middle of
+     it. 22px is pinned by styles.test.ts. */
+  text-shadow:
+    1px 1px 0 hsl(240 12% 6% / .95),
+    -1px 1px 0 hsl(240 12% 6% / .95),
+    1px -1px 0 hsl(240 12% 6% / .95),
+    -1px -1px 0 hsl(240 12% 6% / .95),
+    2px 0 0 hsl(240 12% 6% / .95),
+    -2px 0 0 hsl(240 12% 6% / .95),
+    0 2px 0 hsl(240 12% 6% / .95),
+    0 -2px 0 hsl(240 12% 6% / .95),
+    3px 3px 0 hsl(240 12% 6% / .8);
   margin: 0;
-  align-self: flex-start;
+  align-self: center;
+  text-align: center;
   max-width: 100%;
-  border-radius: 2px;
 }
 /* The h3 holds ONE child, CardHeader's subtitleWrapper, and that wrapper holds
    two: the type text, then the detail + favourite buttons. Only the type text
