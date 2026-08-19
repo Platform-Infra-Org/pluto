@@ -896,6 +896,9 @@ export function SchemeRoot() {
 
 /** Nine petals: enough for a drift, few enough that none of them overlap. */
 const PETALS = Array.from({ length: 9 }, (_, i) => i);
+/* Six, not nine: a hearth throws fewer sparks than a tree drops petals, and
+   each one is a 4px square rather than a 16px sprite. */
+const EMBERS = Array.from({ length: 6 }, (_, i) => i);
 
 /**
  * The host for the animated mode ornaments.
@@ -921,6 +924,11 @@ function ModeArt() {
       </div>
       <div className="sc-moon" />
       <div className="sc-rune-rule" />
+      <div className="sc-greek-embers">
+        {EMBERS.map(i => (
+          <i key={i} />
+        ))}
+      </div>
     </div>
   );
 }
