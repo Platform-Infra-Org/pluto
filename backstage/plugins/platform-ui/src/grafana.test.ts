@@ -3,6 +3,7 @@ import {
   dashboardUrl,
   isGrafanaConfigured,
   isSafePathSegment,
+  readGrafanaConfig,
   sameOrigin,
 } from './grafana';
 
@@ -81,16 +82,133 @@ describe('isSafePathSegment', () => {
   });
 });
 
+describe('readGrafanaConfig', () => {
+  const read = (data: Record<string, unknown>) =>
+    readGrafanaConfig(new ConfigReader(data as never) as never);
+
+  const FULL = {
+    baseUrl: 'https://grafana.example.com',
+    dashboard: { uid: 'abc123', slug: 'platform-overview' },
+  };
+
+  it('is undefined when platform.grafana is absent', () => {
+    expect(read({})).toBeUndefined();
+  });
+
+  it('is undefined when the key exists but says nothing', () => {
+    // The old check was `!!getOptionalConfig('platform.grafana')`, which was
+    // true here — and then getString('dashboard.uid') threw and took the page
+    // with it.
+    expect(read({ platform: { grafana: {} } })).toBeUndefined();
+  });
+
+  it('is undefined without a dashboard uid or slug', () => {
+    expect(read({ platform: { grafana: { baseUrl: 'https://g.example.com' } } })).toBeUndefined();
+    expect(
+      read({ platform: { grafana: { baseUrl: 'https://g.example.com', dashboard: { uid: 'a' } } } }),
+    ).toBeUndefined();
+  });
+
+  it('reads the global dashboard', () => {
+    expect(read({ platform: { grafana: { ...FULL, theme: 'dark', kiosk: true } } })?.global).toEqual({
+      baseUrl: 'https://grafana.example.com',
+      uid: 'abc123',
+      slug: 'platform-overview',
+      theme: 'dark',
+      kiosk: true,
+      params: undefined,
+    });
+  });
+
+  it('reads the global params', () => {
+    expect(
+      read({ platform: { grafana: { ...FULL, params: { 'var-env': 'prod' } } } })?.global.params,
+    ).toEqual({ 'var-env': 'prod' });
+  });
+
+  it('mirrors the global dashboard onto requests when requests is absent', () => {
+    const cfg = read({ platform: { grafana: { ...FULL, theme: 'dark' } } });
+    expect(cfg?.requests).toEqual({
+      baseUrl: 'https://grafana.example.com',
+      uid: 'abc123',
+      slug: 'platform-overview',
+      theme: 'dark',
+      kiosk: undefined,
+      params: undefined,
+    });
+  });
+
+  it('lets requests override uid, slug, theme and kiosk', () => {
+    const cfg = read({
+      platform: {
+        grafana: {
+          ...FULL,
+          theme: 'dark',
+          kiosk: true,
+          requests: { uid: 'def456', slug: 'req-detail', theme: 'light', kiosk: false },
+        },
+      },
+    });
+    expect(cfg?.requests).toEqual({
+      baseUrl: 'https://grafana.example.com',
+      uid: 'def456',
+      slug: 'req-detail',
+      theme: 'light',
+      kiosk: false,
+      params: undefined,
+    });
+  });
+
+  it('does not inherit params onto requests', () => {
+    // The point of the request block is that its variables differ. Inheriting
+    // would make "only request-scoped variables" require unsetting the global
+    // ones.
+    const cfg = read({
+      platform: {
+        grafana: {
+          ...FULL,
+          params: { 'var-env': 'prod' },
+          requests: { params: { 'var-request': '<< requestId >>' } },
+        },
+      },
+    });
+    expect(cfg?.global.params).toEqual({ 'var-env': 'prod' });
+    expect(cfg?.requests?.params).toEqual({ 'var-request': '<< requestId >>' });
+  });
+
+  it('drops the request dashboard when it is disabled, keeping the global one', () => {
+    const cfg = read({ platform: { grafana: { ...FULL, requests: { enabled: false } } } });
+    expect(cfg?.requests).toBeUndefined();
+    expect(cfg?.global.uid).toBe('abc123');
+  });
+
+  it('keeps the request dashboard when enabled is explicitly true', () => {
+    const cfg = read({ platform: { grafana: { ...FULL, requests: { enabled: true } } } });
+    expect(cfg?.requests?.uid).toBe('abc123');
+  });
+});
+
 describe('isGrafanaConfigured', () => {
-  it('is true when platform.grafana is present', () => {
+  it('is true for a complete config', () => {
     const config = new ConfigReader({
-      platform: { grafana: { baseUrl: 'https://grafana.example.com' } },
+      platform: {
+        grafana: {
+          baseUrl: 'https://grafana.example.com',
+          dashboard: { uid: 'abc123', slug: 'platform-overview' },
+        },
+      },
     });
     expect(isGrafanaConfigured(config as never)).toBe(true);
   });
 
   it('is false when platform.grafana is absent', () => {
-    const config = new ConfigReader({});
+    expect(isGrafanaConfigured(new ConfigReader({}) as never)).toBe(false);
+  });
+
+  it('is false for a baseUrl with no dashboard', () => {
+    const config = new ConfigReader({
+      platform: { grafana: { baseUrl: 'https://grafana.example.com' } },
+    });
     expect(isGrafanaConfigured(config as never)).toBe(false);
   });
 });

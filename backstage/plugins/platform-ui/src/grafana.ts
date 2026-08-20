@@ -6,11 +6,93 @@ export interface GrafanaConfig {
   slug: string;
   theme?: 'light' | 'dark';
   kiosk?: boolean;
+  /**
+   * Extra query parameters, written into the URL before the computed ones so a
+   * computed value always wins. See `dashboardUrl`.
+   */
+  params?: Record<string, string>;
 }
 
-/** Whether `platform.grafana` is present in config at all. */
+/** The two dashboards this feature can show, fully resolved. */
+export interface PlatformGrafanaConfig {
+  global: GrafanaConfig;
+  /** Absent when `platform.grafana.requests.enabled` is false. */
+  requests?: GrafanaConfig;
+}
+
+/**
+ * A config subtree, named without importing `@backstage/config` — that package
+ * is a devDependency here, and `ConfigApi` is already in scope.
+ */
+type ConfigNode = NonNullable<ReturnType<ConfigApi['getOptionalConfig']>>;
+
+/** A `params` block as a flat string map; `undefined` when it holds nothing. */
+function readParams(node: ConfigNode | undefined): Record<string, string> | undefined {
+  if (!node) return undefined;
+  const out: Record<string, string> = {};
+  for (const key of node.keys()) {
+    const value = node.getOptionalString(key);
+    if (value !== undefined) out[key] = value;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/**
+ * The whole `platform.grafana` block, or `undefined` when it cannot produce a
+ * dashboard.
+ *
+ * "Cannot produce" is stricter than "is absent": a `platform.grafana` key
+ * holding only a baseUrl used to pass the old presence check and then throw on
+ * `getString('dashboard.uid')`. Everything downstream treats `undefined` as
+ * "show nothing anywhere", which is also what an unconfigured deployment wants.
+ *
+ * `requests` inherits uid/slug/theme/kiosk from the global dashboard — the
+ * common case is one dashboard viewed two ways — but never `params`, whose
+ * whole purpose is to differ.
+ */
+export function readGrafanaConfig(
+  config: ConfigApi,
+): PlatformGrafanaConfig | undefined {
+  const node = config.getOptionalConfig('platform.grafana');
+  if (!node) return undefined;
+
+  const baseUrl = node.getOptionalString('baseUrl');
+  const uid = node.getOptionalString('dashboard.uid');
+  const slug = node.getOptionalString('dashboard.slug');
+  if (!baseUrl || !uid || !slug) return undefined;
+
+  const theme = node.getOptionalString('theme') as 'light' | 'dark' | undefined;
+  const kiosk = node.getOptionalBoolean('kiosk');
+  const global: GrafanaConfig = {
+    baseUrl,
+    uid,
+    slug,
+    theme,
+    kiosk,
+    params: readParams(node.getOptionalConfig('params')),
+  };
+
+  const requests = node.getOptionalConfig('requests');
+  if (requests?.getOptionalBoolean('enabled') === false) return { global };
+
+  return {
+    global,
+    requests: {
+      baseUrl,
+      uid: requests?.getOptionalString('uid') ?? uid,
+      slug: requests?.getOptionalString('slug') ?? slug,
+      theme:
+        (requests?.getOptionalString('theme') as 'light' | 'dark' | undefined) ??
+        theme,
+      kiosk: requests?.getOptionalBoolean('kiosk') ?? kiosk,
+      params: readParams(requests?.getOptionalConfig('params')),
+    },
+  };
+}
+
+/** Whether `platform.grafana` can actually produce a dashboard. */
 export function isGrafanaConfigured(config: ConfigApi): boolean {
-  return !!config.getOptionalConfig('platform.grafana');
+  return !!readGrafanaConfig(config);
 }
 
 /**
