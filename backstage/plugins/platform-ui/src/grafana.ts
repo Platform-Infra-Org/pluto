@@ -127,7 +127,14 @@ export function sameOrigin(baseUrl: string, candidate: string): boolean {
   }
 }
 
-/** `/d/<uid>/<slug>` for a whole dashboard, `/d-solo/...` for one panel. */
+/**
+ * `/d/<uid>/<slug>` for a whole dashboard, `/d-solo/...` for one panel.
+ *
+ * Configured `params` are written first and the computed ones second, so
+ * `panelId`, `kiosk`, `theme`, `from` and `to` always win a name collision.
+ * `URLSearchParams` handles the encoding, so a param value never needs
+ * escaping by the caller.
+ */
 export function dashboardUrl(
   cfg: GrafanaConfig,
   opts: { panelId?: number; from?: string; to?: string } = {},
@@ -135,6 +142,9 @@ export function dashboardUrl(
   const base = cfg.baseUrl.replace(/\/+$/, '');
   const path = opts.panelId === undefined ? 'd' : 'd-solo';
   const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(cfg.params ?? {})) {
+    params.set(key, value);
+  }
   if (opts.panelId !== undefined) params.set('panelId', String(opts.panelId));
   if (cfg.kiosk) params.set('kiosk', '1');
   if (cfg.theme) params.set('theme', cfg.theme);

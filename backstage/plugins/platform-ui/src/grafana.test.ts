@@ -41,6 +41,30 @@ describe('dashboardUrl', () => {
       'https://grafana.example.com/d/abc123/platform-overview',
     );
   });
+
+  it('writes configured params into the query string', () => {
+    expect(dashboardUrl({ ...CFG, params: { 'var-env': 'prod' } })).toBe(
+      'https://grafana.example.com/d/abc123/platform-overview?var-env=prod',
+    );
+  });
+
+  it('encodes param keys and values', () => {
+    expect(
+      dashboardUrl({ ...CFG, params: { 'var-team': 'a&b c' } }),
+    ).toContain('var-team=a%26b+c');
+  });
+
+  it('lets a computed value beat a configured one of the same name', () => {
+    // An operator pinning `from` must not defeat the request's own window —
+    // scoping the card to that window is the card's whole reason to exist.
+    const url = dashboardUrl(
+      { ...CFG, params: { from: 'now-90d', 'var-env': 'prod' } },
+      { from: '1750000000000', to: '1750003600000' },
+    );
+    expect(url).toContain('from=1750000000000');
+    expect(url).not.toContain('now-90d');
+    expect(url).toContain('var-env=prod');
+  });
 });
 
 describe('sameOrigin', () => {
