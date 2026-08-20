@@ -17,6 +17,7 @@ import { PlatformMark } from './components';
 import { screenName, Flavour } from './flavour';
 import { navItemVisible } from './navVisibility';
 import { useIsAdmin } from './useIsAdmin';
+import { isGrafanaConfigured } from './grafana';
 
 // The nav renders outside react-router's context, so derive the active path
 // from the browser location + history events rather than useLocation().
@@ -137,6 +138,7 @@ function CustomNav({ navItems }: { navItems: any }) {
   // component — the labels would stay literal whatever the config said.
   const config = useApi(configApiRef);
   const isAdmin = useIsAdmin();
+  const grafanaConfigured = isGrafanaConfigured(config);
   const flavour: Flavour =
     config.getOptionalString('app.branding.flavour') === 'fantasy'
       ? 'fantasy'
@@ -144,7 +146,7 @@ function CustomNav({ navItems }: { navItems: any }) {
   const bag = navItems.withComponent((item: any) => {
     // Some routes are never offered here, and some only to admins — see
     // navVisibility.ts for which, and why.
-    if (!navItemVisible(item.href, isAdmin)) return null;
+    if (!navItemVisible(item.href, isAdmin, grafanaConfigured)) return null;
     const active = isActive(pathname, item.href);
     const label = screenName(item.title, flavour);
     return (
