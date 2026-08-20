@@ -97,7 +97,10 @@ Two rules:
 
 - `dependsOn` lists the sibling field names that are this level's ancestors,
   **outermost first**. It is explicit rather than inferred from form order, so
-  reordering fields on the template never silently breaks the cascade.
+  reordering fields on the template never silently breaks the cascade. *Sibling*
+  is literal: name the property as it appears next to this one, with no path.
+  Grouping the levels under an object (`metadata.space`, `metadata.network`, …)
+  changes nothing — still `dependsOn: [space]`, never `[metadata.space]`.
 - Changing a parent clears any child whose current value the new branch does
   not contain — a value that survives an ancestor change would point at a
   coordinate nobody can resolve. A field is disabled with a "Pick `<parent>`

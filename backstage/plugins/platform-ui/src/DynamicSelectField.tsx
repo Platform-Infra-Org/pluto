@@ -50,7 +50,7 @@ interface UiOptions {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function DynamicSelectFieldComponent(props: any) {
-  const { formData, onChange, uiSchema, schema, registry } = props;
+  const { formData, onChange, uiSchema, schema, registry, idSchema } = props;
   // RJSF v5 moved the canonical formContext onto `registry`: FieldProps declares
   // `formContext?` (optional, and undefined under Backstage's Stepper) while
   // RegistryProps declares `formContext` outright, which is what RJSF's own
@@ -87,8 +87,29 @@ export function DynamicSelectFieldComponent(props: any) {
     };
   }, [opts.url, opts.proxyPath, discovery]);
 
+  // `dependsOn` names sibling properties, so it is resolved against this
+  // field's own parent object, not the form root. formContext.formData is
+  // always the whole form: a template that groups the levels under an object
+  // (`metadata.space`, `metadata.network`, …) puts nothing at the root, so a
+  // root-only lookup found '' for every ancestor and disabled every level
+  // below the first — while the first, having no ancestors to resolve, filled
+  // itself in and looked healthy.
+  //
+  // The parent path comes from RJSF's own id (`root_metadata_space`), which is
+  // the only place a field is told where it sits.
+  // ponytail: '_' is also RJSF's id separator, so a parent property whose name
+  // contains one resolves to nothing and falls back to the root — i.e. today's
+  // behaviour, not a new break. Read idSeparator off the form if that ever
+  // matters.
+  const parentPath = String(idSchema?.$id ?? '')
+    .replace(/^root_?/, '')
+    .split('_')
+    .slice(0, -1)
+    .join('.');
+  const scope = (pickPath(formContext?.formData, parentPath || undefined) ??
+    formContext?.formData) as Record<string, unknown> | undefined;
   const ancestors: string[] = (opts.dependsOn ?? []).map(
-    name => (formContext?.formData?.[name] as string) ?? '',
+    key => (scope?.[key] as string) ?? '',
   );
   const [tree, setTree] = useState<unknown>();
   // Distinct from `tree` itself: a tree that resolved to `undefined` (e.g. an
