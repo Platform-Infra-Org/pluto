@@ -22,12 +22,71 @@ platform:
 ```
 
 `baseUrl` is frontend-visible config — served to every user — and it doubles
-as an origin allowlist: the frame can never point anywhere else. Leave the
-whole `platform.grafana` key unset and both mount points render nothing rather
-than an empty box.
+as an origin allowlist: the frame can never point anywhere else.
+
+**With no `platform.grafana`, there is no dashboard anywhere**: no `/dashboard`
+page, no Dashboard entry in the sidebar, no Metrics card on a request. A block
+that omits `baseUrl`, `dashboard.uid` or `dashboard.slug` counts as absent —
+that is deliberate, a half-configured dashboard used to throw and take the page
+with it.
 
 In the Helm chart, the equivalent is `platform.grafana` in `values.yaml`
 (empty by default — see the commented example there).
+
+### Two dashboards, one block
+
+The same config drives two places: the `/dashboard` page, and a Metrics card on
+every request page, scoped to that request's own time window.
+
+```yaml
+platform:
+  grafana:
+    baseUrl: https://grafana.example.com
+    dashboard: { uid: abc123, slug: platform-overview }
+    params:                       # the /dashboard page only
+      var-env: production
+    requests:                     # the request card only
+      enabled: true               # false drops the card; /dashboard unaffected
+      uid: def456                 # optional, else dashboard.uid
+      slug: request-detail        # optional, else dashboard.slug
+      params:
+        var-workflow: '<< workflowName >>'
+```
+
+`uid`, `slug`, `theme` and `kiosk` inherit from the top level. **`params` does
+not** — the point of the request block is that its variables differ, and
+inheriting would mean unsetting the global ones to get only request-scoped
+ones.
+
+Configured `params` are written into the URL before the computed ones, so
+`kiosk`, `theme`, `from` and `to` win a name collision. Pinning `from` in
+`requests.params` will not defeat the request's own time window.
+
+### Request-scoped values
+
+Values under `requests.params` may carry `<< token >>` placeholders, resolved
+in the browser against the request on screen:
+
+| Token | Resolves to |
+|---|---|
+| `<< requestId >>` | the request's numeric id |
+| `<< resourceName >>` | the resource name |
+| `<< resourceType >>` | the resource type |
+| `<< requester >>` | the requesting user's short id |
+| `<< workflowName >>` | the Argo workflow's name |
+| `<< workflowNamespace >>` | the Argo workflow's namespace |
+
+This is a **smaller, separate set** from the backend's submit tokens — see
+[submit tokens](../reference/tokens.md). A parameter that resolves to an empty
+string is dropped rather than sent empty, because an empty Grafana variable
+usually means "all", which would quietly widen a dashboard meant to be scoped
+to one request.
+
+### When the card appears
+
+Once the request carries a workflow name — the 5s poll sets it as soon as Argo
+actually has the workflow — and its state is `IN_PROGRESS`, `AWAITING_INPUT`,
+`SUCCEEDED` or `FAILED`. Before that there is no run to plot.
 
 ## Open the CSP
 

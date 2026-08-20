@@ -184,8 +184,8 @@ platform:
       - favouriteTemplates
     maxItems: 8
   # Existing Grafana dashboard, embedded on /dashboard and on request pages
-  # (scoped to that request's own time window). Empty by default —
-  # GrafanaFrame renders nothing when platform.grafana is unset, and no
+  # (scoped to that request's own time window). Empty by default — with no
+  # config there is no dashboard page, no nav entry and no card, and no
   # frame-src is added to the CSP either. See
   # docs/how-to/embed-a-grafana-dashboard.md for the allow_embedding
   # requirement and the authentication trade-offs.
@@ -196,6 +196,15 @@ platform:
   #    slug: platform-overview
   #  theme: dark
   #  kiosk: true
+  #  params:
+  #    var-env: production
+  #  requests:
+  #    enabled: true
+  #    uid: def456
+  #    slug: request-detail
+  #    params:
+  #      var-workflow: '<< workflowName >>'
+  #      var-namespace: '<< workflowNamespace >>'
   # Presigned S3 uploads for the PlatformFile scaffolder field. Empty by
   # default — POST /uploads/presign 501s and PlatformFile reports "not
   # configured" until this is set. See docs/how-to/author-a-template.md's

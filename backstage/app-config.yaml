@@ -283,8 +283,8 @@ platform:
   # An existing Grafana dashboard, embedded on /dashboard and on request pages
   # (scoped to that request's own time window). See
   # docs/how-to/embed-a-grafana-dashboard.md for the allow_embedding
-  # requirement and the authentication trade-offs. Unset in dev — GrafanaFrame
-  # renders nothing when platform.grafana is absent.
+  # requirement and the authentication trade-offs. Unset in dev — with no
+  # config there is no dashboard page, no nav entry and no card.
   # grafana:
   #   baseUrl: ${GRAFANA_BASE_URL}
   #   dashboard:
@@ -292,6 +292,16 @@ platform:
   #     slug: ${GRAFANA_DASHBOARD_SLUG}
   #   theme: dark
   #   kiosk: true
+  #   # /dashboard only
+  #   params:
+  #     var-env: production
+  #   requests:
+  #     # false drops the card from request pages; /dashboard is unaffected
+  #     enabled: true
+  #     # uid/slug/theme/kiosk fall back to the values above; params do not
+  #     params:
+  #       var-workflow: '<< workflowName >>'
+  #       var-namespace: '<< workflowNamespace >>'
   # Presigned S3 uploads for the `ui:field: PlatformFile` scaffolder field.
   # Bytes go straight from the browser to S3; Backstage credentials never
   # touch them (see docs/how-to/author-a-template.md#file-uploads for the CORS

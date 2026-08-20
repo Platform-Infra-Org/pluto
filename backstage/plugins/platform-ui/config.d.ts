@@ -93,6 +93,10 @@ export interface Config {
      * URL and nothing else — this feature makes no Grafana API call and needs
      * no token. baseUrl is also the origin allowlist: nothing outside it is
      * ever framed.
+     *
+     * Omit the whole key and there is no dashboard anywhere: no `/dashboard`
+     * page, no nav entry, no card on a request. A key that omits `baseUrl`,
+     * `dashboard.uid` or `dashboard.slug` counts as omitted.
      * @visibility frontend
      */
     grafana?: {
@@ -109,6 +113,50 @@ export interface Config {
       theme?: 'light' | 'dark';
       /** @visibility frontend */
       kiosk?: boolean;
+      /**
+       * Extra query parameters for the `/dashboard` page only — Grafana
+       * template variables, most usefully. Written into the URL before the
+       * computed parameters, so `kiosk`, `theme`, `from` and `to` win a name
+       * collision.
+       * @visibility frontend
+       */
+      params?: { [key: string]: string };
+      /**
+       * The Metrics card on a request page, which frames the same dashboard
+       * scoped to that request's own time window.
+       *
+       * Omit the block for "on, same dashboard, no extra parameters". `uid`,
+       * `slug`, `theme` and `kiosk` fall back to the values above; `params`
+       * deliberately does not, since differing is its whole purpose.
+       * @visibility frontend
+       */
+      requests?: {
+        /**
+         * Set false to drop the card. The `/dashboard` page is unaffected.
+         * @default true
+         * @visibility frontend
+         */
+        enabled?: boolean;
+        /** @visibility frontend */
+        uid?: string;
+        /** @visibility frontend */
+        slug?: string;
+        /** @visibility frontend */
+        theme?: 'light' | 'dark';
+        /** @visibility frontend */
+        kiosk?: boolean;
+        /**
+         * Extra query parameters for the card only. Values may contain
+         * `<< requestId >>`, `<< resourceName >>`, `<< resourceType >>`,
+         * `<< requester >>`, `<< workflowName >>` and
+         * `<< workflowNamespace >>`, resolved in the browser against the
+         * request on screen. A parameter that resolves to an empty string is
+         * dropped rather than sent empty — an empty Grafana variable reads as
+         * "all".
+         * @visibility frontend
+         */
+        params?: { [key: string]: string };
+      };
     };
   };
 }
