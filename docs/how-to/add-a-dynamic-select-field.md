@@ -43,8 +43,10 @@ Use `url:` (direct) only for public, unauthenticated endpoints.
 ## Dependent selects
 
 Five fields can cascade over one API call that returns a whole hierarchy,
-rather than each level having its own endpoint. `provision-database` is the
-worked example:
+rather than each level having its own endpoint. Both shapes are seeded:
+`provision-database` keeps the levels flat, `coordinate-demo` groups them
+under an object. Below is the grouped shape — `dependsOn` reads identically
+either way.
 
 ```yaml
 parameters:
