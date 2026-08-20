@@ -1,9 +1,11 @@
 import { ConfigReader } from '@backstage/config';
 import {
   dashboardUrl,
+  globalDashboardUrl,
   isGrafanaConfigured,
   isSafePathSegment,
   readGrafanaConfig,
+  requestDashboardUrl,
   resolveParams,
   sameOrigin,
 } from './grafana';
@@ -295,5 +297,67 @@ describe('resolveParams', () => {
 
   it('drops an unknown token but keeps its siblings', () => {
     expect(resolveParams({ a: '<< nope >>', b: 'prod' }, CTX)).toEqual({ b: 'prod' });
+  });
+});
+
+describe('globalDashboardUrl / requestDashboardUrl', () => {
+  const cfg = (grafana: Record<string, unknown>) =>
+    new ConfigReader({ platform: { grafana } } as never) as never;
+
+  const FULL = {
+    baseUrl: 'https://grafana.example.com',
+    dashboard: { uid: 'abc123', slug: 'platform-overview' },
+  };
+
+  const CTX = { requestId: 41, workflowName: 'git-ops-abc12', workflowNamespace: 'argo' };
+
+  it('is undefined for both when nothing is configured', () => {
+    expect(globalDashboardUrl(cfg({}))).toBeUndefined();
+    expect(requestDashboardUrl(cfg({}), CTX)).toBeUndefined();
+  });
+
+  it('builds the global dashboard with only its own params', () => {
+    expect(
+      globalDashboardUrl(
+        cfg({ ...FULL, params: { 'var-env': 'prod' }, requests: { params: { 'var-x': 'y' } } }),
+      ),
+    ).toEqual({
+      baseUrl: 'https://grafana.example.com',
+      src: 'https://grafana.example.com/d/abc123/platform-overview?var-env=prod',
+    });
+  });
+
+  it('builds the request dashboard with its own params, tokens resolved, plus the window', () => {
+    expect(
+      requestDashboardUrl(
+        cfg({ ...FULL, requests: { uid: 'def456', slug: 'req-detail', params: { 'var-wf': '<< workflowName >>' } } }),
+        { ...CTX, from: '1750000000000', to: '1750003600000' },
+      ),
+    ).toEqual({
+      baseUrl: 'https://grafana.example.com',
+      src:
+        'https://grafana.example.com/d/def456/req-detail' +
+        '?var-wf=git-ops-abc12&from=1750000000000&to=1750003600000',
+    });
+  });
+
+  it('is undefined for the request dashboard when it is disabled, and fine for the global one', () => {
+    const disabled = cfg({ ...FULL, requests: { enabled: false } });
+    expect(requestDashboardUrl(disabled, CTX)).toBeUndefined();
+    expect(globalDashboardUrl(disabled)?.src).toContain('/d/abc123/platform-overview');
+  });
+
+  it('yields a target with no src when the uid escapes the path', () => {
+    // Configured-but-wrong must stay loud: the caller renders an "Open Grafana"
+    // link rather than nothing, which is what "not configured" looks like.
+    expect(
+      globalDashboardUrl(cfg({ ...FULL, dashboard: { uid: '../../..//evil.example.com/x', slug: 'y' } })),
+    ).toEqual({ baseUrl: 'https://grafana.example.com' });
+  });
+
+  it('yields a target with no src when the requests uid escapes the path', () => {
+    expect(
+      requestDashboardUrl(cfg({ ...FULL, requests: { uid: 'abc123?evil=1' } }), CTX),
+    ).toEqual({ baseUrl: 'https://grafana.example.com' });
   });
 });

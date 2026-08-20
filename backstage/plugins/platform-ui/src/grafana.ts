@@ -198,3 +198,64 @@ export function resolveParams(
   }
   return Object.keys(out).length ? out : undefined;
 }
+
+/**
+ * Where a frame should point, in three states.
+ *
+ * `undefined` from a builder means not configured — render nothing at all.
+ * A target with no `src` means configured but rejected by the guards, which is
+ * an operator error and must stay visible. A target with a `src` is good.
+ */
+export interface DashboardTarget {
+  baseUrl: string;
+  src?: string;
+}
+
+/**
+ * Build and validate in one place: the guards need the uid and slug, and this
+ * is the last point that holds them.
+ *
+ * `sameOrigin` alone cannot catch a hostile uid/slug — a URL built from
+ * cfg.baseUrl parses back to cfg.baseUrl's origin whatever they contain, since
+ * path traversal normalizes away without ever changing the authority.
+ * `isSafePathSegment` is what stops '/', '?' and '#' from injecting extra path
+ * segments, query parameters or a fragment.
+ */
+function toTarget(
+  cfg: GrafanaConfig,
+  opts: { from?: string; to?: string } = {},
+): DashboardTarget {
+  const src = dashboardUrl(cfg, opts);
+  if (
+    !isSafePathSegment(cfg.uid) ||
+    !isSafePathSegment(cfg.slug) ||
+    !sameOrigin(cfg.baseUrl, src)
+  ) {
+    return { baseUrl: cfg.baseUrl };
+  }
+  return { baseUrl: cfg.baseUrl, src };
+}
+
+/** The `/dashboard` page's frame, or `undefined` when Grafana is unconfigured. */
+export function globalDashboardUrl(
+  config: ConfigApi,
+): DashboardTarget | undefined {
+  const read = readGrafanaConfig(config);
+  return read ? toTarget(read.global) : undefined;
+}
+
+/**
+ * A request page's Metrics frame, or `undefined` when Grafana is unconfigured
+ * or `platform.grafana.requests.enabled` is false.
+ */
+export function requestDashboardUrl(
+  config: ConfigApi,
+  ctx: GrafanaRequestContext & { from?: string; to?: string },
+): DashboardTarget | undefined {
+  const read = readGrafanaConfig(config);
+  if (!read?.requests) return undefined;
+  return toTarget(
+    { ...read.requests, params: resolveParams(read.requests.params, ctx) },
+    { from: ctx.from, to: ctx.to },
+  );
+}
