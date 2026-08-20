@@ -95,8 +95,9 @@ export interface Config {
      * ever framed.
      *
      * Omit the whole key and there is no dashboard anywhere: no `/dashboard`
-     * page, no nav entry, no card on a request. A key that omits `baseUrl`,
-     * `dashboard.uid` or `dashboard.slug` counts as omitted.
+     * page, no nav entry, no card on a request. Write the key but omit
+     * `baseUrl`, `dashboard.uid` or `dashboard.slug` and the app refuses to
+     * start.
      * @visibility frontend
      */
     grafana?: {
@@ -118,7 +119,7 @@ export interface Config {
        * template variables, most usefully. Written into the URL before the
        * computed parameters, so `kiosk`, `theme`, `from` and `to` win a name
        * collision.
-       * @visibility frontend
+       * @deepVisibility frontend
        */
       params?: { [key: string]: string };
       /**
@@ -153,7 +154,7 @@ export interface Config {
          * request on screen. A parameter that resolves to an empty string is
          * dropped rather than sent empty — an empty Grafana variable reads as
          * "all".
-         * @visibility frontend
+         * @deepVisibility frontend
          */
         params?: { [key: string]: string };
       };

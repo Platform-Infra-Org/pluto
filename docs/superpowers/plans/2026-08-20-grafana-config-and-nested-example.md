@@ -1930,3 +1930,39 @@ Not a task — do this once after Task 10, against a real Grafana with
    while `/dashboard` stays.
 6. `bash scripts/prod-image-up.sh` and repeat step 3 — this is the only place
    the `frame-src` CSP actually applies (`yarn start` runs no helmet).
+7. Confirm `params` and `requests.params` actually reach the browser — all
+   existing jest tests build a `ConfigReader` directly and so bypass frontend
+   visibility filtering entirely; this is the only check that exercises it.
+   From `backstage/`:
+
+   ```bash
+   cat > /tmp/graf-check.yaml <<'YAML'
+   platform:
+     grafana:
+       baseUrl: https://grafana.example.com
+       dashboard:
+         uid: abc123
+         slug: platform-overview
+       params:
+         var-env: prod
+       requests:
+         params:
+           var-workflow: '<< workflowName >>'
+   YAML
+   yarn backstage-cli config:print --frontend --config app-config.yaml --config /tmp/graf-check.yaml 2>&1 | grep -A12 'grafana:'
+   ```
+
+   Expected output includes both configured keys, not `params: {}`:
+
+   ```yaml
+   grafana:
+     baseUrl: https://grafana.example.com
+     dashboard:
+       uid: abc123
+       slug: platform-overview
+     params:
+       var-env: prod
+     requests:
+       params:
+         var-workflow: << workflowName >>
+   ```

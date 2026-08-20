@@ -24,10 +24,10 @@ platform:
 as an origin allowlist: the frame can never point anywhere else.
 
 **With no `platform.grafana`, there is no dashboard anywhere**: no `/dashboard`
-page, no Dashboard entry in the sidebar, no Metrics card on a request. A block
-that omits `baseUrl`, `dashboard.uid` or `dashboard.slug` counts as absent —
-that is deliberate, a half-configured dashboard used to throw and take the page
-with it.
+page, no Dashboard entry in the sidebar, no Metrics card on a request. Write
+the key but leave out `baseUrl`, `dashboard.uid` or `dashboard.slug` and the
+app refuses to start — that is deliberate, a half-configured dashboard used to
+throw at render time and take the page with it.
 
 In the Helm chart, the equivalent is `platform.grafana` in `values.yaml`
 (empty by default — see the commented example there).

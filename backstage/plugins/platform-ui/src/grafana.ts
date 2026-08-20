@@ -121,7 +121,12 @@ export function isSafePathSegment(value: string): boolean {
  */
 export function sameOrigin(baseUrl: string, candidate: string): boolean {
   try {
-    return new URL(candidate).origin === new URL(baseUrl).origin;
+    const base = new URL(baseUrl);
+    // http/https only: a `javascript:` or `data:` URL parses to the opaque
+    // origin `'null'`, so a baseUrl built the same way would equal it too and
+    // pass the origin check below without this.
+    if (base.protocol !== 'http:' && base.protocol !== 'https:') return false;
+    return new URL(candidate).origin === base.origin;
   } catch {
     return false;
   }
@@ -193,7 +198,9 @@ export function resolveParams(
   };
   const out: Record<string, string> = {};
   for (const [key, raw] of Object.entries(params)) {
-    const value = raw.replace(TOKEN, (_match, token: string) => values[token] ?? '');
+    const value = raw.replace(TOKEN, (_match, token: string) =>
+      Object.hasOwn(values, token) ? values[token] : '',
+    );
     if (value) out[key] = value;
   }
   return Object.keys(out).length ? out : undefined;

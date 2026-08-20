@@ -88,6 +88,20 @@ describe('sameOrigin', () => {
     // eslint-disable-next-line no-script-url
     expect(sameOrigin('https://grafana.example.com', 'javascript:alert(1)')).toBe(false);
   });
+
+  it('rejects a javascript: baseUrl', () => {
+    // `new URL('javascript:...').origin` is the opaque string 'null', which a
+    // candidate built the same way would also produce — same-string equality
+    // without a protocol check would wrongly call that "same origin".
+    // eslint-disable-next-line no-script-url
+    expect(sameOrigin('javascript:alert(1)', 'javascript:alert(2)')).toBe(false);
+  });
+
+  it('rejects a data: baseUrl', () => {
+    expect(sameOrigin('data:text/html,<script>1</script>', 'data:text/html,<script>2</script>')).toBe(
+      false,
+    );
+  });
 });
 
 describe('isSafePathSegment', () => {
@@ -297,6 +311,16 @@ describe('resolveParams', () => {
 
   it('drops an unknown token but keeps its siblings', () => {
     expect(resolveParams({ a: '<< nope >>', b: 'prod' }, CTX)).toEqual({ b: 'prod' });
+  });
+
+  it('drops an inherited Object.prototype token exactly like an unknown one', () => {
+    // A plain-object lookup (`values[token]`) resolves `toString`,
+    // `constructor`, `valueOf` and `hasOwnProperty` to inherited functions
+    // instead of falling through to "unknown" — this would stringify a
+    // function into the query.
+    expect(resolveParams({ a: '<< toString >>', b: 'prod' }, CTX)).toEqual({ b: 'prod' });
+    expect(resolveParams({ a: '<< constructor >>' }, CTX)).toBeUndefined();
+    expect(resolveParams({ a: '<< hasOwnProperty >>' }, CTX)).toBeUndefined();
   });
 });
 
