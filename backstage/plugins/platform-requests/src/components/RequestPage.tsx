@@ -22,7 +22,7 @@ import {
   useGraphDirection,
   HOURGLASS,
   GrafanaFrame,
-  isGrafanaConfigured,
+  requestDashboardUrl,
 } from '@internal/plugin-platform-ui';
 import {
   Request,
@@ -526,25 +526,40 @@ export function RequestPage() {
 
         {/* Bound to this request's own timestamps rather than a bookmarked
             dashboard: the window is exactly what happened while the workflow
-            ran. Only shown once there's a workflow run worth plotting, and
-            only when Grafana is actually configured — otherwise this would be
-            a card with an empty body instead of no card at all. */}
-        {isGrafanaConfigured(config) &&
-          ['IN_PROGRESS', 'SUCCEEDED', 'FAILED'].includes(request.state) && (
-          <div style={{ gridColumn: '1 / -1' }}>
-            <Card>
-              <CardHeader title="Metrics" />
-              <CardBody>
-                <GrafanaFrame
-                  title={`Metrics for request #${request.id}`}
-                  from={String(new Date(request.createdAt).getTime())}
-                  to={String(new Date(request.updatedAt).getTime())}
-                  height={420}
-                />
-              </CardBody>
-            </Card>
-          </div>
-        )}
+            ran. Three independent reasons not to render, all readable here:
+            no workflow has shown up yet, the state says there is nothing to
+            plot, or platform.grafana.requests is off / absent. */}
+        {request.workflowName &&
+          ['IN_PROGRESS', 'AWAITING_INPUT', 'SUCCEEDED', 'FAILED'].includes(
+            request.state,
+          ) &&
+          (() => {
+            const target = requestDashboardUrl(config, {
+              requestId: request.id,
+              resourceName: request.resourceName,
+              resourceType: request.resourceType,
+              requester: request.requester,
+              workflowName: request.workflowName,
+              workflowNamespace: request.workflowNamespace,
+              from: String(new Date(request.createdAt).getTime()),
+              to: String(new Date(request.updatedAt).getTime()),
+            });
+            if (!target) return null;
+            return (
+              <div style={{ gridColumn: '1 / -1' }}>
+                <Card>
+                  <CardHeader title="Metrics" />
+                  <CardBody>
+                    <GrafanaFrame
+                      target={target}
+                      title={`Metrics for request #${request.id}`}
+                      height={420}
+                    />
+                  </CardBody>
+                </Card>
+              </div>
+            );
+          })()}
 
         {/* Last on the page on purpose: you scroll past the whole record —
             params, approvals, workflow — before you reach the thing that

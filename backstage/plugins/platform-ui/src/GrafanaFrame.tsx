@@ -1,63 +1,33 @@
-import { configApiRef, useApi } from '@backstage/core-plugin-api';
-import {
-  dashboardUrl,
-  isGrafanaConfigured,
-  isSafePathSegment,
-  sameOrigin,
-} from './grafana';
+import type { DashboardTarget } from './grafana';
 
 /**
- * One configured Grafana dashboard in an iframe.
+ * One resolved Grafana dashboard in an iframe.
+ *
+ * Deliberately knows nothing about config: `grafana.ts` reads it, builds the
+ * URL and runs the origin/path guards, so all of that is testable without
+ * React and both call sites get the same answer. What is left here is the
+ * three-state render.
  *
  * No sandbox attribute: Grafana does not run sandboxed. The protection is the
  * origin check plus backend.csp.frame-src naming exactly one host.
  */
 export function GrafanaFrame({
+  target,
   title,
-  from,
-  to,
-  panelId,
   height = 600,
 }: {
+  target?: DashboardTarget;
   title: string;
-  from?: string;
-  to?: string;
-  panelId?: number;
   height?: number;
 }) {
-  const config = useApi(configApiRef);
-  if (!isGrafanaConfigured(config)) return null;
-  const cfg = config.getOptionalConfig('platform.grafana')!;
+  // Not configured: nothing here, not an empty box.
+  if (!target) return null;
 
-  const baseUrl = cfg.getString('baseUrl');
-  const uid = cfg.getString('dashboard.uid');
-  const slug = cfg.getString('dashboard.slug');
-
-  const built = dashboardUrl(
-    {
-      baseUrl,
-      uid,
-      slug,
-      theme: cfg.getOptionalString('theme') as 'light' | 'dark' | undefined,
-      kiosk: cfg.getOptionalBoolean('kiosk'),
-    },
-    { from, to, panelId },
-  );
-
-  // sameOrigin alone cannot catch a hostile uid/slug: a value built from
-  // cfg.baseUrl always parses back to cfg.baseUrl's origin no matter what they
-  // contain (path traversal inside them normalizes away without ever changing
-  // the origin). isSafePathSegment is what stops '/', '?' and '#' from
-  // injecting extra path segments, query parameters or a fragment into the
-  // built URL — see its doc comment for exactly what it does and does not
-  // cover.
-  if (
-    !isSafePathSegment(uid) ||
-    !isSafePathSegment(slug) ||
-    !sameOrigin(baseUrl, built)
-  ) {
+  // Configured, but the guards rejected the built URL. Staying silent would
+  // make an operator error look exactly like an unconfigured deployment.
+  if (!target.src) {
     return (
-      <a href={baseUrl} target="_blank" rel="noreferrer">
+      <a href={target.baseUrl} target="_blank" rel="noreferrer">
         Open Grafana
       </a>
     );
@@ -66,7 +36,7 @@ export function GrafanaFrame({
   return (
     <iframe
       title={title}
-      src={built}
+      src={target.src}
       width="100%"
       height={height}
       style={{ border: 0 }}
