@@ -4,6 +4,7 @@ import {
   isGrafanaConfigured,
   isSafePathSegment,
   readGrafanaConfig,
+  resolveParams,
   sameOrigin,
 } from './grafana';
 
@@ -234,5 +235,65 @@ describe('isGrafanaConfigured', () => {
       platform: { grafana: { baseUrl: 'https://grafana.example.com' } },
     });
     expect(isGrafanaConfigured(config as never)).toBe(false);
+  });
+});
+
+describe('resolveParams', () => {
+  const CTX = {
+    requestId: 41,
+    resourceName: 'checkout-db',
+    resourceType: 'git-resource',
+    requester: 'ada',
+    workflowName: 'git-ops-abc12',
+    workflowNamespace: 'argo',
+  };
+
+  it('is undefined for no params', () => {
+    expect(resolveParams(undefined, CTX)).toBeUndefined();
+  });
+
+  it('passes a literal value through', () => {
+    expect(resolveParams({ 'var-env': 'prod' }, CTX)).toEqual({ 'var-env': 'prod' });
+  });
+
+  it('resolves every token', () => {
+    expect(
+      resolveParams(
+        {
+          a: '<< requestId >>',
+          b: '<< resourceName >>',
+          c: '<< resourceType >>',
+          d: '<< requester >>',
+          e: '<< workflowName >>',
+          f: '<< workflowNamespace >>',
+        },
+        CTX,
+      ),
+    ).toEqual({
+      a: '41',
+      b: 'checkout-db',
+      c: 'git-resource',
+      d: 'ada',
+      e: 'git-ops-abc12',
+      f: 'argo',
+    });
+  });
+
+  it('tolerates missing whitespace inside the delimiters', () => {
+    expect(resolveParams({ a: '<<requestId>>' }, CTX)).toEqual({ a: '41' });
+  });
+
+  it('substitutes inside a larger string', () => {
+    expect(resolveParams({ a: 'req-<< requestId >>-x' }, CTX)).toEqual({ a: 'req-41-x' });
+  });
+
+  it('drops a param that resolves to nothing', () => {
+    // An empty Grafana variable reads as "all", which silently widens a
+    // dashboard meant to be scoped to one request. Absent is the safer answer.
+    expect(resolveParams({ a: '<< workflowName >>' }, { requestId: 1 })).toBeUndefined();
+  });
+
+  it('drops an unknown token but keeps its siblings', () => {
+    expect(resolveParams({ a: '<< nope >>', b: 'prod' }, CTX)).toEqual({ b: 'prod' });
   });
 });

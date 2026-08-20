@@ -153,3 +153,48 @@ export function dashboardUrl(
   const qs = params.toString();
   return `${base}/${path}/${cfg.uid}/${cfg.slug}${qs ? `?${qs}` : ''}`;
 }
+
+/** What a request-scoped `<< token >>` may be resolved against. */
+export interface GrafanaRequestContext {
+  requestId: number | string;
+  resourceName?: string;
+  resourceType?: string;
+  requester?: string;
+  workflowName?: string;
+  workflowNamespace?: string;
+}
+
+const TOKEN = /<<\s*([a-zA-Z]+)\s*>>/g;
+
+/**
+ * `<< token >>` substitution for `platform.grafana.requests.params`.
+ *
+ * The notation is the backend's, so there is one syntax in the product; the
+ * vocabulary is not — this is a small, client-side set resolved against the
+ * request on screen, not the backend's submit tokens (docs/reference/tokens.md
+ * lists both and says which is which).
+ *
+ * A param that resolves to an empty string is dropped rather than sent empty:
+ * an empty Grafana variable usually means "all", which would quietly widen a
+ * dashboard that was meant to be scoped to one request.
+ */
+export function resolveParams(
+  params: Record<string, string> | undefined,
+  ctx: GrafanaRequestContext,
+): Record<string, string> | undefined {
+  if (!params) return undefined;
+  const values: Record<string, string> = {
+    requestId: String(ctx.requestId ?? ''),
+    resourceName: ctx.resourceName ?? '',
+    resourceType: ctx.resourceType ?? '',
+    requester: ctx.requester ?? '',
+    workflowName: ctx.workflowName ?? '',
+    workflowNamespace: ctx.workflowNamespace ?? '',
+  };
+  const out: Record<string, string> = {};
+  for (const [key, raw] of Object.entries(params)) {
+    const value = raw.replace(TOKEN, (_match, token: string) => values[token] ?? '');
+    if (value) out[key] = value;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
