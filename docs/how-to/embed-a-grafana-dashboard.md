@@ -2,8 +2,7 @@
 
 An existing Grafana dashboard can be framed in two places: its own page at
 `/dashboard`, and — scoped to that request's own time window — a card on every
-request page once it has a workflow run to plot (`IN_PROGRESS`, `SUCCEEDED`,
-`FAILED`).
+request page once it has a workflow to plot (see "When the card appears").
 
 This makes no Grafana API call and needs no Grafana token. It embeds a
 dashboard URL in an iframe, nothing more.
