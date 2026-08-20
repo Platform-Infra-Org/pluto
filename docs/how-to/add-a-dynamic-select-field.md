@@ -49,31 +49,35 @@ worked example:
 ```yaml
 parameters:
   - properties:
-      space:
-        type: string
-        title: Space
-        ui:field: DynamicSelect
-        ui:options: { proxyPath: /infra/coordinate-tree, treePath: coordinates }
-      network:
-        type: string
-        title: Network
-        ui:field: DynamicSelect
-        ui:options: { proxyPath: /infra/coordinate-tree, treePath: coordinates, dependsOn: [space] }
-      region:
-        type: string
-        title: Region
-        ui:field: DynamicSelect
-        ui:options: { proxyPath: /infra/coordinate-tree, treePath: coordinates, dependsOn: [space, network] }
-      island:
-        type: string
-        title: Island
-        ui:field: DynamicSelect
-        ui:options: { proxyPath: /infra/coordinate-tree, treePath: coordinates, dependsOn: [space, network, region] }
-      environment:
-        type: string
-        title: Environment
-        ui:field: DynamicSelect
-        ui:options: { proxyPath: /infra/coordinate-tree, treePath: coordinates, dependsOn: [space, network, region, island] }
+      metadata:
+        type: object
+        title: Coordinates
+        properties:
+          space:
+            type: string
+            title: Space
+            ui:field: DynamicSelect
+            ui:options: { proxyPath: /infra/coordinate-tree, treePath: coordinates }
+          network:
+            type: string
+            title: Network
+            ui:field: DynamicSelect
+            ui:options: { proxyPath: /infra/coordinate-tree, treePath: coordinates, dependsOn: [space] }
+          region:
+            type: string
+            title: Region
+            ui:field: DynamicSelect
+            ui:options: { proxyPath: /infra/coordinate-tree, treePath: coordinates, dependsOn: [space, network] }
+          island:
+            type: string
+            title: Island
+            ui:field: DynamicSelect
+            ui:options: { proxyPath: /infra/coordinate-tree, treePath: coordinates, dependsOn: [space, network, region] }
+          environment:
+            type: string
+            title: Environment
+            ui:field: DynamicSelect
+            ui:options: { proxyPath: /infra/coordinate-tree, treePath: coordinates, dependsOn: [space, network, region, island] }
 ```
 
 The endpoint at `treePath` returns the whole hierarchy in one call — nested
@@ -100,7 +104,8 @@ Two rules:
   reordering fields on the template never silently breaks the cascade. *Sibling*
   is literal: name the property as it appears next to this one, with no path.
   Grouping the levels under an object (`metadata.space`, `metadata.network`, …)
-  changes nothing — still `dependsOn: [space]`, never `[metadata.space]`.
+  changes nothing about it — still `dependsOn: [space]`, never `[metadata.space]`.
+  What does change is how the steps read the values: `${{ parameters.metadata.space }}`.
 - Changing a parent clears any child whose current value the new branch does
   not contain — a value that survives an ancestor change would point at a
   coordinate nobody can resolve. A field is disabled with a "Pick `<parent>`
