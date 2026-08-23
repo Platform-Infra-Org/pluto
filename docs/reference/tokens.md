@@ -155,3 +155,16 @@ fields.
 | Scaffolder form | `${{ parameters.x }}` | Scaffolder (nunjucks) | the template's form/steps |
 | Platform submit | `<< paramsJson >>` | the platform backend | the `argoSubmit` block |
 | Argo runtime | `{{inputs.parameters.x}}` | Argo | inside the WorkflowTemplate |
+
+## A second, smaller set: Grafana request params
+
+`platform.grafana.requests.params` values use the same `<< >>` notation, but
+they are **not these tokens**. They are resolved in the browser, at render
+time, against the request on screen — a different implementation at a
+different moment — and the vocabulary is six entries:
+
+`<< requestId >>`, `<< resourceName >>`, `<< resourceType >>`,
+`<< requester >>`, `<< workflowName >>`, `<< workflowNamespace >>`.
+
+The notation is shared so there is one syntax in the product. Nothing else is.
+See [embed a Grafana dashboard](../how-to/embed-a-grafana-dashboard.md).

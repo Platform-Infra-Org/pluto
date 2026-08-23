@@ -28,14 +28,33 @@ const REQUEST: Request = {
   approvals: [],
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T01:00:00.000Z',
+  // The Metrics card is gated on the workflow having shown up, so the default
+  // fixture is a request that ran. Tests that want the other side pass an
+  // override.
+  workflowName: 'git-ops-abc12',
+  workflowNamespace: 'argo',
 };
 
-function renderWith(config: Record<string, unknown>) {
+function renderWith(
+  config: Record<string, unknown>,
+  request: Partial<Request> = {},
+) {
+  const value = { ...REQUEST, ...request };
   return render(
     <MemoryRouter>
       <TestApiProvider
         apis={[
-          [requestsApiRef, { get: jest.fn().mockResolvedValue(REQUEST) } as never],
+          [
+            requestsApiRef,
+            {
+              get: jest.fn().mockResolvedValue(value),
+              // ExperienceBar and the Workflow card both poll this once the
+              // fixture carries a workflowName; unstubbed it throws inside a
+              // passive effect and jsdom reports that as an uncaught
+              // exception, failing the test though the assertions never ran.
+              getWorkflow: jest.fn().mockResolvedValue({ nodes: [] }),
+            } as never,
+          ],
           [
             identityApiRef,
             {
@@ -84,5 +103,78 @@ describe('RequestPage — Metrics card', () => {
     await waitFor(() => expect(screen.getByText('Details')).toBeInTheDocument());
     expect(screen.queryByText('Metrics')).toBeNull();
     expect(document.querySelector('iframe')).toBeNull();
+  });
+
+  const GRAFANA = {
+    platform: {
+      grafana: {
+        baseUrl: 'https://grafana.example.com',
+        dashboard: { uid: 'abc123', slug: 'platform-overview' },
+      },
+    },
+  };
+
+  it('stays hidden while the state is live but no workflow exists yet', async () => {
+    // Submitted, or approved and not yet submitted, but the 5s poll has not
+    // seen a workflow: there is no run to plot.
+    renderWith(GRAFANA, { state: 'IN_PROGRESS', workflowName: undefined });
+    await waitFor(() => expect(screen.getByText('my-resource')).toBeInTheDocument());
+    expect(screen.queryByText('Metrics')).toBeNull();
+  });
+
+  it('stays hidden before a workflow could exist', async () => {
+    renderWith(GRAFANA, { state: 'PENDING_APPROVAL', workflowName: undefined });
+    await waitFor(() => expect(screen.getByText('my-resource')).toBeInTheDocument());
+    expect(screen.queryByText('Metrics')).toBeNull();
+  });
+
+  it('shows for a suspended workflow', async () => {
+    // A suspended workflow is a live one, and the old state list dropped the
+    // card exactly when someone was looking at a stuck run.
+    renderWith(GRAFANA, { state: 'AWAITING_INPUT' });
+    await waitFor(() => expect(screen.getByText('Metrics')).toBeInTheDocument());
+  });
+
+  it('shows while running', async () => {
+    renderWith(GRAFANA, { state: 'IN_PROGRESS' });
+    await waitFor(() => expect(screen.getByText('Metrics')).toBeInTheDocument());
+  });
+
+  it('shows after a failure', async () => {
+    renderWith(GRAFANA, { state: 'FAILED' });
+    await waitFor(() => expect(screen.getByText('Metrics')).toBeInTheDocument());
+  });
+
+  it('resolves request tokens into the frame src', async () => {
+    renderWith({
+      platform: {
+        grafana: {
+          ...GRAFANA.platform.grafana,
+          requests: {
+            params: {
+              'var-wf': '<< workflowName >>',
+              'var-req': '<< requestId >>',
+              'var-missing': '<< ownerGroup >>',
+            },
+          },
+        },
+      },
+    });
+    await waitFor(() => expect(screen.getByText('Metrics')).toBeInTheDocument());
+    const src = document.querySelector('iframe')!.getAttribute('src')!;
+    expect(src).toContain('var-wf=git-ops-abc12');
+    expect(src).toContain('var-req=42');
+    // ownerGroup is a backend submit token, not one of the six resolved here.
+    expect(src).not.toContain('var-missing');
+  });
+
+  it('stays hidden when the request dashboard is disabled', async () => {
+    renderWith({
+      platform: {
+        grafana: { ...GRAFANA.platform.grafana, requests: { enabled: false } },
+      },
+    });
+    await waitFor(() => expect(screen.getByText('my-resource')).toBeInTheDocument());
+    expect(screen.queryByText('Metrics')).toBeNull();
   });
 });

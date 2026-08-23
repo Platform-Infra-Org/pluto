@@ -19,67 +19,86 @@ spec:
   parameters:
     - title: Where should it live?
       required:
-        - space
-        - network
-        - region
-        - island
-        - environment
+        - metadata
       properties:
-        # Same wiring a real deployment uses: proxyPath through the Backstage
-        # proxy, so the upstream's credentials stay server-side. Here it points
-        # at the platform backend's own demo options route; in production it
-        # points at the config API (/infra/coordinate-tree).
-        space:
-          type: string
-          title: Space
-          ui:field: DynamicSelect
-          ui:options: { proxyPath: /demo-options/coordinate-tree, treePath: coordinates }
-        network:
-          type: string
-          title: Network
-          ui:field: DynamicSelect
-          ui:options:
-            { proxyPath: /demo-options/coordinate-tree, treePath: coordinates, dependsOn: [space] }
-        region:
-          type: string
-          title: Region
-          ui:field: DynamicSelect
-          ui:options:
-            { proxyPath: /demo-options/coordinate-tree, treePath: coordinates, dependsOn: [space, network] }
-        island:
-          type: string
-          title: Island
-          ui:field: DynamicSelect
-          ui:options:
-            {
-              proxyPath: /demo-options/coordinate-tree,
-              treePath: coordinates,
-              dependsOn: [space, network, region],
-            }
-        environment:
-          type: string
-          title: Environment
-          ui:field: DynamicSelect
-          ui:options:
-            {
-              proxyPath: /demo-options/coordinate-tree,
-              treePath: coordinates,
-              dependsOn: [space, network, region, island],
-            }
+        # Grouped under an object on purpose. `dependsOn` names a *sibling*
+        # property, so nesting must change nothing about it — this template is
+        # the fixture that keeps that true.
+        metadata:
+          type: object
+          title: Coordinates
+          required:
+            - space
+            - network
+            - region
+            - island
+            - environment
+          properties:
+            # Same wiring a real deployment uses: proxyPath through the
+            # Backstage proxy, so the upstream's credentials stay server-side.
+            # Here it points at the platform backend's own demo options route;
+            # in production it points at the config API
+            # (/infra/coordinate-tree).
+            space:
+              type: string
+              title: Space
+              ui:field: DynamicSelect
+              ui:options:
+                { proxyPath: /demo-options/coordinate-tree, treePath: coordinates }
+            network:
+              type: string
+              title: Network
+              ui:field: DynamicSelect
+              ui:options:
+                {
+                  proxyPath: /demo-options/coordinate-tree,
+                  treePath: coordinates,
+                  dependsOn: [space],
+                }
+            region:
+              type: string
+              title: Region
+              ui:field: DynamicSelect
+              ui:options:
+                {
+                  proxyPath: /demo-options/coordinate-tree,
+                  treePath: coordinates,
+                  dependsOn: [space, network],
+                }
+            island:
+              type: string
+              title: Island
+              ui:field: DynamicSelect
+              ui:options:
+                {
+                  proxyPath: /demo-options/coordinate-tree,
+                  treePath: coordinates,
+                  dependsOn: [space, network, region],
+                }
+            environment:
+              type: string
+              title: Environment
+              ui:field: DynamicSelect
+              ui:options:
+                {
+                  proxyPath: /demo-options/coordinate-tree,
+                  treePath: coordinates,
+                  dependsOn: [space, network, region, island],
+                }
   steps:
     - id: submit
       name: Submit request
       action: platform:request:submit
       input:
         resourceType: git-resource
-        resourceName: ${{ parameters.space }}-${{ parameters.island }}-demo
+        resourceName: ${{ parameters.metadata.space }}-${{ parameters.metadata.island }}-demo
         kind: CREATE
         params:
-          space: ${{ parameters.space }}
-          network: ${{ parameters.network }}
-          region: ${{ parameters.region }}
-          island: ${{ parameters.island }}
-          environment: ${{ parameters.environment }}
+          space: ${{ parameters.metadata.space }}
+          network: ${{ parameters.metadata.network }}
+          region: ${{ parameters.metadata.region }}
+          island: ${{ parameters.metadata.island }}
+          environment: ${{ parameters.metadata.environment }}
         argoSubmit:
           namespace: argo
           workflowTemplate: param-echo

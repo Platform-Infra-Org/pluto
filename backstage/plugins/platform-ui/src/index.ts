@@ -49,5 +49,10 @@ export { DynamicSelect, toChoiceOptions } from './DynamicSelect';
 export type { DynamicSelectProps, ChoiceOption, Fetcher } from './DynamicSelect';
 export { platformScaffolderFieldsModule } from './DynamicSelectField';
 export { GrafanaFrame } from './GrafanaFrame';
-export { isGrafanaConfigured } from './grafana';
+export {
+  isGrafanaConfigured,
+  globalDashboardUrl,
+  requestDashboardUrl,
+} from './grafana';
+export type { DashboardTarget, GrafanaRequestContext } from './grafana';
 export { fileFormField } from './FileField';

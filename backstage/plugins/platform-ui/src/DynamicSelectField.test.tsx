@@ -1,9 +1,13 @@
 // toBeDisabled/toHaveTextContent are jest-dom matchers; this plugin has no global setup.
 import '@testing-library/jest-dom';
+import { useState } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { TestApiProvider } from '@backstage/test-utils';
 import { discoveryApiRef, fetchApiRef } from '@backstage/core-plugin-api';
+import Form from '@rjsf/core';
+import validator from '@rjsf/validator-ajv8';
 import { DynamicSelectFieldComponent } from './DynamicSelectField';
+import { resetTreeStore } from './treeStore';
 
 const TREE = {
   coordinates: {
@@ -211,5 +215,105 @@ describe('DynamicSelectFieldComponent', () => {
     );
     await screen.findAllByRole('option', { name: 'eu-west' });
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+// The tests above hand each field a static formContext, which cannot show what
+// a cascade does once the fields are wired to one form and feeding each other.
+// These two mount the whole chain through a real RJSF form, wired the way the
+// scaffolder Stepper wires it (formContext.formData = the whole form).
+describe('the whole cascade, through a real form', () => {
+  // One child at every level until the third: the shape that makes auto-select
+  // fill in space and network before the reader is asked anything.
+  const CHAIN = {
+    coordinates: {
+      operational: {
+        'eu-west': {
+          paris: { island: ['dev', 'prp', 'prd'] },
+          'eu-east': { island: ['dev', 'opr'] },
+        },
+      },
+    },
+  };
+
+  const LEVELS: Array<[string, string[]]> = [
+    ['space', []],
+    ['network', ['space']],
+    ['region', ['space', 'network']],
+    ['island', ['space', 'network', 'region']],
+    ['environment', ['space', 'network', 'region', 'island']],
+  ];
+
+  const levelsSchema = {
+    type: 'object' as const,
+    properties: Object.fromEntries(
+      LEVELS.map(([n]) => [n, { type: 'string' as const, title: n }]),
+    ),
+  };
+
+  const levelsUiSchema = Object.fromEntries(
+    LEVELS.map(([n, dependsOn]) => [
+      n,
+      {
+        'ui:field': 'DynamicSelect',
+        'ui:options': {
+          proxyPath: '/infra/coordinate-tree',
+          treePath: 'coordinates',
+          ...(dependsOn.length ? { dependsOn } : {}),
+        },
+      },
+    ]),
+  );
+
+  function renderForm(schemaIn: object, uiSchemaIn: object) {
+    function Harness() {
+      const [formData, setFormData] = useState<Record<string, unknown>>({});
+      return (
+        <Form
+          validator={validator}
+          schema={schemaIn as never}
+          uiSchema={uiSchemaIn}
+          formData={formData}
+          formContext={{ formData }}
+          fields={{ DynamicSelect: DynamicSelectFieldComponent } as never}
+          onChange={e => setFormData(current => ({ ...current, ...e.formData }))}
+        />
+      );
+    }
+    return render(
+      <TestApiProvider apis={apis(CHAIN) as never}>
+        <Harness />
+      </TestApiProvider>,
+    );
+  }
+
+  async function expectCascaded() {
+    const boxes = await screen.findAllByRole('combobox');
+    await waitFor(() => expect(boxes[0]).toHaveValue('operational'));
+    await waitFor(() => expect(boxes[1]).toHaveValue('eu-west'));
+    // The first level that genuinely branches is where the reader takes over.
+    await waitFor(() => expect(boxes[2]).not.toBeDisabled());
+    expect(
+      Array.from(boxes[2].querySelectorAll('option')).map(o => o.textContent),
+    ).toEqual(expect.arrayContaining(['paris', 'eu-east']));
+  }
+
+  beforeEach(() => resetTreeStore());
+
+  it('auto-fills every single-child level down to the first real choice', async () => {
+    renderForm(levelsSchema, levelsUiSchema);
+    await expectCascaded();
+  });
+
+  it('does the same when the levels are grouped under an object property', async () => {
+    // `dependsOn: [space]` names a sibling, and under a group the siblings live
+    // at metadata.space, not at the form root. Resolving against the root found
+    // nothing, so every level below the first sat disabled on "Pick space
+    // first" while the first, having no ancestors, filled itself in.
+    renderForm(
+      { type: 'object', properties: { metadata: levelsSchema } },
+      { metadata: levelsUiSchema },
+    );
+    await expectCascaded();
   });
 });

@@ -27,14 +27,26 @@ export const HIDDEN_NAV_HREFS = ['/catalog-graph'];
 export const ADMIN_NAV_HREFS = ['/api-docs', '/catalog-import', '/visualizer'];
 
 /**
+ * Routes offered only when the feature behind them is configured.
+ *
+ * `/dashboard` is an embedded Grafana and nothing else. With no
+ * `platform.grafana`, the page redirects home — so offering the tab would be
+ * offering a round trip to where you already were.
+ */
+export const GRAFANA_NAV_HREFS = ['/dashboard'];
+
+/**
  * `isAdmin` is undefined while the identity is still loading, which counts as
  * not-an-admin — the admin links appearing a beat after the rest is a smaller
- * flaw than them showing to everyone and then vanishing.
+ * flaw than them showing to everyone and then vanishing. `grafanaConfigured`
+ * defaults to false for the same reason.
  */
 export function navItemVisible(
   href: string,
   isAdmin: boolean | undefined,
+  grafanaConfigured: boolean = false,
 ): boolean {
   if (HIDDEN_NAV_HREFS.includes(href)) return false;
+  if (GRAFANA_NAV_HREFS.includes(href) && !grafanaConfigured) return false;
   return isAdmin === true || !ADMIN_NAV_HREFS.includes(href);
 }
