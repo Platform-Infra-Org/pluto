@@ -1397,8 +1397,10 @@ browser. Define the endpoint in <code>app-config.yaml</code>:</p>
 <p>Use <code>url:</code> (direct) only for public, unauthenticated endpoints.</p>
 <h2 id="dependent-selects">Dependent selects<a class="headerlink" href="#dependent-selects" title="Permanent link">&para;</a></h2>
 <p>Five fields can cascade over one API call that returns a whole hierarchy,
-rather than each level having its own endpoint. <code>provision-database</code> is the
-worked example:</p>
+rather than each level having its own endpoint. Both shapes are seeded:
+<code>provision-database</code> keeps the levels flat, <code>coordinate-demo</code> groups them
+under an object. Below is the grouped shape — <code>dependsOn</code> reads identically
+either way.</p>
 <div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
 <span class="normal"> 2</span>
 <span class="normal"> 3</span>
@@ -1425,33 +1427,41 @@ worked example:</p>
 <span class="normal">24</span>
 <span class="normal">25</span>
 <span class="normal">26</span>
-<span class="normal">27</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">parameters</span><span class="p">:</span>
 <span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">properties</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">space</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="w">        </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Space</span>
-<span class="w">        </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DynamicSelect</span>
-<span class="w">        </span><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/infra/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<span class="w">      </span><span class="nt">network</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="w">        </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Network</span>
-<span class="w">        </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DynamicSelect</span>
-<span class="w">        </span><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/infra/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="p p-Indicator">,</span><span class="nt"> dependsOn</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">space</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<span class="w">      </span><span class="nt">region</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="w">        </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Region</span>
-<span class="w">        </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DynamicSelect</span>
-<span class="w">        </span><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/infra/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="p p-Indicator">,</span><span class="nt"> dependsOn</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">space</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">network</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<span class="w">      </span><span class="nt">island</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="w">        </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Island</span>
-<span class="w">        </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DynamicSelect</span>
-<span class="w">        </span><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/infra/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="p p-Indicator">,</span><span class="nt"> dependsOn</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">space</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">network</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">region</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="p p-Indicator">}</span>
-<span class="w">      </span><span class="nt">environment</span><span class="p">:</span>
-<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
-<span class="w">        </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Environment</span>
-<span class="w">        </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DynamicSelect</span>
-<span class="w">        </span><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/infra/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="p p-Indicator">,</span><span class="nt"> dependsOn</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">space</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">network</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">region</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">island</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">object</span>
+<span class="w">        </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Coordinates</span>
+<span class="w">        </span><span class="nt">properties</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">space</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">            </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Space</span>
+<span class="w">            </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DynamicSelect</span>
+<span class="w">            </span><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/infra/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">          </span><span class="nt">network</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">            </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Network</span>
+<span class="w">            </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DynamicSelect</span>
+<span class="w">            </span><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/infra/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="p p-Indicator">,</span><span class="nt"> dependsOn</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">space</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">          </span><span class="nt">region</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">            </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Region</span>
+<span class="w">            </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DynamicSelect</span>
+<span class="w">            </span><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/infra/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="p p-Indicator">,</span><span class="nt"> dependsOn</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">space</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">network</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">          </span><span class="nt">island</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">            </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Island</span>
+<span class="w">            </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DynamicSelect</span>
+<span class="w">            </span><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/infra/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="p p-Indicator">,</span><span class="nt"> dependsOn</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">space</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">network</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">region</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">          </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">string</span>
+<span class="w">            </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Environment</span>
+<span class="w">            </span><span class="nt">ui:field</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">DynamicSelect</span>
+<span class="w">            </span><span class="nt">ui:options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> proxyPath</span><span class="p">:</span><span class="w"> </span><span class="nv">/infra/coordinate-tree</span><span class="p p-Indicator">,</span><span class="nt"> treePath</span><span class="p">:</span><span class="w"> </span><span class="nv">coordinates</span><span class="p p-Indicator">,</span><span class="nt"> dependsOn</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">space</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">network</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">region</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">island</span><span class="p p-Indicator">]</span><span class="w"> </span><span class="p p-Indicator">}</span>
 </code></pre></div></td></tr></table></div>
 <p>The endpoint at <code>treePath</code> returns the whole hierarchy in one call — nested
 objects keyed by name, four levels deep, with a sorted array of leaf values
@@ -1480,7 +1490,11 @@ objects keyed by name, four levels deep, with a sorted array of leaf values
 <ul>
 <li><code>dependsOn</code> lists the sibling field names that are this level's ancestors,
   <strong>outermost first</strong>. It is explicit rather than inferred from form order, so
-  reordering fields on the template never silently breaks the cascade.</li>
+  reordering fields on the template never silently breaks the cascade. <em>Sibling</em>
+  is literal: name the property as it appears next to this one, with no path.
+  Grouping the levels under an object (<code>metadata.space</code>, <code>metadata.network</code>, …)
+  changes nothing about it — still <code>dependsOn: [space]</code>, never <code>[metadata.space]</code>.
+  What does change is how the steps read the values: <code>${{ parameters.metadata.space }}</code>.</li>
 <li>Changing a parent clears any child whose current value the new branch does
   not contain — a value that survives an ancestor change would point at a
   coordinate nobody can resolve. A field is disabled with a "Pick <code>&lt;parent&gt;</code>

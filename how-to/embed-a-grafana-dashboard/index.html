@@ -578,6 +578,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Configure it">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#two-dashboards-one-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two dashboards, one block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-scoped-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request-scoped values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-the-card-appears" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the card appears
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1287,6 +1326,45 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Configure it">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#two-dashboards-one-block" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Two dashboards, one block
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#request-scoped-values" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Request-scoped values
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#when-the-card-appears" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        When the card appears
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1353,8 +1431,7 @@
 <h1 id="how-to-embed-a-grafana-dashboard">How-to: embed a Grafana dashboard<a class="headerlink" href="#how-to-embed-a-grafana-dashboard" title="Permanent link">&para;</a></h1>
 <p>An existing Grafana dashboard can be framed in two places: its own page at
 <code>/dashboard</code>, and — scoped to that request's own time window — a card on every
-request page once it has a workflow run to plot (<code>IN_PROGRESS</code>, <code>SUCCEEDED</code>,
-<code>FAILED</code>).</p>
+request page once it has a workflow to plot (see "When the card appears").</p>
 <p>This makes no Grafana API call and needs no Grafana token. It embeds a
 dashboard URL in an iframe, nothing more.</p>
 <h2 id="configure-it">Configure it<a class="headerlink" href="#configure-it" title="Permanent link">&para;</a></h2>
@@ -1375,11 +1452,94 @@ dashboard URL in an iframe, nothing more.</p>
 <span class="w">    </span><span class="nt">kiosk</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 </code></pre></div></td></tr></table></div>
 <p><code>baseUrl</code> is frontend-visible config — served to every user — and it doubles
-as an origin allowlist: the frame can never point anywhere else. Leave the
-whole <code>platform.grafana</code> key unset and both mount points render nothing rather
-than an empty box.</p>
+as an origin allowlist: the frame can never point anywhere else.</p>
+<p><strong>With no <code>platform.grafana</code>, there is no dashboard anywhere</strong>: no <code>/dashboard</code>
+page, no Dashboard entry in the sidebar, no Metrics card on a request. Write
+the key but leave out <code>baseUrl</code>, <code>dashboard.uid</code> or <code>dashboard.slug</code> and the
+app refuses to start — that is deliberate, a half-configured dashboard used to
+throw at render time and take the page with it.</p>
 <p>In the Helm chart, the equivalent is <code>platform.grafana</code> in <code>values.yaml</code>
 (empty by default — see the commented example there).</p>
+<h3 id="two-dashboards-one-block">Two dashboards, one block<a class="headerlink" href="#two-dashboards-one-block" title="Permanent link">&para;</a></h3>
+<p>The same config drives two places: the <code>/dashboard</code> page, and a Metrics card on
+every request page, scoped to that request's own time window.</p>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span>
+<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">platform</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">grafana</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">baseUrl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">https://grafana.example.com</span>
+<span class="w">    </span><span class="nt">dashboard</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt"> uid</span><span class="p">:</span><span class="w"> </span><span class="nv">abc123</span><span class="p p-Indicator">,</span><span class="nt"> slug</span><span class="p">:</span><span class="w"> </span><span class="nv">platform-overview</span><span class="w"> </span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span><span class="w">                       </span><span class="c1"># the /dashboard page only</span>
+<span class="w">      </span><span class="nt">var-env</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">production</span>
+<span class="w">    </span><span class="nt">requests</span><span class="p">:</span><span class="w">                     </span><span class="c1"># the request card only</span>
+<span class="w">      </span><span class="nt">enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w">               </span><span class="c1"># false drops the card; /dashboard unaffected</span>
+<span class="w">      </span><span class="nt">uid</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">def456</span><span class="w">                 </span><span class="c1"># optional, else dashboard.uid</span>
+<span class="w">      </span><span class="nt">slug</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">request-detail</span><span class="w">        </span><span class="c1"># optional, else dashboard.slug</span>
+<span class="w">      </span><span class="nt">params</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">var-workflow</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;&lt;&lt;</span><span class="nv"> </span><span class="s">workflowName</span><span class="nv"> </span><span class="s">&gt;&gt;&#39;</span>
+</code></pre></div></td></tr></table></div>
+<p><code>uid</code>, <code>slug</code>, <code>theme</code> and <code>kiosk</code> inherit from the top level. <strong><code>params</code> does
+not</strong> — the point of the request block is that its variables differ, and
+inheriting would mean unsetting the global ones to get only request-scoped
+ones.</p>
+<p>Configured <code>params</code> are written into the URL before the computed ones, so
+<code>kiosk</code>, <code>theme</code>, <code>from</code> and <code>to</code> win a name collision. Pinning <code>from</code> in
+<code>requests.params</code> will not defeat the request's own time window.</p>
+<h3 id="request-scoped-values">Request-scoped values<a class="headerlink" href="#request-scoped-values" title="Permanent link">&para;</a></h3>
+<p>Values under <code>requests.params</code> may carry <code>&lt;&lt; token &gt;&gt;</code> placeholders, resolved
+in the browser against the request on screen:</p>
+<table>
+<thead>
+<tr>
+<th>Token</th>
+<th>Resolves to</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;&lt; requestId &gt;&gt;</code></td>
+<td>the request's numeric id</td>
+</tr>
+<tr>
+<td><code>&lt;&lt; resourceName &gt;&gt;</code></td>
+<td>the resource name</td>
+</tr>
+<tr>
+<td><code>&lt;&lt; resourceType &gt;&gt;</code></td>
+<td>the resource type</td>
+</tr>
+<tr>
+<td><code>&lt;&lt; requester &gt;&gt;</code></td>
+<td>the requesting user's short id</td>
+</tr>
+<tr>
+<td><code>&lt;&lt; workflowName &gt;&gt;</code></td>
+<td>the Argo workflow's name</td>
+</tr>
+<tr>
+<td><code>&lt;&lt; workflowNamespace &gt;&gt;</code></td>
+<td>the Argo workflow's namespace</td>
+</tr>
+</tbody>
+</table>
+<p>This is a <strong>smaller, separate set</strong> from the backend's submit tokens — see
+<a href="../../reference/tokens/">submit tokens</a>. A parameter that resolves to an empty
+string is dropped rather than sent empty, because an empty Grafana variable
+usually means "all", which would quietly widen a dashboard meant to be scoped
+to one request.</p>
+<h3 id="when-the-card-appears">When the card appears<a class="headerlink" href="#when-the-card-appears" title="Permanent link">&para;</a></h3>
+<p>Once the request carries a workflow name — the 5s poll sets it as soon as Argo
+actually has the workflow — and its state is <code>IN_PROGRESS</code>, <code>AWAITING_INPUT</code>,
+<code>SUCCEEDED</code> or <code>FAILED</code>. Before that there is no run to plot.</p>
 <h2 id="open-the-csp">Open the CSP<a class="headerlink" href="#open-the-csp" title="Permanent link">&para;</a></h2>
 <p>The frame also needs the backend's Content-Security-Policy to allow it:</p>
 <div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
