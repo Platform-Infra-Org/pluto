@@ -54,6 +54,18 @@ screen is decoration and someone who cannot find "Requests" finds it one click
 later; a label naming a state is a record, and `QUEST FAILED` in an audit trail
 is a support ticket.
 
+### The potion a first-time visitor gets
+
+```yaml
+app:
+  branding:
+    defaultScheme: hades
+```
+
+An id from the scheme shelf. A visitor's own pick always wins — this decides the
+first visit only, so setting it never overrides a choice someone has made.
+Missing or unknown falls back to `obsidian`.
+
 ## `platform.rbac`
 
 ```yaml

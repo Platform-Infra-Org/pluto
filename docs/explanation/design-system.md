@@ -210,6 +210,23 @@ a `BRAND_DEFS` row cannot express ornament or an animation:
   confined to the sign-in page — it sits 16° from the success status hue, and
   green ornament beside a badge turns decoration into state;
   `egyptian.test.ts` fails if it appears anywhere else.
+- **Hades: one mode, two axes** — Every other mode is a palette. Hades is a
+  palette plus a `data-boon` attribute naming one of nine gods, each redefining
+  the accent and swapping the ornament and animation layer. The scheme picker
+  equips the mode; the wheel on the home page equips the god, and picking one
+  does both so it works from any starting potion.
+  
+  Nine bottles on the shelf would have been nine silhouettes to draw and nine
+  rows to keep in contrast. One bottle and a wheel is the same variety at a
+  ninth of the surface.
+  
+  The boon rides an attribute rather than a class so it cannot collide with the
+  `sc-<mode>` classes `applyScheme` clears on every pick — the two axes are
+  independent and must stay that way.
+  
+  Both constraints still bind: every boon's motion is `steps()` inside a
+  `prefers-reduced-motion` guard, and the equipped god is named in text beside
+  the wheel, because nothing conveys state through motion alone.
 
 The mechanism is specificity alone. The injected accent sheet writes `:root`,
 which is (0,1,0); `:root.sc-greek` is (0,2,0) and wins whatever the injection
