@@ -32,6 +32,25 @@ export const SHADCN_CSS = `
   font-style: normal;
   font-display: swap;
 }
+/* Hebrew. Clash Grotesk carries none, so every Hebrew glyph fell back to
+   whatever the OS offered — which is what made the one Hebrew line in the app
+   look pasted in from somewhere else.
+
+   Heebo is a neo-grotesque Hebrew drawn as Roboto's companion: closed
+   apertures, even stroke contrast, proportions near enough to Clash Grotesk to
+   sit in the same sentence. SIL OFL, see public/fonts/HEEBO-LICENSE.txt.
+
+   Attached by unicode-range rather than appended as a fallback: the browser
+   pulls this face ONLY for these codepoints, so Latin never leaves Clash
+   Grotesk and no rule has to know which script it is rendering. */
+@font-face {
+  font-family: 'Heebo';
+  src: url('/fonts/heebo.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0590-05FF, U+FB1D-FB4F;
+}
 .sc, .sc * { box-sizing: border-box; }
 /* The host for the animated mode ornaments — SchemeRoot mounts it once, and a
    mode sheet turns on the child it wants. Hidden by default and pointer-events
@@ -56,12 +75,12 @@ export const SHADCN_CSS = `
   --sc-field-x: 10px;
   --sc-border-w: 2px;
   --sc-shadow: 3px 3px 0 hsl(var(--sc-fg) / .16);
-  --sc-font-ui: 'Clash Grotesk', Inter, system-ui, -apple-system, sans-serif;
+  --sc-font-ui: 'Clash Grotesk', 'Heebo', Inter, system-ui, -apple-system, sans-serif;
   /* Titles take the grotesque, everything else keeps the pixel face. Held as
      its own variable so a mode can move the two independently — the pixel font
      is still the app's voice, but a heading is where a face has room to be
      read rather than decoded. */
-  --sc-font-title: 'Clash Grotesk', Inter, system-ui, -apple-system, sans-serif;
+  --sc-font-title: 'Clash Grotesk', 'Heebo', Inter, system-ui, -apple-system, sans-serif;
   --sc-unit: 4px;
   --sc-nav-w: 240px;
   --sc-bg: 240 10% 98%;

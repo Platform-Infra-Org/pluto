@@ -194,12 +194,15 @@ describe('SHADCN_CSS', () => {
     expect(block![1]).not.toMatch(/overflow:\s*visible/);
   });
 
-  it('serves exactly one typeface', () => {
-    // One family, differentiated by weight, size and case. A second @font-face
-    // would mean the consolidation had quietly come undone.
+  it('serves exactly one Latin typeface, plus Heebo for Hebrew', () => {
+    // One Latin family, differentiated by weight, size and case, plus the
+    // unicode-range-scoped Hebrew companion. A THIRD @font-face -- or a second
+    // one not scoped to Hebrew -- would mean the consolidation had quietly
+    // come undone.
     const faces = Array.from(SHADCN_CSS.matchAll(/@font-face\s*\{([^}]*)\}/g), m => m[1]);
-    expect(faces.length).toBe(1);
+    expect(faces.length).toBe(2);
     expect(faces[0]).toMatch(/Clash Grotesk/);
+    expect(faces[1]).toMatch(/Heebo/);
     expect(SHADCN_CSS).not.toMatch(/Pixelify Sans|Anton/);
   });
 
@@ -755,5 +758,33 @@ describe('SHADCN_CSS', () => {
     );
     expect(titleRule).toContain('overflow-wrap: anywhere');
     expect(titleRule).not.toContain('overflow-wrap: break-word');
+  });
+});
+
+describe('Hebrew type', () => {
+  it('serves Heebo from our own origin', () => {
+    // The CSP is font-src 'self'. A CDN reference does not load, and fails
+    // silently into a system fallback that looks nearly right.
+    expect(SHADCN_CSS).toContain("src: url('/fonts/heebo.woff2')");
+    expect(SHADCN_CSS).not.toMatch(/@font-face[^}]*https?:\/\//);
+  });
+
+  it('scopes Heebo to the Hebrew blocks', () => {
+    // unicode-range is what makes this a fix rather than a fallback: Latin
+    // never leaves Clash Grotesk, and no rule has to know which script it is
+    // rendering.
+    const face = SHADCN_CSS.slice(SHADCN_CSS.indexOf("font-family: 'Heebo'"));
+    const block = face.slice(0, face.indexOf('}'));
+    expect(block).toContain('unicode-range');
+    expect(block).toContain('U+0590-05FF');
+  });
+
+  it('lists Heebo in both font stacks', () => {
+    for (const token of ['--sc-font-ui', '--sc-font-title']) {
+      const decl = SHADCN_CSS.slice(SHADCN_CSS.indexOf(`${token}:`));
+      expect(`${token}:${decl.slice(0, decl.indexOf(';')).includes('Heebo')}`).toBe(
+        `${token}:true`,
+      );
+    }
   });
 });
