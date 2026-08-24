@@ -92,23 +92,58 @@ for. Both are real delete authority, they just have different reach, and
 `mayDeleteLookup` in the requests backend checks them as two separate branches
 of the same union.
 
-## The visibility limits
+## Where delete authority stops short of visibility
 
-The gate uses **direct `memberOf` group membership only**, resolving a named
-requester's groups by querying the catalog and walking the `relations`. On a
-Keycloak→LDAP stack with nested groups, a user who is an owner only by
-inheritance (member of a member of the owning group) will be able to *see* the
-resource — because the permission policy uses `ownershipEntityRefs`, which Backstage
-itself resolves transitively — but will be refused (403) when attempting
-bulk-delete. It fails closed. A user in this situation will not be silently denied
-without explanation; the 403 error message spells out what is required. If
-nested-group ownership needs to apply to bulk-delete as well, the backend's
-`mayDeleteLookup` would need to walk `relations` transitively (or use the same
-`principalResolver` the permission policy uses for `ownershipEntityRefs`).
+Visibility and delete authority ask **different questions about group
+membership**, and on a nested-group directory they can disagree.
+
+- The permission policy (visibility) reads `ownershipEntityRefs`, which Backstage
+  resolves **transitively** — your groups *and their ancestors*.
+- `mayDeleteLookup` and `adminLookup` (bulk-delete, and the maintenance-mode
+  admin check) resolve a named requester by reading their User entity from the
+  catalog and filtering `relations` to `memberOf` — **direct membership only**.
+
+They cannot currently ask the same question. Both backend gates run on a resolved
+`requester` *string* rather than a credential — the Scaffolder submits as a
+service principal and names the human in the body — while `ownershipEntityRefs`
+comes from the identity layer, which needs a user credential. All the catalog can
+offer for a bare name is direct edges.
+
+So on a Keycloak→LDAP stack with nested groups, a user who owns a resource only
+by inheritance (a member of a member of the owning group) **can see it and cannot
+bulk-delete it**. It fails closed: the disagreement only ever refuses someone who
+should have been allowed, never the reverse. That is why it is a known limit
+rather than a hole.
+
+### The failure is badly ordered, and the 403 does not explain it
+
+This is the part worth knowing before someone reports it as a bug. The user is
+not stopped early. They get a *full* picker, tick five boxes, submit, and only
+then get refused — the most expensive point at which to find out. Worse, the
+refusal says admin, owner or service-owner is required, and they **are** the
+owner as far as every other screen in the app is concerned. Nothing in the
+message points at nested groups.
+
+Until this is closed it is a support question, not a self-service one. Closing it
+means walking `relations` transitively in the backend; nothing here does that
+yet, and a second hand-rolled group-graph walker beside Backstage's own is
+exactly the duplicate-authorization-rule drift this design has twice paid for.
 
 ## The picker is a courtesy
 
-The bulk-delete form's entity picker is narrowed for free — a user with no
-visibility gets an empty picker. But the picker is not the gate; `POST /requests`
-is. If a picker issue ever narrows the list incorrectly while leaving the backend
-open, it is a UX issue, not a security issue. The backend check always comes last.
+The bulk-delete form's entity picker is narrowed for free, because it reads the
+catalog with the user's own credentials — no picker code enforces anything.
+
+But the picker is not the gate; `POST /requests` is. That endpoint receives a
+plain list of names, and nothing in the payload distinguishes a name chosen from
+a filtered dropdown from one typed into `curl`. If the picker ever narrows
+incorrectly while the backend stays closed, that is a UX bug. If the backend
+check were removed, the narrowing would be decorative. The backend check always
+comes last.
+
+Two cases where the picker and the backend legitimately disagree, both of them
+late refusals rather than empty pickers:
+
+- a **nested-group owner**, as above;
+- a **stale tab**, whose list was loaded before an owner or a group membership
+  changed.
