@@ -373,7 +373,7 @@ describe('createRouter', () => {
     it('accepts resourceNames and derives resourceName from them', async () => {
       const { app } = await makeApp({
         result: AuthorizeResult.ALLOW,
-        mayDeleteLookup: async () => true,
+        mayDeleteLookup: async () => ({ allowed: true, denied: [] }),
       });
       const res = await request(app)
         .post('/requests')
@@ -497,7 +497,7 @@ describe('createRouter', () => {
     const { app, store } = await makeApp({
       result: AuthorizeResult.ALLOW,
       principalResolver: async () => ({ isAdmin: true, groups: [] }),
-      mayDeleteLookup: async () => true,
+      mayDeleteLookup: async () => ({ allowed: true, denied: [] }),
       submitWorkflow,
     });
 
@@ -1242,8 +1242,22 @@ describe('createRouter', () => {
     // 'boss' is an admin; 'dev' service-owns git-resource; 'owner' directly owns
     // the named resources; 'other' is none of the three.
     const adminLookup = async (ref: string) => ref === 'boss';
-    const mayDeleteLookup = async (ref: string, type: string) =>
-      (ref === 'dev' && type === 'git-resource') || ref === 'owner';
+    // Stubbed at the router boundary on purpose — the rule itself has its own
+    // tests in `ownership.test.ts`, where the catalog it reads can be a fixture.
+    // It still honours `resourceNames`, so the refusal below is asserted on
+    // names the gate actually produced rather than on a constant.
+    const mayDeleteLookup = async (
+      ref: string,
+      type: string,
+      names: string[],
+    ) => {
+      if ((ref === 'dev' && type === 'git-resource') || ref === 'owner') {
+        return { allowed: true, denied: [] };
+      }
+      // 'other' owns bucket-a and nothing else.
+      const denied = names.filter(n => n !== 'bucket-a');
+      return { allowed: denied.length === 0, denied };
+    };
 
     it('accepts a bulk delete where every name is service-owned', async () => {
       const { app } = await makeApp({ result: AuthorizeResult.ALLOW, adminLookup, mayDeleteLookup });
@@ -1283,8 +1297,12 @@ describe('createRouter', () => {
         .post('/requests')
         .set('Authorization', mockCredentials.service.header())
         .send({ ...BULK_DELETE_BODY, requester: 'other' });
-      // A user who ticked five boxes needs to know which one stopped it.
-      expect(JSON.stringify(res.body)).toMatch(/git-resource|not permitted/i);
+      // A user who ticked five boxes needs to know which one stopped it. Every
+      // name in the batch is of the same type, so naming the type is not an
+      // answer — the assertion has to be on the name that failed, and on the
+      // one that did not being left out of the blame.
+      expect(res.body.error).toContain('bucket-b');
+      expect(res.body.error).not.toContain('bucket-a');
     });
 
     it('lets an admin bulk delete regardless of service ownership', async () => {

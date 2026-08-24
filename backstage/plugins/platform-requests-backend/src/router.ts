@@ -59,7 +59,20 @@ export type MayDeleteLookup = (
   userRef: string,
   resourceType: string,
   resourceNames: string[],
-) => Promise<boolean>;
+) => Promise<MayDeleteVerdict>;
+
+/**
+ * The answer, plus the names that produced it.
+ *
+ * Not a bare boolean: a user who ticked five boxes and got a 403 naming only
+ * the *type* learns nothing — every name in the batch is of that type. `denied`
+ * is what the refusal reads out, so they know which tick to untick.
+ */
+export interface MayDeleteVerdict {
+  allowed: boolean;
+  /** The names the caller may not delete. Empty when `allowed`. */
+  denied: string[];
+}
 
 export interface RouterOptions {
   httpAuth: HttpAuthService;
@@ -207,7 +220,8 @@ export async function createRouter(
     options.principalResolver ?? (async () => ({ isAdmin: false, groups: [] }));
   const adminLookup: AdminLookup = options.adminLookup ?? (async () => false);
   const mayDeleteLookup: MayDeleteLookup =
-    options.mayDeleteLookup ?? (async () => false);
+    options.mayDeleteLookup ??
+    (async (_u, _t, names) => ({ allowed: false, denied: names }));
   const submitWorkflow =
     options.submitWorkflow ?? (async () => undefined);
   const cipher: Cipher | undefined = options.cipher;
@@ -285,18 +299,29 @@ export async function createRouter(
     //
     // One resourceType per batch: `bulk-delete-resources` posts one
     // `resourceType` for the whole request (its MultiEntityPicker filters to a
-    // single `spec.type`), so one check covers every name and the refusal
-    // names the type rather than walking resourceNames individually.
+    // single `spec.type`), so service-ownership is one check for the batch —
+    // but ownership is per resource, so the gate still walks every name and the
+    // refusal reads back the ones that failed.
     if (data.kind === 'DELETE' && data.resourceNames?.length) {
       if (!(await adminLookup(requester))) {
-        if (
-          !(await mayDeleteLookup(requester, data.resourceType, data.resourceNames))
-        ) {
+        const verdict = await mayDeleteLookup(
+          requester,
+          data.resourceType,
+          data.resourceNames,
+        );
+        if (!verdict.allowed) {
+          // Name the offenders. `denied` empty on a refusal means the gate
+          // could not attribute it to particular names (a catalog it could not
+          // reach, say) — then the whole batch is the honest answer, not a
+          // shorter list that reads as precise and is not.
+          const offenders = verdict.denied.length
+            ? verdict.denied
+            : data.resourceNames;
           res.status(403).json({
             error:
-              `Not permitted to delete one or more of those ${data.resourceType} ` +
-              `resources — that requires an admin, the resource's owner, or the ` +
-              `owning service team.`,
+              `Not permitted to delete ${offenders.join(', ')} ` +
+              `(${data.resourceType}) — that requires an admin, the resource's ` +
+              `owner, or the owning service team.`,
           });
           return;
         }

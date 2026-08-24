@@ -1,6 +1,7 @@
 import { AuthService, LoggerService } from '@backstage/backend-plugin-api';
 import { Entity } from '@backstage/catalog-model';
 import { CatalogService } from '@backstage/plugin-catalog-node';
+import { MayDeleteVerdict } from './router';
 import {
   ServiceOwnerMap,
   normalizeEntityRef,
@@ -72,7 +73,7 @@ export function createMayDeleteLookup(deps: MayDeleteDeps) {
     userRef: string,
     resourceType: string,
     resourceNames: string[],
-  ): Promise<boolean> => {
+  ): Promise<MayDeleteVerdict> => {
     try {
       const selfRef = `user:${catalogNamespace}/${userRef}`;
       const entity = await catalog.getEntityByRef(selfRef, {
@@ -86,7 +87,7 @@ export function createMayDeleteLookup(deps: MayDeleteDeps) {
       if (
         serviceOwnedTypes(await serviceOwners(), groups).includes(resourceType)
       ) {
-        return true;
+        return { allowed: true, denied: [] };
       }
 
       // Direct ownership: every named resource must be owned by this user or a
@@ -104,12 +105,19 @@ export function createMayDeleteLookup(deps: MayDeleteDeps) {
           }),
         ),
       );
-      return resources.every(
-        r => r !== undefined && ownersOf(r).some(o => ownerRefs.has(o)),
-      );
+      // Every name that failed, not just the first: the refusal reads them
+      // back, and a user who ticked five boxes should not have to discover the
+      // second offender by resubmitting.
+      const denied = resourceNames.filter((_, i) => {
+        const r = resources[i];
+        return r === undefined || !ownersOf(r).some(o => ownerRefs.has(o));
+      });
+      return { allowed: denied.length === 0, denied };
     } catch (e) {
       logger.warn(`mayDeleteLookup failed for '${resourceType}': ${e}`);
-      return false;
+      // Fails closed, and blames the whole batch — nothing was established
+      // about any single name, so naming a subset would be a guess.
+      return { allowed: false, denied: resourceNames };
     }
   };
 }

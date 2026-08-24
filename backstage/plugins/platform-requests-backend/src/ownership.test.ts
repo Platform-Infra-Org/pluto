@@ -70,25 +70,36 @@ describe('mayDeleteLookup', () => {
   it('allows the owner of every named resource', async () => {
     expect(
       await lookup()('dana', 'git-resource', ['orders-db', 'audit-db']),
-    ).toBe(true);
+    ).toEqual({ allowed: true, denied: [] });
   });
 
-  it('refuses when the caller owns only some of the names', async () => {
+  it('refuses when the caller owns only some of the names, and names the rest', async () => {
     // Refused whole: partial success on a Git-writing destructive action is the
-    // outcome that is hardest to notice and hardest to undo.
+    // outcome that is hardest to notice and hardest to undo. The offender is
+    // named because every name in the batch is of the same type, so naming the
+    // type tells the user nothing.
     expect(
       await lookup()('dana', 'git-resource', ['orders-db', 'billing-db']),
-    ).toBe(false);
+    ).toEqual({ allowed: false, denied: ['billing-db'] });
+  });
+
+  it('names every offender, not just the first', async () => {
+    expect(
+      (await lookup()('kim', 'git-resource', ['orders-db', 'billing-db']))
+        .denied,
+    ).toEqual(['orders-db', 'billing-db']);
   });
 
   it('allows the service-owner of the type, whoever owns the resources', async () => {
     expect(
       await lookup()('sam', 'git-resource', ['orders-db', 'billing-db']),
-    ).toBe(true);
+    ).toEqual({ allowed: true, denied: [] });
   });
 
   it('refuses someone who is neither owner nor service-owner', async () => {
-    expect(await lookup()('kim', 'git-resource', ['orders-db'])).toBe(false);
+    expect(
+      (await lookup()('kim', 'git-resource', ['orders-db'])).allowed,
+    ).toBe(false);
   });
 
   it('allows the owner of a resource whose owner is written short-form', async () => {
@@ -96,31 +107,40 @@ describe('mayDeleteLookup', () => {
     // group:default/payments, so payments *sees* this resource. Comparing the
     // raw string made the same resource 403 on delete — the exact asymmetry
     // this gate exists to prevent.
-    expect(await lookup()('dana', 'git-resource', ['ledger-db'])).toBe(true);
+    expect(
+      (await lookup()('dana', 'git-resource', ['ledger-db'])).allowed,
+    ).toBe(true);
   });
 
   it('allows the service-owner of a template whose owner is written short-form', async () => {
     expect(
-      await lookup({ serviceOwners: new Map([['git-resource', 'checkout']]) })(
-        'sam',
-        'git-resource',
-        ['billing-db'],
-      ),
+      (
+        await lookup({
+          serviceOwners: new Map([['git-resource', 'checkout']]),
+        })('sam', 'git-resource', ['billing-db'])
+      ).allowed,
     ).toBe(true);
   });
 
   it('refuses a name that does not exist in the catalog', async () => {
-    expect(await lookup()('dana', 'git-resource', ['ghost-db'])).toBe(false);
+    expect(
+      await lookup()('dana', 'git-resource', ['ghost-db']),
+    ).toEqual({ allowed: false, denied: ['ghost-db'] });
   });
 
-  it('fails closed when the catalog cannot be reached', async () => {
+  it('fails closed when the catalog cannot be reached, blaming the whole batch', async () => {
+    // Nothing was established about any single name, so a shorter list would
+    // read as precise and be a guess.
     const broken = {
       getEntityByRef: async () => {
         throw new Error('catalog is down');
       },
     } as unknown as CatalogService;
     expect(
-      await lookup({ catalog: broken })('dana', 'git-resource', ['orders-db']),
-    ).toBe(false);
+      await lookup({ catalog: broken })('dana', 'git-resource', [
+        'orders-db',
+        'audit-db',
+      ]),
+    ).toEqual({ allowed: false, denied: ['orders-db', 'audit-db'] });
   });
 });
