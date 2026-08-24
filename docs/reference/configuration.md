@@ -74,7 +74,7 @@ platform:
     adminGroups: [group:default/platform-admins]     # default
     auditorGroups: [group:default/platform-auditors]  # default
 ```
-Frontend-visible (the approve button uses `adminGroups`). Multiple groups allowed.
+Frontend-visible (the approve button uses `adminGroups`). Multiple groups allowed. See **[Configure admins & per-team approval](../how-to/configure-rbac.md)** and **[Pause the platform](../how-to/pause-the-platform.md)**.
 
 ## `platform.argo`
 
