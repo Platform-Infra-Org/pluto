@@ -15,7 +15,6 @@ import {
   Page,
   PageHeader,
   Card,
-  CardBody,
   PixelStar,
   PlutoMark,
 } from '@internal/plugin-platform-ui';
@@ -284,15 +283,16 @@ function PendingApprovals({ max }: { max: number }) {
  * that looked interactive here would be a dead end, and the empty cell was
  * only ever a layout artefact, not missing information.
  *
- * Marked decorative, so it is skipped by screen readers entirely.
+ * No card around it: an edge here would read as a panel with its content
+ * missing. It floats in the cell instead, held back so it never competes
+ * with the real cards beside it, and marked decorative so screen readers
+ * skip it entirely.
  */
 function PlutoBlock() {
   return (
-    <Card className="sc-pluto-block">
-      <CardBody>
-        <PlutoMark decorative />
-      </CardBody>
-    </Card>
+    <div className="sc-pluto-block">
+      <PlutoMark decorative />
+    </div>
   );
 }
 

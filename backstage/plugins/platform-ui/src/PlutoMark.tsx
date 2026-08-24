@@ -10,9 +10,10 @@ import { PLUTO_PHOTO } from './plutoPhoto';
  * `image-rendering: pixelated`, so it lands on the same chunky grid as the
  * sprites instead of looking like a screenshot from another application.
  *
- * The glyph is the **bident** — Hades' two-pronged spear, the weapon he
- * fights with and the attribute that separates him from Poseidon's trident.
- * It strokes `--sc-primary`, so the mark answers to the picked potion; the
+ * The glyph is the **bident** — Hades' two-pronged spear, drawn as the
+ * game's own stylisation of it rather than the plain fork: needle prongs,
+ * flared barbs, a diamond cut out of the body. It is filled with
+ * `--sc-primary`, so the mark answers to the picked potion; the
  * photograph keeps colours of its own, which it must. No colour literals
  * here — see `.sc-pluto*` in `styles.ts`.
  *
@@ -36,11 +37,23 @@ export function PlutoMark({ decorative = false }: { decorative?: boolean }) {
         aria-hidden="true"
         focusable="false"
       >
-        {/* Bident: two prongs off a head bar, one shaft down. */}
-        <path d="M38 30v26" />
-        <path d="M82 30v26" />
-        <path d="M38 56h44" />
-        <path d="M60 56v40" />
+        {/*
+          The Hades sigil: a stylised bident. Two needle prongs taper from
+          sharp tips down to a narrow waist, flare out into barbs, then close
+          to a point — with a diamond cut out of the lower body.
+
+          One filled outline rather than strokes, because the silhouette IS
+          the mark: stroked lines of even width read as a garden fork. Wound
+          bottom point -> left barb -> left tip -> back down the inner edge to
+          the crotch -> up the right prong, so the gap between the blades is
+          part of the outline and narrows downward the way the original does.
+        */}
+        <path
+          fillRule="evenodd"
+          d="M60 108 L48 85 L39.5 71 L52.5 63 L57.2 13 L59.1 63 L60 71
+             L60.9 63 L62.8 13 L67.5 63 L80.5 71 L72 85 Z
+             M60 80 L63.4 88 L60 96 L56.6 88 Z"
+        />
       </svg>
     </div>
   );
