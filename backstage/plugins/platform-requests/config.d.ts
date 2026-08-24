@@ -61,6 +61,7 @@ export interface Config {
         | 'pendingApprovals'
         | 'recentlyVisited'
         | 'favouriteTemplates'
+        | 'pantheon'
       )[];
       /**
        * Max rows shown per section (0 = no limit). Default 8.

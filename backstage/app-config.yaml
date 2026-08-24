@@ -282,6 +282,7 @@ platform:
       - pendingApprovals
       - recentlyVisited
       - favouriteTemplates
+      - pantheon
     maxItems: 8
   # An existing Grafana dashboard, embedded on /dashboard and on request pages
   # (scoped to that request's own time window). See

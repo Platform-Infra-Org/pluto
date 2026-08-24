@@ -47,6 +47,7 @@ import {
   TANKARD_VESSEL,
   CANOPIC_VESSEL,
   HADES_VESSEL,
+  BOON_SPRITES,
 } from './sprites';
 
 const grid = (...rows: string[]) => rows;
@@ -116,6 +117,7 @@ describe('sprite data', () => {
       TEMPLE,
       ...items,
       ...STATE_SPRITES,
+      ...BOON_SPRITES,
     })) {
       expect(`${name}:${sprite.length}`).toBe(`${name}:${SPRITE_SIZE}`);
       for (const row of sprite) {
@@ -126,7 +128,7 @@ describe('sprite data', () => {
 
   it('uses only the two authored characters', () => {
     for (const [name, sprite] of Object.entries({
-      AMPHORA, KEY, LAUREL, HELM, TORCH, ...STATE_SPRITES,
+      AMPHORA, KEY, LAUREL, HELM, TORCH, ...STATE_SPRITES, ...BOON_SPRITES,
     })) {
       const stray = sprite.join('').replace(/[#.]/g, '');
       expect(`${name}:${stray}`).toBe(`${name}:`);
@@ -245,6 +247,18 @@ describe('sprite data', () => {
       const edges = sprite.map(row => row[0] + row[SPRITE_SIZE - 1]).join('');
       expect(`${name} sides:${edges.replace(/\./g, '')}`).toBe(`${name} sides:`);
     }
+  });
+
+  it('draws something in every boon glyph', () => {
+    for (const [name, sprite] of Object.entries(BOON_SPRITES)) {
+      expect(`${name}:${spriteRects(sprite).length > 0}`).toBe(`${name}:true`);
+    }
+  });
+
+  it('gives every boon glyph a silhouette of its own', () => {
+    // Nine gods sharing a drawing is one glyph worn by two buttons.
+    const shapes = Object.values(BOON_SPRITES).map(s => s.join('/'));
+    expect(new Set(shapes).size).toBe(shapes.length);
   });
 
   it('gives every vessel a silhouette of its own', () => {

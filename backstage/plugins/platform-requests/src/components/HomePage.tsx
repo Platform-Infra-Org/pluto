@@ -16,6 +16,7 @@ import {
   PageHeader,
   Card,
   PixelStar,
+  BoonPicker,
 } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
 import { useCatalogNamespace } from '../useCatalogNamespace';
@@ -30,7 +31,8 @@ type Section =
   | 'standingRequests'
   | 'pendingApprovals'
   | 'recentlyVisited'
-  | 'favouriteTemplates';
+  | 'favouriteTemplates'
+  | 'pantheon';
 
 interface OwnedResource {
   name: string;
@@ -288,6 +290,7 @@ export function HomePage() {
     'pendingApprovals',
     'recentlyVisited',
     'favouriteTemplates',
+    'pantheon',
   ];
   const maxItems = home?.getOptionalNumber('maxItems') ?? 8;
 
@@ -311,6 +314,8 @@ export function HomePage() {
             case 'favouriteTemplates':
               // 6: beyond that it stops being a favourites list.
               return <FavouriteTemplates key={s} max={6} />;
+            case 'pantheon':
+              return <BoonPicker key={s} />;
             default:
               return null;
           }

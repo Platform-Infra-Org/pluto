@@ -270,5 +270,80 @@ export function hadesCss(): string {
   from { box-shadow: 0 0 0 0 hsl(var(--sc-primary) / 0.9); }
   to { box-shadow: 0 0 0 18px hsl(var(--sc-primary) / 0); }
 }
+
+/* ===== The boon wheel — BoonPicker.tsx =====
+   Nine gods on a ring around the House's own emblem. Unscoped (not under
+   :root.sc-hades): the wheel lives on the home page under whatever potion is
+   currently equipped, since picking a boon is what equips Hades rather than
+   being gated behind having equipped it already.
+
+   Laid out on a circle with one formula rather than nine hand-placed offsets:
+   each button is rotated to its own share of the ring (--i of --n) then
+   pushed outward by the wheel's radius — rotate() translate() — which is
+   what a circular button layout is on a CSS transform, not a special case.
+   Circular buttons rather than square ones is what makes the rotation free:
+   a circle looks the same rotated to any angle, so nothing needs correcting
+   on the button itself. The glyph inside is a rotated child of a rotated
+   parent, so it inherits both turns and would land upside down at the far
+   side of the ring without the counter-rotation below undoing the first
+   one. */
+.sc-boon-wheel {
+  position: relative;
+  width: 180px;
+  height: 180px;
+  margin: 4px auto 8px;
+}
+/* The centre of the wheel: the House's own emblem, present with no boon
+   equipped — same as :root.sc-hades' own register at the top of this file. */
+.sc-boon-wheel::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 46px;
+  height: 46px;
+  margin: -23px;
+  border-radius: 50%;
+  background: hsl(var(--sc-primary) / .16);
+  border: var(--sc-border-w) solid hsl(var(--sc-primary) / .55);
+  pointer-events: none;
+}
+.sc-boon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  margin: -15px;
+  padding: 5px;
+  border: var(--sc-border-w) solid hsl(var(--sc-border));
+  border-radius: 50%;
+  background: hsl(var(--sc-card));
+  color: hsl(var(--sc-muted-fg));
+  cursor: pointer;
+  transform: rotate(calc(var(--i) * 360deg / var(--n))) translate(70px);
+}
+.sc-boon:hover { color: hsl(var(--sc-fg)); border-color: hsl(var(--sc-primary)); }
+.sc-boon:focus-visible {
+  outline: var(--sc-border-w) solid hsl(var(--sc-ring));
+  outline-offset: 2px;
+}
+/* Equipped is carried by aria-pressed, not by this fill alone — the fill is
+   the sighted shortcut to what the label beside the wheel already says in
+   text. */
+.sc-boon[aria-pressed="true"] {
+  border-color: hsl(var(--sc-primary));
+  color: hsl(var(--sc-primary));
+  background: hsl(var(--sc-primary) / .16);
+}
+.sc-boon svg {
+  width: 100%;
+  height: 100%;
+  /* Cancels the wheel's own rotation above, so the glyph reads upright at
+     every one of the nine positions instead of pointing outward from the
+     centre. --i and --n are set once on .sc-boon and read here too — a
+     custom property inherits to a plain child with no extra wiring. */
+  transform: rotate(calc(var(--i) * -360deg / var(--n)));
+}
 `;
 }

@@ -476,8 +476,30 @@ export function applyScheme(scheme?: string) {
   );
 }
 
-// Theme the login gate immediately, before React mounts anything.
+/**
+ * Equip a boon. Separate from `applyScheme` because it is a second axis: the
+ * scheme decides the mode class, the boon decides which of that mode's nine
+ * registers applies. Written as an attribute rather than a class so it cannot
+ * collide with the `sc-<mode>` classes `applyScheme` clears.
+ */
+export function applyBoon(boon: string | undefined) {
+  const root = document.documentElement;
+  if (boon) root.setAttribute('data-boon', boon);
+  else root.removeAttribute('data-boon');
+  if (typeof localStorage !== 'undefined') {
+    if (boon) localStorage.setItem('platform-boon', boon);
+    else localStorage.removeItem('platform-boon');
+  }
+}
+
+// Theme the login gate immediately, before React mounts anything. The boon is
+// restored alongside it, at the same module-load point applyScheme runs at,
+// so a reload keeps the equipped god rather than dropping back to the House's
+// own register.
 applyScheme();
+if (typeof document !== 'undefined' && typeof localStorage !== 'undefined') {
+  applyBoon(localStorage.getItem('platform-boon') ?? undefined);
+}
 
 /**
  * The live color-scheme swatches. Self-contained (own state, persisted +
