@@ -11,7 +11,10 @@ import {
 } from '@internal/plugin-platform-common';
 import express from 'express';
 import request from 'supertest';
-import { RootConfigService } from '@backstage/backend-plugin-api';
+import {
+  BackstageCredentials,
+  RootConfigService,
+} from '@backstage/backend-plugin-api';
 import { createRouter, MayDeleteLookup, PrincipalResolver } from './router';
 import { RequestsStore } from './store';
 import { Cipher, createCipher } from './crypto';
@@ -56,6 +59,11 @@ describe('createRouter', () => {
     resumeNode?: jest.Mock<Promise<void>, [string, string, object]>;
     stopWorkflow?: jest.Mock<Promise<void>, [string, object]>;
     config?: RootConfigService;
+    resourceDataFor?: (name: string) => Promise<Record<string, unknown>>;
+    resourceVisibleTo?: (
+      credentials: BackstageCredentials,
+      name: string,
+    ) => Promise<boolean>;
   }) {
     const knex = await databases.init('SQLITE_3');
     const store = await RequestsStore.create(mockServices.database({ knex }));
@@ -75,6 +83,8 @@ describe('createRouter', () => {
       suspendedNodesFor: opts.suspendedNodesFor,
       resumeNode: opts.resumeNode,
       config: opts.config,
+      resourceDataFor: opts.resourceDataFor,
+      resourceVisibleTo: opts.resourceVisibleTo,
     });
     const app = express();
     app.use(router);
@@ -1322,6 +1332,76 @@ describe('createRouter', () => {
         .set('Authorization', mockCredentials.service.header())
         .send({ ...SINGLE_DELETE_BODY, requester: 'other' });
       expect(res.status).toBe(201);
+    });
+  });
+
+  describe('GET /resources/:name/data', () => {
+    // `resolveResource` reads with the backend's own service credentials, so
+    // this is the one read of ours the catalog does not filter. Without a gate
+    // in front, a user in no group could curl an entity the catalog hides from
+    // them — which would make the whole visibility feature advisory.
+    const SECRETS = { connectionString: 'postgres://in-the-clear' };
+    const resourceDataFor = async () => SECRETS;
+    // Stands in for the catalog re-read: 'orders-db' is visible to everyone
+    // here, 'hidden-db' to nobody.
+    const resourceVisibleTo = async (_c: BackstageCredentials, name: string) =>
+      name !== 'hidden-db';
+
+    it('serves the data to a user who can see the resource', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        resourceDataFor,
+        resourceVisibleTo,
+      });
+      const res = await request(app)
+        .get('/resources/orders-db/data')
+        .set('Authorization', mockCredentials.user.header());
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(SECRETS);
+    });
+
+    it('404s a user who cannot see the resource, and leaks no data', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        resourceDataFor,
+        resourceVisibleTo,
+      });
+      const res = await request(app)
+        .get('/resources/hidden-db/data')
+        .set('Authorization', mockCredentials.user.header());
+      // 404 rather than 403: a 403 confirms the resource exists, which is the
+      // leak on a route whose job is hiding it.
+      expect(res.status).toBe(404);
+      expect(JSON.stringify(res.body)).not.toContain('in-the-clear');
+    });
+
+    it('leaves service callers alone — that is the provisioning path', async () => {
+      const visible = jest.fn(async () => false);
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        resourceDataFor,
+        resourceVisibleTo: visible,
+      });
+      const res = await request(app)
+        .get('/resources/hidden-db/data')
+        .set('Authorization', mockCredentials.service.header());
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(SECRETS);
+      // Not merely allowed — never asked. A service principal has no user whose
+      // visibility could be checked.
+      expect(visible).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when no visibility gate is wired', async () => {
+      // An unwired gate must not be an open one.
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        resourceDataFor,
+      });
+      const res = await request(app)
+        .get('/resources/orders-db/data')
+        .set('Authorization', mockCredentials.user.header());
+      expect(res.status).toBe(404);
     });
   });
 

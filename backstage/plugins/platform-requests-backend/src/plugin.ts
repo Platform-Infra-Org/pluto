@@ -1,4 +1,5 @@
 import {
+  BackstageCredentials,
   coreServices,
   createBackendPlugin,
 } from '@backstage/backend-plugin-api';
@@ -9,6 +10,7 @@ import {
   Request as PlatformRequest,
   RequestState,
   ServiceOwnerMap,
+  resourceRef,
   serviceOwnerMap,
 } from '@internal/plugin-platform-common';
 import { createMayDeleteLookup } from './ownership';
@@ -158,6 +160,29 @@ export const platformRequestsPlugin = createBackendPlugin({
           logger,
           namespace: catalogNamespace,
         });
+
+        // Can this caller see this resource? Asks the catalog *as the caller*,
+        // so the answer is the catalog's own permission filter rather than a
+        // reimplementation of it — `resolveResource` reads with the backend's
+        // service credentials for the provisioning path, which is why the route
+        // that exposes it to a human needs this in front.
+        const resourceVisibleTo = async (
+          credentials: BackstageCredentials,
+          resourceName: string,
+        ): Promise<boolean> => {
+          try {
+            return !!(await catalog.getEntityByRef(
+              resourceRef(catalogNamespace, resourceName),
+              { credentials },
+            ));
+          } catch (e) {
+            // Includes a catalog that is simply unreachable. Fails closed: this
+            // guards a read the catalog would otherwise have filtered, so the
+            // safe answer to "I could not check" is "you cannot see it".
+            logger.warn(`resourceVisibleTo failed for '${resourceName}': ${e}`);
+            return false;
+          }
+        };
 
         // On APPROVED the router calls this, then flips the request to IN_PROGRESS.
         const submitWorkflow = createSubmitWorkflow({
@@ -469,6 +494,7 @@ export const platformRequestsPlugin = createBackendPlugin({
             ownerResolver,
             verbConfigResolver,
             resourceDataFor,
+            resourceVisibleTo,
             cipher,
             secretsEnabled: !!secretStore,
           }),

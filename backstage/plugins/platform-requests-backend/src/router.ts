@@ -104,6 +104,24 @@ export interface RouterOptions {
   resourceDataFor?: (
     resourceName: string,
   ) => Promise<Record<string, unknown>>;
+  /**
+   * Can *these* credentials see this resource? Answered by re-reading the
+   * entity from the catalog as the caller, so the catalog's own permission
+   * filter — the conditional decision the RBAC module returns — stays the
+   * single source of truth for visibility.
+   *
+   * Deliberately not an ownership predicate. `mayDeleteLookup` and the RBAC
+   * policy already had to be taught to agree with each other; a third
+   * hand-written copy of "admin, owner or service-owner" would be a third thing
+   * to keep in step. Asking the catalog is the same question by construction.
+   *
+   * Absent = no user may read resource data. Fails closed like
+   * {@link MayDeleteLookup}: an unwired gate must not be an open one.
+   */
+  resourceVisibleTo?: (
+    credentials: BackstageCredentials,
+    resourceName: string,
+  ) => Promise<boolean>;
   /** Called on APPROVED before flipping to IN_PROGRESS. No-op until P2. */
   submitWorkflow?: (request: PlatformRequest) => Promise<void>;
   /** Envelope cipher for user-provided secrets; absent when no key is configured. */
@@ -496,8 +514,37 @@ export async function createRouter(
   });
 
   // Resolved resource data (ref'd file or spec.resourceData) for the tab + edit.
+  //
+  // `resolveResource` reads the entity with the backend's own service
+  // credentials — it has to, because the provisioning path that shares it runs
+  // without a user. That makes this route the one read of ours the catalog does
+  // not filter, so it re-asks the catalog as the caller before answering:
+  // otherwise a user in no group could curl the entity and its data for a
+  // resource the catalog hides from them, and the visibility feature would be
+  // advisory.
+  //
+  // 404, never 403: a 403 confirms the resource exists, which is itself the
+  // leak on a route whose job is hiding it. Invisible and absent must be
+  // indistinguishable from outside.
   router.get('/resources/:name/data', async (req, res) => {
-    await httpAuth.credentials(req, { allow: ['user', 'service'] });
+    const credentials = await httpAuth.credentials(req, {
+      allow: ['user', 'service'],
+    });
+    // Service callers are the provisioning path (see `resolveResource`), which
+    // legitimately acts without a user and is already trusted by the credential
+    // check above.
+    if (credentials.principal.type === 'user') {
+      const visible = await (options.resourceVisibleTo?.(
+        credentials,
+        req.params.name,
+      ) ?? false);
+      if (!visible) {
+        res
+          .status(404)
+          .json({ error: `resource '${req.params.name}' not found` });
+        return;
+      }
+    }
     const data = options.resourceDataFor
       ? await options.resourceDataFor(req.params.name)
       : {};
