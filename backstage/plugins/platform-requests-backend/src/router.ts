@@ -40,6 +40,13 @@ export type PrincipalResolver = (
   credentials: BackstageCredentials,
 ) => Promise<{ isAdmin: boolean; groups: string[] }>;
 
+/**
+ * Admin-ness for a user named by ref rather than held as a credential — the
+ * only way to answer for a service-principal submission, where the acting
+ * credential is the Scaffolder's, not the human's. See maintenance.ts.
+ */
+export type AdminLookup = (userRef: string) => Promise<boolean>;
+
 export interface RouterOptions {
   httpAuth: HttpAuthService;
   permissions: PermissionsService;
@@ -55,6 +62,8 @@ export interface RouterOptions {
   logger?: LoggerService;
   /** Resolves the acting user's roles + groups (per-team approval). */
   principalResolver?: PrincipalResolver;
+  /** Resolves admin-ness for a named requester (maintenance-mode gate). */
+  adminLookup?: AdminLookup;
   /** Resolves the owning service team (group ref) for a resourceType. */
   ownerResolver?: (resourceType: string) => Promise<string | undefined>;
   /** Resolves per-verb Argo submit config for UPDATE/DELETE (from the template). */
@@ -180,6 +189,7 @@ export async function createRouter(
   const { httpAuth, permissions, store } = options;
   const principalResolver: PrincipalResolver =
     options.principalResolver ?? (async () => ({ isAdmin: false, groups: [] }));
+  const adminLookup: AdminLookup = options.adminLookup ?? (async () => false);
   const submitWorkflow =
     options.submitWorkflow ?? (async () => undefined);
   const cipher: Cipher | undefined = options.cipher;
@@ -247,6 +257,22 @@ export async function createRouter(
         throw new NotAllowedError('Not allowed to create requests');
       }
     }
+
+    // Maintenance mode. Keyed on the resolved requester, not on the credential:
+    // the Scaffolder posts as a service and names the human in `requester`, so
+    // a credential-keyed check would see a service principal, call every
+    // submission non-admin, and block admins too. Admins are never gated —
+    // being able to file during maintenance is the point of being able to turn
+    // it on.
+    if ((await store.getSetting('maintenance')) === 'true') {
+      if (!(await adminLookup(requester))) {
+        res.status(503).json({
+          error: 'Platform maintenance is on — new requests are paused.',
+        });
+        return;
+      }
+    }
+
     // A batch stores the joined names as its resourceName: every list, search
     // and notification renders that one string, so joining keeps them all
     // working without a branch, and searching a member name still finds it.

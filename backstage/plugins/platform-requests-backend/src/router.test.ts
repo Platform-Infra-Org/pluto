@@ -33,6 +33,7 @@ describe('createRouter', () => {
   async function makeApp(opts: {
     result: AuthorizeResult.ALLOW | AuthorizeResult.DENY;
     principalResolver?: PrincipalResolver;
+    adminLookup?: (userRef: string) => Promise<boolean>;
     ownerResolver?: (resourceType: string) => Promise<string | undefined>;
     submitWorkflow?: jest.Mock<Promise<void>, [PlatformRequest]>;
     cipher?: Cipher;
@@ -50,6 +51,7 @@ describe('createRouter', () => {
       permissions: mockServices.permissions({ result: opts.result }),
       store,
       principalResolver: opts.principalResolver,
+      adminLookup: opts.adminLookup,
       ownerResolver: opts.ownerResolver,
       submitWorkflow: opts.submitWorkflow,
       cipher: opts.cipher,
@@ -1135,6 +1137,69 @@ describe('createRouter', () => {
       expect((await request(app).get('/maintenance').send()).body).toEqual({
         enabled: false,
       });
+    });
+  });
+
+  describe('the maintenance gate on POST /requests', () => {
+    // A stub, so the catalog is not needed: 'boss' is an admin, 'dev' is not.
+    const adminLookup = async (ref: string) => ref === 'boss';
+
+    async function maintenanceApp() {
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        principalResolver: async () => ({ isAdmin: true, groups: [] }),
+        adminLookup,
+      });
+      await request(app)
+        .put('/maintenance')
+        .set('Authorization', asAdmin)
+        .send({ enabled: true });
+      return { app, store };
+    }
+
+    it('refuses a service-principal submission naming a NON-admin requester', async () => {
+      // The Scaffolder path, and the whole point of this task. A gate keyed on
+      // the credential would see a service principal, call every submission
+      // non-admin, and look like it worked — while blocking admins too.
+      const { app } = await maintenanceApp();
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...NEW_REQUEST, requester: 'dev' });
+      expect(res.status).toBe(503);
+    });
+
+    it('allows a service-principal submission naming an ADMIN requester', async () => {
+      // The other half of the trap: an admin filing through a template must not
+      // be blocked by their own maintenance mode.
+      const { app } = await maintenanceApp();
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...NEW_REQUEST, requester: 'boss' });
+      expect(res.status).toBe(201);
+    });
+
+    it('refuses a DELETE just as it refuses a CREATE', async () => {
+      const { app } = await maintenanceApp();
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...NEW_REQUEST, kind: 'DELETE', requester: 'dev' });
+      expect(res.status).toBe(503);
+    });
+
+    it('lets everything through once maintenance is off', async () => {
+      const { app } = await maintenanceApp();
+      await request(app)
+        .put('/maintenance')
+        .set('Authorization', asAdmin)
+        .send({ enabled: false });
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...NEW_REQUEST, requester: 'dev' });
+      expect(res.status).toBe(201);
     });
   });
 

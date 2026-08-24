@@ -17,6 +17,7 @@ import { createSecretStore } from './secretStore';
 import { createCipher } from './crypto';
 import { createResourceResolver, createSubmitWorkflow } from './provisioning';
 import { planRetention, readRetentionConfig } from './retention';
+import { isAdminRef } from './maintenance';
 
 /**
  * States whose workflow may still need the request's Secret: running,
@@ -177,6 +178,27 @@ export const platformRequestsPlugin = createBackendPlugin({
             return { isAdmin, groups };
           } catch {
             return { isAdmin: false, groups: [] };
+          }
+        };
+
+        // Admin-ness for a user we only have a name for.
+        //
+        // The Scaffolder posts as a service and names the human in
+        // `requester`, so `principalResolver` — which needs a user credential —
+        // cannot answer for the path most submissions take. Same adminGroups
+        // list, so the two cannot disagree.
+        const adminLookup = async (userRef: string) => {
+          try {
+            const entity = await catalog.getEntityByRef(
+              `user:${catalogNamespace}/${userRef}`,
+              { credentials: await auth.getOwnServiceCredentials() },
+            );
+            const groups = entity?.relations
+              ?.filter(r => r.type === 'memberOf')
+              .map(r => r.targetRef);
+            return isAdminRef(groups, adminGroups);
+          } catch {
+            return false;
           }
         };
 
@@ -372,6 +394,7 @@ export const platformRequestsPlugin = createBackendPlugin({
             stopWorkflow: (name, opts) => argo.stopWorkflow(name, opts),
             reconcileRequest,
             principalResolver,
+            adminLookup,
             ownerResolver,
             verbConfigResolver,
             resourceDataFor,
