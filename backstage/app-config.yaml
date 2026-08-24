@@ -48,10 +48,10 @@ app:
     - theme:app/dark: false
     # Disable the default relations graph card (replaced by our shadcn one).
     - entity-card:catalog-graph/relations: false
-    # Disable the built-in layout (replaced by platform-ui's `appLayout`,
-    # which gates only its `content` input on maintenance mode instead of
-    # wrapping the whole shell — see theme.tsx).
-    - app/layout: false
+    # NOTE: do NOT disable `app/layout` here. platform-ui's `appLayout`
+    # registers under that same id, so a module override already replaces the
+    # built-in — and a `false` entry disables the replacement along with it,
+    # leaving app/root with no children and rendering a blank page.
     # Our React Flow graph replaces it at the same path. The built-in one could
     # not pan at the default zoom, could not align its background with the
     # nodes, and gave the rooted node no marker of its own — so clicking a node
