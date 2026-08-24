@@ -742,4 +742,18 @@ describe('SHADCN_CSS', () => {
       .filter(block => /MuiInputLabel-root|MuiFormLabel-root/.test(block));
     expect(offenders).toEqual([]);
   });
+
+  it('lets a long template name shrink below its longest word', () => {
+    // `break-word` paints a break but does NOT reduce intrinsic min-content
+    // width, so the flex line stayed as wide as the longest word and pushed the
+    // detail/favourite row onto a second line. `anywhere` reduces it, which is
+    // what keeps the buttons pinned top-right.
+    const css = SHADCN_CSS;
+    const titleRule = css.slice(
+      css.indexOf('.sc-route-create'),
+      css.indexOf('.sc-route-create') + 4000,
+    );
+    expect(titleRule).toContain('overflow-wrap: anywhere');
+    expect(titleRule).not.toContain('overflow-wrap: break-word');
+  });
 });

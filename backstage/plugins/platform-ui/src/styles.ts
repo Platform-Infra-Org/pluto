@@ -809,13 +809,15 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
     0 -2px 0 hsl(240 12% 6% / .95),
     3px 3px 0 hsl(240 12% 6% / .8);
   margin: 0;
-  /* Takes the space the actions leave and gives it back when the name is long:
-     min-width 0 is what lets a flex item shrink below its content width at all,
-     and break-word is the last resort for a single unbreakable token. */
+  /* anywhere, not break-word: both paint the same break, but only anywhere
+     reduces the box's intrinsic min-content width. With break-word the flex
+     line stayed as wide as the longest word, which is what pushed the actions
+     onto a second row. The container keeps wrap — the catch-all that forces
+     every other header child onto its own full-width row depends on it. */
   flex: 1 1 auto;
   min-width: 0;
   text-align: left;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 /* The h3 holds ONE child, CardHeader's subtitleWrapper, and that wrapper holds
    two: the type text, then the detail + favourite buttons. Only the type text
