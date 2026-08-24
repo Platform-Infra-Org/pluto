@@ -1,4 +1,4 @@
-import { CSSProperties, useEffect, useState } from 'react';
+import { CSSProperties, useState } from 'react';
 import { BOONS, BOON_LABELS, Boon, toBoon } from './hades';
 import { applyBoon, applyScheme } from './SchemeRoot';
 import { Card, PixelSprite } from './components';
@@ -21,16 +21,12 @@ export function BoonPicker() {
   );
   const [flaring, setFlaring] = useState(false);
 
-  // The one restore point for the persisted boon: reads localStorage fresh on
-  // every mount and validates through `toBoon`, rather than trusting a
-  // module-load side effect that only ever runs once per process and cannot
-  // see a value written after that — see the note in SchemeRoot.tsx. A
-  // corrupted or hand-edited value degrades to no boon instead of being
-  // written straight through to `data-boon`.
-  useEffect(() => {
-    applyBoon(toBoon(localStorage.getItem('platform-boon')));
-  }, []);
-
+  // No mount-time restore here: SchemeRoot wraps every route and is the one
+  // place that actually restores `data-boon` on load (its own useLayoutEffect,
+  // regardless of whether this card is even in the configured home sections).
+  // `boon` above is this component's own display state — what to show as
+  // pressed and named — read once from the same storage key so it starts in
+  // step with whatever SchemeRoot already applied.
   const pick = (b: Boon) => {
     applyScheme('hades');
     applyBoon(b);

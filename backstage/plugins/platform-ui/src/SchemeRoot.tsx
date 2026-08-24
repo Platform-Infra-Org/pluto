@@ -42,6 +42,7 @@ import {
 import { CARD_LIGHT } from './statusTokens';
 import { ALL_ROUTE_CLASSES, routeClassFor } from './routeClass';
 import { resolveHeaderImages } from './headerImages';
+import { toBoon } from './hades';
 
 /**
  * Pointer travel before a press becomes a drag.
@@ -494,16 +495,14 @@ export function applyBoon(boon: string | undefined) {
 
 // Theme the login gate immediately, before React mounts anything.
 //
-// The boon is deliberately NOT restored here too. A module-load side effect
-// like this one runs exactly once per process — right for `applyScheme`,
-// which this file is the only writer of `sc-<mode>` for, but wrong for the
-// boon: BoonPicker.tsx is the one place `data-boon` is read or written, and
-// restoring it there, on every mount, is what stays correct if this module
-// happens to have been imported (and already run its restore) before the
-// picker exists to read the localStorage value a user just set — which is
-// exactly the situation BoonPicker's own tests render into. Two restore
-// points for one value is one more than needed; see BoonPicker.tsx for the
-// one that's kept.
+// The boon is NOT restored here: this runs once per process, at whatever
+// moment something first imports this module, which is too early to matter
+// and (for a picker that can be re-opened or, in tests, re-rendered) too
+// early to stay correct. It is restored instead by a `useLayoutEffect` inside
+// the `SchemeRoot` component below, which mounts once per app — wrapping
+// every route, not just the home page BoonPicker's card happens to live on —
+// and re-runs per render tree in tests, the same way the configured default
+// scheme a few lines down does.
 applyScheme();
 
 /**
@@ -947,6 +946,20 @@ export function SchemeRoot() {
     const stored =
       typeof localStorage !== 'undefined' && localStorage.getItem('platform-scheme');
     if (!stored) applyScheme(defaultScheme().id);
+  }, []);
+
+  // The boon's one restore point. SchemeRoot wraps every route (mounted
+  // app-wide, see theme.tsx), so this is what keeps `data-boon` in step with
+  // `localStorage` on a reload of ANY page — not only when BoonPicker's own
+  // card happens to be on screen, which for most routes it never is.
+  // `toBoon` degrades a corrupted or hand-edited value to no boon rather than
+  // writing it straight through. useLayoutEffect, matching the scheme restore
+  // just above, so a reload never paints the House's own crimson register
+  // before the equipped boon lands.
+  useLayoutEffect(() => {
+    applyBoon(
+      toBoon(typeof localStorage !== 'undefined' ? localStorage.getItem('platform-boon') : null),
+    );
   }, []);
 
   useEffect(

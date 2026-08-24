@@ -45,20 +45,28 @@ describe('BoonPicker', () => {
     );
   });
 
-  it('restores the stored boon on mount', () => {
+  it('shows the stored boon as pressed and named on mount', () => {
+    // Applying `data-boon` on mount is SchemeRoot's job now (it wraps every
+    // route; see SchemeRoot.test.tsx for that guard) — BoonPicker only owns
+    // its own display state, which still has to start in step with whatever
+    // was last equipped rather than defaulting to nothing.
     localStorage.setItem('platform-boon', 'artemis');
     render(<BoonPicker />);
-    expect(document.documentElement.getAttribute('data-boon')).toBe('artemis');
+    expect(screen.getByRole('button', { name: BOON_LABELS.artemis })).toHaveAttribute(
+      'aria-pressed', 'true',
+    );
+    expect(
+      screen.getByText(BOON_LABELS.artemis, { selector: ':not(button)' }),
+    ).toBeInTheDocument();
   });
 
-  it('degrades a corrupted stored value to no boon, instead of writing it through', () => {
-    // A hand-edited or stale localStorage value must not become the
-    // `data-boon` attribute verbatim — that would leave the root in a state
-    // BOON_LABELS has no entry for, and the text beside the wheel is the one
-    // thing that has to keep naming the state with motion off.
+  it('shows the no-boon fallback for a corrupted stored value, not a blank label', () => {
+    // A hand-edited or stale localStorage value must not become `boon` state
+    // verbatim — BOON_LABELS has no entry for it, and rendering `undefined`
+    // is a blank line beside the wheel rather than the fallback text that is
+    // supposed to name the state with motion off.
     localStorage.setItem('platform-boon', 'garbage');
     render(<BoonPicker />);
-    expect(document.documentElement.getAttribute('data-boon')).toBeNull();
     expect(screen.getByText('No boon — the house of Hades')).toBeInTheDocument();
   });
 });
