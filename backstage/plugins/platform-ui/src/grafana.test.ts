@@ -426,12 +426,6 @@ describe('non-string param values', () => {
 });
 
 describe('dashboardUrl with list params', () => {
-  const CFG = {
-    baseUrl: 'https://grafana.example.com',
-    uid: 'abc123',
-    slug: 'platform-overview',
-  };
-
   it('repeats a list as multiple query parameters', () => {
     // How Grafana expresses a multi-value template variable.
     expect(dashboardUrl({ ...CFG, params: { 'var-env': ['prod', 'staging'] } })).toBe(
