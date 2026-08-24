@@ -11,14 +11,29 @@
  */
 export type Flavour = 'fantasy' | undefined;
 
+/**
+ * Screens this app renames regardless of flavour.
+ *
+ * `Create` is Backstage's own nav title. The screen files requests of several
+ * kinds — CREATE and DELETE today, UPDATE later — so naming it after one of
+ * them reads as a filter over the others. The request `kind` values themselves
+ * are records and are untouched.
+ */
+const BASE_SCREENS: Record<string, string> = {
+  Create: 'New Request',
+};
+
 /** Screen names only. Deliberately short: three entries people navigate by. */
 const FANTASY_SCREENS: Record<string, string> = {
   Requests: 'Quests',
-  Create: 'Summon',
+  'New Request': 'Summon',
   Catalog: 'Atlas',
 };
 
 export function screenName(title: string, flavour: Flavour): string {
-  if (flavour !== 'fantasy') return title;
-  return FANTASY_SCREENS[title] ?? title;
+  // Base rename first, then flavour on top of the result — so the fantasy map
+  // is keyed on what this app calls the screen, not on what Backstage called it.
+  const base = BASE_SCREENS[title] ?? title;
+  if (flavour !== 'fantasy') return base;
+  return FANTASY_SCREENS[base] ?? base;
 }
