@@ -1261,8 +1261,11 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
     hsl(var(--sc-fg) / .05) 0 1px, transparent 1px 3px); }
 .sc-pluto-glyph { position: absolute; inset: 0; width: 100%; height: 100%;
   fill: hsl(var(--sc-primary));
-  stroke: hsl(var(--sc-bg)); stroke-width: 2.5; stroke-linejoin: round;
-  filter: drop-shadow(0 2px 0 hsl(var(--sc-bg) / .55)); }
+  /* A hairline keyline, not the 2.5 the blockier fork carried: these blades
+     taper to nothing, and a fat outline blunts the tips into blobs. The halo
+     is what actually separates the mark from the photograph behind it. */
+  stroke: hsl(var(--sc-bg)); stroke-width: 1.2; stroke-linejoin: round;
+  filter: drop-shadow(0 0 3px hsl(var(--sc-bg) / .85)); }
 /* The home page's decorative cell: no card, no edge, no ground. The planet
    floats in the grid the way the scanline layer floats over the page —
    ornament that the layout flows around rather than a panel holding content.
