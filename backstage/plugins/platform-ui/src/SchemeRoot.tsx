@@ -2,6 +2,7 @@ import {
   CSSProperties,
   PointerEvent as ReactPointerEvent,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -203,13 +204,21 @@ export const SCHEMES: Scheme[] = [
 /**
  * What a browser with nothing stored gets.
  *
- * Resolved through the shelf rather than used raw, so removing or renaming a
- * scheme degrades to the first bottle instead of leaving every new visitor on
- * an id that no longer exists.
+ * Resolved through the shelf rather than used raw, so a configured id that is
+ * removed or renamed degrades to the first bottle instead of leaving every new
+ * visitor on an id that no longer exists.
  */
 const DEFAULT_SCHEME_ID = 'obsidian';
-const defaultScheme = (): Scheme =>
-  SCHEMES.find(s => s.id === DEFAULT_SCHEME_ID) ?? SCHEMES[0];
+
+export function resolveDefaultScheme(configured: string | undefined): Scheme {
+  return (
+    SCHEMES.find(s => s.id === configured) ??
+    SCHEMES.find(s => s.id === DEFAULT_SCHEME_ID) ??
+    SCHEMES[0]
+  );
+}
+
+const defaultScheme = (): Scheme => resolveDefaultScheme(branding.defaultScheme);
 
 /**
  * Branding from `app.branding`, handed over once by {@link SchemeRoot}.
@@ -224,6 +233,7 @@ let branding: {
   headerDir?: string;
   headerHeight?: string;
   headerPosition?: string;
+  defaultScheme?: string;
 } = {};
 
 /**
@@ -865,6 +875,14 @@ export function SchemeRoot() {
   const appTheme = useApi(appThemeApiRef);
   const config = useApi(configApiRef);
 
+  // Set synchronously, during render rather than only in the effect below:
+  // SchemePicker is a child rendered within this same pass, and its own
+  // `useState` initialiser reads `defaultScheme()` before any effect —
+  // layout or passive — gets a chance to run, then immediately persists
+  // whatever it saw to localStorage. An effect alone would arrive one render
+  // too late: the wrong default would already be locked in and saved.
+  branding.defaultScheme = config.getOptionalString('app.branding.defaultScheme');
+
   useEffect(() => {
     setBranding({
       mark: config.getOptionalString('app.branding.mark'),
@@ -879,8 +897,20 @@ export function SchemeRoot() {
       headerPosition: config.getOptionalString(
         'app.branding.templateHeaders.position',
       ),
+      defaultScheme: config.getOptionalString('app.branding.defaultScheme'),
     });
   }, [config]);
+
+  // applyScheme runs at module load — before React, so before configApi exists
+  // — and therefore cannot have seen the configured default. Re-apply here,
+  // and only when nothing is stored: a returning visitor's own pick always
+  // wins, or the picker would look broken. useLayoutEffect, not useEffect, so
+  // a new visitor never sees obsidian paint first.
+  useLayoutEffect(() => {
+    const stored =
+      typeof localStorage !== 'undefined' && localStorage.getItem('platform-scheme');
+    if (!stored) applyScheme(defaultScheme().id);
+  }, []);
 
   useEffect(
     () =>

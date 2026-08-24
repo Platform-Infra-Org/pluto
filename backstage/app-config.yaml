@@ -25,6 +25,9 @@ app:
     # Requests -> Quests, Create -> Summon, Catalog -> Atlas. Request states
     # are records and are never renamed. Omit for the literal names.
     # flavour: fantasy
+    # Which potion a first-time visitor gets. A stored pick always wins.
+    # Missing or unknown → obsidian.
+    # defaultScheme: greek
   baseUrl: http://localhost:3000
 
   # Enable all packages by default, this will discover packages from packages/app/package.json
