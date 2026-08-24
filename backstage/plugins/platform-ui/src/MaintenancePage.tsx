@@ -17,15 +17,17 @@ export function MaintenancePage() {
     <Page>
       <Card>
         <CardBody>
-          <PixelSprite sprite={PLUTO} />
-          <div className="sc-empty-title">Maintenance</div>
-          <p className="sc-muted" lang="he" dir="rtl">
-            פלוטו בנסיגה...
-          </p>
-          <p className="sc-muted">
-            New requests are paused while the platform is being worked on.
-            Anything already filed is unaffected.
-          </p>
+          <div className="sc-empty">
+            <PixelSprite sprite={PLUTO} className="sc-state-ic" />
+            <div className="sc-empty-title">Maintenance</div>
+            <p className="sc-muted" lang="he" dir="rtl">
+              פלוטו בנסיגה...
+            </p>
+            <p className="sc-muted">
+              New requests are paused while the platform is being worked on.
+              Anything already filed is unaffected.
+            </p>
+          </div>
         </CardBody>
       </Card>
     </Page>

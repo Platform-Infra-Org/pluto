@@ -22,6 +22,19 @@ describe('MaintenancePage', () => {
     ).toBeInTheDocument();
   });
 
+  it('sizes the sprite through the shared idiom, not the SVG default', () => {
+    // jsdom has no layout engine, so nothing here can assert real pixels —
+    // that's exactly why an unsized <svg viewBox="0 0 16 16"> (falling back to
+    // the ~300x150 replaced-element default) shipped green before. Assert the
+    // idiom every other sprite call site uses instead: `.sc-state-ic` sizes
+    // the svg to 32px inside `.sc-empty`, the wrapper that centres it
+    // (styles.ts, ~1219-1232).
+    const { container } = render(<MaintenancePage />);
+    const svg = container.querySelector('svg');
+    expect(svg).toHaveClass('sc-state-ic');
+    expect(svg?.closest('.sc-empty')).not.toBeNull();
+  });
+
   it('carries no colour of its own', () => {
     // It must follow the picked potion like every other surface, including the
     // Hades boons. A hex, hsl()/rgb()/rgba() literal, or any inline style=
