@@ -46,6 +46,7 @@ import {
   CAULDRON_VESSEL,
   TANKARD_VESSEL,
   CANOPIC_VESSEL,
+  HADES_VESSEL,
 } from './sprites';
 
 const grid = (...rows: string[]) => rows;
@@ -109,7 +110,7 @@ describe('sprite data', () => {
       SEIGAIHA, TORII, ASANOHA, KOI, CRESCENT_FLAME, CAULDRON, SPRIG,
       FUTHARK, YGGDRASIL, KNOTWORK, SCROLL_CORNER, RAVEN,
       ANKH, WEDJAT, CARTOUCHE, PAPYRUS, DJED,
-      TOKKURI_VESSEL, CAULDRON_VESSEL, TANKARD_VESSEL, CANOPIC_VESSEL,
+      TOKKURI_VESSEL, CAULDRON_VESSEL, TANKARD_VESSEL, CANOPIC_VESSEL, HADES_VESSEL,
     };
     for (const [name, sprite] of Object.entries({
       TEMPLE,
@@ -210,6 +211,7 @@ describe('sprite data', () => {
       CAULDRON_VESSEL,
       TANKARD_VESSEL,
       CANOPIC_VESSEL,
+      HADES_VESSEL,
     };
     for (const [name, sprite] of Object.entries(vessels)) {
       expect(`${name} liquid:${spriteRects(sprite, '~').length > 0}`).toBe(
@@ -234,6 +236,7 @@ describe('sprite data', () => {
       CAULDRON_VESSEL,
       TANKARD_VESSEL,
       CANOPIC_VESSEL,
+      HADES_VESSEL,
     };
     for (const [name, sprite] of Object.entries(vessels)) {
       expect(`${name} last row:${sprite[SPRITE_SIZE - 1]}`).toBe(
@@ -254,6 +257,7 @@ describe('sprite data', () => {
       CAULDRON_VESSEL,
       TANKARD_VESSEL,
       CANOPIC_VESSEL,
+      HADES_VESSEL,
     ].map(s => s.join('/'));
     expect(new Set(shapes).size).toBe(shapes.length);
   });

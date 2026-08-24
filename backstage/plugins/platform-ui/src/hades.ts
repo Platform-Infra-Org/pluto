@@ -72,6 +72,41 @@ export function hadesCss(): string {
    one, because nine gods that all fail the same way is as bad as nine gods
    that all render the same colour. */
 
+/* The box every boon paints into. A bare ::after generates no box at all
+   without a content declaration — CSS 2.1 3.14, nothing to override — so a
+   boon that only set --sc-boon-ornament and an animation on .sc-card-h::after
+   was animating a pseudo-element that never existed. This is what greek.ts's
+   .sc-h1 rule and egyptian.ts's [class*="bui-DialogInner"] rule both do for
+   their own ornament: reserve room with padding, then paint into it.
+
+   .sc-card-h is the header row every card renders (components.tsx), so it is
+   already present everywhere a boon's ornament needs to show up, and it never
+   carries a background-image of its own to collide with. The band goes in the
+   6px of padding-bottom added here rather than over the title text: .sc-card-h
+   ships with padding: 18px 20px 0 and no room below the title row, so an
+   overlay at bottom:0 without added padding would sit ON the last line of text
+   instead of under it.
+
+   Scoped to :root.sc-hades so the ::after only exists in this mode — a bare
+   .sc-card-h::after would grow a pseudo-element on every card in every other
+   mode too, for a variable that is never set outside this file. */
+:root.sc-hades .sc-card-h {
+  position: relative;
+  padding-bottom: 6px;
+}
+:root.sc-hades .sc-card-h::after {
+  content: '';
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 0;
+  height: 4px;
+  background-image: var(--sc-boon-ornament, none);
+  background-repeat: repeat-x;
+  background-size: auto 4px;
+  pointer-events: none;
+}
+
 /* ZEUS — electric gold. Forked bolts in the header rule, arc-flicker.
    The flicker is two stops, not a fade: a bolt either strikes or it does not,
    and steps() is the only cadence that reads as electricity rather than as a
@@ -136,8 +171,10 @@ export function hadesCss(): string {
 }
 @keyframes sc-hades-hermes { from { background-position: 0 0; } to { background-position: 18px 0; } }
 
-/* DIONYSUS — violet-purple. Vine-and-goblet dots at the corners, rising like
-   bubbles through wine.
+/* DIONYSUS — violet-purple. A vine line with grapes hanging off it — a thin
+   diagonal hatch (the vine) at one tile size, and a coarser dot layer (the
+   grapes) at another, so it reads as two things rather than as APHRODITE's
+   plain dot field. Rising like bubbles through wine.
    --sc-primary is 56% lightness rather than the more obvious 58%: at 58% both
    white (4.31) and near-black (4.33) sit just under the 4.5:1 floor, and 56%
    is the smallest drop that clears it (4.63 on white) without moving the hue
@@ -145,7 +182,9 @@ export function hadesCss(): string {
 :root.sc-hades[data-boon="dionysus"] {
   --sc-primary: 280 62% 56%;
   --sc-primary-fg: 0 0% 100%;
-  --sc-boon-ornament: radial-gradient(circle, hsl(280 62% 56% / .55) 0 2px, transparent 3px) 0 0 / 10px 10px;
+  --sc-boon-ornament:
+    repeating-linear-gradient(70deg, hsl(280 62% 56% / .5) 0 1px, transparent 1px 6px),
+    radial-gradient(circle, hsl(280 62% 56% / .6) 0 2px, transparent 3px) 0 0 / 14px 14px;
 }
 @media (prefers-reduced-motion: no-preference) {
   :root.sc-hades[data-boon="dionysus"] .sc-card-h::after {
@@ -185,13 +224,18 @@ export function hadesCss(): string {
 }
 @keyframes sc-hades-artemis { from { background-position: 0 0; } to { background-position: 16px 0; } }
 
-/* APHRODITE — rose pink. Heart-laurel marks at the corners, pulsing in four
+/* APHRODITE — rose pink. Two dots offset within each tile rather than
+   DIONYSUS's one, at 30% and 70% across — a paired, twin-lobe mark (the
+   heart-laurel) instead of a single-dot field, so the two boons read as
+   different shapes rather than as the same dot recoloured. Pulsing in four
    stops rather than fading — the same discipline the ember bloom in
    greek.ts and egyptian.ts's gild both keep: no interpolation, ever. */
 :root.sc-hades[data-boon="aphrodite"] {
   --sc-primary: 330 78% 62%;
   --sc-primary-fg: 240 10% 8%;
-  --sc-boon-ornament: radial-gradient(circle, hsl(330 78% 62% / .5) 0 3px, transparent 4px) 4px 4px / 12px 12px;
+  --sc-boon-ornament:
+    radial-gradient(circle at 30% 60%, hsl(330 78% 62% / .55) 0 2.5px, transparent 3px) 0 0 / 12px 12px,
+    radial-gradient(circle at 70% 60%, hsl(330 78% 62% / .55) 0 2.5px, transparent 3px) 0 0 / 12px 12px;
 }
 @media (prefers-reduced-motion: no-preference) {
   :root.sc-hades[data-boon="aphrodite"] .sc-card-h::after {
