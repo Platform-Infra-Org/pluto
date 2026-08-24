@@ -46,7 +46,6 @@ import {
   CAULDRON_VESSEL,
   TANKARD_VESSEL,
   CANOPIC_VESSEL,
-  PLUTO,
 } from './sprites';
 
 const grid = (...rows: string[]) => rows;
@@ -111,7 +110,6 @@ describe('sprite data', () => {
       FUTHARK, YGGDRASIL, KNOTWORK, SCROLL_CORNER, RAVEN,
       ANKH, WEDJAT, CARTOUCHE, PAPYRUS, DJED,
       TOKKURI_VESSEL, CAULDRON_VESSEL, TANKARD_VESSEL, CANOPIC_VESSEL,
-      PLUTO,
     };
     for (const [name, sprite] of Object.entries({
       TEMPLE,
@@ -444,18 +442,5 @@ describe('mode ornament sprites', () => {
       expect(`${name}:${spriteRects(sprite, '#').length > 0}`).toBe(`${name}:true`);
       expect(`${name}:${spriteRects(sprite, '~').length > 0}`).toBe(`${name}:true`);
     }
-  });
-});
-
-describe('PLUTO', () => {
-  // Not a mode ornament — it is the maintenance-mode mark drawn on the
-  // MaintenancePage sprite (see sprites.ts) — so its assertions live on their
-  // own rather than inside 'mode ornament sprites'.
-  it('draws both layers of the two-colour motif', () => {
-    // Same reasoning as the mode ornaments' two-layer test: a data URI
-    // inherits no custom property, so a two-colour motif is two images, and a
-    // grid missing one layer renders as half a picture.
-    expect(spriteRects(PLUTO, '#').length > 0).toBe(true);
-    expect(spriteRects(PLUTO, '~').length > 0).toBe(true);
   });
 });

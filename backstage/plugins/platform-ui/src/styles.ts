@@ -1232,6 +1232,32 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   font-size: 13px; color: hsl(var(--sc-fg)); }
 .sc-empty-hint { font-size: 12px; max-width: 32ch; }
 
+/* [maintenance] The pause screen fills the content area instead of sitting as
+   a short card under the header — it is the whole answer to "can I file a
+   request right now", not a notice pinned above something else. Centred in
+   what is left of the viewport after Backstage's own header and padding. */
+.sc-maint { display: grid; place-items: center; min-height: calc(100vh - 220px);
+  padding: 24px 0; }
+.sc-maint-card { width: 100%; max-width: 560px; }
+.sc-maint-empty { gap: 14px; padding: 44px 28px; border-style: solid; }
+.sc-maint-empty .sc-empty-title { font-size: 16px; letter-spacing: .06em; }
+/* The Hebrew line is the punchline, so it carries the weight the title would
+   in an ordinary empty state. */
+.sc-maint-empty [lang="he"] { font-size: 20px; color: hsl(var(--sc-fg)); }
+
+/* Pluto. Greys of its own — a planet photographed by New Horizons is not a
+   surface we theme — but the glyph over it rides --sc-primary, so the mark
+   still answers to the picked potion. See MaintenancePage.tsx for why the
+   heart (Tombaugh Regio) is the one feature drawn in full. */
+.sc-pluto { width: 168px; height: 168px; flex: 0 0 auto; }
+.sc-pluto-hi { stop-color: hsl(36 30% 90%); }
+.sc-pluto-mid { stop-color: hsl(26 16% 58%); }
+.sc-pluto-lo { stop-color: hsl(24 18% 18%); }
+.sc-pluto-heart { fill: hsl(40 34% 92%); opacity: .82; }
+.sc-pluto-crater { fill: hsl(24 14% 26%); opacity: .3; }
+.sc-pluto-glyph { fill: none; stroke: hsl(var(--sc-primary)); stroke-width: 9;
+  stroke-linecap: square; }
+
 /* [suspend] The mid-workflow approval gate. Yellow edge, matching the node in
    the graph and the request badge: one signal, three places. */
 .sc-suspend { border-left: 3px solid hsl(var(--sc-warning));
@@ -2005,6 +2031,9 @@ h1, h2, h3, h4, h5, h6,
   }
   @keyframes sc-caret { 50% { opacity: 0; } }
   .sc-empty .sc-state-ic { animation: sc-bob 1.2s steps(2) infinite; }
+  /* Slower and gentler than the empty-state bob: this one is a planet
+     drifting, not a sprite hopping. steps(), like everything else here. */
+  .sc-pluto-glyph { animation: sc-bob 3.2s steps(4) infinite; }
   .sc-press-start { animation: sc-caret 1s steps(1) infinite; }
   .sc-qs-box::after { animation: sc-caret 1s steps(1) infinite; }
 

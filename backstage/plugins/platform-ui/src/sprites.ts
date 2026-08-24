@@ -1520,32 +1520,3 @@ export const ATEN_STRIP: Sprite = [
   '.......##........##..........##.',
   '.......##.......................',
 ];
-
-/**
- * The maintenance mark: Pluto's disc with the astrological glyph — the
- * bident, a small bowl over a stroke — on its face.
- *
- * Two-layer like AMPHORA_VESSEL and CAULDRON, not single-layer like the state
- * icons: '#' is the disc's rim AND the monogram (both draw in currentColor
- * under plain PixelSprite, which only paints the '#' layer), '~' is the
- * disc's fill, the scheme colour showing through when something does render
- * both layers. The planet says which body; the glyph says the joke.
- */
-export const PLUTO: Sprite = [
-  '......#~~#......',
-  '.....#~~~~#.....',
-  '....#~~~~~~#....',
-  '...#~~#~~#~~#...',
-  '..#~~~#~~#~~~#..',
-  '..#~~~####~~~#..',
-  '.#~~~~~##~~~~~#.',
-  '.#~~~~~##~~~~~#.',
-  '.#~~~~~##~~~~~#.',
-  '.#~~~~~##~~~~~#.',
-  '..#~~~~##~~~~#..',
-  '..#~~~~##~~~~#..',
-  '...#~~~##~~~#...',
-  '....#~~~~~~#....',
-  '.....#~~~~#.....',
-  '......#~~#......',
-];
