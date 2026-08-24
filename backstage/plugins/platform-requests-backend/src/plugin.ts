@@ -186,7 +186,18 @@ export const platformRequestsPlugin = createBackendPlugin({
         // The Scaffolder posts as a service and names the human in
         // `requester`, so `principalResolver` — which needs a user credential —
         // cannot answer for the path most submissions take. Same adminGroups
-        // list, so the two cannot disagree.
+        // list, but not the same membership test: this reads the entity's own
+        // `memberOf` relations, direct membership only. `principalResolver`,
+        // the RBAC policy and `useIsAdmin` all read `ownershipEntityRefs`
+        // instead, which also carries ancestor groups — normal on this stack
+        // (Keycloak->LDAP, nested groups). An admin only by inheritance passes
+        // every other check and 503s here; it fails closed, so there is no
+        // security hole, just a submit that admin cannot explain.
+        //
+        // ponytail: direct membership only here. Walk `relations`
+        // transitively (or resolve through the same ownership-refs machinery
+        // `getUserInfo` uses) if nested-group admins need this to agree with
+        // the others too.
         const adminLookup = async (userRef: string) => {
           try {
             const entity = await catalog.getEntityByRef(
