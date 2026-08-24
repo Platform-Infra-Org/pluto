@@ -9,6 +9,7 @@ export {
   resourceRef,
   userRef,
   catalogPath,
+  normalizeEntityRef,
 } from './refs';
 
 export {

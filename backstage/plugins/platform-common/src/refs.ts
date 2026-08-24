@@ -50,3 +50,40 @@ export function catalogPath(
 ): string {
   return `/catalog/${namespace}/${kind}/${name}`;
 }
+
+/**
+ * A ref in the exact form the catalog stores it in `relations` —
+ * `<kind>:<namespace>/<name>`, all lowercase.
+ *
+ * The catalog normalises every owner it is given: `parseEntityRef` fills in the
+ * missing kind/namespace and `stringifyEntityRef` lowercases the result before
+ * it lands in `relations.ownedBy` (and its search index lowercases again on the
+ * way in and on the way out). So `payments`, `Group:default/Payments` and
+ * `group:default/payments` are one group to the permission rule that decides
+ * *visibility* — and anything comparing a raw `spec.owner` string against those
+ * refs disagrees with it. That disagreement is the bug this exists to prevent:
+ * a resource visible to a team but 403 on delete.
+ *
+ * Deliberately re-implemented rather than imported: this package carries no
+ * dependencies on purpose (see `resourceOwnership.ts`), and `@backstage/catalog-model`
+ * is a poor price for six lines. It mirrors `parseEntityRef` +
+ * `stringifyEntityRef`, including their odd case where a `/` precedes the `:`
+ * (then there is no kind), but never throws — an unparseable ref here means
+ * "matches nothing", not a 500 in an authorization gate.
+ *
+ * ponytail: `defaultNamespace` is `default`, not `platform.catalog.namespace`.
+ * A deployment that both moves the namespace *and* writes short-form owners
+ * would normalise to the wrong namespace; thread the configured namespace
+ * through both call sites together if that ever happens — apart is how they
+ * drift.
+ */
+export function normalizeEntityRef(ref: string, defaultKind: string): string {
+  let colonI = ref.indexOf(':');
+  const slashI = ref.indexOf('/');
+  if (slashI !== -1 && slashI < colonI) colonI = -1;
+  const kind = colonI === -1 ? defaultKind : ref.slice(0, colonI);
+  const namespace =
+    slashI === -1 ? DEFAULT_NAMESPACE : ref.slice(colonI + 1, slashI);
+  const name = ref.slice(Math.max(colonI + 1, slashI + 1));
+  return `${kind}:${namespace}/${name}`.toLocaleLowerCase('en-US');
+}

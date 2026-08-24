@@ -1,3 +1,5 @@
+import { normalizeEntityRef } from './refs';
+
 /**
  * The shape these functions actually read.
  *
@@ -45,13 +47,25 @@ export function serviceOwnerMap(templates: TemplateLike[]): ServiceOwnerMap {
 /**
  * The resource types these groups service-own.
  *
- * Exact ref comparison, matching the permission policy and `isAdminRef` — the
- * checks must not disagree about which group a ref names.
+ * Both sides are normalised the way the catalog normalises an owner before it
+ * reaches `relations.ownedBy` — kind and namespace defaulted in, everything
+ * lowercased (see {@link normalizeEntityRef}). A Template written with the
+ * idiomatic short `owner: payments` is the same team as `group:default/payments`
+ * to the permission rule that decides who may *see* its resources, so it has to
+ * be the same team here, where it is decided who may delete them. Comparing raw
+ * strings made a short-form Template silently service-own nothing: its owners
+ * saw their resources listed and were refused on delete, with no error anywhere
+ * to explain it.
+ *
+ * Groups are normalised with `defaultKind: 'Group'` — a bare `payments` in
+ * either list means the group, matching what the catalog does to `spec.owner`.
  */
 export function serviceOwnedTypes(
   map: ServiceOwnerMap,
   groups: string[],
 ): string[] {
-  const owned = new Set(groups);
-  return [...map.entries()].filter(([, o]) => owned.has(o)).map(([t]) => t);
+  const owned = new Set(groups.map(g => normalizeEntityRef(g, 'Group')));
+  return [...map.entries()]
+    .filter(([, o]) => owned.has(normalizeEntityRef(o, 'Group')))
+    .map(([t]) => t);
 }

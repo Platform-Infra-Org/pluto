@@ -76,7 +76,31 @@ describe('serviceOwnedTypes', () => {
     expect(serviceOwnedTypes(map, ['group:default/nobody'])).toEqual([]);
   });
 
-  it('compares refs exactly, as every other admin check does', () => {
-    expect(serviceOwnedTypes(map, ['group:default/Checkout'])).toEqual([]);
+  it('matches a ref whose case differs, as the catalog does', () => {
+    // relations.ownedBy is lowercased by stringifyEntityRef before the catalog
+    // ever stores it, so `Group:default/Checkout` and `group:default/checkout`
+    // are one group to the rule that decides visibility. Treating them as two
+    // made a resource visible to a team and 403 on delete.
+    expect(serviceOwnedTypes(map, ['Group:default/Checkout'])).toEqual([
+      'git-resource',
+    ]);
+  });
+
+  it('matches a short-form group ref', () => {
+    expect(serviceOwnedTypes(map, ['checkout'])).toEqual(['git-resource']);
+  });
+
+  it('matches a template written with a short-form owner', () => {
+    // The idiomatic Template owner. Compared raw, this service-owned nothing
+    // and its owners were silently refused on every delete.
+    const short = new Map([['git-resource', 'payments']]);
+    expect(serviceOwnedTypes(short, ['group:default/payments'])).toEqual([
+      'git-resource',
+    ]);
+  });
+
+  it('does not confuse a user ref with the group of the same name', () => {
+    // Normalisation defaults the kind in; it must not erase an explicit one.
+    expect(serviceOwnedTypes(map, ['user:default/checkout'])).toEqual([]);
   });
 });
