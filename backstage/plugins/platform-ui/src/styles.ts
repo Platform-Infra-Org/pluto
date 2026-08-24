@@ -1263,6 +1263,10 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   fill: none; stroke: hsl(var(--sc-primary)); stroke-width: 9;
   stroke-linecap: square;
   filter: drop-shadow(0 2px 0 hsl(var(--sc-bg) / .55)); }
+/* The home page's decorative cell. Centres the planet and gives it room; the
+   card carries no header or copy, so the body is the whole block. */
+.sc-pluto-block .sc-card-b { display: grid; place-items: center;
+  min-height: 200px; }
 
 /* [suspend] The mid-workflow approval gate. Yellow edge, matching the node in
    the graph and the request badge: one signal, three places. */

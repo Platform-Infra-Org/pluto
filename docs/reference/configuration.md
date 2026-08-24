@@ -129,6 +129,7 @@ platform:
       - pendingApprovals    # requests you may decide
       - recentlyVisited     # pages you opened, newest first
       - favouriteTemplates  # templates you starred on New Request
+      - pluto               # decoration only — fills the grid's spare cell
     maxItems: 8
 ```
 

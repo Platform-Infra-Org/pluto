@@ -30,6 +30,7 @@ export {
 } from './sprites';
 export type { Sprite } from './sprites';
 export { MaintenancePage } from './MaintenancePage';
+export { PlutoMark } from './PlutoMark';
 export { MaintenanceGate } from './MaintenanceGate';
 export { useMaintenance } from './useMaintenance';
 export { useIsAdmin } from './useIsAdmin';
