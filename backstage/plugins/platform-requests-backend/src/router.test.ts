@@ -1201,6 +1201,23 @@ describe('createRouter', () => {
         .send({ ...NEW_REQUEST, requester: 'dev' });
       expect(res.status).toBe(201);
     });
+
+    it('refuses a non-admin with an unconfigured cipher as 503, not 500', async () => {
+      // Pins the ordering: the gate must run before secret encryption, or a
+      // request that was always going to be refused pays for encryption first
+      // — and, with no cipher configured, throws a 500 instead of a clean 503.
+      const { app } = await maintenanceApp();
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({
+          ...NEW_REQUEST,
+          requester: 'dev',
+          secretSpec: [{ name: 'apiKey', source: 'provided' as const }],
+          secretValues: { apiKey: 'super-secret-value' },
+        });
+      expect(res.status).toBe(503);
+    });
   });
 
 });

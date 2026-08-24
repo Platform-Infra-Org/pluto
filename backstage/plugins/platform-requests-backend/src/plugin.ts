@@ -174,7 +174,7 @@ export const platformRequestsPlugin = createBackendPlugin({
           try {
             const info = await userInfo.getUserInfo(credentials);
             const groups = info.ownershipEntityRefs;
-            const isAdmin = groups.some(g => adminGroups.includes(g));
+            const isAdmin = isAdminRef(groups, adminGroups);
             return { isAdmin, groups };
           } catch {
             return { isAdmin: false, groups: [] };

@@ -208,34 +208,6 @@ export async function createRouter(
     if (!parsed.success) throw new InputError(parsed.error.toString());
     const { requester: onBehalf, secretValues, ...data } = parsed.data;
 
-    // A request that needs a Secret is only accepted when secrets are enabled —
-    // fail at submit, not silently at approval.
-    if (data.secretSpec?.length && options.secretsEnabled === false) {
-      throw new InputError(
-        'this request requires secrets but platform.secrets is disabled',
-      );
-    }
-    // Encrypt provided values immediately; plaintext is never stored, and
-    // `secretValues` is dropped from the persisted request entirely.
-    let secretEnc: string | undefined;
-    const provided = (data.secretSpec ?? []).filter(f => f.source === 'provided');
-    if (provided.length) {
-      const values: Record<string, string> = {};
-      for (const f of provided) {
-        const v = secretValues?.[f.name];
-        if (v === undefined) {
-          throw new InputError(`missing value for provided secret '${f.name}'`);
-        }
-        values[f.name] = v;
-      }
-      if (!cipher) {
-        throw new Error(
-          'a request supplies a provided secret but platform.secrets.encryptionKey is unset',
-        );
-      }
-      secretEnc = cipher.encrypt(JSON.stringify(values));
-    }
-
     // Service callers (the Scaffolder action) create on behalf of a named user;
     // user callers create for themselves and must hold the create permission.
     const credentials = await httpAuth.credentials(req, {
@@ -263,7 +235,9 @@ export async function createRouter(
     // a credential-keyed check would see a service principal, call every
     // submission non-admin, and block admins too. Admins are never gated —
     // being able to file during maintenance is the point of being able to turn
-    // it on.
+    // it on. This sits before secret encryption below: a refused request must
+    // not pay for encrypting values it will never store, and — if no cipher is
+    // configured — must not blow up with a 500 instead of a clean 503.
     if ((await store.getSetting('maintenance')) === 'true') {
       if (!(await adminLookup(requester))) {
         res.status(503).json({
@@ -271,6 +245,34 @@ export async function createRouter(
         });
         return;
       }
+    }
+
+    // A request that needs a Secret is only accepted when secrets are enabled —
+    // fail at submit, not silently at approval.
+    if (data.secretSpec?.length && options.secretsEnabled === false) {
+      throw new InputError(
+        'this request requires secrets but platform.secrets is disabled',
+      );
+    }
+    // Encrypt provided values immediately; plaintext is never stored, and
+    // `secretValues` is dropped from the persisted request entirely.
+    let secretEnc: string | undefined;
+    const provided = (data.secretSpec ?? []).filter(f => f.source === 'provided');
+    if (provided.length) {
+      const values: Record<string, string> = {};
+      for (const f of provided) {
+        const v = secretValues?.[f.name];
+        if (v === undefined) {
+          throw new InputError(`missing value for provided secret '${f.name}'`);
+        }
+        values[f.name] = v;
+      }
+      if (!cipher) {
+        throw new Error(
+          'a request supplies a provided secret but platform.secrets.encryptionKey is unset',
+        );
+      }
+      secretEnc = cipher.encrypt(JSON.stringify(values));
     }
 
     // A batch stores the joined names as its resourceName: every list, search
