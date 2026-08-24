@@ -8,6 +8,15 @@ import {
 } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
 
+// `RequestsClient.create` throws `Error('${status}: ${body}')` on a non-ok
+// response (see `api.ts`'s `json()`). The pre-flight `blocked` check above is
+// only ever an optimisation — this is the actual source of truth, since it
+// reads the response the backend just sent for *this* request, not a flag
+// fetched once whenever the page happened to load.
+function isMaintenance503(e: unknown): boolean {
+  return e instanceof Error && e.message.startsWith('503');
+}
+
 /**
  * Entity card (Resource pages): raise an edit/delete request for the current
  * catalog resource, right where it lives. Both go through the approval flow —
@@ -32,6 +41,11 @@ export function ResourceActionsCard() {
   const isAdmin = useIsAdmin();
   // Same rule as MaintenanceGate: undefined (still loading) behaves like
   // non-admin, so nothing is submitted into the 503 while identity resolves.
+  // This is only ever a pre-flight optimisation to skip a pointless round
+  // trip — `useMaintenance` fetches once on mount and never refetches, so a
+  // page left open across someone else flipping the switch would have a
+  // stale `false` here. The backend's actual 503 (caught below, in
+  // `submitEdit`/`submitDelete`) is what the dialog really depends on.
   const blocked = Boolean(maintenance) && !isAdmin;
 
   const type = (entity.spec?.type as string) ?? 'resource';
@@ -61,14 +75,26 @@ export function ResourceActionsCard() {
       setErrors(problems);
       return;
     }
-    const req = await requests.create({
-      kind: 'UPDATE',
-      resourceType: type,
-      resourceName: name,
-      params: data,
-    });
-    setEdit(false);
-    setNotice(req.id);
+    try {
+      const req = await requests.create({
+        kind: 'UPDATE',
+        resourceType: type,
+        resourceName: name,
+        params: data,
+      });
+      setEdit(false);
+      setNotice(req.id);
+    } catch (e) {
+      // Only a 503 gets a dialog. Anything else is left exactly as it was
+      // before this fix existed — this card has never had a general error
+      // display, so there is nothing new to show for it — but caught rather
+      // than left as an unhandled rejection, same as `getResourceData`
+      // above.
+      if (isMaintenance503(e)) {
+        setEdit(false);
+        setMaint(true);
+      }
+    }
   };
 
   const submitDelete = async () => {
@@ -77,14 +103,22 @@ export function ResourceActionsCard() {
       setMaint(true);
       return;
     }
-    const req = await requests.create({
-      kind: 'DELETE',
-      resourceType: type,
-      resourceName: name,
-      params: {},
-    });
-    setDel(false);
-    setNotice(req.id);
+    try {
+      const req = await requests.create({
+        kind: 'DELETE',
+        resourceType: type,
+        resourceName: name,
+        params: {},
+      });
+      setDel(false);
+      setNotice(req.id);
+    } catch (e) {
+      // See submitEdit's catch — only a 503 gets a dialog.
+      if (isMaintenance503(e)) {
+        setDel(false);
+        setMaint(true);
+      }
+    }
   };
 
   return (
