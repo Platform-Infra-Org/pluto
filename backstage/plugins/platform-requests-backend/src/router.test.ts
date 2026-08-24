@@ -674,6 +674,30 @@ describe('createRouter', () => {
         true,
       );
     });
+
+    it('returns no failure reason when a re-check finds the workflow succeeded', async () => {
+      // The bug: /refresh only cleared `error` when the outcome was IN_PROGRESS,
+      // so a workflow retried in Argo that had already finished came back
+      // SUCCEEDED with the previous run's message still attached.
+      const reconcileRequest = jest.fn() as jest.Mock<
+        Promise<ReconcileOutcome>,
+        [PlatformRequest]
+      >;
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        reconcileRequest,
+      });
+      reconcileRequest.mockImplementation(async r => {
+        await store.setState(r.id, 'SUCCEEDED');
+        return { state: 'SUCCEEDED', changed: true, reason: 'moved-to-succeeded' };
+      });
+      const id = await seedFailed(app, store);
+
+      const res = await request(app).post(`/requests/${id}/refresh`).send({});
+      expect(res.status).toBe(200);
+      expect(res.body.request.state).toBe('SUCCEEDED');
+      expect(res.body.request.error).toBeUndefined();
+    });
   });
 
   /**

@@ -157,9 +157,17 @@ export class RequestsStore {
   }
 
   async setState(id: number, state: RequestState): Promise<void> {
-    await this.db('platform_requests')
-      .where({ id })
-      .update({ state, updated_at: new Date().toISOString() });
+    const update: Record<string, unknown> = {
+      state,
+      updated_at: new Date().toISOString(),
+    };
+    // A succeeded request has no failure reason. Enforced here rather than at
+    // the call sites because every path that can reach SUCCEEDED — the poller,
+    // the re-check route, and whatever is added next — goes through this one
+    // method. null (not '') so `assemble`'s `row.error ?? undefined` actually
+    // drops the field, rather than leaving a falsy-but-present empty string.
+    if (state === 'SUCCEEDED') update.error = null;
+    await this.db('platform_requests').where({ id }).update(update);
   }
 
   async setWorkflow(

@@ -240,4 +240,44 @@ describe('RequestsStore', () => {
       ).toBe(3);
     },
   );
+
+  it.each(databases.eachSupportedId())(
+    'clears the failure reason when a request succeeds, %p',
+    async databaseId => {
+      // A retried workflow reaches SUCCEEDED straight from FAILED. Leaving the
+      // old reason on the row is not a UI problem — the API served it too.
+      const store = await createStore(databaseId);
+      const r = await store.create({
+        kind: 'CREATE',
+        resourceType: 'bucket',
+        resourceName: 'data',
+        requester: 'alice',
+      });
+
+      await store.setWorkflow(r.id, { error: 'boom' });
+      await store.setState(r.id, 'FAILED');
+      expect((await store.get(r.id))?.error).toBe('boom');
+
+      await store.setState(r.id, 'SUCCEEDED');
+      expect((await store.get(r.id))?.error).toBeUndefined();
+    },
+  );
+
+  it.each(databases.eachSupportedId())(
+    'leaves the failure reason alone on every other transition, %p',
+    async databaseId => {
+      const store = await createStore(databaseId);
+      const r = await store.create({
+        kind: 'CREATE',
+        resourceType: 'bucket',
+        resourceName: 'data',
+        requester: 'alice',
+      });
+
+      await store.setWorkflow(r.id, { error: 'boom' });
+      await store.setState(r.id, 'FAILED');
+      await store.setState(r.id, 'IN_PROGRESS');
+      expect((await store.get(r.id))?.error).toBe('boom');
+    },
+  );
 });

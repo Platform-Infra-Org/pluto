@@ -286,7 +286,10 @@ export function RequestPage() {
           )}
         </div>
       )}
-      {request.error && (
+      {/* Gated on the state as well as the message: rows written before the
+          store enforced "a succeeded request has no error" are still in the
+          database, and this is what stops them rendering without a migration. */}
+      {request.state === 'FAILED' && request.error && (
         <div className="sc-notice sc-notice-fail" style={{ marginBottom: 12 }}>
           <strong>Failed:</strong> {request.error}
         </div>
