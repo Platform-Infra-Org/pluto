@@ -25,6 +25,12 @@ describe('BoonPicker', () => {
     expect(document.documentElement).toHaveClass('sc-hades');
     expect(document.documentElement.getAttribute('data-boon')).toBe('zeus');
     expect(localStorage.getItem('platform-boon')).toBe('zeus');
+    // The scheme itself must survive a reload too — not just the boon. A
+    // no-arg applyScheme() (module reload, the prefers-color-scheme handler,
+    // the async header-tone callback) reads this key and repaints whatever
+    // it finds, so a pick that never wrote it silently reverts to whatever
+    // scheme was active before Hades was equipped.
+    expect(localStorage.getItem('platform-scheme')).toBe('hades');
   });
 
   it('names the equipped boon in text', () => {

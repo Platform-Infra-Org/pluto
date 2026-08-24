@@ -103,4 +103,42 @@ describe('the ornament actually paints', () => {
     const block = css.slice(start, css.indexOf('}', start) + 1);
     expect(block).toContain('content:');
   });
+
+  it('keeps every --sc-boon-ornament value a legal background-image', () => {
+    // The property this variable feeds is `background-image`, which only
+    // accepts a comma-separated <bg-image># list — plain gradients, no
+    // position or size. A layer written with the "0 0 / WxH" background
+    // SHORTHAND syntax (dionysus's grapes and aphrodite's twin dots both
+    // shipped this way) makes the whole var() substitution invalid at
+    // computed-value time, and `background-image` silently computes to
+    // `none` since it is not inherited — two of nine boons painted an empty
+    // box. Per-layer tile sizing belongs in --sc-boon-ornament-size instead,
+    // read by background-size, where that syntax is legal.
+    for (const b of BOONS) {
+      const block = css.slice(css.indexOf(`[data-boon="${b}"]`));
+      const decl = block
+        .slice(0, block.indexOf('}'))
+        .match(/--sc-boon-ornament:\s*([\s\S]+?);/)?.[1];
+      expect(`${b}:${Boolean(decl)}`).toBe(`${b}:true`);
+      // Split on top-level commas only — every gradient function nests its
+      // own comma-separated stop list, so a naive split would cut those too.
+      const layers: string[] = [];
+      let depth = 0;
+      let start = 0;
+      for (let i = 0; i < decl!.length; i += 1) {
+        const ch = decl![i];
+        if (ch === '(') depth += 1;
+        else if (ch === ')') depth -= 1;
+        else if (ch === ',' && depth === 0) {
+          layers.push(decl!.slice(start, i).trim());
+          start = i + 1;
+        }
+      }
+      layers.push(decl!.slice(start).trim());
+      expect(layers.length).toBeGreaterThan(0);
+      for (const layer of layers) {
+        expect(layer).toMatch(/^[a-z-]+-gradient\(.*\)$/);
+      }
+    }
+  });
 });

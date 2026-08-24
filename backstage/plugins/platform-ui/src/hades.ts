@@ -120,7 +120,14 @@ export function hadesCss(): string {
   height: 4px;
   background-image: var(--sc-boon-ornament, none);
   background-repeat: repeat-x;
-  background-size: auto 4px;
+  /* Per-layer tile size, not baked into --sc-boon-ornament: background-image
+     only accepts a <bg-image># list, so a layer written with the "0 0 / WxH"
+     background SHORTHAND syntax (dionysus's grapes, aphrodite's twin dots)
+     makes the whole custom-property substitution invalid at computed-value
+     time and the declaration computes to none. --sc-boon-ornament-size is
+     the same per-layer list, read by background-size instead, where that
+     syntax is legal. */
+  background-size: var(--sc-boon-ornament-size, auto 4px);
   pointer-events: none;
 }
 
@@ -201,7 +208,10 @@ export function hadesCss(): string {
   --sc-primary-fg: 0 0% 100%;
   --sc-boon-ornament:
     repeating-linear-gradient(70deg, hsl(280 62% 56% / .5) 0 1px, transparent 1px 6px),
-    radial-gradient(circle, hsl(280 62% 56% / .6) 0 2px, transparent 3px) 0 0 / 14px 14px;
+    radial-gradient(circle, hsl(280 62% 56% / .6) 0 2px, transparent 3px);
+  /* The vine (layer 1) keeps the base 4px-tall band; the grapes (layer 2) get
+     their own 14px tile so they read as spaced dots rather than one blot. */
+  --sc-boon-ornament-size: auto 4px, 14px 14px;
 }
 @media (prefers-reduced-motion: no-preference) {
   :root.sc-hades[data-boon="dionysus"] .sc-card-h::after {
@@ -251,8 +261,9 @@ export function hadesCss(): string {
   --sc-primary: 330 78% 62%;
   --sc-primary-fg: 240 10% 8%;
   --sc-boon-ornament:
-    radial-gradient(circle at 30% 60%, hsl(330 78% 62% / .55) 0 2.5px, transparent 3px) 0 0 / 12px 12px,
-    radial-gradient(circle at 70% 60%, hsl(330 78% 62% / .55) 0 2.5px, transparent 3px) 0 0 / 12px 12px;
+    radial-gradient(circle at 30% 60%, hsl(330 78% 62% / .55) 0 2.5px, transparent 3px),
+    radial-gradient(circle at 70% 60%, hsl(330 78% 62% / .55) 0 2.5px, transparent 3px);
+  --sc-boon-ornament-size: 12px 12px, 12px 12px;
 }
 @media (prefers-reduced-motion: no-preference) {
   :root.sc-hades[data-boon="aphrodite"] .sc-card-h::after {
@@ -264,11 +275,24 @@ export function hadesCss(): string {
 /* CHAOS — indigo void. Rings orbiting the mark, the one boon whose motion is
    rotation rather than a slide or a flicker — eight stops for the eight
    points a ring visibly holds as it turns, the same logic egyptian.ts's Aten
-   uses for its own rotation. */
+   uses for its own rotation.
+
+   Every other boon rotates nothing — this is the only one that does — and
+   that is exactly why it cannot share the base ::after box unmodified: that
+   box is 4px tall but nearly the full card wide (left:20px; right:20px), so
+   turning it 45deg/90deg swings its long axis up through the title text
+   sitting right above it instead of along the header rule. Chaos shrinks its
+   own box to a small square anchored at the right inset before rotating it,
+   so the whole sweep stays inside the 6px band reserved below the title and
+   never reaches the text. */
 :root.sc-hades[data-boon="chaos"] {
   --sc-primary: 268 45% 52%;
   --sc-primary-fg: 0 0% 100%;
   --sc-boon-ornament: repeating-radial-gradient(circle, transparent 0 4px, hsl(268 45% 52% / .4) 4px 5px, transparent 5px 9px);
+}
+:root.sc-hades[data-boon="chaos"] .sc-card-h::after {
+  left: auto;
+  width: 4px;
 }
 @media (prefers-reduced-motion: no-preference) {
   :root.sc-hades[data-boon="chaos"] .sc-card-h::after {

@@ -275,6 +275,11 @@ describe('dark rules', () => {
       ],
       ['rimefast', registerOf(rimefastCss(), ':root.sc-rimefast.sc-dark')],
       ['egyptian', registerOf(egyptianCss(), ':root.sc-egyptian.sc-dark')],
+      // Hades has no `.sc-dark` pairing of its own — single register, see
+      // hades.ts — so its one dark-in-all-but-name register is `:root.sc-hades`
+      // itself, the same block the "hades palette contrast" describe below
+      // measures.
+      ['hades', registerOf(hadesCss(), ':root.sc-hades')],
     ];
 
     for (const [mode, tokens] of registers) {

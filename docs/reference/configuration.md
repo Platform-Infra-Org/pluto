@@ -47,7 +47,7 @@ app:
 ```
 
 Optional, frontend-visible. `fantasy` renames **sidebar screens only** —
-Requests → Quests, Create → Summon, Catalog → Atlas.
+Requests → Quests, New Request → Summon, Catalog → Atlas.
 
 Request **states are never renamed**, whatever this is set to. A label naming a
 screen is decoration and someone who cannot find "Requests" finds it one click
@@ -128,7 +128,8 @@ platform:
       - standingRequests    # your requests still in flight
       - pendingApprovals    # requests you may decide
       - recentlyVisited     # pages you opened, newest first
-      - favouriteTemplates  # templates you starred on Create
+      - favouriteTemplates  # templates you starred on New Request
+      - pantheon            # the Hades boon wheel — on by default
     maxItems: 8
 ```
 
@@ -139,7 +140,7 @@ favourites 6 regardless, because a longer list stops being either.
 
 `recentlyVisited` and `favouriteTemplates` are stored per **user** in the
 user-settings backend, so they follow the person across browsers and machines.
-Favourites are the same stars the Create page already writes — nothing extra to
+Favourites are the same stars the New Request page already writes — nothing extra to
 enable. See **[Customise the home page](../how-to/customise-the-home-page.md)**.
 
 ## `platform.secrets`

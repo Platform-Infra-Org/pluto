@@ -1,6 +1,6 @@
 import { CSSProperties, useState } from 'react';
 import { BOONS, BOON_LABELS, Boon, toBoon } from './hades';
-import { applyBoon, applyScheme } from './SchemeRoot';
+import { applyBoon, equipScheme } from './SchemeRoot';
 import { Card, PixelSprite } from './components';
 import { BOON_SPRITES } from './sprites';
 
@@ -9,7 +9,9 @@ import { BOON_SPRITES } from './sprites';
  *
  * Picking sets the scheme AND the boon, so "pick a symbol and the theme
  * changes" holds from any starting potion rather than only from Hades — see
- * `pick` below.
+ * `pick` below. Routed through `equipScheme` (not a bare `applyScheme`) so
+ * the pick persists to `platform-scheme` and the corner shelf's own
+ * "what's equipped" state updates too, the same as picking a bottle there.
  *
  * Laid out on a circle with transforms rather than nine hand-placed offsets:
  * the ring is one formula (`hadesCss`'s `.sc-boon` rule), and adding or
@@ -28,7 +30,7 @@ export function BoonPicker() {
   // pressed and named — read once from the same storage key so it starts in
   // step with whatever SchemeRoot already applied.
   const pick = (b: Boon) => {
-    applyScheme('hades');
+    equipScheme('hades');
     applyBoon(b);
     setBoon(b);
     setFlaring(true);

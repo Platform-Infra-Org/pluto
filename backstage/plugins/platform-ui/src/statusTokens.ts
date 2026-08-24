@@ -78,7 +78,8 @@ export type SchemeMode =
   | 'hanami'
   | 'nightshade'
   | 'rimefast'
-  | 'egyptian';
+  | 'egyptian'
+  | 'hades';
 
 /** `--sc-card` in the Greek registers, from greek.ts. */
 export const GREEK_CARD_LIGHT = '42 45% 98%';
@@ -133,6 +134,31 @@ export const GREEK_STATUS_TOKENS: StatusToken[] = [
   },
 ];
 
+/**
+ * `--sc-card` in the Hades register, from hades.ts's `:root.sc-hades` block.
+ * One value, not a light/dark pair: Hades is deliberately single-register
+ * (there is no `:root.sc-hades.sc-dark`) — see hades.ts's header comment.
+ */
+export const HADES_CARD = '260 16% 10%';
+
+/**
+ * Hades' status ink. Also one value per token rather than a light/dark pair,
+ * for the same single-register reason as HADES_CARD — `light` and `dark`
+ * below hold the identical figure, so whichever theme Backstage happens to
+ * be running (light or dark) still measures against the same obsidian card.
+ *
+ * Reuses STATUS_TOKENS' dark ink verbatim: it already clears AA against
+ * HADES_CARD (10% lightness) with the same 4.70-4.77 headroom it has against
+ * the default dark card (6.5%), and hades.ts's own --sc-success/warning/
+ * destructive cell literals already match STATUS_TOKENS' cell values exactly
+ * — solving a second set of ink for the same cells would just be this table
+ * copied with more steps.
+ */
+export const HADES_STATUS_TOKENS: StatusToken[] = STATUS_TOKENS.map(t => ({
+  ...t,
+  light: t.dark,
+}));
+
 export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   default: STATUS_TOKENS,
   greek: GREEK_STATUS_TOKENS,
@@ -154,6 +180,7 @@ export const MODE_TOKENS: Record<SchemeMode, StatusToken[]> = {
   nightshade: STATUS_TOKENS,
   rimefast: STATUS_TOKENS,
   egyptian: STATUS_TOKENS,
+  hades: HADES_STATUS_TOKENS,
 };
 
 export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
@@ -185,6 +212,9 @@ export const MODE_CARDS: Record<SchemeMode, { light: string; dark: string }> = {
   // with the ground: the register is cool limestone now, not warm papyrus, and
   // the whole set had to be re-solved against it. See egyptian.ts.
   egyptian: { light: '205 32% 97%', dark: '212 44% 6%' },
+  // Both sides the same figure: Hades has one card regardless of which theme
+  // Backstage is running, so there is nothing for a light/dark pair to name.
+  hades: { light: HADES_CARD, dark: HADES_CARD },
 };
 
 /** The `:root` declarations for every mode, for interpolation into SHADCN_CSS. */
@@ -193,14 +223,19 @@ export function statusTokenCss(): string {
     `${selector} {\n${tokens
       .map(t => `  --sc-${t.name}: ${t[key]};`)
       .join('\n')}\n}`;
-  // ORDER IS LOAD-BEARING. `:root.sc-dark` and `:root.sc-greek` are both
-  // specificity (0,2,0), so whichever is written last wins when both match.
-  // The greek light block must therefore follow the default dark block, and
-  // `:root.sc-greek.sc-dark` — (0,3,0) — settles greek-in-dark outright.
+  // ORDER IS LOAD-BEARING. `:root.sc-dark`, `:root.sc-greek` and
+  // `:root.sc-hades` are all specificity (0,2,0), so whichever is written
+  // last wins when more than one matches. The greek light block must
+  // therefore follow the default dark block, and `:root.sc-greek.sc-dark` —
+  // (0,3,0) — settles greek-in-dark outright. `:root.sc-hades` is written
+  // last of all: Hades has no `.sc-dark` pairing of its own (single
+  // register, see HADES_STATUS_TOKENS above) and must still win over
+  // `:root.sc-dark` when the app theme happens to be dark.
   return [
     block(':root', STATUS_TOKENS, 'light'),
     block(':root.sc-dark', STATUS_TOKENS, 'dark'),
     block(':root.sc-greek', GREEK_STATUS_TOKENS, 'light'),
     block(':root.sc-greek.sc-dark', GREEK_STATUS_TOKENS, 'dark'),
+    block(':root.sc-hades', HADES_STATUS_TOKENS, 'light'),
   ].join('\n');
 }

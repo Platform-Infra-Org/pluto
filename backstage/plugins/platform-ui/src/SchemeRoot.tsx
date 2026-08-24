@@ -493,6 +493,33 @@ export function applyBoon(boon: string | undefined) {
   }
 }
 
+// The event a scheme pick made anywhere (BoonPicker's wheel, not just this
+// file's own shelf) is broadcast on, so every mounted SchemePicker updates
+// its own `scheme` state to match — the same cross-component pattern
+// `platform:quickstart` uses below. Without this the shelf still shows the
+// previous bottle as equipped after a boon pick.
+const SCHEME_EVENT = 'platform:scheme';
+
+/**
+ * Equip a scheme from outside the picker: paint it, persist it, and tell
+ * every mounted SchemePicker to update which bottle it shows as equipped.
+ * `applyScheme` alone does the first but not the last two — those live here
+ * instead of in `applyScheme` because plenty of its other callers (the
+ * config-default effect, the prefers-color-scheme handler, `ensureTones`)
+ * call it to repaint the *current* scheme and must not stomp a stored pick.
+ */
+export function equipScheme(id: string) {
+  applyScheme(id);
+  try {
+    localStorage.setItem('platform-scheme', id);
+  } catch {
+    /* ignore */
+  }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(SCHEME_EVENT, { detail: id }));
+  }
+}
+
 // Theme the login gate immediately, before React mounts anything.
 //
 // The boon is NOT restored here: this runs once per process, at whatever
@@ -584,13 +611,22 @@ export function SchemePicker({
 
   useEffect(() => {
     // Base CSS + accent var; also re-applied live whenever the picker changes.
-    applyScheme(scheme);
-    try {
-      localStorage.setItem('platform-scheme', scheme);
-    } catch {
-      /* ignore */
-    }
+    // Routed through equipScheme so a pick made here persists and broadcasts
+    // exactly the same way a pick made from BoonPicker's wheel does.
+    equipScheme(scheme);
   }, [scheme]);
+
+  useEffect(() => {
+    // The other half of equipScheme's broadcast: a pick made anywhere else
+    // (BoonPicker) still needs this shelf's own "what's equipped" state to
+    // agree, or the corner bottle keeps showing the previous scheme.
+    const onEquip = (e: Event) => {
+      const id = (e as CustomEvent<string>).detail;
+      if (id) setScheme(id);
+    };
+    window.addEventListener(SCHEME_EVENT, onEquip);
+    return () => window.removeEventListener(SCHEME_EVENT, onEquip);
+  }, []);
 
   useEffect(
     () => () => {

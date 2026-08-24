@@ -30,7 +30,8 @@ That includes new cards after an upgrade: add the key or it will not appear.
 | `standingRequests` | your requests still in flight |
 | `pendingApprovals` | requests you may decide |
 | `recentlyVisited` | pages you opened, newest first (5) |
-| `favouriteTemplates` | templates you starred on Create (6) |
+| `favouriteTemplates` | templates you starred on New Request (6) |
+| `pantheon` | the Hades boon wheel — on by default, even if you never list it here |
 
 Order in the list is the order on the page. Cards are all one size, so a row
 stays aligned however many you enable; `standingRequests` deliberately takes
