@@ -129,12 +129,16 @@ export class PlatformPermissionPolicy implements PermissionPolicy {
     }
 
     // A platform Resource may be seen by an admin, its own owner, or the
-    // service-owner of its resource type — never by a bare ALLOW. The first
-    // `anyOf` clause is what keeps this a gate on platform Resources rather
-    // than a catalog lockdown: an entity with no `platform.io/resource-type`
-    // annotation (every Template, Group, User, Component, …) is simply not
-    // ours to hide, so it is `not`-excluded from narrowing and keeps today's
-    // behaviour.
+    // service-owner of its resource type — never by a bare ALLOW. The two
+    // leading `anyOf` clauses are what keep this a gate on platform Resources
+    // rather than a catalog lockdown, and it takes both:
+    //   - not `kind: Resource` → not ours. This is the load-bearing one.
+    //     `platform.io/resource-type` is authored ON TEMPLATES (it is how a
+    //     Template declares which type it provisions), so an annotation check
+    //     alone hides every template from every non-owner — an empty /create
+    //     and a 404 from the scaffolder's own getEntityByRef.
+    //   - no `platform.io/resource-type` annotation → a Resource we do not
+    //     manage (hand-authored, another plugin's), left as it was.
     if (isResourcePermission(request.permission, 'catalog-entity')) {
       if (isAdmin) return { result: AuthorizeResult.ALLOW };
 
@@ -143,6 +147,7 @@ export class PlatformPermissionPolicy implements PermissionPolicy {
 
       return createCatalogConditionalDecision(request.permission, {
         anyOf: [
+          { not: catalogConditions.isEntityKind({ kinds: ['Resource'] }) },
           {
             not: catalogConditions.hasAnnotation({
               annotation: RESOURCE_TYPE_ANNOTATION,

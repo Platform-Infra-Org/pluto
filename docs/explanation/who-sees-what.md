@@ -26,10 +26,14 @@ The catalog's read gate admits:
 - The resource's **owner** (`spec.owner`).
 - The resource type's **service-owner** (the template's `spec.owner`).
 
-Everyone else sees nothing. Resources without a `platform.io/resource-type`
-annotation are never narrowed — this is a gate on platform-managed resources,
-not a catalog lockdown. Templates, Groups, Users, Components and any other entity
-without the annotation behave exactly as before.
+Everyone else sees nothing. Only `kind: Resource` is narrowed, and only when it
+carries a `platform.io/resource-type` annotation — this is a gate on
+platform-managed resources, not a catalog lockdown. Templates, Groups, Users,
+Components and everything else behave exactly as before. The kind check is
+what does that work, not the annotation: the annotation is authored **on
+templates** too (it is how a Template declares which resource type it
+provisions), so gating on the annotation alone would hide most of `/create`
+from everyone who is not a template owner.
 
 The gate is enforced on **every** read: home page, entity page, search, picker,
 graph. The MultiEntityPicker does not apply visibility itself; it reads the
@@ -51,13 +55,16 @@ rejected deliberately — on an action that submits a Git-writing workflow, a
 half-created request is the outcome hardest to notice and hardest to undo. The
 error names the resource type and the reason (admin/owner/service-owner required).
 
-## Why owners deliberately may not bulk-delete
+## Why the two owners grant different reach
 
-A resource owner can delete *their own* resource. They cannot delete every
-resource of the type, even if they are a service-owner of that type — it is their
-template, not the one they belong to. The intuition: a service team owns the
-machinery; the customer owns what they asked for. They are not the same entity
-and should not silently become one.
+A resource owner can delete *their own* resources — every resource named in the
+request must be one of theirs, or the whole request is refused. A service-owner
+can delete **every** resource of the type they own the template for, without
+owning any instance directly. The intuition: a service team owns the machinery,
+so it may act on anything built from it; the customer owns only what they asked
+for. Both are real delete authority, they just have different reach, and
+`mayDeleteLookup` in the requests backend checks them as two separate branches
+of the same union.
 
 ## The visibility limits
 
