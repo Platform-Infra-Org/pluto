@@ -448,6 +448,39 @@ export const CANOPIC_VESSEL: Sprite = [
   '................',
 ];
 
+/**
+ * Hades: a stemmed chalice — a flared lip and a flared foot either side of a
+ * thin stem, the goblet Supergiant's underworld is built on.
+ *
+ * The one vessel on the shelf whose liquid sits HIGH rather than low: every
+ * neighbour here is a bottle with a neck above a belly, so the brew settles at
+ * the bottom by the shape of the vessel itself. A chalice inverts that — the
+ * bowl that holds the liquid IS the top of the object, and drawing the liquid
+ * anywhere else would draw a different vessel. The stem and foot below carry
+ * no fill, which is what keeps the silhouette upright rather than top-heavy.
+ * Flared at both ends (the lip AND the foot) is what separates it from
+ * TANKARD_VESSEL, whose walls run straight, and from CAULDRON_VESSEL, whose
+ * body is round-bottomed with no stem at all.
+ */
+export const HADES_VESSEL: Sprite = [
+  '...##########...',
+  '...#~~~~~~~~#...',
+  '....#~~~~~~#....',
+  '....#~~~~~~#....',
+  '.....#~~~~#.....',
+  '.....#~~~~#.....',
+  '......#~~#......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '.......##.......',
+  '......####......',
+  '.....######.....',
+  '....########....',
+  '...##########...',
+  '................',
+];
+
 /** A secret: what a request carries that must not be printed. */
 export const KEY: Sprite = [
   '....######......',

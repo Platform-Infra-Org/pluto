@@ -1,6 +1,7 @@
 import { BRAND_DEFS } from './brands';
 import { egyptianCss } from './egyptian';
 import { foudreCss } from './foudre';
+import { BOONS, hadesCss } from './hades';
 import { greekCss } from './greek';
 import { hanamiCss } from './hanami';
 import { nightshadeCss } from './nightshade';
@@ -209,6 +210,37 @@ describe('greek palette contrast', () => {
       }
     });
   }
+});
+
+describe('hades palette contrast', () => {
+  // The base register (the House itself) plus all nine boons — each measured
+  // rather than eyeballed, so "nine gods that all fail the same way" is a
+  // failure this file catches the same way hades.test.ts catches nine gods
+  // rendering the same colour.
+  const css = hadesCss();
+
+  it('clears its contrast targets on the House register', () => {
+    const tokens = registerOf(css, ':root.sc-hades');
+    const PAIRS: ReadonlyArray<readonly [string, string, number]> = [
+      ['sc-fg', 'sc-bg', AA],
+      ['sc-fg', 'sc-card', AA],
+      ['sc-muted-fg', 'sc-card', AA],
+      ['sc-primary-fg', 'sc-primary', AA],
+      ['sc-accent-fg', 'sc-accent', AA],
+    ];
+    for (const [fg, bg, min] of PAIRS) {
+      const measured = contrast(tokens[fg], tokens[bg]);
+      expect(`${fg} on ${bg}: ${measured >= min}`).toBe(`${fg} on ${bg}: true`);
+    }
+  });
+
+  it('clears 4.5:1 between every boon and its own foreground', () => {
+    for (const b of BOONS) {
+      const tokens = registerOf(css, `:root.sc-hades[data-boon="${b}"]`);
+      const measured = contrast(tokens['sc-primary'], tokens['sc-primary-fg']);
+      expect(`${b}: ${measured >= AA}`).toBe(`${b}: true`);
+    }
+  });
 });
 
 describe('dark rules', () => {

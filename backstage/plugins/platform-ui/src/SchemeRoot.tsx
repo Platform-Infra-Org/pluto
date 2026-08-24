@@ -13,6 +13,7 @@ import {
   AMPHORA_VESSEL,
   CANOPIC_VESSEL,
   CAULDRON_VESSEL,
+  HADES_VESSEL,
   TANKARD_VESSEL,
   Sprite,
   SPRITE_SIZE,
@@ -99,6 +100,7 @@ const MODES = [
   'nightshade',
   'rimefast',
   'egyptian',
+  'hades',
 ] as const;
 type Mode = (typeof MODES)[number];
 
@@ -109,7 +111,7 @@ type Mode = (typeof MODES)[number];
  * inventory tray both render a bottle, and a branch in each is how the two
  * drifted apart the first time. Adding the next one is a row here.
  *
- * ORDER MATTERS ELSEWHERE. These five sit contiguously at the front of
+ * ORDER MATTERS ELSEWHERE. These six sit contiguously at the front of
  * `SCHEMES` so the shelf reads as "the crafted ones, then the brand ones", and
  * `SchemeRoot.test.ts` fails if a new scheme is slotted in between them.
  */
@@ -119,6 +121,7 @@ export const MODE_VESSELS: Partial<Record<Mode, Sprite>> = {
   nightshade: CAULDRON_VESSEL,
   rimefast: TANKARD_VESSEL,
   egyptian: CANOPIC_VESSEL,
+  hades: HADES_VESSEL,
 };
 
 // Saturated toward NES-era values. `fg` is the text colour that sits on the
@@ -168,6 +171,13 @@ export const SCHEMES: Scheme[] = [
     hsl: '221 62% 32%',
     fg: WHITE, // 9.98 — lapis, the light register's primary
     mode: 'egyptian',
+  },
+  {
+    id: 'hades',
+    label: 'Hades',
+    hsl: '352 72% 45%',
+    fg: WHITE, // 5.76
+    mode: 'hades',
   },
   // Reference design systems, each rendered in this app's furniture.
   {
