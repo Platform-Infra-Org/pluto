@@ -61,6 +61,11 @@ Configured `params` are written into the URL before the computed ones, so
 `kiosk`, `theme`, `from` and `to` win a name collision. Pinning `from` in
 `requests.params` will not defeat the request's own time window.
 
+Values may be a string, a number, a boolean, or a list. A list becomes the same
+key repeated — `var-env: [prod, staging]` renders `?var-env=prod&var-env=staging`
+— which is how Grafana expresses a multi-value template variable. A value that is
+neither a scalar nor a list of them is skipped rather than failing the page.
+
 ### Request-scoped values
 
 Values under `requests.params` may carry `<< token >>` placeholders, resolved

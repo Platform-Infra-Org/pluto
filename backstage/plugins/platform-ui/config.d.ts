@@ -118,10 +118,14 @@ export interface Config {
        * Extra query parameters for the `/dashboard` page only — Grafana
        * template variables, most usefully. Written into the URL before the
        * computed parameters, so `kiosk`, `theme`, `from` and `to` win a name
-       * collision.
+       * collision. Values may be a string, a number, a boolean, or a list of
+       * those — a list becomes the same key repeated, which is how Grafana
+       * expresses a multi-value template variable.
        * @deepVisibility frontend
        */
-      params?: { [key: string]: string };
+      params?: {
+        [key: string]: string | number | boolean | Array<string | number | boolean>;
+      };
       /**
        * The Metrics card on a request page, which frames the same dashboard
        * scoped to that request's own time window.
@@ -147,16 +151,20 @@ export interface Config {
         /** @visibility frontend */
         kiosk?: boolean;
         /**
-         * Extra query parameters for the card only. Values may contain
-         * `<< requestId >>`, `<< resourceName >>`, `<< resourceType >>`,
-         * `<< requester >>`, `<< workflowName >>` and
-         * `<< workflowNamespace >>`, resolved in the browser against the
-         * request on screen. A parameter that resolves to an empty string is
-         * dropped rather than sent empty — an empty Grafana variable reads as
-         * "all".
+         * Extra query parameters for the card only. Values may be a string, a
+         * number, a boolean, or a list of those — a list becomes the same key
+         * repeated, which is how Grafana expresses a multi-value template
+         * variable. A string value may contain `<< requestId >>`,
+         * `<< resourceName >>`, `<< resourceType >>`, `<< requester >>`,
+         * `<< workflowName >>` and `<< workflowNamespace >>`, resolved in the
+         * browser against the request on screen. A parameter that resolves to
+         * an empty string is dropped rather than sent empty — an empty
+         * Grafana variable reads as "all".
          * @deepVisibility frontend
          */
-        params?: { [key: string]: string };
+        params?: {
+          [key: string]: string | number | boolean | Array<string | number | boolean>;
+        };
       };
     };
   };
