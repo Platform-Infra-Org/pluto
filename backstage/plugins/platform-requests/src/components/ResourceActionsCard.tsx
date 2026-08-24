@@ -4,7 +4,7 @@ import { Link } from '@backstage/core-components';
 import { useEntity } from '@backstage/plugin-catalog-react';
 import {
   Card, CardHeader, CardBody, Button, Dialog, JsonTree, JsonEditTree,
-  leavesOf, mergeDeepEdits, pathKey, type Leaf,
+  leavesOf, mergeDeepEdits, pathKey, useMaintenance, useIsAdmin, type Leaf,
 } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
 
@@ -26,6 +26,13 @@ export function ResourceActionsCard() {
   const [leaves, setLeaves] = useState<Leaf[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<number>();
+  const [maint, setMaint] = useState(false);
+
+  const maintenance = useMaintenance();
+  const isAdmin = useIsAdmin();
+  // Same rule as MaintenanceGate: undefined (still loading) behaves like
+  // non-admin, so nothing is submitted into the 503 while identity resolves.
+  const blocked = Boolean(maintenance) && !isAdmin;
 
   const type = (entity.spec?.type as string) ?? 'resource';
   const name = entity.metadata.name;
@@ -44,6 +51,11 @@ export function ResourceActionsCard() {
   };
 
   const submitEdit = async () => {
+    if (blocked) {
+      setEdit(false);
+      setMaint(true);
+      return;
+    }
     const { data, errors: problems } = mergeDeepEdits(original, leaves, fields);
     if (Object.keys(problems).length) {
       setErrors(problems);
@@ -60,6 +72,11 @@ export function ResourceActionsCard() {
   };
 
   const submitDelete = async () => {
+    if (blocked) {
+      setDel(false);
+      setMaint(true);
+      return;
+    }
     const req = await requests.create({
       kind: 'DELETE',
       resourceType: type,
@@ -156,6 +173,19 @@ export function ResourceActionsCard() {
           This raises a delete request for approval. On approval the workflow
           runs and the resource is removed from the catalog.
         </div>
+      </Dialog>
+
+      <Dialog
+        open={maint}
+        onClose={() => setMaint(false)}
+        title="Maintenance"
+        footer={<Button onClick={() => setMaint(false)}>Close</Button>}
+      >
+        {/* Same copy as MaintenancePage — the two surfaces must agree. */}
+        <p className="sc-muted">
+          New requests are paused while the platform is being worked on.
+          Anything already filed is unaffected.
+        </p>
       </Dialog>
     </Card>
   );
