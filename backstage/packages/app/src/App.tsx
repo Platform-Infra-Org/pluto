@@ -12,6 +12,7 @@ import {
 import { BRANDING_IMAGES } from './branding';
 import { authModule } from './modules/auth';
 import { scaffolderTranslationsModule } from './modules/scaffolderTranslations';
+import { maintenanceSettingsModule } from './modules/maintenanceSettings';
 
 // Images bundled from src/branding, handed to the UI plugin; config decides
 // which subfolder becomes the template card headers.
@@ -31,6 +32,8 @@ export default createApp({
     platformRelationsCardModule,
     // Override scaffolder page heading to "New Request".
     scaffolderTranslationsModule,
+    // Admin on/off switch for maintenance mode, under Settings.
+    maintenanceSettingsModule,
     authModule,
   ],
 });
