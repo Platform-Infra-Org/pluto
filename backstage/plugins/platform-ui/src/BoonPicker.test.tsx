@@ -50,4 +50,15 @@ describe('BoonPicker', () => {
     render(<BoonPicker />);
     expect(document.documentElement.getAttribute('data-boon')).toBe('artemis');
   });
+
+  it('degrades a corrupted stored value to no boon, instead of writing it through', () => {
+    // A hand-edited or stale localStorage value must not become the
+    // `data-boon` attribute verbatim — that would leave the root in a state
+    // BOON_LABELS has no entry for, and the text beside the wheel is the one
+    // thing that has to keep naming the state with motion off.
+    localStorage.setItem('platform-boon', 'garbage');
+    render(<BoonPicker />);
+    expect(document.documentElement.getAttribute('data-boon')).toBeNull();
+    expect(screen.getByText('No boon — the house of Hades')).toBeInTheDocument();
+  });
 });

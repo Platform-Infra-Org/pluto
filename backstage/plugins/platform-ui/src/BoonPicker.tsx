@@ -1,5 +1,5 @@
 import { CSSProperties, useEffect, useState } from 'react';
-import { BOONS, BOON_LABELS, Boon } from './hades';
+import { BOONS, BOON_LABELS, Boon, toBoon } from './hades';
 import { applyBoon, applyScheme } from './SchemeRoot';
 import { Card, PixelSprite } from './components';
 import { BOON_SPRITES } from './sprites';
@@ -16,18 +16,19 @@ import { BOON_SPRITES } from './sprites';
  * removing a god is a row in `BOONS`.
  */
 export function BoonPicker() {
-  const [boon, setBoon] = useState<Boon | undefined>(
-    () => (localStorage.getItem('platform-boon') as Boon) || undefined,
+  const [boon, setBoon] = useState<Boon | undefined>(() =>
+    toBoon(localStorage.getItem('platform-boon')),
   );
   const [flaring, setFlaring] = useState(false);
 
-  // Restores the DOM attribute a reload (or, in tests, a fresh mount) should
-  // carry over from whatever was last equipped — the same localStorage key
-  // `applyBoon` itself writes to, read back once on mount rather than relying
-  // on whichever other module happened to import SchemeRoot first and run its
-  // own module-load restore.
+  // The one restore point for the persisted boon: reads localStorage fresh on
+  // every mount and validates through `toBoon`, rather than trusting a
+  // module-load side effect that only ever runs once per process and cannot
+  // see a value written after that — see the note in SchemeRoot.tsx. A
+  // corrupted or hand-edited value degrades to no boon instead of being
+  // written straight through to `data-boon`.
   useEffect(() => {
-    applyBoon((localStorage.getItem('platform-boon') as Boon) || undefined);
+    applyBoon(toBoon(localStorage.getItem('platform-boon')));
   }, []);
 
   const pick = (b: Boon) => {

@@ -492,14 +492,19 @@ export function applyBoon(boon: string | undefined) {
   }
 }
 
-// Theme the login gate immediately, before React mounts anything. The boon is
-// restored alongside it, at the same module-load point applyScheme runs at,
-// so a reload keeps the equipped god rather than dropping back to the House's
-// own register.
+// Theme the login gate immediately, before React mounts anything.
+//
+// The boon is deliberately NOT restored here too. A module-load side effect
+// like this one runs exactly once per process — right for `applyScheme`,
+// which this file is the only writer of `sc-<mode>` for, but wrong for the
+// boon: BoonPicker.tsx is the one place `data-boon` is read or written, and
+// restoring it there, on every mount, is what stays correct if this module
+// happens to have been imported (and already run its restore) before the
+// picker exists to read the localStorage value a user just set — which is
+// exactly the situation BoonPicker's own tests render into. Two restore
+// points for one value is one more than needed; see BoonPicker.tsx for the
+// one that's kept.
 applyScheme();
-if (typeof document !== 'undefined' && typeof localStorage !== 'undefined') {
-  applyBoon(localStorage.getItem('platform-boon') ?? undefined);
-}
 
 /**
  * The live color-scheme swatches. Self-contained (own state, persisted +

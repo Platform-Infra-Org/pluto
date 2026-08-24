@@ -36,6 +36,23 @@ export const BOON_LABELS: Record<Boon, string> = {
   artemis: 'Artemis', aphrodite: 'Aphrodite', chaos: 'Chaos',
 };
 
+/**
+ * Narrows a raw value — typically read straight out of `localStorage` — to a
+ * real boon, or `undefined`.
+ *
+ * The one place a stored string becomes a `Boon`. Every read site routes
+ * through this instead of casting with `as Boon`, so a hand-edited or
+ * otherwise corrupted `localStorage['platform-boon']` degrades to "no boon"
+ * — the same shape `applyScheme` already gets from
+ * `SCHEMES.find(...) ?? defaultScheme()` — rather than being written straight
+ * through to a bogus `data-boon` attribute with no label to match it.
+ */
+export function toBoon(value: string | null | undefined): Boon | undefined {
+  return (BOONS as readonly string[]).includes(value ?? '')
+    ? (value as Boon)
+    : undefined;
+}
+
 export function hadesCss(): string {
   return `
 /* ===== Hades — the House itself, before any boon is drawn ===== */
