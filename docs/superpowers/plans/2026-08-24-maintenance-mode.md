@@ -552,24 +552,48 @@ git commit -m "feat: refuse new requests from non-admins during maintenance"
 
 - [ ] **Step 1: Fetch the font**
 
-Heebo, SIL Open Font License, variable 100–900. Obtain the **variable woff2**
-and its OFL text, and place them at the two paths above.
+Heebo, SIL Open Font License, variable 100–900. **I verified this exact
+sequence works from this machine** — use it rather than improvising:
 
 ```bash
 cd /Users/adelin/Projects/Platform/new-ui/backstage/packages/app/public/fonts
-# e.g. from the google/fonts repository (ofl/heebo), or the Google Fonts CSS2
-# API with a modern UA so it serves woff2.
-ls -la heebo.woff2 HEEBO-LICENSE.txt
+UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+curl -sS -L -A "$UA" \
+  "https://fonts.googleapis.com/css2?family=Heebo:wght@100..900&display=swap" -o /tmp/heebo.css
 ```
 
-**If you cannot reach the network, STOP and report `BLOCKED` naming this step.**
-Do not commit a placeholder file, do not inline a base64 blob, and do not fall
-back to a CDN `@font-face` — the CSP is `font-src 'self'` and a CDN reference
-fails *silently* into something that looks nearly right, which is precisely the
-bug this task exists to fix.
+Then pick the **hebrew** block out of that CSS and download its url — Google
+splits Heebo into `hebrew`, `math`, `symbols`, `latin-ext` and `latin`, each a
+separate woff2:
 
-Sanity-check what you fetched: the file should be roughly 20–120 KB, and
-`file heebo.woff2` should report WOFF2.
+```python
+import re, urllib.request
+css = open('/tmp/heebo.css').read()
+body = re.search(r'/\*\s*hebrew\s*\*/\s*@font-face\s*\{(.*?)\}', css, re.S).group(1)
+urllib.request.urlretrieve(re.search(r'url\((https://[^)]+)\)', body).group(1), 'heebo.woff2')
+```
+
+**Two traps I hit doing this, both of which produce a silently wrong result:**
+
+- **The User-Agent decides the format.** With an older UA string Google serves
+  `.ttf`, not `.woff2`, and the download still appears to succeed. Use the UA
+  above.
+- **Five subsets, one of them Hebrew.** Taking the first woff2 in the CSS, or
+  the `latin` one, gives a file that loads fine and renders no Hebrew at all —
+  this task's own bug, reintroduced one layer down.
+
+Expected: `file heebo.woff2` reports `Web Open Font Format (Version 2)`, and it
+is **about 12 KB** — a Hebrew subset of the variable face, not the whole family,
+so its small size is correct. The subset is still variable (`font-weight: 100 900`).
+
+Also fetch the OFL text (`ofl/heebo/OFL.txt` in the `google/fonts` repository)
+to `HEEBO-LICENSE.txt`, beside the existing `LICENSE.txt`.
+
+**If you cannot reach the network, STOP and report `BLOCKED` naming this step.**
+Do not commit a placeholder, do not inline a base64 blob, and do not fall back
+to a CDN `@font-face` — the CSP is `font-src 'self'`, so a CDN reference fails
+*silently* into something that looks nearly right.
+
 
 - [ ] **Step 2: Write the failing test**
 
@@ -635,6 +659,14 @@ In `styles.ts`, directly after the Clash Grotesk `@font-face`:
   unicode-range: U+0590-05FF, U+FB1D-FB4F;
 }
 ```
+
+**Deliberately narrower than Google's own range.** Their Hebrew subset declares
+`U+0307-0308, U+0590-05FF, U+200C-2010, U+20AA, U+25CC, U+FB1D-FB4F`, which
+claims the zero-width joiners and the hyphen at U+2010 — codepoints that occur
+in *Latin* text too, and would pull Heebo into words otherwise set in Clash
+Grotesk. Narrowing costs nothing: anything outside the range falls back to
+Clash Grotesk, which should be rendering it anyway.
+
 
 Then add `'Heebo'` immediately after `'Clash Grotesk'` in both `--sc-font-ui`
 and `--sc-font-title`.
