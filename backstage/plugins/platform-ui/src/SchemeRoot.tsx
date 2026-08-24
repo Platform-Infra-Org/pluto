@@ -218,8 +218,6 @@ export function resolveDefaultScheme(configured: string | undefined): Scheme {
   );
 }
 
-const defaultScheme = (): Scheme => resolveDefaultScheme(branding.defaultScheme);
-
 /**
  * Branding from `app.branding`, handed over once by {@link SchemeRoot}.
  * `applyScheme` runs at module load — before React, so before configApi exists —
@@ -235,6 +233,8 @@ let branding: {
   headerPosition?: string;
   defaultScheme?: string;
 } = {};
+
+const defaultScheme = (): Scheme => resolveDefaultScheme(branding.defaultScheme);
 
 /**
  * Images bundled from packages/app/src/branding, keyed by subfolder. The app
