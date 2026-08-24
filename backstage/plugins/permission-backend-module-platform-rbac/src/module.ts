@@ -2,6 +2,7 @@ import {
   AuthService,
   coreServices,
   createBackendModule,
+  LoggerService,
 } from '@backstage/backend-plugin-api';
 import { policyExtensionPoint } from '@backstage/plugin-permission-node/alpha';
 import {
@@ -62,6 +63,7 @@ export class PlatformPermissionPolicy implements PermissionPolicy {
     private readonly auditorGroups: string[],
     private readonly catalog: CatalogService,
     private readonly auth: AuthService,
+    private readonly logger: LoggerService,
   ) {}
 
   /**
@@ -75,20 +77,34 @@ export class PlatformPermissionPolicy implements PermissionPolicy {
     if (this.cachedServiceOwners && this.cachedServiceOwners.expiresAt > now) {
       return this.cachedServiceOwners.map;
     }
-    const { items } = await this.catalog.getEntities(
-      { filter: { kind: 'template' } },
-      { credentials: await this.auth.getOwnServiceCredentials() },
-    );
-    const map = serviceOwnerMap(
-      items.map(t => ({
-        metadata: { annotations: t.metadata.annotations },
-        spec: {
-          owner: typeof t.spec?.owner === 'string' ? t.spec.owner : undefined,
-        },
-      })),
-    );
-    this.cachedServiceOwners = { map, expiresAt: now + SERVICE_OWNERS_TTL_MS };
-    return map;
+    // ponytail: fail closed, not open. A catalog error returns an empty map
+    // (so serviceOwnedTypes finds nothing and only entity-ownership still
+    // lets anyone through) rather than propagating an unhandled rejection
+    // out of handle(), which would surface as a 500. Not cached: a
+    // transient failure should retry on the next read, not stay empty for
+    // the TTL.
+    try {
+      const { items } = await this.catalog.getEntities(
+        { filter: { kind: 'template' } },
+        { credentials: await this.auth.getOwnServiceCredentials() },
+      );
+      const map = serviceOwnerMap(
+        items.map(t => ({
+          metadata: {
+            name: t.metadata.name,
+            annotations: t.metadata.annotations,
+          },
+          spec: {
+            owner: typeof t.spec?.owner === 'string' ? t.spec.owner : undefined,
+          },
+        })),
+      );
+      this.cachedServiceOwners = { map, expiresAt: now + SERVICE_OWNERS_TTL_MS };
+      return map;
+    } catch (e) {
+      this.logger.warn(`serviceOwners failed to fetch templates: ${e}`);
+      return new Map();
+    }
   }
 
   async handle(
@@ -157,8 +173,9 @@ export const permissionModulePlatformRbac = createBackendModule({
         config: coreServices.rootConfig,
         catalog: catalogServiceRef,
         auth: coreServices.auth,
+        logger: coreServices.logger,
       },
-      async init({ policy, config, catalog, auth }) {
+      async init({ policy, config, catalog, auth, logger }) {
         policy.setPolicy(
           new PlatformPermissionPolicy(
             config.getOptionalStringArray('platform.rbac.adminGroups') ??
@@ -167,6 +184,7 @@ export const permissionModulePlatformRbac = createBackendModule({
               DEFAULT_AUDITOR_GROUPS,
             catalog,
             auth,
+            logger,
           ),
         );
       },

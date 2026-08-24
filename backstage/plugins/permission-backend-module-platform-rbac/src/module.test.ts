@@ -2,6 +2,7 @@ import {
   AuthorizeResult,
   createPermission,
 } from '@backstage/plugin-permission-common';
+import { isNotCriteria, isOrCriteria } from '@backstage/plugin-permission-node';
 import { PLATFORM_PERMISSIONS } from '@internal/plugin-platform-common';
 import { PlatformPermissionPolicy } from './module';
 
@@ -37,9 +38,9 @@ function tpl(resourceType: string, owner: string): StubTemplate {
   };
 }
 
-function makePolicy(
-  opts: { admin?: boolean; templates?: StubTemplate[] } = {},
-) {
+const noopLogger = { warn: () => {} } as any;
+
+function makePolicy(opts: { templates?: StubTemplate[] } = {}) {
   const catalog = {
     getEntities: async () => ({ items: opts.templates ?? [] }),
   } as any;
@@ -49,6 +50,7 @@ function makePolicy(
     ['group:default/platform-auditors'],
     catalog,
     auth,
+    noopLogger,
   );
 }
 
@@ -57,6 +59,7 @@ const policy = new PlatformPermissionPolicy(
   ['group:default/platform-auditors'],
   { getEntities: async () => ({ items: [] }) } as any,
   { getOwnServiceCredentials: async () => ({}) } as any,
+  noopLogger,
 );
 
 describe('PlatformPermissionPolicy', () => {
@@ -100,6 +103,7 @@ describe('PlatformPermissionPolicy', () => {
       ['group:default/readonly'],
       { getEntities: async () => ({ items: [] }) } as any,
       { getOwnServiceCredentials: async () => ({}) } as any,
+      noopLogger,
     );
     // a member of a configured admin group is not blocked even if also readonly
     const sreReadonly = await custom.handle(
@@ -126,7 +130,7 @@ describe('PlatformPermissionPolicy', () => {
     const READ = { permission: catalogEntityReadPermission } as never;
 
     it('lets an admin read everything', async () => {
-      const policyAdmin = makePolicy({ admin: true });
+      const policyAdmin = makePolicy();
       await expect(
         policyAdmin.handle(READ, userWith(['group:default/platform-admins'])),
       ).resolves.toEqual({ result: AuthorizeResult.ALLOW });
@@ -162,12 +166,31 @@ describe('PlatformPermissionPolicy', () => {
 
     it('does not narrow anything that is not a platform Resource', async () => {
       // Templates, Groups, Users and Components must keep today's behaviour, or
-      // the scaffolder and the org sidebar break.
-      const d: any = await makePolicy({}).handle(
+      // the scaffolder and the org sidebar break. Asserted on the actual
+      // criteria structure, not a substring: `not: hasAnnotation(...)` and a
+      // bare `hasAnnotation(...)` both contain 'platform.io/resource-type' in
+      // their JSON, so a substring check would still pass if the `not`
+      // wrapper were dropped — turning this gate into a catalog lockdown,
+      // the single most dangerous mutation in this task.
+      const d = await makePolicy({}).handle(
         READ,
         userWith(['group:default/nobody']),
       );
-      expect(JSON.stringify(d.conditions)).toContain('platform.io/resource-type');
+      expect(d.result).toBe(AuthorizeResult.CONDITIONAL);
+      const conditions = (d as any).conditions;
+      if (!isOrCriteria(conditions)) {
+        throw new Error('expected an anyOf decision');
+      }
+      const first = conditions.anyOf[0];
+      if (!isNotCriteria(first)) {
+        throw new Error('expected the first anyOf clause to be a `not`');
+      }
+      expect(first.not).toMatchObject({
+        rule: 'HAS_ANNOTATION',
+        resourceType: 'catalog-entity',
+        params: { annotation: 'platform.io/resource-type' },
+      });
+      expect((first.not as any).params?.value).toBeUndefined();
     });
 
     it('still ALLOWs non-catalog permissions', async () => {
