@@ -1245,18 +1245,24 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    in an ordinary empty state. */
 .sc-maint-empty [lang="he"] { font-size: 20px; color: hsl(var(--sc-fg)); }
 
-/* Pluto. Greys of its own — a planet photographed by New Horizons is not a
-   surface we theme — but the glyph over it rides --sc-primary, so the mark
-   still answers to the picked potion. See MaintenancePage.tsx for why the
-   heart (Tombaugh Regio) is the one feature drawn in full. */
-.sc-pluto { width: 168px; height: 168px; flex: 0 0 auto; }
-.sc-pluto-hi { stop-color: hsl(36 30% 90%); }
-.sc-pluto-mid { stop-color: hsl(26 16% 58%); }
-.sc-pluto-lo { stop-color: hsl(24 18% 18%); }
-.sc-pluto-heart { fill: hsl(40 34% 92%); opacity: .82; }
-.sc-pluto-crater { fill: hsl(24 14% 26%); opacity: .3; }
-.sc-pluto-glyph { fill: none; stroke: hsl(var(--sc-primary)); stroke-width: 9;
-  stroke-linecap: square; }
+/* Pluto. A photograph keeps colours of its own — it is a photograph's
+   subject, not a themed surface — but everything laid over it answers to the
+   scheme. image-rendering: pixelated is what makes a real photo belong in an
+   8-bit interface: the 72px source is drawn back up on the same chunky grid
+   the sprites live on, so no rule has to fake a texture. */
+.sc-pluto { position: relative; width: 168px; height: 168px; flex: 0 0 auto; }
+.sc-pluto-disc { width: 100%; height: 100%; display: block;
+  image-rendering: pixelated; }
+/* The same scanline layer .sc-page::before lays over the whole app, clipped to
+   the disc. Texture, not motion, so it survives reduced-motion. */
+.sc-pluto::after { content: ''; position: absolute; inset: 0; border-radius: 50%;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg,
+    hsl(var(--sc-fg) / .05) 0 1px, transparent 1px 3px); }
+.sc-pluto-glyph { position: absolute; inset: 0; width: 100%; height: 100%;
+  fill: none; stroke: hsl(var(--sc-primary)); stroke-width: 9;
+  stroke-linecap: square;
+  filter: drop-shadow(0 2px 0 hsl(var(--sc-bg) / .55)); }
 
 /* [suspend] The mid-workflow approval gate. Yellow edge, matching the node in
    the graph and the request badge: one signal, three places. */
