@@ -439,14 +439,17 @@ describe('dashboardUrl with list params', () => {
     );
   });
 
-  it('lets a computed value replace every member of a configured list', () => {
+  it('keeps a configured list intact beside a computed parameter', () => {
+    // getAll, not toContain: the old implementation stringified the array to a
+    // single "prod,staging" entry, which a substring assertion cannot tell
+    // apart from two real ones.
     const url = dashboardUrl(
-      { ...CFG, params: { from: ['a', 'b'] } },
+      { ...CFG, params: { 'var-env': ['prod', 'staging'] } },
       { from: '1750000000000' },
     );
-    expect(url).toContain('from=1750000000000');
-    expect(url).not.toContain('from=a');
-    expect(url).not.toContain('from=b');
+    const qs = new URLSearchParams(url.split('?')[1]);
+    expect(qs.getAll('var-env')).toEqual(['prod', 'staging']);
+    expect(qs.getAll('from')).toEqual(['1750000000000']);
   });
 });
 
