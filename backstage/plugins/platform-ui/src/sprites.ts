@@ -1750,8 +1750,8 @@ export const BOON_SPRITES: Record<Boon, Sprite> = {
 };
 
 /**
- * The maintenance mark: Pluto's disc with the astrological glyph — the PL
- * monogram, a small bowl over a stroke — on its face.
+ * The maintenance mark: Pluto's disc with the astrological glyph — the
+ * bident, a small bowl over a stroke — on its face.
  *
  * Two-layer like AMPHORA_VESSEL and CAULDRON, not single-layer like the boon
  * glyphs: '#' is the disc's rim AND the monogram (both draw in currentColor

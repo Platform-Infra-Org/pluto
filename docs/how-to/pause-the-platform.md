@@ -22,6 +22,7 @@ This is the load-bearing statement: **the UI hides the form, but the backend ref
 
 ```bash
 curl -X POST \
+  -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"kind": "CREATE", "resourceType": "example", "resourceName": "test", "params": {}}' \
   https://<your-platform>/api/platform-requests/requests
