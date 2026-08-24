@@ -14,14 +14,23 @@ describe('MaintenancePage', () => {
 
   it('explains itself in English too', () => {
     render(<MaintenancePage />);
-    expect(screen.getByText(/maintenance/i)).toBeInTheDocument();
+    // The explanation paragraph itself, not a word ("maintenance") that also
+    // appears in the heading — that match would still pass with the
+    // paragraph deleted entirely.
+    expect(
+      screen.getByText(/new requests are paused/i),
+    ).toBeInTheDocument();
   });
 
   it('carries no colour of its own', () => {
     // It must follow the picked potion like every other surface, including the
-    // Hades boons. A hex or hsl() literal here is a scheme that stopped
-    // theming.
+    // Hades boons. A hex, hsl()/rgb()/rgba() literal, or any inline style=
+    // (which could carry a colour the regex below cannot parse) is a scheme
+    // that stopped theming. This page has no inline styles today and should
+    // never acquire one.
     const { container } = render(<MaintenancePage />);
-    expect(container.innerHTML).not.toMatch(/#[0-9a-f]{3,6}\b|hsl\(\s*\d/i);
+    expect(container.innerHTML).not.toMatch(
+      /#[0-9a-f]{3,6}\b|hsl\(\s*\d|rgba?\(\s*\d|style=/i,
+    );
   });
 });
