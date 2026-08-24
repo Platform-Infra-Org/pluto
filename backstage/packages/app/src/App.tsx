@@ -30,7 +30,7 @@ export default createApp({
     // Our shadcn React Flow relations graph card (replaces catalog-graph's).
     platformRelationsCardModule,
     // Override scaffolder page heading to "New Request".
-    scaffolderTranslationsModule as any,
+    scaffolderTranslationsModule,
     authModule,
   ],
 });
