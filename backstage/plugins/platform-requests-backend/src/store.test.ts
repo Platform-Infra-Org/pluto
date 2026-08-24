@@ -264,6 +264,18 @@ describe('RequestsStore', () => {
   );
 
   it.each(databases.eachSupportedId())(
+    'round-trips a setting and reports absent as undefined, %p',
+    async databaseId => {
+      const store = await createStore(databaseId);
+      expect(await store.getSetting('maintenance')).toBeUndefined();
+      await store.setSetting('maintenance', 'true');
+      expect(await store.getSetting('maintenance')).toBe('true');
+      await store.setSetting('maintenance', 'false');
+      expect(await store.getSetting('maintenance')).toBe('false');
+    },
+  );
+
+  it.each(databases.eachSupportedId())(
     'leaves the failure reason alone on every other transition, %p',
     async databaseId => {
       const store = await createStore(databaseId);

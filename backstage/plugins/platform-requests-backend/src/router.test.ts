@@ -1100,4 +1100,42 @@ describe('createRouter', () => {
     });
   });
 
+  describe('maintenance mode', () => {
+    it('is off when nothing has been set', async () => {
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW });
+      const res = await request(app).get('/maintenance').send();
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ enabled: false });
+    });
+
+    it('lets an admin turn it on, and anyone read it', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        principalResolver: async () => ({ isAdmin: true, groups: [] }),
+      });
+      const put = await request(app)
+        .put('/maintenance')
+        .set('Authorization', asAdmin)
+        .send({ enabled: true });
+      expect(put.status).toBe(200);
+
+      const get = await request(app).get('/maintenance').send();
+      expect(get.body).toEqual({ enabled: true });
+    });
+
+    it('refuses a non-admin turning it on', async () => {
+      // The settings page hides the switch from non-admins, but that is
+      // decluttering. This is the actual gate.
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        principalResolver: async () => ({ isAdmin: false, groups: [] }),
+      });
+      const res = await request(app).put('/maintenance').send({ enabled: true });
+      expect(res.status).toBe(403);
+      expect((await request(app).get('/maintenance').send()).body).toEqual({
+        enabled: false,
+      });
+    });
+  });
+
 });

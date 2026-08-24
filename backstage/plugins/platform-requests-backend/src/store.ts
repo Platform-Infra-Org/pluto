@@ -281,6 +281,26 @@ export class RequestsStore {
       .where({ id })
       .update({ secret_name: name, updated_at: new Date().toISOString() });
   }
+
+  /**
+   * A platform-wide setting, or undefined when never set.
+   *
+   * Values are text because the table is generic; each caller owns its own
+   * parsing. `maintenance` stores 'true'/'false' and treats anything else,
+   * including absence, as off — a malformed row must fail open rather than
+   * locking the platform in maintenance with no way to read the switch.
+   */
+  async getSetting(key: string): Promise<string | undefined> {
+    const row = await this.db('platform_settings').where({ key }).first();
+    return row?.value;
+  }
+
+  async setSetting(key: string, value: string): Promise<void> {
+    await this.db('platform_settings')
+      .insert({ key, value })
+      .onConflict('key')
+      .merge();
+  }
 }
 
 function assemble(row: RequestRow, approvals: ApprovalRow[]): Request {

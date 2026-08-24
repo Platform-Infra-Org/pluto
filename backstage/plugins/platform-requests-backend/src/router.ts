@@ -833,5 +833,27 @@ export async function createRouter(
   router.post('/requests/:id/approve', decide('approve'));
   router.post('/requests/:id/reject', decide('reject'));
 
+  /**
+   * Whether new submissions are being refused.
+   *
+   * Readable by any authenticated caller because the frontend has to know
+   * whether to show the request form or the maintenance page. Writable only by
+   * admins — and that check is here, not in the UI, because hiding a switch is
+   * not the same as refusing to flip it.
+   */
+  router.get('/maintenance', async (req, res) => {
+    await httpAuth.credentials(req, { allow: ['user', 'service'] });
+    res.json({ enabled: (await store.getSetting('maintenance')) === 'true' });
+  });
+
+  router.put('/maintenance', async (req, res) => {
+    const credentials = await httpAuth.credentials(req, { allow: ['user'] });
+    const { isAdmin } = await principalResolver(credentials);
+    if (!isAdmin) throw new NotAllowedError('Only platform admins may change maintenance mode');
+    const enabled = Boolean(req.body?.enabled);
+    await store.setSetting('maintenance', enabled ? 'true' : 'false');
+    res.json({ enabled });
+  });
+
   return router;
 }
