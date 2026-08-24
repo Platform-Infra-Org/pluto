@@ -6,7 +6,7 @@
  * name two optional fields would be a poor trade. A real Entity satisfies this.
  */
 type TemplateLike = {
-  metadata?: { annotations?: Record<string, string> };
+  metadata: { name?: string; annotations?: Record<string, string> };
   spec?: { owner?: string };
 };
 
@@ -17,19 +17,23 @@ export type ServiceOwnerMap = Map<string, string>;
  * Which team approves changes to each resource type.
  *
  * This is the same lookup `ownerResolver` makes — a Template's
- * `platform.io/resource-type` annotation naming the type it owns — lifted into
- * a pure function because two callers now need it: the permission policy that
- * decides what a user may see, and the gate that decides who may bulk-delete.
- * Two copies of an authorization rule is how they drift.
+ * `platform.io/resource-type` annotation (first) or `metadata.name` (fallback)
+ * naming the type it owns — lifted into a pure function because two callers now
+ * need it: the permission policy that decides what a user may see, and the gate
+ * that decides who may bulk-delete. Two copies of an authorization rule is how
+ * they drift.
  *
- * A Template with no annotation is skipped deliberately, not defensively:
- * `bulk-delete-resources` carries none precisely so it cannot shadow the real
- * owner of `git-resource`.
+ * A Template with no annotation falls back to its name, mirroring `ownerResolver`.
+ * `bulk-delete-resources` carries no annotation and is named `bulk-delete-resources`
+ * (not a resource type), so it cannot shadow real resource types even with the
+ * name fallback.
  */
 export function serviceOwnerMap(templates: TemplateLike[]): ServiceOwnerMap {
   const map: ServiceOwnerMap = new Map();
   for (const t of templates) {
-    const type = t.metadata?.annotations?.['platform.io/resource-type'];
+    // Annotation takes precedence over name, matching ownerResolver's logic.
+    const type =
+      t.metadata.annotations?.['platform.io/resource-type'] ?? t.metadata.name;
     const owner = t.spec?.owner;
     // First wins. Two templates claiming one type is a misconfiguration; a
     // deterministic answer beats one that changes with catalog ordering.

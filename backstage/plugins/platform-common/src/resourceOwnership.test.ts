@@ -1,7 +1,12 @@
 import { serviceOwnerMap, serviceOwnedTypes } from './resourceOwnership';
 
-const tpl = (type: string | undefined, owner: string | undefined) => ({
+const tpl = (
+  type: string | undefined,
+  owner: string | undefined,
+  opts?: { name?: string },
+) => ({
   metadata: {
+    ...(opts?.name ? { name: opts.name } : {}),
     ...(type ? { annotations: { 'platform.io/resource-type': type } } : {}),
   },
   spec: { ...(owner ? { owner } : {}) },
@@ -31,6 +36,23 @@ describe('serviceOwnerMap', () => {
       tpl('db', 'group:default/b'),
     ]);
     expect(m.get('db')).toBe('group:default/a');
+  });
+
+  it('falls back to metadata.name when annotation is absent', () => {
+    // Same lookup as ownerResolver: annotation first, name as fallback.
+    const m = serviceOwnerMap([tpl(undefined, 'group:default/checkout', { name: 'git-resource' })]);
+    expect(m.get('git-resource')).toBe('group:default/checkout');
+  });
+
+  it('prefers annotation over name when both exist', () => {
+    // Annotation takes precedence regardless of catalog ordering; a template
+    // with both should use the annotation, not the name. This would be a
+    // misconfiguration, but annotation-first ensures deterministic results.
+    const m = serviceOwnerMap([
+      tpl('annotated-type', 'group:default/checkout', { name: 'git-resource' }),
+      tpl(undefined, 'group:default/payments', { name: 'annotated-type' }),
+    ]);
+    expect(m.get('annotated-type')).toBe('group:default/checkout');
   });
 });
 
