@@ -18,7 +18,7 @@
 
 | Annotation | Value | Effect |
 |---|---|---|
-| `platform.io/resource-type` | string | The resource's type (maps back to its template/owner). |
+| `platform.io/resource-type` | string | The resource's type (maps back to its template/owner). **Decides visibility:** admins, the resource's owner, and the type's service-owner may see it; everyone else sees nothing. A Resource without this annotation is not narrowed by the visibility policy. |
 | `platform.io/resource-data` | `dir:<rel>` \| `url:<abs>` \| `<rel>` | Ref to the resource's data JSON/YAML file. Rendered on the **Resource Data** tab and resolved as `<< resourceData >>`. Falls back to `spec.resourceData`. |
 
 ## On an Argo suspend template
