@@ -48,6 +48,7 @@ import {
   CANOPIC_VESSEL,
   HADES_VESSEL,
   BOON_SPRITES,
+  PLUTO,
 } from './sprites';
 
 const grid = (...rows: string[]) => rows;
@@ -112,6 +113,7 @@ describe('sprite data', () => {
       FUTHARK, YGGDRASIL, KNOTWORK, SCROLL_CORNER, RAVEN,
       ANKH, WEDJAT, CARTOUCHE, PAPYRUS, DJED,
       TOKKURI_VESSEL, CAULDRON_VESSEL, TANKARD_VESSEL, CANOPIC_VESSEL, HADES_VESSEL,
+      PLUTO,
     };
     for (const [name, sprite] of Object.entries({
       TEMPLE,
@@ -455,7 +457,7 @@ describe('mode ornament sprites', () => {
   it('draws both layers of every two-colour motif', () => {
     // A data URI inherits no custom property, so a two-colour motif is two
     // images. A grid missing one layer renders as half a picture.
-    for (const [name, sprite] of Object.entries({ CRESCENT_FLAME, CAULDRON })) {
+    for (const [name, sprite] of Object.entries({ CRESCENT_FLAME, CAULDRON, PLUTO })) {
       expect(`${name}:${spriteRects(sprite, '#').length > 0}`).toBe(`${name}:true`);
       expect(`${name}:${spriteRects(sprite, '~').length > 0}`).toBe(`${name}:true`);
     }

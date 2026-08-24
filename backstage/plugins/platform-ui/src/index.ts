@@ -28,8 +28,10 @@ export {
   SCROLL,
   HOURGLASS,
   LAUREL,
+  PLUTO,
 } from './sprites';
 export type { Sprite } from './sprites';
+export { MaintenancePage } from './MaintenancePage';
 export { useTabActivity } from './tabActivity';
 export { useVisits, useRecordVisit } from './useVisits';
 export { Quickstart } from './quickstart/Quickstart';
