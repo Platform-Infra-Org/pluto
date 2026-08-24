@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { ThemeBlueprint } from '@backstage/plugin-app-react';
+import { AppRootWrapperBlueprint, ThemeBlueprint } from '@backstage/plugin-app-react';
 import {
   AppRootElementBlueprint,
   PageBlueprint,
@@ -16,6 +16,7 @@ import LightIcon from '@material-ui/icons/WbSunny';
 import DarkIcon from '@material-ui/icons/Brightness2';
 import { SchemeRoot } from './SchemeRoot';
 import { navContent } from './CustomNav';
+import { MaintenanceGate } from './MaintenanceGate';
 
 // MUI theme = the Backstage chrome + native pages. The injected shadcn CSS
 // (styles.ts) reskins those MUI surfaces to follow the color picker; this theme
@@ -410,6 +411,15 @@ const schemeRoot = AppRootElementBlueprint.make({
   params: { element: <SchemeRoot /> },
 });
 
+// Replaces the request form with the maintenance page for non-admins while
+// maintenance mode is on (see MaintenanceGate.tsx).
+const maintenanceGate = AppRootWrapperBlueprint.make({
+  name: 'maintenance-gate',
+  params: {
+    component: ({ children }) => <MaintenanceGate>{children}</MaintenanceGate>,
+  },
+});
+
 /**
  * The single platform-ui plugin feature: the shadcn theme (light/dark), the
  * global shadcn CSS + color picker (SchemeRoot), and the custom shadcn nav.
@@ -433,5 +443,12 @@ const catalogGraphPage = PageBlueprint.make({
 
 export const platformUiModule = createFrontendModule({
   pluginId: 'app',
-  extensions: [lightTheme, darkTheme, schemeRoot, navContent, catalogGraphPage],
+  extensions: [
+    lightTheme,
+    darkTheme,
+    schemeRoot,
+    maintenanceGate,
+    navContent,
+    catalogGraphPage,
+  ],
 });

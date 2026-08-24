@@ -32,6 +32,8 @@ export {
 } from './sprites';
 export type { Sprite } from './sprites';
 export { MaintenancePage } from './MaintenancePage';
+export { MaintenanceGate } from './MaintenanceGate';
+export { useMaintenance } from './useMaintenance';
 export { useTabActivity } from './tabActivity';
 export { useVisits, useRecordVisit } from './useVisits';
 export { Quickstart } from './quickstart/Quickstart';
