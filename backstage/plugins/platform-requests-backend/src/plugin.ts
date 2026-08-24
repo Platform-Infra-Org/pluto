@@ -8,6 +8,10 @@ import {
   DEFAULT_NAMESPACE,
   Request as PlatformRequest,
   RequestState,
+  resourceRef,
+  ServiceOwnerMap,
+  serviceOwnedTypes,
+  serviceOwnerMap,
 } from '@internal/plugin-platform-common';
 import { createRouter } from './router';
 import { RequestsStore } from './store';
@@ -213,6 +217,109 @@ export const platformRequestsPlugin = createBackendPlugin({
           }
         };
 
+        // The resourceType -> service-owner map, same lookup the RBAC
+        // permission policy builds (plugin-permission-backend-module-platform-rbac
+        // /src/module.ts), from the same platform-common functions — sharing
+        // those is what keeps this gate and that policy answering the same
+        // question about who may see/act on a resource type. A separate cache
+        // from that module's: each runs in its own plugin/process, so there is
+        // nothing to share between them in this task; worth revisiting only if
+        // the two ever move into one service.
+        //
+        // ponytail: same short TTL as the policy's cache (30s) — long enough to
+        // spare a catalog query on every bulk delete, short enough that a
+        // template edit lands quickly.
+        let cachedServiceOwners: { map: ServiceOwnerMap; expiresAt: number } | undefined;
+        const SERVICE_OWNERS_TTL_MS = 30_000;
+        const serviceOwners = async (): Promise<ServiceOwnerMap> => {
+          const now = Date.now();
+          if (cachedServiceOwners && cachedServiceOwners.expiresAt > now) {
+            return cachedServiceOwners.map;
+          }
+          try {
+            const { items } = await catalog.getEntities(
+              { filter: { kind: 'template' } },
+              { credentials: await auth.getOwnServiceCredentials() },
+            );
+            const map = serviceOwnerMap(
+              items.map(t => ({
+                metadata: {
+                  name: t.metadata.name,
+                  annotations: t.metadata.annotations,
+                },
+                spec: {
+                  owner:
+                    typeof t.spec?.owner === 'string' ? t.spec.owner : undefined,
+                },
+              })),
+            );
+            cachedServiceOwners = { map, expiresAt: now + SERVICE_OWNERS_TTL_MS };
+            return map;
+          } catch (e) {
+            logger.warn(`serviceOwners failed to fetch templates: ${e}`);
+            return new Map();
+          }
+        };
+
+        // Bulk-delete ownership for a requester named by ref (see adminLookup's
+        // comment — the Scaffolder posts as a service and names the human in
+        // `requester`). Answers the same union the RBAC policy's catalog gate
+        // does: the resourceType's service-owner, or the caller being every
+        // named resource's own `spec.owner` — admin is handled by the router's
+        // separate adminLookup call, so it is not re-checked here.
+        //
+        // ponytail: direct `memberOf` relations only, same limitation as
+        // adminLookup — a nested-group owner or service-owner fails closed here
+        // rather than being denied incorrectly; walk relations transitively (or
+        // reuse `principalResolver`'s ownershipEntityRefs machinery) if that
+        // needs to agree with the RBAC policy's own nested-group handling too.
+        const mayDeleteLookup = async (
+          userRef: string,
+          resourceType: string,
+          resourceNames: string[],
+        ): Promise<boolean> => {
+          try {
+            const selfRef = `user:${catalogNamespace}/${userRef}`;
+            const entity = await catalog.getEntityByRef(selfRef, {
+              credentials: await auth.getOwnServiceCredentials(),
+            });
+            const groups =
+              entity?.relations
+                ?.filter(r => r.type === 'memberOf')
+                .map(r => r.targetRef) ?? [];
+
+            if (
+              serviceOwnedTypes(await serviceOwners(), groups).includes(
+                resourceType,
+              )
+            ) {
+              return true;
+            }
+
+            // Direct ownership: every named resource's own `spec.owner` must be
+            // this user or a group they belong to (owner is per resource, not
+            // per type — unlike service-ownership above).
+            const ownerRefs = new Set([...groups, selfRef]);
+            const credentials = await auth.getOwnServiceCredentials();
+            const resources = await Promise.all(
+              resourceNames.map(name =>
+                catalog.getEntityByRef(resourceRef(catalogNamespace, name), {
+                  credentials,
+                }),
+              ),
+            );
+            return resources.every(
+              r =>
+                r !== undefined &&
+                typeof r.spec?.owner === 'string' &&
+                ownerRefs.has(r.spec.owner),
+            );
+          } catch (e) {
+            logger.warn(`mayDeleteLookup failed for '${resourceType}': ${e}`);
+            return false;
+          }
+        };
+
         // The owning service team for a resourceType = the owner of the
         // Scaffolder Template that provides it (matched by a
         // `platform.io/resource-type` annotation, or by template name).
@@ -406,6 +513,7 @@ export const platformRequestsPlugin = createBackendPlugin({
             reconcileRequest,
             principalResolver,
             adminLookup,
+            mayDeleteLookup,
             ownerResolver,
             verbConfigResolver,
             resourceDataFor,

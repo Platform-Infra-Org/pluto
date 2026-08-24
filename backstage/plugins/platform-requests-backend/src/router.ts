@@ -47,6 +47,20 @@ export type PrincipalResolver = (
  */
 export type AdminLookup = (userRef: string) => Promise<boolean>;
 
+/**
+ * Whether `userRef` may bulk-delete every one of `resourceNames` (all of one
+ * `resourceType`) — the same union the permission policy's catalog gate
+ * answers: admin, the resource's own owner, or the resourceType's
+ * service-owner. Named by ref rather than held as a credential, for the same
+ * reason as {@link AdminLookup}: the Scaffolder posts as a service and names
+ * the human in the body.
+ */
+export type MayDeleteLookup = (
+  userRef: string,
+  resourceType: string,
+  resourceNames: string[],
+) => Promise<boolean>;
+
 export interface RouterOptions {
   httpAuth: HttpAuthService;
   permissions: PermissionsService;
@@ -64,6 +78,8 @@ export interface RouterOptions {
   principalResolver?: PrincipalResolver;
   /** Resolves admin-ness for a named requester (maintenance-mode gate). */
   adminLookup?: AdminLookup;
+  /** Resolves bulk-delete ownership for a named requester (admin/owner/service-owner). */
+  mayDeleteLookup?: MayDeleteLookup;
   /** Resolves the owning service team (group ref) for a resourceType. */
   ownerResolver?: (resourceType: string) => Promise<string | undefined>;
   /** Resolves per-verb Argo submit config for UPDATE/DELETE (from the template). */
@@ -190,6 +206,8 @@ export async function createRouter(
   const principalResolver: PrincipalResolver =
     options.principalResolver ?? (async () => ({ isAdmin: false, groups: [] }));
   const adminLookup: AdminLookup = options.adminLookup ?? (async () => false);
+  const mayDeleteLookup: MayDeleteLookup =
+    options.mayDeleteLookup ?? (async () => false);
   const submitWorkflow =
     options.submitWorkflow ?? (async () => undefined);
   const cipher: Cipher | undefined = options.cipher;
@@ -244,6 +262,44 @@ export async function createRouter(
           error: 'Platform maintenance is on — new requests are paused.',
         });
         return;
+      }
+    }
+
+    // Bulk delete answers the same union the permission policy uses: admin,
+    // owner, or service-owner. Whoever may see a resource may select it, so
+    // there is no asymmetry for a user to discover the hard way.
+    //
+    // The picker already narrows what is easy to click — it reads the same
+    // filtered catalog. This exists for what the picker cannot cover: a stale
+    // tab, or a call that skips the form.
+    //
+    // Refused whole rather than partially: a user who ticks five boxes, sees
+    // success and finds three gone has no way to tell which half happened, on
+    // an action that submits a Git-writing workflow. This matches the existing
+    // rule that a bulk request naming an unresolvable resource is refused
+    // whole, before any workflow is submitted.
+    //
+    // Keyed on `requester`, not the credential — the Scaffolder posts as a
+    // service and names the human in the body. Runs before any write or
+    // encryption, same as the maintenance gate above.
+    //
+    // One resourceType per batch: `bulk-delete-resources` posts one
+    // `resourceType` for the whole request (its MultiEntityPicker filters to a
+    // single `spec.type`), so one check covers every name and the refusal
+    // names the type rather than walking resourceNames individually.
+    if (data.kind === 'DELETE' && data.resourceNames?.length) {
+      if (!(await adminLookup(requester))) {
+        if (
+          !(await mayDeleteLookup(requester, data.resourceType, data.resourceNames))
+        ) {
+          res.status(403).json({
+            error:
+              `Not permitted to delete one or more of those ${data.resourceType} ` +
+              `resources — that requires an admin, the resource's owner, or the ` +
+              `owning service team.`,
+          });
+          return;
+        }
       }
     }
 

@@ -12,7 +12,7 @@ import {
 import express from 'express';
 import request from 'supertest';
 import { RootConfigService } from '@backstage/backend-plugin-api';
-import { createRouter, PrincipalResolver } from './router';
+import { createRouter, MayDeleteLookup, PrincipalResolver } from './router';
 import { RequestsStore } from './store';
 import { Cipher, createCipher } from './crypto';
 import { ArgoClient } from './argo';
@@ -27,6 +27,18 @@ const NEW_REQUEST = {
   params: { region: 'eu' },
 };
 
+const BULK_DELETE_BODY = {
+  kind: 'DELETE' as const,
+  resourceType: 'git-resource',
+  resourceNames: ['bucket-a', 'bucket-b'],
+};
+
+const SINGLE_DELETE_BODY = {
+  kind: 'DELETE' as const,
+  resourceType: 'git-resource',
+  resourceName: 'bucket-a',
+};
+
 describe('createRouter', () => {
   const databases = TestDatabases.create({ disableDocker: true });
 
@@ -34,6 +46,7 @@ describe('createRouter', () => {
     result: AuthorizeResult.ALLOW | AuthorizeResult.DENY;
     principalResolver?: PrincipalResolver;
     adminLookup?: (userRef: string) => Promise<boolean>;
+    mayDeleteLookup?: MayDeleteLookup;
     ownerResolver?: (resourceType: string) => Promise<string | undefined>;
     submitWorkflow?: jest.Mock<Promise<void>, [PlatformRequest]>;
     cipher?: Cipher;
@@ -52,6 +65,7 @@ describe('createRouter', () => {
       store,
       principalResolver: opts.principalResolver,
       adminLookup: opts.adminLookup,
+      mayDeleteLookup: opts.mayDeleteLookup,
       ownerResolver: opts.ownerResolver,
       submitWorkflow: opts.submitWorkflow,
       cipher: opts.cipher,
@@ -357,7 +371,10 @@ describe('createRouter', () => {
 
   describe('many resources per request', () => {
     it('accepts resourceNames and derives resourceName from them', async () => {
-      const { app } = await makeApp({ result: AuthorizeResult.ALLOW });
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        mayDeleteLookup: async () => true,
+      });
       const res = await request(app)
         .post('/requests')
         .send({
@@ -480,6 +497,7 @@ describe('createRouter', () => {
     const { app, store } = await makeApp({
       result: AuthorizeResult.ALLOW,
       principalResolver: async () => ({ isAdmin: true, groups: [] }),
+      mayDeleteLookup: async () => true,
       submitWorkflow,
     });
 
@@ -1217,6 +1235,75 @@ describe('createRouter', () => {
           secretValues: { apiKey: 'super-secret-value' },
         });
       expect(res.status).toBe(503);
+    });
+  });
+
+  describe('bulk delete ownership', () => {
+    // 'boss' is an admin; 'dev' service-owns git-resource; 'owner' directly owns
+    // the named resources; 'other' is none of the three.
+    const adminLookup = async (ref: string) => ref === 'boss';
+    const mayDeleteLookup = async (ref: string, type: string) =>
+      (ref === 'dev' && type === 'git-resource') || ref === 'owner';
+
+    it('accepts a bulk delete where every name is service-owned', async () => {
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW, adminLookup, mayDeleteLookup });
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...BULK_DELETE_BODY, requester: 'dev' });
+      expect(res.status).toBe(201);
+    });
+
+    it('accepts a bulk delete from a direct owner', async () => {
+      // Owners may bulk delete, same as service-owners — one rule for seeing and
+      // selecting, so there is no asymmetry to explain.
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW, adminLookup, mayDeleteLookup });
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...BULK_DELETE_BODY, requester: 'owner' });
+      expect(res.status).toBe(201);
+    });
+
+    it('refuses the whole request when one name is not service-owned', async () => {
+      // Partial success on a Git-writing destructive action is the outcome that
+      // is hardest to notice and hardest to undo.
+      const { app, store } = await makeApp({ result: AuthorizeResult.ALLOW, adminLookup, mayDeleteLookup });
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...BULK_DELETE_BODY, requester: 'other' });
+      expect(res.status).toBe(403);
+      expect(await store.list()).toHaveLength(0);   // nothing submitted
+    });
+
+    it('names the offending resources in the refusal', async () => {
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW, adminLookup, mayDeleteLookup });
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...BULK_DELETE_BODY, requester: 'other' });
+      // A user who ticked five boxes needs to know which one stopped it.
+      expect(JSON.stringify(res.body)).toMatch(/git-resource|not permitted/i);
+    });
+
+    it('lets an admin bulk delete regardless of service ownership', async () => {
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW, adminLookup, mayDeleteLookup });
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...BULK_DELETE_BODY, requester: 'boss' });
+      expect(res.status).toBe(201);
+    });
+
+    it('leaves a single-resource DELETE alone', async () => {
+      // This plan does not change who may delete one resource.
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW, adminLookup, mayDeleteLookup });
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...SINGLE_DELETE_BODY, requester: 'other' });
+      expect(res.status).toBe(201);
     });
   });
 
