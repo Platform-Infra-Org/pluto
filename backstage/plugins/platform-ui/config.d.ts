@@ -88,7 +88,7 @@ export interface Config {
       /**
        * Which potion a browser with nothing stored gets.
        *
-       * An id from the scheme shelf (`obsidian`, `greek`, `hades`, …). A
+       * An id from the scheme shelf (`obsidian`, `greek`, `egyptian`, …). A
        * visitor's own pick always wins — this decides only the first visit.
        * Missing or unknown falls back to `obsidian`.
        * @visibility frontend

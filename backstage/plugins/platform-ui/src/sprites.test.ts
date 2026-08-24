@@ -46,8 +46,6 @@ import {
   CAULDRON_VESSEL,
   TANKARD_VESSEL,
   CANOPIC_VESSEL,
-  HADES_VESSEL,
-  BOON_SPRITES,
   PLUTO,
 } from './sprites';
 
@@ -112,14 +110,13 @@ describe('sprite data', () => {
       SEIGAIHA, TORII, ASANOHA, KOI, CRESCENT_FLAME, CAULDRON, SPRIG,
       FUTHARK, YGGDRASIL, KNOTWORK, SCROLL_CORNER, RAVEN,
       ANKH, WEDJAT, CARTOUCHE, PAPYRUS, DJED,
-      TOKKURI_VESSEL, CAULDRON_VESSEL, TANKARD_VESSEL, CANOPIC_VESSEL, HADES_VESSEL,
+      TOKKURI_VESSEL, CAULDRON_VESSEL, TANKARD_VESSEL, CANOPIC_VESSEL,
       PLUTO,
     };
     for (const [name, sprite] of Object.entries({
       TEMPLE,
       ...items,
       ...STATE_SPRITES,
-      ...BOON_SPRITES,
     })) {
       expect(`${name}:${sprite.length}`).toBe(`${name}:${SPRITE_SIZE}`);
       for (const row of sprite) {
@@ -130,7 +127,7 @@ describe('sprite data', () => {
 
   it('uses only the two authored characters', () => {
     for (const [name, sprite] of Object.entries({
-      AMPHORA, KEY, LAUREL, HELM, TORCH, ...STATE_SPRITES, ...BOON_SPRITES,
+      AMPHORA, KEY, LAUREL, HELM, TORCH, ...STATE_SPRITES,
     })) {
       const stray = sprite.join('').replace(/[#.]/g, '');
       expect(`${name}:${stray}`).toBe(`${name}:`);
@@ -215,7 +212,6 @@ describe('sprite data', () => {
       CAULDRON_VESSEL,
       TANKARD_VESSEL,
       CANOPIC_VESSEL,
-      HADES_VESSEL,
     };
     for (const [name, sprite] of Object.entries(vessels)) {
       expect(`${name} liquid:${spriteRects(sprite, '~').length > 0}`).toBe(
@@ -240,7 +236,6 @@ describe('sprite data', () => {
       CAULDRON_VESSEL,
       TANKARD_VESSEL,
       CANOPIC_VESSEL,
-      HADES_VESSEL,
     };
     for (const [name, sprite] of Object.entries(vessels)) {
       expect(`${name} last row:${sprite[SPRITE_SIZE - 1]}`).toBe(
@@ -251,17 +246,6 @@ describe('sprite data', () => {
     }
   });
 
-  it('draws something in every boon glyph', () => {
-    for (const [name, sprite] of Object.entries(BOON_SPRITES)) {
-      expect(`${name}:${spriteRects(sprite).length > 0}`).toBe(`${name}:true`);
-    }
-  });
-
-  it('gives every boon glyph a silhouette of its own', () => {
-    // Nine gods sharing a drawing is one glyph worn by two buttons.
-    const shapes = Object.values(BOON_SPRITES).map(s => s.join('/'));
-    expect(new Set(shapes).size).toBe(shapes.length);
-  });
 
   it('gives every vessel a silhouette of its own', () => {
     // Two modes sharing a grid is the same bottle twice, which is what the
@@ -273,7 +257,6 @@ describe('sprite data', () => {
       CAULDRON_VESSEL,
       TANKARD_VESSEL,
       CANOPIC_VESSEL,
-      HADES_VESSEL,
     ].map(s => s.join('/'));
     expect(new Set(shapes).size).toBe(shapes.length);
   });

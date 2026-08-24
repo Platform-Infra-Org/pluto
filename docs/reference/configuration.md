@@ -59,7 +59,7 @@ is a support ticket.
 ```yaml
 app:
   branding:
-    defaultScheme: hades
+    defaultScheme: greek
 ```
 
 An id from the scheme shelf. A visitor's own pick always wins — this decides the
@@ -129,7 +129,6 @@ platform:
       - pendingApprovals    # requests you may decide
       - recentlyVisited     # pages you opened, newest first
       - favouriteTemplates  # templates you starred on New Request
-      - pantheon            # the Hades boon wheel — on by default
     maxItems: 8
 ```
 

@@ -5,7 +5,7 @@ import { PLUTO } from './sprites';
  * What a non-admin sees instead of the request form while maintenance is on.
  *
  * Built from our own furniture and nothing else — no colour literals — so it
- * follows the picked potion, Hades boons included. A maintenance screen that
+ * follows the picked potion. A maintenance screen that
  * ignored the theme would look like an error page from another application,
  * which is exactly the wrong impression: nothing is broken.
  *

@@ -47,7 +47,6 @@ describe('SchemeRoot', () => {
 
   beforeEach(() => {
     localStorage.clear();
-    document.documentElement.removeAttribute('data-boon');
     // jsdom has no matchMedia; SchemeRoot reads it for the dark-mode query.
     (window as unknown as { matchMedia: unknown }).matchMedia = jest.fn().mockReturnValue({
       matches: false,
@@ -81,25 +80,5 @@ describe('SchemeRoot', () => {
 
     expect(localStorage.getItem('platform-scheme')).toBe('obsidian');
     expect(document.documentElement.classList.contains('sc-obsidian')).toBe(true);
-  });
-
-  it('restores a stored boon with no BoonPicker anywhere in the tree', () => {
-    // Regression guard: BoonPicker only ever renders as one of the
-    // configured `platform.home.sections`, on the home page. If the boon's
-    // restore ever moves into BoonPicker's own mount effect instead of
-    // living here, this goes red — a reload on any OTHER route, or a
-    // deployment that drops `pantheon` from that config list entirely,
-    // would silently lose the equipped boon even though localStorage still
-    // has it. SchemeRoot is what wraps every route, so it is the one place
-    // that can restore `data-boon` regardless of which page is on screen.
-    localStorage.setItem('platform-boon', 'zeus');
-    renderRoot(undefined);
-    expect(document.documentElement.getAttribute('data-boon')).toBe('zeus');
-  });
-
-  it('degrades a corrupted stored boon to none, on every route', () => {
-    localStorage.setItem('platform-boon', 'garbage');
-    renderRoot(undefined);
-    expect(document.documentElement.getAttribute('data-boon')).toBeNull();
   });
 });

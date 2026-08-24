@@ -13,7 +13,6 @@ import {
   AMPHORA_VESSEL,
   CANOPIC_VESSEL,
   CAULDRON_VESSEL,
-  HADES_VESSEL,
   TANKARD_VESSEL,
   Sprite,
   SPRITE_SIZE,
@@ -42,7 +41,6 @@ import {
 import { CARD_LIGHT } from './statusTokens';
 import { ALL_ROUTE_CLASSES, routeClassFor } from './routeClass';
 import { resolveHeaderImages } from './headerImages';
-import { toBoon } from './hades';
 
 /**
  * Pointer travel before a press becomes a drag.
@@ -101,7 +99,6 @@ const MODES = [
   'nightshade',
   'rimefast',
   'egyptian',
-  'hades',
 ] as const;
 type Mode = (typeof MODES)[number];
 
@@ -122,7 +119,6 @@ export const MODE_VESSELS: Partial<Record<Mode, Sprite>> = {
   nightshade: CAULDRON_VESSEL,
   rimefast: TANKARD_VESSEL,
   egyptian: CANOPIC_VESSEL,
-  hades: HADES_VESSEL,
 };
 
 // Saturated toward NES-era values. `fg` is the text colour that sits on the
@@ -172,13 +168,6 @@ export const SCHEMES: Scheme[] = [
     hsl: '221 62% 32%',
     fg: WHITE, // 9.98 — lapis, the light register's primary
     mode: 'egyptian',
-  },
-  {
-    id: 'hades',
-    label: 'Hades',
-    hsl: '352 72% 45%',
-    fg: WHITE, // 5.76
-    mode: 'hades',
   },
   // Reference design systems, each rendered in this app's furniture.
   {
@@ -477,27 +466,10 @@ export function applyScheme(scheme?: string) {
   );
 }
 
-/**
- * Equip a boon. Separate from `applyScheme` because it is a second axis: the
- * scheme decides the mode class, the boon decides which of that mode's nine
- * registers applies. Written as an attribute rather than a class so it cannot
- * collide with the `sc-<mode>` classes `applyScheme` clears.
- */
-export function applyBoon(boon: string | undefined) {
-  const root = document.documentElement;
-  if (boon) root.setAttribute('data-boon', boon);
-  else root.removeAttribute('data-boon');
-  if (typeof localStorage !== 'undefined') {
-    if (boon) localStorage.setItem('platform-boon', boon);
-    else localStorage.removeItem('platform-boon');
-  }
-}
-
-// The event a scheme pick made anywhere (BoonPicker's wheel, not just this
-// file's own shelf) is broadcast on, so every mounted SchemePicker updates
-// its own `scheme` state to match — the same cross-component pattern
-// `platform:quickstart` uses below. Without this the shelf still shows the
-// previous bottle as equipped after a boon pick.
+// The event a scheme pick is broadcast on, so every mounted SchemePicker
+// updates its own `scheme` state to match — the same cross-component pattern
+// `platform:quickstart` uses below. Without this a second shelf still shows
+// the previous bottle as equipped after a pick made elsewhere.
 const SCHEME_EVENT = 'platform:scheme';
 
 /**
@@ -521,15 +493,6 @@ export function equipScheme(id: string) {
 }
 
 // Theme the login gate immediately, before React mounts anything.
-//
-// The boon is NOT restored here: this runs once per process, at whatever
-// moment something first imports this module, which is too early to matter
-// and (for a picker that can be re-opened or, in tests, re-rendered) too
-// early to stay correct. It is restored instead by a `useLayoutEffect` inside
-// the `SchemeRoot` component below, which mounts once per app — wrapping
-// every route, not just the home page BoonPicker's card happens to live on —
-// and re-runs per render tree in tests, the same way the configured default
-// scheme a few lines down does.
 applyScheme();
 
 /**
@@ -612,14 +575,14 @@ export function SchemePicker({
   useEffect(() => {
     // Base CSS + accent var; also re-applied live whenever the picker changes.
     // Routed through equipScheme so a pick made here persists and broadcasts
-    // exactly the same way a pick made from BoonPicker's wheel does.
+    // to any other mounted picker.
     equipScheme(scheme);
   }, [scheme]);
 
   useEffect(() => {
     // The other half of equipScheme's broadcast: a pick made anywhere else
-    // (BoonPicker) still needs this shelf's own "what's equipped" state to
-    // agree, or the corner bottle keeps showing the previous scheme.
+    // still needs this shelf's own "what's equipped" state to agree, or the
+    // corner bottle keeps showing the previous scheme.
     const onEquip = (e: Event) => {
       const id = (e as CustomEvent<string>).detail;
       if (id) setScheme(id);
@@ -982,20 +945,6 @@ export function SchemeRoot() {
     const stored =
       typeof localStorage !== 'undefined' && localStorage.getItem('platform-scheme');
     if (!stored) applyScheme(defaultScheme().id);
-  }, []);
-
-  // The boon's one restore point. SchemeRoot wraps every route (mounted
-  // app-wide, see theme.tsx), so this is what keeps `data-boon` in step with
-  // `localStorage` on a reload of ANY page — not only when BoonPicker's own
-  // card happens to be on screen, which for most routes it never is.
-  // `toBoon` degrades a corrupted or hand-edited value to no boon rather than
-  // writing it straight through. useLayoutEffect, matching the scheme restore
-  // just above, so a reload never paints the House's own crimson register
-  // before the equipped boon lands.
-  useLayoutEffect(() => {
-    applyBoon(
-      toBoon(typeof localStorage !== 'undefined' ? localStorage.getItem('platform-boon') : null),
-    );
   }, []);
 
   useEffect(

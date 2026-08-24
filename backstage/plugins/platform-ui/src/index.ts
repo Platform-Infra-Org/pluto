@@ -1,6 +1,5 @@
 export { SHADCN_CSS } from './styles';
 export { SCHEMES, SchemePicker, setBrandingImages } from './SchemeRoot';
-export { BoonPicker } from './BoonPicker';
 export { platformUiModule } from './theme';
 export {
   PixelSprite,

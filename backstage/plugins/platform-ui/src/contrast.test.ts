@@ -1,7 +1,6 @@
 import { BRAND_DEFS } from './brands';
 import { egyptianCss } from './egyptian';
 import { foudreCss } from './foudre';
-import { BOONS, hadesCss } from './hades';
 import { greekCss } from './greek';
 import { hanamiCss } from './hanami';
 import { nightshadeCss } from './nightshade';
@@ -212,37 +211,6 @@ describe('greek palette contrast', () => {
   }
 });
 
-describe('hades palette contrast', () => {
-  // The base register (the House itself) plus all nine boons — each measured
-  // rather than eyeballed, so "nine gods that all fail the same way" is a
-  // failure this file catches the same way hades.test.ts catches nine gods
-  // rendering the same colour.
-  const css = hadesCss();
-
-  it('clears its contrast targets on the House register', () => {
-    const tokens = registerOf(css, ':root.sc-hades');
-    const PAIRS: ReadonlyArray<readonly [string, string, number]> = [
-      ['sc-fg', 'sc-bg', AA],
-      ['sc-fg', 'sc-card', AA],
-      ['sc-muted-fg', 'sc-card', AA],
-      ['sc-primary-fg', 'sc-primary', AA],
-      ['sc-accent-fg', 'sc-accent', AA],
-    ];
-    for (const [fg, bg, min] of PAIRS) {
-      const measured = contrast(tokens[fg], tokens[bg]);
-      expect(`${fg} on ${bg}: ${measured >= min}`).toBe(`${fg} on ${bg}: true`);
-    }
-  });
-
-  it('clears 4.5:1 between every boon and its own foreground', () => {
-    for (const b of BOONS) {
-      const tokens = registerOf(css, `:root.sc-hades[data-boon="${b}"]`);
-      const measured = contrast(tokens['sc-primary'], tokens['sc-primary-fg']);
-      expect(`${b}: ${measured >= AA}`).toBe(`${b}: true`);
-    }
-  });
-});
-
 describe('dark rules', () => {
   it('is never a second helping of the accent', () => {
     // Every dark register cleared the numeric contrast bar and still read as
@@ -275,11 +243,6 @@ describe('dark rules', () => {
       ],
       ['rimefast', registerOf(rimefastCss(), ':root.sc-rimefast.sc-dark')],
       ['egyptian', registerOf(egyptianCss(), ':root.sc-egyptian.sc-dark')],
-      // Hades has no `.sc-dark` pairing of its own — single register, see
-      // hades.ts — so its one dark-in-all-but-name register is `:root.sc-hades`
-      // itself, the same block the "hades palette contrast" describe below
-      // measures.
-      ['hades', registerOf(hadesCss(), ':root.sc-hades')],
     ];
 
     for (const [mode, tokens] of registers) {

@@ -36,8 +36,7 @@ describe('MaintenancePage', () => {
   });
 
   it('carries no colour of its own', () => {
-    // It must follow the picked potion like every other surface, including the
-    // Hades boons. A hex, hsl()/rgb()/rgba() literal, or any inline style=
+    // It must follow the picked potion like every other surface. A hex, hsl()/rgb()/rgba() literal, or any inline style=
     // (which could carry a colour the regex below cannot parse) is a scheme
     // that stopped theming. This page has no inline styles today and should
     // never acquire one.
