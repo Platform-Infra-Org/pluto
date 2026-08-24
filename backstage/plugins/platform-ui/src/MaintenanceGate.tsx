@@ -6,8 +6,18 @@ import { useIsAdmin } from './useIsAdmin';
 
 // Matches '/create' itself and everything under it (the template picker and
 // the multi-step form both live under this prefix) — but not e.g. '/created'.
+//
+// '/create/tasks' is carved back out: it's where someone watches a run they
+// already submitted, not a form the backend would reject. The 503 in
+// platform-requests-backend is on POST /requests only — approvals, re-checks
+// and in-flight workflows are deliberately left alone — so the UI gate has to
+// stop at the same boundary, or MaintenancePage's own "already filed is
+// unaffected" copy would be shown while hiding exactly that.
 function isRequestFormRoute(pathname: string): boolean {
   const path = pathname.replace(/\/+$/, '') || '/';
+  if (path === '/create/tasks' || path.startsWith('/create/tasks/')) {
+    return false;
+  }
   return path === '/create' || path.startsWith('/create/');
 }
 

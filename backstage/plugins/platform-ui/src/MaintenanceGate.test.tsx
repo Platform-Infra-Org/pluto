@@ -61,4 +61,28 @@ describe('MaintenanceGate', () => {
     expect(screen.getByText('the form')).toBeInTheDocument();
     expect(screen.queryByText('Maintenance')).not.toBeInTheDocument();
   });
+
+  it('renders children on the task view — work already filed is unaffected by maintenance', () => {
+    mockMaintenance.mockReturnValue(true);
+    mockIsAdmin.mockReturnValue(false);
+    renderGate('/create/tasks/abc123');
+    expect(screen.getByText('the form')).toBeInTheDocument();
+    expect(screen.queryByText('Maintenance')).not.toBeInTheDocument();
+  });
+
+  it('renders children on the task list with a trailing slash', () => {
+    mockMaintenance.mockReturnValue(true);
+    mockIsAdmin.mockReturnValue(false);
+    renderGate('/create/tasks/');
+    expect(screen.getByText('the form')).toBeInTheDocument();
+    expect(screen.queryByText('Maintenance')).not.toBeInTheDocument();
+  });
+
+  it('still gates a path that merely starts with "tasks", e.g. /create/tasksomething', () => {
+    mockMaintenance.mockReturnValue(true);
+    mockIsAdmin.mockReturnValue(false);
+    renderGate('/create/tasksomething');
+    expect(screen.getByText('Maintenance')).toBeInTheDocument();
+    expect(screen.queryByText('the form')).not.toBeInTheDocument();
+  });
 });
