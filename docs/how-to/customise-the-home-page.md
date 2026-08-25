@@ -17,6 +17,7 @@ platform:
       - pendingApprovals
       - recentlyVisited
       - favouriteTemplates
+      - pluto
     maxItems: 8
 ```
 
