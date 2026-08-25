@@ -828,12 +828,27 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
     0 -2px 0 hsl(240 12% 6% / .95),
     3px 3px 0 hsl(240 12% 6% / .8);
   margin: 0;
-  /* anywhere, not break-word: both paint the same break, but only anywhere
-     reduces the box's intrinsic min-content width. With break-word the flex
-     line stayed as wide as the longest word, which is what pushed the actions
-     onto a second row. The container keeps wrap — the catch-all that forces
-     every other header child onto its own full-width row depends on it. */
-  flex: 1 1 auto;
+  /* flex-basis 0, NOT auto. This is the whole fix, and the reason a previous
+     attempt at it did nothing.
+
+     A wrapping flex container decides its lines from each item's *hypothetical
+     main size*, and for flex-basis: auto that is the item's max-content
+     width — the title as one unwrapped line. A long name therefore filled the
+     row on its own and the actions were pushed to a second line before any
+     shrinking was considered. overflow-wrap cannot help: it lowers
+     min-content, which governs how far an item may shrink once it is already
+     on the line, not which line it lands on.
+
+     With basis 0 the title's hypothetical size is 0, so it always shares the
+     row; flex-grow then hands it whatever the actions leave. Measured in
+     Chromium at a 320px card with a 52-char name: basis auto put the actions
+     at y=63, basis 0 keeps them at y=10 beside a 260px title.
+
+     min-width: 0 and overflow-wrap: anywhere stay for the remaining case — a
+     single unbreakable token longer than the space the actions leave. The
+     container keeps wrap: the catch-all that forces every other header child
+     onto its own full-width row depends on it. */
+  flex: 1 1 0;
   min-width: 0;
   text-align: left;
   overflow-wrap: anywhere;

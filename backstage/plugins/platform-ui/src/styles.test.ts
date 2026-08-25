@@ -625,11 +625,13 @@ describe('SHADCN_CSS', () => {
 
     // Flush left, sharing the header's top line with the action icons.
     expect(body).toMatch(/text-align:\s*left/);
-    // The title is the flexible half of that line. min-width 0 is the part
-    // that is easy to drop and impossible to notice: without it a flex item
-    // refuses to shrink below its content width, so a long name pushes the
-    // icons off the card instead of wrapping underneath itself.
-    expect(body).toMatch(/flex:\s*1 1 auto/);
+    // The title is the flexible half of that line, and the basis must be 0
+    // rather than auto — see "keeps the template card actions on the title
+    // row" below for why auto is what pushed the icons onto a second line.
+    // min-width 0 is the companion that is easy to drop and impossible to
+    // notice: without it a flex item refuses to shrink below its content
+    // width at all.
+    expect(body).toMatch(/flex:\s*1 1 0/);
     expect(body).toMatch(/min-width:\s*0/);
   });
 
@@ -746,18 +748,32 @@ describe('SHADCN_CSS', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('lets a long template name shrink below its longest word', () => {
-    // `break-word` paints a break but does NOT reduce intrinsic min-content
-    // width, so the flex line stayed as wide as the longest word and pushed the
-    // detail/favourite row onto a second line. `anywhere` reduces it, which is
-    // what keeps the buttons pinned top-right.
-    const css = SHADCN_CSS;
-    const titleRule = css.slice(
-      css.indexOf('.sc-route-create'),
-      css.indexOf('.sc-route-create') + 4000,
+  it('keeps the template card actions on the title row', () => {
+    // This rule shipped once already, asserting `overflow-wrap: anywhere` —
+    // which was green while the bug was still on screen, because overflow-wrap
+    // is not what decides this. A wrapping flex container picks its lines from
+    // each item's HYPOTHETICAL MAIN SIZE, and for `flex-basis: auto` that is
+    // the title's max-content width. A long name filled the row alone and the
+    // actions were pushed to a second line before shrinking was ever
+    // considered; overflow-wrap only lowers min-content, which governs how far
+    // an item shrinks once it is already on the line.
+    //
+    // Measured in Chromium, 320px card, 52-char name: `flex: 1 1 auto` put the
+    // actions at y=63, `flex: 1 1 0` keeps them at y=10. So basis is what this
+    // pins. jsdom has no layout engine, so the declaration is as close as a
+    // unit test gets — the real proof is the measurement above.
+    const start = SHADCN_CSS.indexOf(
+      '.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h4 {',
     );
+    expect(start).toBeGreaterThan(-1);
+    const titleRule = SHADCN_CSS.slice(start, SHADCN_CSS.indexOf('\n}', start));
+
+    expect(titleRule).toContain('flex: 1 1 0;');
+    expect(titleRule).not.toContain('flex: 1 1 auto');
+    expect(titleRule).toContain('min-width: 0');
+    // Still needed, for the one case basis 0 cannot solve: a single
+    // unbreakable token wider than the space the actions leave.
     expect(titleRule).toContain('overflow-wrap: anywhere');
-    expect(titleRule).not.toContain('overflow-wrap: break-word');
   });
 });
 
