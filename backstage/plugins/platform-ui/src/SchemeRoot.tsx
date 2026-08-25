@@ -2,6 +2,7 @@ import {
   CSSProperties,
   PointerEvent as ReactPointerEvent,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -108,7 +109,7 @@ type Mode = (typeof MODES)[number];
  * inventory tray both render a bottle, and a branch in each is how the two
  * drifted apart the first time. Adding the next one is a row here.
  *
- * ORDER MATTERS ELSEWHERE. These five sit contiguously at the front of
+ * ORDER MATTERS ELSEWHERE. These six sit contiguously at the front of
  * `SCHEMES` so the shelf reads as "the crafted ones, then the brand ones", and
  * `SchemeRoot.test.ts` fails if a new scheme is slotted in between them.
  */
@@ -203,13 +204,19 @@ export const SCHEMES: Scheme[] = [
 /**
  * What a browser with nothing stored gets.
  *
- * Resolved through the shelf rather than used raw, so removing or renaming a
- * scheme degrades to the first bottle instead of leaving every new visitor on
- * an id that no longer exists.
+ * Resolved through the shelf rather than used raw, so a configured id that is
+ * removed or renamed degrades to the first bottle instead of leaving every new
+ * visitor on an id that no longer exists.
  */
 const DEFAULT_SCHEME_ID = 'obsidian';
-const defaultScheme = (): Scheme =>
-  SCHEMES.find(s => s.id === DEFAULT_SCHEME_ID) ?? SCHEMES[0];
+
+export function resolveDefaultScheme(configured: string | undefined): Scheme {
+  return (
+    SCHEMES.find(s => s.id === configured) ??
+    SCHEMES.find(s => s.id === DEFAULT_SCHEME_ID) ??
+    SCHEMES[0]
+  );
+}
 
 /**
  * Branding from `app.branding`, handed over once by {@link SchemeRoot}.
@@ -224,7 +231,10 @@ let branding: {
   headerDir?: string;
   headerHeight?: string;
   headerPosition?: string;
+  defaultScheme?: string;
 } = {};
+
+const defaultScheme = (): Scheme => resolveDefaultScheme(branding.defaultScheme);
 
 /**
  * Images bundled from packages/app/src/branding, keyed by subfolder. The app
@@ -456,6 +466,32 @@ export function applyScheme(scheme?: string) {
   );
 }
 
+// The event a scheme pick is broadcast on, so every mounted SchemePicker
+// updates its own `scheme` state to match — the same cross-component pattern
+// `platform:quickstart` uses below. Without this a second shelf still shows
+// the previous bottle as equipped after a pick made elsewhere.
+const SCHEME_EVENT = 'platform:scheme';
+
+/**
+ * Equip a scheme from outside the picker: paint it, persist it, and tell
+ * every mounted SchemePicker to update which bottle it shows as equipped.
+ * `applyScheme` alone does the first but not the last two — those live here
+ * instead of in `applyScheme` because plenty of its other callers (the
+ * config-default effect, the prefers-color-scheme handler, `ensureTones`)
+ * call it to repaint the *current* scheme and must not stomp a stored pick.
+ */
+export function equipScheme(id: string) {
+  applyScheme(id);
+  try {
+    localStorage.setItem('platform-scheme', id);
+  } catch {
+    /* ignore */
+  }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(SCHEME_EVENT, { detail: id }));
+  }
+}
+
 // Theme the login gate immediately, before React mounts anything.
 applyScheme();
 
@@ -538,13 +574,22 @@ export function SchemePicker({
 
   useEffect(() => {
     // Base CSS + accent var; also re-applied live whenever the picker changes.
-    applyScheme(scheme);
-    try {
-      localStorage.setItem('platform-scheme', scheme);
-    } catch {
-      /* ignore */
-    }
+    // Routed through equipScheme so a pick made here persists and broadcasts
+    // to any other mounted picker.
+    equipScheme(scheme);
   }, [scheme]);
+
+  useEffect(() => {
+    // The other half of equipScheme's broadcast: a pick made anywhere else
+    // still needs this shelf's own "what's equipped" state to agree, or the
+    // corner bottle keeps showing the previous scheme.
+    const onEquip = (e: Event) => {
+      const id = (e as CustomEvent<string>).detail;
+      if (id) setScheme(id);
+    };
+    window.addEventListener(SCHEME_EVENT, onEquip);
+    return () => window.removeEventListener(SCHEME_EVENT, onEquip);
+  }, []);
 
   useEffect(
     () => () => {
@@ -865,6 +910,14 @@ export function SchemeRoot() {
   const appTheme = useApi(appThemeApiRef);
   const config = useApi(configApiRef);
 
+  // Set synchronously, during render rather than only in the effect below:
+  // SchemePicker is a child rendered within this same pass, and its own
+  // `useState` initialiser reads `defaultScheme()` before any effect —
+  // layout or passive — gets a chance to run, then immediately persists
+  // whatever it saw to localStorage. An effect alone would arrive one render
+  // too late: the wrong default would already be locked in and saved.
+  branding.defaultScheme = config.getOptionalString('app.branding.defaultScheme');
+
   useEffect(() => {
     setBranding({
       mark: config.getOptionalString('app.branding.mark'),
@@ -879,8 +932,20 @@ export function SchemeRoot() {
       headerPosition: config.getOptionalString(
         'app.branding.templateHeaders.position',
       ),
+      defaultScheme: config.getOptionalString('app.branding.defaultScheme'),
     });
   }, [config]);
+
+  // applyScheme runs at module load — before React, so before configApi exists
+  // — and therefore cannot have seen the configured default. Re-apply here,
+  // and only when nothing is stored: a returning visitor's own pick always
+  // wins, or the picker would look broken. useLayoutEffect, not useEffect, so
+  // a new visitor never sees obsidian paint first.
+  useLayoutEffect(() => {
+    const stored =
+      typeof localStorage !== 'undefined' && localStorage.getItem('platform-scheme');
+    if (!stored) applyScheme(defaultScheme().id);
+  }, []);
 
   useEffect(
     () =>

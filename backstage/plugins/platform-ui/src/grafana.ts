@@ -1,5 +1,8 @@
 import type { ConfigApi } from '@backstage/core-plugin-api';
 
+/** A configured parameter: one value, or several for a multi-value variable. */
+export type ParamValue = string | string[];
+
 export interface GrafanaConfig {
   baseUrl: string;
   uid: string;
@@ -10,7 +13,7 @@ export interface GrafanaConfig {
    * Extra query parameters, written into the URL before the computed ones so a
    * computed value always wins. See `dashboardUrl`.
    */
-  params?: Record<string, string>;
+  params?: Record<string, ParamValue>;
 }
 
 /** The two dashboards this feature can show, fully resolved. */
@@ -26,13 +29,35 @@ export interface PlatformGrafanaConfig {
  */
 type ConfigNode = NonNullable<ReturnType<ConfigApi['getOptionalConfig']>>;
 
-/** A `params` block as a flat string map; `undefined` when it holds nothing. */
-function readParams(node: ConfigNode | undefined): Record<string, string> | undefined {
+/** A scalar YAML value as a query-parameter string, or undefined if it is not one. */
+function scalar(value: unknown): string | undefined {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return undefined;
+}
+
+/**
+ * A `params` block as a flat map; `undefined` when it holds nothing.
+ *
+ * Read raw rather than through `getOptionalString`: that throws on a type
+ * mismatch, so a plain `var-limit: 10` used to take the whole field down.
+ * Numbers and booleans are ordinary Grafana variable values and coerce; a list
+ * stays a list, because Grafana expresses a multi-value variable as the same
+ * key repeated. Anything else is skipped — the frontend cannot refuse to start,
+ * and a dashboard missing one variable beats a blank page.
+ */
+function readParams(node: ConfigNode | undefined): Record<string, ParamValue> | undefined {
   if (!node) return undefined;
-  const out: Record<string, string> = {};
+  const out: Record<string, ParamValue> = {};
   for (const key of node.keys()) {
-    const value = node.getOptionalString(key);
-    if (value !== undefined) out[key] = value;
+    const raw: unknown = node.get(key);
+    if (Array.isArray(raw)) {
+      const members = raw.map(scalar).filter((v): v is string => v !== undefined);
+      if (members.length) out[key] = members;
+      continue;
+    }
+    const one = scalar(raw);
+    if (one !== undefined) out[key] = one;
   }
   return Object.keys(out).length ? out : undefined;
 }
@@ -148,7 +173,11 @@ export function dashboardUrl(
   const path = opts.panelId === undefined ? 'd' : 'd-solo';
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(cfg.params ?? {})) {
-    params.set(key, value);
+    // `append` for a list so a multi-value variable survives as repeated keys.
+    // The computed parameters below still use `set`, which collapses every
+    // same-named value — so a computed one beats a configured list outright.
+    if (Array.isArray(value)) for (const v of value) params.append(key, v);
+    else params.set(key, value);
   }
   if (opts.panelId !== undefined) params.set('panelId', String(opts.panelId));
   if (cfg.kiosk) params.set('kiosk', '1');
@@ -184,9 +213,9 @@ const TOKEN = /<<\s*([a-zA-Z]+)\s*>>/g;
  * dashboard that was meant to be scoped to one request.
  */
 export function resolveParams(
-  params: Record<string, string> | undefined,
+  params: Record<string, ParamValue> | undefined,
   ctx: GrafanaRequestContext,
-): Record<string, string> | undefined {
+): Record<string, ParamValue> | undefined {
   if (!params) return undefined;
   const values: Record<string, string> = {
     requestId: String(ctx.requestId ?? ''),
@@ -196,11 +225,18 @@ export function resolveParams(
     workflowName: ctx.workflowName ?? '',
     workflowNamespace: ctx.workflowNamespace ?? '',
   };
-  const out: Record<string, string> = {};
-  for (const [key, raw] of Object.entries(params)) {
-    const value = raw.replace(TOKEN, (_match, token: string) =>
+  const one = (raw: string) =>
+    raw.replace(TOKEN, (_m, token: string) =>
       Object.hasOwn(values, token) ? values[token] : '',
     );
+  const out: Record<string, ParamValue> = {};
+  for (const [key, raw] of Object.entries(params)) {
+    if (Array.isArray(raw)) {
+      const members = raw.map(one).filter(Boolean);
+      if (members.length) out[key] = members;
+      continue;
+    }
+    const value = one(raw);
     if (value) out[key] = value;
   }
   return Object.keys(out).length ? out : undefined;

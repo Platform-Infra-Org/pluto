@@ -1,4 +1,9 @@
-import { MODE_VESSELS, SCHEMES, applyScheme } from './SchemeRoot';
+import {
+  MODE_VESSELS,
+  SCHEMES,
+  applyScheme,
+  resolveDefaultScheme,
+} from './SchemeRoot';
 
 /** WCAG relative luminance for an "H S% L%" triplet. */
 function luminance(hsl: string): number {
@@ -86,5 +91,22 @@ describe('colour schemes', () => {
         `${s.id}:sc-${s.mode}`,
       );
     }
+  });
+});
+
+describe('configured default scheme', () => {
+  it('falls back to obsidian when nothing is configured', () => {
+    expect(resolveDefaultScheme(undefined).id).toBe('obsidian');
+  });
+
+  it('falls back to obsidian for an id no longer on the shelf', () => {
+    // Same degrade rule the hard-coded default already documented: resolve
+    // through the shelf, so a removed or renamed scheme leaves new visitors on
+    // a real bottle instead of a dead id.
+    expect(resolveDefaultScheme('no-such-potion').id).toBe('obsidian');
+  });
+
+  it('uses a configured id that exists', () => {
+    expect(resolveDefaultScheme('greek').id).toBe('greek');
   });
 });

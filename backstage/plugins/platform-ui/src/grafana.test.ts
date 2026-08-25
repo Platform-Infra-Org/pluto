@@ -385,3 +385,84 @@ describe('globalDashboardUrl / requestDashboardUrl', () => {
     ).toEqual({ baseUrl: 'https://grafana.example.com' });
   });
 });
+
+describe('non-string param values', () => {
+  const read = (params: unknown) =>
+    readGrafanaConfig(
+      new ConfigReader({
+        platform: {
+          grafana: {
+            baseUrl: 'https://grafana.example.com',
+            dashboard: { uid: 'abc123', slug: 'platform-overview' },
+            params,
+          },
+        },
+      } as never) as never,
+    )?.global.params;
+
+  it('coerces a number', () => {
+    expect(read({ 'var-limit': 10 })).toEqual({ 'var-limit': '10' });
+  });
+
+  it('coerces a boolean', () => {
+    expect(read({ kiosk: true })).toEqual({ kiosk: 'true' });
+  });
+
+  it('keeps a list as a list', () => {
+    expect(read({ 'var-env': ['prod', 'staging'] })).toEqual({
+      'var-env': ['prod', 'staging'],
+    });
+  });
+
+  it('coerces the members of a list', () => {
+    expect(read({ 'var-n': [1, 2] })).toEqual({ 'var-n': ['1', '2'] });
+  });
+
+  it('skips a value that is not a scalar or a list of them', () => {
+    // The frontend cannot refuse to start; a dashboard missing one variable
+    // beats a blank page.
+    expect(read({ ok: 'yes', bad: { nested: 1 } })).toEqual({ ok: 'yes' });
+  });
+});
+
+describe('dashboardUrl with list params', () => {
+  it('repeats a list as multiple query parameters', () => {
+    // How Grafana expresses a multi-value template variable.
+    expect(dashboardUrl({ ...CFG, params: { 'var-env': ['prod', 'staging'] } })).toBe(
+      'https://grafana.example.com/d/abc123/platform-overview?var-env=prod&var-env=staging',
+    );
+  });
+
+  it('keeps a configured list intact beside a computed parameter', () => {
+    // getAll, not toContain: the old implementation stringified the array to a
+    // single "prod,staging" entry, which a substring assertion cannot tell
+    // apart from two real ones.
+    const url = dashboardUrl(
+      { ...CFG, params: { 'var-env': ['prod', 'staging'] } },
+      { from: '1750000000000' },
+    );
+    const qs = new URLSearchParams(url.split('?')[1]);
+    expect(qs.getAll('var-env')).toEqual(['prod', 'staging']);
+    expect(qs.getAll('from')).toEqual(['1750000000000']);
+  });
+});
+
+describe('resolveParams with list values', () => {
+  const CTX = { requestId: 41, workflowName: 'git-ops-abc12' };
+
+  it('resolves each member', () => {
+    expect(resolveParams({ a: ['<< requestId >>', 'lit'] }, CTX)).toEqual({
+      a: ['41', 'lit'],
+    });
+  });
+
+  it('drops the members that resolve empty', () => {
+    expect(resolveParams({ a: ['<< requestId >>', '<< nope >>'] }, CTX)).toEqual({
+      a: ['41'],
+    });
+  });
+
+  it('drops a key whose whole list resolves empty', () => {
+    expect(resolveParams({ a: ['<< nope >>'], b: 'keep' }, CTX)).toEqual({ b: 'keep' });
+  });
+});

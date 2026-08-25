@@ -1,6 +1,7 @@
 import {
   DEFAULT_NAMESPACE,
   catalogPath,
+  normalizeEntityRef,
   resourceRef,
   userRef,
 } from './refs';
@@ -36,5 +37,31 @@ describe('ref helpers', () => {
 
   it('defaults to the namespace Backstage itself defaults to', () => {
     expect(DEFAULT_NAMESPACE).toBe('default');
+  });
+});
+
+describe('normalizeEntityRef', () => {
+  // The catalog runs every owner through parseEntityRef + stringifyEntityRef
+  // before it becomes a `relations.ownedBy` targetRef, so these are the forms
+  // that must all collapse onto one string.
+  it.each([
+    ['payments', 'group:default/payments'],
+    ['Group:default/Payments', 'group:default/payments'],
+    ['group:default/payments', 'group:default/payments'],
+    ['default/payments', 'group:default/payments'],
+    ['group:platform/payments', 'group:platform/payments'],
+  ])('normalizes %s', (input, expected) => {
+    expect(normalizeEntityRef(input, 'Group')).toBe(expected);
+  });
+
+  it('keeps an explicit kind rather than defaulting it', () => {
+    expect(normalizeEntityRef('user:default/dana', 'Group')).toBe(
+      'user:default/dana',
+    );
+  });
+
+  it('does not throw on a malformed ref', () => {
+    // An authorization gate must return "matches nothing", never a 500.
+    expect(() => normalizeEntityRef('', 'Group')).not.toThrow();
   });
 });

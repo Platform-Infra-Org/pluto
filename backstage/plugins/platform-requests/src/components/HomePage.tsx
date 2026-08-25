@@ -16,6 +16,7 @@ import {
   PageHeader,
   Card,
   PixelStar,
+  PlutoMark,
 } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
 import { useCatalogNamespace } from '../useCatalogNamespace';
@@ -30,7 +31,8 @@ type Section =
   | 'standingRequests'
   | 'pendingApprovals'
   | 'recentlyVisited'
-  | 'favouriteTemplates';
+  | 'favouriteTemplates'
+  | 'pluto';
 
 interface OwnedResource {
   name: string;
@@ -272,6 +274,28 @@ function PendingApprovals({ max }: { max: number }) {
   );
 }
 
+/**
+ * Decoration, and nothing else.
+ *
+ * `standingRequests` spans two cells, so six sections fill seven of the
+ * grid's eight — this is what sits in the eighth rather than leaving a hole
+ * beside the last row. It states nothing and links nowhere on purpose: a card
+ * that looked interactive here would be a dead end, and the empty cell was
+ * only ever a layout artefact, not missing information.
+ *
+ * No card around it: an edge here would read as a panel with its content
+ * missing. It floats in the cell instead, held back so it never competes
+ * with the real cards beside it, and marked decorative so screen readers
+ * skip it entirely.
+ */
+function PlutoBlock() {
+  return (
+    <div className="sc-pluto-block">
+      <PlutoMark decorative />
+    </div>
+  );
+}
+
 export function HomePage() {
   const config = useApi(configApiRef);
   const home = config.getOptionalConfig('platform.home');
@@ -288,6 +312,7 @@ export function HomePage() {
     'pendingApprovals',
     'recentlyVisited',
     'favouriteTemplates',
+    'pluto',
   ];
   const maxItems = home?.getOptionalNumber('maxItems') ?? 8;
 
@@ -311,6 +336,8 @@ export function HomePage() {
             case 'favouriteTemplates':
               // 6: beyond that it stops being a favourites list.
               return <FavouriteTemplates key={s} max={6} />;
+            case 'pluto':
+              return <PlutoBlock key={s} />;
             default:
               return null;
           }

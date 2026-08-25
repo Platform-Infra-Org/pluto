@@ -157,9 +157,17 @@ export class RequestsStore {
   }
 
   async setState(id: number, state: RequestState): Promise<void> {
-    await this.db('platform_requests')
-      .where({ id })
-      .update({ state, updated_at: new Date().toISOString() });
+    const update: Record<string, unknown> = {
+      state,
+      updated_at: new Date().toISOString(),
+    };
+    // A succeeded request has no failure reason. Enforced here rather than at
+    // the call sites because every path that can reach SUCCEEDED — the poller,
+    // the re-check route, and whatever is added next — goes through this one
+    // method. null (not '') so `assemble`'s `row.error ?? undefined` actually
+    // drops the field, rather than leaving a falsy-but-present empty string.
+    if (state === 'SUCCEEDED') update.error = null;
+    await this.db('platform_requests').where({ id }).update(update);
   }
 
   async setWorkflow(
@@ -272,6 +280,26 @@ export class RequestsStore {
     await this.db('platform_requests')
       .where({ id })
       .update({ secret_name: name, updated_at: new Date().toISOString() });
+  }
+
+  /**
+   * A platform-wide setting, or undefined when never set.
+   *
+   * Values are text because the table is generic; each caller owns its own
+   * parsing. `maintenance` stores 'true'/'false' and treats anything else,
+   * including absence, as off — a malformed row must fail open rather than
+   * locking the platform in maintenance with no way to read the switch.
+   */
+  async getSetting(key: string): Promise<string | undefined> {
+    const row = await this.db('platform_settings').where({ key }).first();
+    return row?.value;
+  }
+
+  async setSetting(key: string, value: string): Promise<void> {
+    await this.db('platform_settings')
+      .insert({ key, value })
+      .onConflict('key')
+      .merge();
   }
 }
 

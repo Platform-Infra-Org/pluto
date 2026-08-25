@@ -210,7 +210,6 @@ a `BRAND_DEFS` row cannot express ornament or an animation:
   confined to the sign-in page — it sits 16° from the success status hue, and
   green ornament beside a badge turns decoration into state;
   `egyptian.test.ts` fails if it appears anywhere else.
-
 The mechanism is specificity alone. The injected accent sheet writes `:root`,
 which is (0,1,0); `:root.sc-greek` is (0,2,0) and wins whatever the injection
 order, and `:root.sc-greek.sc-dark` is (0,3,0) and settles the dark register

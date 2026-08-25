@@ -1,4 +1,5 @@
 import {
+  BackstageCredentials,
   coreServices,
   createBackendPlugin,
 } from '@backstage/backend-plugin-api';
@@ -8,7 +9,11 @@ import {
   DEFAULT_NAMESPACE,
   Request as PlatformRequest,
   RequestState,
+  ServiceOwnerMap,
+  resourceRef,
+  serviceOwnerMap,
 } from '@internal/plugin-platform-common';
+import { createMayDeleteLookup } from './ownership';
 import { createRouter } from './router';
 import { RequestsStore } from './store';
 import { ArgoClient } from './argo';
@@ -17,6 +22,7 @@ import { createSecretStore } from './secretStore';
 import { createCipher } from './crypto';
 import { createResourceResolver, createSubmitWorkflow } from './provisioning';
 import { planRetention, readRetentionConfig } from './retention';
+import { isAdminRef } from './maintenance';
 
 /**
  * States whose workflow may still need the request's Secret: running,
@@ -155,6 +161,29 @@ export const platformRequestsPlugin = createBackendPlugin({
           namespace: catalogNamespace,
         });
 
+        // Can this caller see this resource? Asks the catalog *as the caller*,
+        // so the answer is the catalog's own permission filter rather than a
+        // reimplementation of it — `resolveResource` reads with the backend's
+        // service credentials for the provisioning path, which is why the route
+        // that exposes it to a human needs this in front.
+        const resourceVisibleTo = async (
+          credentials: BackstageCredentials,
+          resourceName: string,
+        ): Promise<boolean> => {
+          try {
+            return !!(await catalog.getEntityByRef(
+              resourceRef(catalogNamespace, resourceName),
+              { credentials },
+            ));
+          } catch (e) {
+            // Includes a catalog that is simply unreachable. Fails closed: this
+            // guards a read the catalog would otherwise have filtered, so the
+            // safe answer to "I could not check" is "you cannot see it".
+            logger.warn(`resourceVisibleTo failed for '${resourceName}': ${e}`);
+            return false;
+          }
+        };
+
         // On APPROVED the router calls this, then flips the request to IN_PROGRESS.
         const submitWorkflow = createSubmitWorkflow({
           argo,
@@ -173,12 +202,100 @@ export const platformRequestsPlugin = createBackendPlugin({
           try {
             const info = await userInfo.getUserInfo(credentials);
             const groups = info.ownershipEntityRefs;
-            const isAdmin = groups.some(g => adminGroups.includes(g));
+            const isAdmin = isAdminRef(groups, adminGroups);
             return { isAdmin, groups };
           } catch {
             return { isAdmin: false, groups: [] };
           }
         };
+
+        // Admin-ness for a user we only have a name for.
+        //
+        // The Scaffolder posts as a service and names the human in
+        // `requester`, so `principalResolver` — which needs a user credential —
+        // cannot answer for the path most submissions take. Same adminGroups
+        // list, but not the same membership test: this reads the entity's own
+        // `memberOf` relations, direct membership only. `principalResolver`,
+        // the RBAC policy and `useIsAdmin` all read `ownershipEntityRefs`
+        // instead, which also carries ancestor groups — normal on this stack
+        // (Keycloak->LDAP, nested groups). An admin only by inheritance passes
+        // every other check and 503s here; it fails closed, so there is no
+        // security hole, just a submit that admin cannot explain.
+        //
+        // ponytail: direct membership only here. Walk `relations`
+        // transitively (or resolve through the same ownership-refs machinery
+        // `getUserInfo` uses) if nested-group admins need this to agree with
+        // the others too.
+        const adminLookup = async (userRef: string) => {
+          try {
+            const entity = await catalog.getEntityByRef(
+              `user:${catalogNamespace}/${userRef}`,
+              { credentials: await auth.getOwnServiceCredentials() },
+            );
+            const groups = entity?.relations
+              ?.filter(r => r.type === 'memberOf')
+              .map(r => r.targetRef);
+            return isAdminRef(groups, adminGroups);
+          } catch {
+            return false;
+          }
+        };
+
+        // The resourceType -> service-owner map, same lookup the RBAC
+        // permission policy builds (plugin-permission-backend-module-platform-rbac
+        // /src/module.ts), from the same platform-common functions — sharing
+        // those is what keeps this gate and that policy answering the same
+        // question about who may see/act on a resource type. A separate cache
+        // from that module's: each runs in its own plugin/process, so there is
+        // nothing to share between them in this task; worth revisiting only if
+        // the two ever move into one service.
+        //
+        // ponytail: same short TTL as the policy's cache (30s) — long enough to
+        // spare a catalog query on every bulk delete, short enough that a
+        // template edit lands quickly.
+        let cachedServiceOwners: { map: ServiceOwnerMap; expiresAt: number } | undefined;
+        const SERVICE_OWNERS_TTL_MS = 30_000;
+        const serviceOwners = async (): Promise<ServiceOwnerMap> => {
+          const now = Date.now();
+          if (cachedServiceOwners && cachedServiceOwners.expiresAt > now) {
+            return cachedServiceOwners.map;
+          }
+          try {
+            const { items } = await catalog.getEntities(
+              { filter: { kind: 'template' } },
+              { credentials: await auth.getOwnServiceCredentials() },
+            );
+            const map = serviceOwnerMap(
+              items.map(t => ({
+                metadata: {
+                  name: t.metadata.name,
+                  annotations: t.metadata.annotations,
+                },
+                spec: {
+                  owner:
+                    typeof t.spec?.owner === 'string' ? t.spec.owner : undefined,
+                },
+              })),
+            );
+            cachedServiceOwners = { map, expiresAt: now + SERVICE_OWNERS_TTL_MS };
+            return map;
+          } catch (e) {
+            logger.warn(`serviceOwners failed to fetch templates: ${e}`);
+            return new Map();
+          }
+        };
+
+        // Bulk-delete ownership: the resourceType's service-owner, or the
+        // caller owning every named resource. Lives in `ownership.ts` so the
+        // rule has tests of its own — the router only ever saw it through an
+        // option it could stub.
+        const mayDeleteLookup = createMayDeleteLookup({
+          catalog,
+          auth,
+          logger,
+          catalogNamespace,
+          serviceOwners,
+        });
 
         // The owning service team for a resourceType = the owner of the
         // Scaffolder Template that provides it (matched by a
@@ -372,9 +489,12 @@ export const platformRequestsPlugin = createBackendPlugin({
             stopWorkflow: (name, opts) => argo.stopWorkflow(name, opts),
             reconcileRequest,
             principalResolver,
+            adminLookup,
+            mayDeleteLookup,
             ownerResolver,
             verbConfigResolver,
             resourceDataFor,
+            resourceVisibleTo,
             cipher,
             secretsEnabled: !!secretStore,
           }),

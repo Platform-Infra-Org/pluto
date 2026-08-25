@@ -3,6 +3,9 @@ import { ThemeBlueprint } from '@backstage/plugin-app-react';
 import {
   AppRootElementBlueprint,
   PageBlueprint,
+  createExtension,
+  createExtensionInput,
+  coreExtensionData,
   createFrontendModule,
 } from '@backstage/frontend-plugin-api';
 import {
@@ -16,6 +19,7 @@ import LightIcon from '@material-ui/icons/WbSunny';
 import DarkIcon from '@material-ui/icons/Brightness2';
 import { SchemeRoot } from './SchemeRoot';
 import { navContent } from './CustomNav';
+import { AppLayoutContent } from './AppLayoutContent';
 
 // MUI theme = the Backstage chrome + native pages. The injected shadcn CSS
 // (styles.ts) reskins those MUI surfaces to follow the color picker; this theme
@@ -410,6 +414,40 @@ const schemeRoot = AppRootElementBlueprint.make({
   params: { element: <SchemeRoot /> },
 });
 
+// Replaces the request form's content with the maintenance page for
+// non-admins while maintenance mode is on (see MaintenanceGate.tsx).
+//
+// This overrides the built-in `app/layout` extension (disabled in
+// app-config.yaml under `app.extensions`) instead of wrapping `app/root`'s
+// `children` with AppRootWrapperBlueprint: that wrapper sits around
+// app/layout's own output, where nav and content are already composed into
+// one element, so swapping `children` for the maintenance page there deletes
+// the sidebar and header too. Reimplementing app/layout's own factory
+// (SidebarPage(nav, content) — see AppLayout.esm.js in @backstage/plugin-app)
+// and gating only `content` keeps the shell intact. The composition itself
+// lives in AppLayoutContent.tsx, so it can be unit tested directly.
+const appLayout = createExtension({
+  name: 'layout',
+  attachTo: { id: 'app/root', input: 'children' },
+  inputs: {
+    nav: createExtensionInput([coreExtensionData.reactElement], {
+      singleton: true,
+    }),
+    content: createExtensionInput([coreExtensionData.reactElement], {
+      singleton: true,
+    }),
+  },
+  output: [coreExtensionData.reactElement],
+  factory: ({ inputs }) => [
+    coreExtensionData.reactElement(
+      <AppLayoutContent
+        nav={inputs.nav.get(coreExtensionData.reactElement)}
+        content={inputs.content.get(coreExtensionData.reactElement)}
+      />,
+    ),
+  ],
+});
+
 /**
  * The single platform-ui plugin feature: the shadcn theme (light/dark), the
  * global shadcn CSS + color picker (SchemeRoot), and the custom shadcn nav.
@@ -433,5 +471,12 @@ const catalogGraphPage = PageBlueprint.make({
 
 export const platformUiModule = createFrontendModule({
   pluginId: 'app',
-  extensions: [lightTheme, darkTheme, schemeRoot, navContent, catalogGraphPage],
+  extensions: [
+    lightTheme,
+    darkTheme,
+    schemeRoot,
+    appLayout,
+    navContent,
+    catalogGraphPage,
+  ],
 });

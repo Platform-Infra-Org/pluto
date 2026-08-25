@@ -178,3 +178,16 @@ describe('RequestPage — Metrics card', () => {
     expect(screen.queryByText('Metrics')).toBeNull();
   });
 });
+
+describe('RequestPage — failure row', () => {
+  it('shows no failure row on a succeeded request carrying a stale error', async () => {
+    renderWith({}, { state: 'SUCCEEDED', error: 'boom from the previous run' });
+    await waitFor(() => expect(screen.getByText('my-resource')).toBeInTheDocument());
+    expect(screen.queryByText(/boom from the previous run/)).toBeNull();
+  });
+
+  it('still shows the failure row while failed', async () => {
+    renderWith({}, { state: 'FAILED', error: 'boom' });
+    await waitFor(() => expect(screen.getByText(/boom/)).toBeInTheDocument());
+  });
+});

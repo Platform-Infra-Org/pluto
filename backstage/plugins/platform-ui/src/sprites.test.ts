@@ -244,6 +244,7 @@ describe('sprite data', () => {
     }
   });
 
+
   it('gives every vessel a silhouette of its own', () => {
     // Two modes sharing a grid is the same bottle twice, which is what the
     // generic POTION already does for everything unornamented.

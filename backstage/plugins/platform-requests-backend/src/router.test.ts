@@ -11,8 +11,11 @@ import {
 } from '@internal/plugin-platform-common';
 import express from 'express';
 import request from 'supertest';
-import { RootConfigService } from '@backstage/backend-plugin-api';
-import { createRouter, PrincipalResolver } from './router';
+import {
+  BackstageCredentials,
+  RootConfigService,
+} from '@backstage/backend-plugin-api';
+import { createRouter, MayDeleteLookup, PrincipalResolver } from './router';
 import { RequestsStore } from './store';
 import { Cipher, createCipher } from './crypto';
 import { ArgoClient } from './argo';
@@ -27,12 +30,26 @@ const NEW_REQUEST = {
   params: { region: 'eu' },
 };
 
+const BULK_DELETE_BODY = {
+  kind: 'DELETE' as const,
+  resourceType: 'git-resource',
+  resourceNames: ['bucket-a', 'bucket-b'],
+};
+
+const SINGLE_DELETE_BODY = {
+  kind: 'DELETE' as const,
+  resourceType: 'git-resource',
+  resourceName: 'bucket-a',
+};
+
 describe('createRouter', () => {
   const databases = TestDatabases.create({ disableDocker: true });
 
   async function makeApp(opts: {
     result: AuthorizeResult.ALLOW | AuthorizeResult.DENY;
     principalResolver?: PrincipalResolver;
+    adminLookup?: (userRef: string) => Promise<boolean>;
+    mayDeleteLookup?: MayDeleteLookup;
     ownerResolver?: (resourceType: string) => Promise<string | undefined>;
     submitWorkflow?: jest.Mock<Promise<void>, [PlatformRequest]>;
     cipher?: Cipher;
@@ -42,6 +59,11 @@ describe('createRouter', () => {
     resumeNode?: jest.Mock<Promise<void>, [string, string, object]>;
     stopWorkflow?: jest.Mock<Promise<void>, [string, object]>;
     config?: RootConfigService;
+    resourceDataFor?: (name: string) => Promise<Record<string, unknown>>;
+    resourceVisibleTo?: (
+      credentials: BackstageCredentials,
+      name: string,
+    ) => Promise<boolean>;
   }) {
     const knex = await databases.init('SQLITE_3');
     const store = await RequestsStore.create(mockServices.database({ knex }));
@@ -50,6 +72,8 @@ describe('createRouter', () => {
       permissions: mockServices.permissions({ result: opts.result }),
       store,
       principalResolver: opts.principalResolver,
+      adminLookup: opts.adminLookup,
+      mayDeleteLookup: opts.mayDeleteLookup,
       ownerResolver: opts.ownerResolver,
       submitWorkflow: opts.submitWorkflow,
       cipher: opts.cipher,
@@ -59,6 +83,8 @@ describe('createRouter', () => {
       suspendedNodesFor: opts.suspendedNodesFor,
       resumeNode: opts.resumeNode,
       config: opts.config,
+      resourceDataFor: opts.resourceDataFor,
+      resourceVisibleTo: opts.resourceVisibleTo,
     });
     const app = express();
     app.use(router);
@@ -355,7 +381,10 @@ describe('createRouter', () => {
 
   describe('many resources per request', () => {
     it('accepts resourceNames and derives resourceName from them', async () => {
-      const { app } = await makeApp({ result: AuthorizeResult.ALLOW });
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        mayDeleteLookup: async () => ({ allowed: true, denied: [] }),
+      });
       const res = await request(app)
         .post('/requests')
         .send({
@@ -478,6 +507,7 @@ describe('createRouter', () => {
     const { app, store } = await makeApp({
       result: AuthorizeResult.ALLOW,
       principalResolver: async () => ({ isAdmin: true, groups: [] }),
+      mayDeleteLookup: async () => ({ allowed: true, denied: [] }),
       submitWorkflow,
     });
 
@@ -673,6 +703,30 @@ describe('createRouter', () => {
       expect(urls.every(u => !u.includes('/retry') && !u.includes('/resubmit'))).toBe(
         true,
       );
+    });
+
+    it('returns no failure reason when a re-check finds the workflow succeeded', async () => {
+      // The bug: /refresh only cleared `error` when the outcome was IN_PROGRESS,
+      // so a workflow retried in Argo that had already finished came back
+      // SUCCEEDED with the previous run's message still attached.
+      const reconcileRequest = jest.fn() as jest.Mock<
+        Promise<ReconcileOutcome>,
+        [PlatformRequest]
+      >;
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        reconcileRequest,
+      });
+      reconcileRequest.mockImplementation(async r => {
+        await store.setState(r.id, 'SUCCEEDED');
+        return { state: 'SUCCEEDED', changed: true, reason: 'moved-to-succeeded' };
+      });
+      const id = await seedFailed(app, store);
+
+      const res = await request(app).post(`/requests/${id}/refresh`).send({});
+      expect(res.status).toBe(200);
+      expect(res.body.request.state).toBe('SUCCEEDED');
+      expect(res.body.request.error).toBeUndefined();
     });
   });
 
@@ -1073,6 +1127,281 @@ describe('createRouter', () => {
       // the environments as a leaf array. That is what walkTree expects.
       expect(Object.keys(res.body.coordinates)).toEqual(['aurora', 'borealis']);
       expect(res.body.coordinates.borealis.lab['eu-west'].cork).toEqual(['sandbox']);
+    });
+  });
+
+  describe('maintenance mode', () => {
+    it('is off when nothing has been set', async () => {
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW });
+      const res = await request(app).get('/maintenance').send();
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ enabled: false });
+    });
+
+    it('lets an admin turn it on, and anyone read it', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        principalResolver: async () => ({ isAdmin: true, groups: [] }),
+      });
+      const put = await request(app)
+        .put('/maintenance')
+        .set('Authorization', asAdmin)
+        .send({ enabled: true });
+      expect(put.status).toBe(200);
+
+      const get = await request(app).get('/maintenance').send();
+      expect(get.body).toEqual({ enabled: true });
+    });
+
+    it('refuses a non-admin turning it on', async () => {
+      // The settings page hides the switch from non-admins, but that is
+      // decluttering. This is the actual gate.
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        principalResolver: async () => ({ isAdmin: false, groups: [] }),
+      });
+      const res = await request(app).put('/maintenance').send({ enabled: true });
+      expect(res.status).toBe(403);
+      expect((await request(app).get('/maintenance').send()).body).toEqual({
+        enabled: false,
+      });
+    });
+  });
+
+  describe('the maintenance gate on POST /requests', () => {
+    // A stub, so the catalog is not needed: 'boss' is an admin, 'dev' is not.
+    const adminLookup = async (ref: string) => ref === 'boss';
+
+    async function maintenanceApp() {
+      const { app, store } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        principalResolver: async () => ({ isAdmin: true, groups: [] }),
+        adminLookup,
+      });
+      await request(app)
+        .put('/maintenance')
+        .set('Authorization', asAdmin)
+        .send({ enabled: true });
+      return { app, store };
+    }
+
+    it('refuses a service-principal submission naming a NON-admin requester', async () => {
+      // The Scaffolder path, and the whole point of this task. A gate keyed on
+      // the credential would see a service principal, call every submission
+      // non-admin, and look like it worked — while blocking admins too.
+      const { app } = await maintenanceApp();
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...NEW_REQUEST, requester: 'dev' });
+      expect(res.status).toBe(503);
+    });
+
+    it('allows a service-principal submission naming an ADMIN requester', async () => {
+      // The other half of the trap: an admin filing through a template must not
+      // be blocked by their own maintenance mode.
+      const { app } = await maintenanceApp();
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...NEW_REQUEST, requester: 'boss' });
+      expect(res.status).toBe(201);
+    });
+
+    it('refuses a DELETE just as it refuses a CREATE', async () => {
+      const { app } = await maintenanceApp();
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...NEW_REQUEST, kind: 'DELETE', requester: 'dev' });
+      expect(res.status).toBe(503);
+    });
+
+    it('lets everything through once maintenance is off', async () => {
+      const { app } = await maintenanceApp();
+      await request(app)
+        .put('/maintenance')
+        .set('Authorization', asAdmin)
+        .send({ enabled: false });
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...NEW_REQUEST, requester: 'dev' });
+      expect(res.status).toBe(201);
+    });
+
+    it('refuses a non-admin with an unconfigured cipher as 503, not 500', async () => {
+      // Pins the ordering: the gate must run before secret encryption, or a
+      // request that was always going to be refused pays for encryption first
+      // — and, with no cipher configured, throws a 500 instead of a clean 503.
+      const { app } = await maintenanceApp();
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({
+          ...NEW_REQUEST,
+          requester: 'dev',
+          secretSpec: [{ name: 'apiKey', source: 'provided' as const }],
+          secretValues: { apiKey: 'super-secret-value' },
+        });
+      expect(res.status).toBe(503);
+    });
+  });
+
+  describe('bulk delete ownership', () => {
+    // 'boss' is an admin; 'dev' service-owns git-resource; 'owner' directly owns
+    // the named resources; 'other' is none of the three.
+    const adminLookup = async (ref: string) => ref === 'boss';
+    // Stubbed at the router boundary on purpose — the rule itself has its own
+    // tests in `ownership.test.ts`, where the catalog it reads can be a fixture.
+    // It still honours `resourceNames`, so the refusal below is asserted on
+    // names the gate actually produced rather than on a constant.
+    const mayDeleteLookup = async (
+      ref: string,
+      type: string,
+      names: string[],
+    ) => {
+      if ((ref === 'dev' && type === 'git-resource') || ref === 'owner') {
+        return { allowed: true, denied: [] };
+      }
+      // 'other' owns bucket-a and nothing else.
+      const denied = names.filter(n => n !== 'bucket-a');
+      return { allowed: denied.length === 0, denied };
+    };
+
+    it('accepts a bulk delete where every name is service-owned', async () => {
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW, adminLookup, mayDeleteLookup });
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...BULK_DELETE_BODY, requester: 'dev' });
+      expect(res.status).toBe(201);
+    });
+
+    it('accepts a bulk delete from a direct owner', async () => {
+      // Owners may bulk delete, same as service-owners — one rule for seeing and
+      // selecting, so there is no asymmetry to explain.
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW, adminLookup, mayDeleteLookup });
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...BULK_DELETE_BODY, requester: 'owner' });
+      expect(res.status).toBe(201);
+    });
+
+    it('refuses the whole request when one name is not service-owned', async () => {
+      // Partial success on a Git-writing destructive action is the outcome that
+      // is hardest to notice and hardest to undo.
+      const { app, store } = await makeApp({ result: AuthorizeResult.ALLOW, adminLookup, mayDeleteLookup });
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...BULK_DELETE_BODY, requester: 'other' });
+      expect(res.status).toBe(403);
+      expect(await store.list()).toHaveLength(0);   // nothing submitted
+    });
+
+    it('names the offending resources in the refusal', async () => {
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW, adminLookup, mayDeleteLookup });
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...BULK_DELETE_BODY, requester: 'other' });
+      // A user who ticked five boxes needs to know which one stopped it. Every
+      // name in the batch is of the same type, so naming the type is not an
+      // answer — the assertion has to be on the name that failed, and on the
+      // one that did not being left out of the blame.
+      expect(res.body.error).toContain('bucket-b');
+      expect(res.body.error).not.toContain('bucket-a');
+    });
+
+    it('lets an admin bulk delete regardless of service ownership', async () => {
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW, adminLookup, mayDeleteLookup });
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...BULK_DELETE_BODY, requester: 'boss' });
+      expect(res.status).toBe(201);
+    });
+
+    it('leaves a single-resource DELETE alone', async () => {
+      // This plan does not change who may delete one resource.
+      const { app } = await makeApp({ result: AuthorizeResult.ALLOW, adminLookup, mayDeleteLookup });
+      const res = await request(app)
+        .post('/requests')
+        .set('Authorization', mockCredentials.service.header())
+        .send({ ...SINGLE_DELETE_BODY, requester: 'other' });
+      expect(res.status).toBe(201);
+    });
+  });
+
+  describe('GET /resources/:name/data', () => {
+    // `resolveResource` reads with the backend's own service credentials, so
+    // this is the one read of ours the catalog does not filter. Without a gate
+    // in front, a user in no group could curl an entity the catalog hides from
+    // them — which would make the whole visibility feature advisory.
+    const SECRETS = { connectionString: 'postgres://in-the-clear' };
+    const resourceDataFor = async () => SECRETS;
+    // Stands in for the catalog re-read: 'orders-db' is visible to everyone
+    // here, 'hidden-db' to nobody.
+    const resourceVisibleTo = async (_c: BackstageCredentials, name: string) =>
+      name !== 'hidden-db';
+
+    it('serves the data to a user who can see the resource', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        resourceDataFor,
+        resourceVisibleTo,
+      });
+      const res = await request(app)
+        .get('/resources/orders-db/data')
+        .set('Authorization', mockCredentials.user.header());
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(SECRETS);
+    });
+
+    it('404s a user who cannot see the resource, and leaks no data', async () => {
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        resourceDataFor,
+        resourceVisibleTo,
+      });
+      const res = await request(app)
+        .get('/resources/hidden-db/data')
+        .set('Authorization', mockCredentials.user.header());
+      // 404 rather than 403: a 403 confirms the resource exists, which is the
+      // leak on a route whose job is hiding it.
+      expect(res.status).toBe(404);
+      expect(JSON.stringify(res.body)).not.toContain('in-the-clear');
+    });
+
+    it('leaves service callers alone — that is the provisioning path', async () => {
+      const visible = jest.fn(async () => false);
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        resourceDataFor,
+        resourceVisibleTo: visible,
+      });
+      const res = await request(app)
+        .get('/resources/hidden-db/data')
+        .set('Authorization', mockCredentials.service.header());
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual(SECRETS);
+      // Not merely allowed — never asked. A service principal has no user whose
+      // visibility could be checked.
+      expect(visible).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when no visibility gate is wired', async () => {
+      // An unwired gate must not be an open one.
+      const { app } = await makeApp({
+        result: AuthorizeResult.ALLOW,
+        resourceDataFor,
+      });
+      const res = await request(app)
+        .get('/resources/orders-db/data')
+        .set('Authorization', mockCredentials.user.header());
+      expect(res.status).toBe(404);
     });
   });
 

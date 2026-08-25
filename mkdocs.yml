@@ -21,6 +21,7 @@ nav:
       - Add a mid-workflow review gate: how-to/add-a-review-gate.md
       - Customise the home page: how-to/customise-the-home-page.md
       - Embed a Grafana dashboard: how-to/embed-a-grafana-dashboard.md
+      - Pause the platform: how-to/pause-the-platform.md
       - Change the logo, favicon and title: how-to/rebrand-the-portal.md
       - Upgrade Backstage: how-to/upgrade-backstage.md
       - Run the production image locally: how-to/run-the-production-image.md
@@ -37,6 +38,7 @@ nav:
       - Request lifecycle: explanation/request-lifecycle.md
       - Secret lifecycle: explanation/secrets-lifecycle.md
       - Per-team RBAC: explanation/rbac.md
+      - Who sees a resource: explanation/who-sees-what.md
       - Workflows own Git: explanation/workflows-and-git.md
       - The pixel design system: explanation/design-system.md
       - Identity & LDAP: explanation/identity-and-ldap.md

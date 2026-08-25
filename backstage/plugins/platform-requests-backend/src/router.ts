@@ -40,6 +40,40 @@ export type PrincipalResolver = (
   credentials: BackstageCredentials,
 ) => Promise<{ isAdmin: boolean; groups: string[] }>;
 
+/**
+ * Admin-ness for a user named by ref rather than held as a credential — the
+ * only way to answer for a service-principal submission, where the acting
+ * credential is the Scaffolder's, not the human's. See maintenance.ts.
+ */
+export type AdminLookup = (userRef: string) => Promise<boolean>;
+
+/**
+ * Whether `userRef` may bulk-delete every one of `resourceNames` (all of one
+ * `resourceType`) — the same union the permission policy's catalog gate
+ * answers: admin, the resource's own owner, or the resourceType's
+ * service-owner. Named by ref rather than held as a credential, for the same
+ * reason as {@link AdminLookup}: the Scaffolder posts as a service and names
+ * the human in the body.
+ */
+export type MayDeleteLookup = (
+  userRef: string,
+  resourceType: string,
+  resourceNames: string[],
+) => Promise<MayDeleteVerdict>;
+
+/**
+ * The answer, plus the names that produced it.
+ *
+ * Not a bare boolean: a user who ticked five boxes and got a 403 naming only
+ * the *type* learns nothing — every name in the batch is of that type. `denied`
+ * is what the refusal reads out, so they know which tick to untick.
+ */
+export interface MayDeleteVerdict {
+  allowed: boolean;
+  /** The names the caller may not delete. Empty when `allowed`. */
+  denied: string[];
+}
+
 export interface RouterOptions {
   httpAuth: HttpAuthService;
   permissions: PermissionsService;
@@ -55,6 +89,10 @@ export interface RouterOptions {
   logger?: LoggerService;
   /** Resolves the acting user's roles + groups (per-team approval). */
   principalResolver?: PrincipalResolver;
+  /** Resolves admin-ness for a named requester (maintenance-mode gate). */
+  adminLookup?: AdminLookup;
+  /** Resolves bulk-delete ownership for a named requester (admin/owner/service-owner). */
+  mayDeleteLookup?: MayDeleteLookup;
   /** Resolves the owning service team (group ref) for a resourceType. */
   ownerResolver?: (resourceType: string) => Promise<string | undefined>;
   /** Resolves per-verb Argo submit config for UPDATE/DELETE (from the template). */
@@ -66,6 +104,24 @@ export interface RouterOptions {
   resourceDataFor?: (
     resourceName: string,
   ) => Promise<Record<string, unknown>>;
+  /**
+   * Can *these* credentials see this resource? Answered by re-reading the
+   * entity from the catalog as the caller, so the catalog's own permission
+   * filter — the conditional decision the RBAC module returns — stays the
+   * single source of truth for visibility.
+   *
+   * Deliberately not an ownership predicate. `mayDeleteLookup` and the RBAC
+   * policy already had to be taught to agree with each other; a third
+   * hand-written copy of "admin, owner or service-owner" would be a third thing
+   * to keep in step. Asking the catalog is the same question by construction.
+   *
+   * Absent = no user may read resource data. Fails closed like
+   * {@link MayDeleteLookup}: an unwired gate must not be an open one.
+   */
+  resourceVisibleTo?: (
+    credentials: BackstageCredentials,
+    resourceName: string,
+  ) => Promise<boolean>;
   /** Called on APPROVED before flipping to IN_PROGRESS. No-op until P2. */
   submitWorkflow?: (request: PlatformRequest) => Promise<void>;
   /** Envelope cipher for user-provided secrets; absent when no key is configured. */
@@ -180,6 +236,10 @@ export async function createRouter(
   const { httpAuth, permissions, store } = options;
   const principalResolver: PrincipalResolver =
     options.principalResolver ?? (async () => ({ isAdmin: false, groups: [] }));
+  const adminLookup: AdminLookup = options.adminLookup ?? (async () => false);
+  const mayDeleteLookup: MayDeleteLookup =
+    options.mayDeleteLookup ??
+    (async (_u, _t, names) => ({ allowed: false, denied: names }));
   const submitWorkflow =
     options.submitWorkflow ?? (async () => undefined);
   const cipher: Cipher | undefined = options.cipher;
@@ -197,6 +257,94 @@ export async function createRouter(
     const parsed = newRequestSchema.safeParse(req.body);
     if (!parsed.success) throw new InputError(parsed.error.toString());
     const { requester: onBehalf, secretValues, ...data } = parsed.data;
+
+    // Service callers (the Scaffolder action) create on behalf of a named user;
+    // user callers create for themselves and must hold the create permission.
+    const credentials = await httpAuth.credentials(req, {
+      allow: ['user', 'service'],
+    });
+    let requester: string;
+    if (credentials.principal.type === 'service') {
+      if (!onBehalf) {
+        throw new InputError('service callers must set `requester`');
+      }
+      requester = onBehalf;
+    } else {
+      requester = actorId(credentials.principal.userEntityRef);
+      const [decision] = await permissions.authorize(
+        [{ permission: requestCreatePermission }],
+        { credentials },
+      );
+      if (decision.result !== AuthorizeResult.ALLOW) {
+        throw new NotAllowedError('Not allowed to create requests');
+      }
+    }
+
+    // Maintenance mode. Keyed on the resolved requester, not on the credential:
+    // the Scaffolder posts as a service and names the human in `requester`, so
+    // a credential-keyed check would see a service principal, call every
+    // submission non-admin, and block admins too. Admins are never gated —
+    // being able to file during maintenance is the point of being able to turn
+    // it on. This sits before secret encryption below: a refused request must
+    // not pay for encrypting values it will never store, and — if no cipher is
+    // configured — must not blow up with a 500 instead of a clean 503.
+    if ((await store.getSetting('maintenance')) === 'true') {
+      if (!(await adminLookup(requester))) {
+        res.status(503).json({
+          error: 'Platform maintenance is on — new requests are paused.',
+        });
+        return;
+      }
+    }
+
+    // Bulk delete answers the same union the permission policy uses: admin,
+    // owner, or service-owner. Whoever may see a resource may select it, so
+    // there is no asymmetry for a user to discover the hard way.
+    //
+    // The picker already narrows what is easy to click — it reads the same
+    // filtered catalog. This exists for what the picker cannot cover: a stale
+    // tab, or a call that skips the form.
+    //
+    // Refused whole rather than partially: a user who ticks five boxes, sees
+    // success and finds three gone has no way to tell which half happened, on
+    // an action that submits a Git-writing workflow. This matches the existing
+    // rule that a bulk request naming an unresolvable resource is refused
+    // whole, before any workflow is submitted.
+    //
+    // Keyed on `requester`, not the credential — the Scaffolder posts as a
+    // service and names the human in the body. Runs before any write or
+    // encryption, same as the maintenance gate above.
+    //
+    // One resourceType per batch: `bulk-delete-resources` posts one
+    // `resourceType` for the whole request (its MultiEntityPicker filters to a
+    // single `spec.type`), so service-ownership is one check for the batch —
+    // but ownership is per resource, so the gate still walks every name and the
+    // refusal reads back the ones that failed.
+    if (data.kind === 'DELETE' && data.resourceNames?.length) {
+      if (!(await adminLookup(requester))) {
+        const verdict = await mayDeleteLookup(
+          requester,
+          data.resourceType,
+          data.resourceNames,
+        );
+        if (!verdict.allowed) {
+          // Name the offenders. `denied` empty on a refusal means the gate
+          // could not attribute it to particular names (a catalog it could not
+          // reach, say) — then the whole batch is the honest answer, not a
+          // shorter list that reads as precise and is not.
+          const offenders = verdict.denied.length
+            ? verdict.denied
+            : data.resourceNames;
+          res.status(403).json({
+            error:
+              `Not permitted to delete ${offenders.join(', ')} ` +
+              `(${data.resourceType}) — that requires an admin, the resource's ` +
+              `owner, or the owning service team.`,
+          });
+          return;
+        }
+      }
+    }
 
     // A request that needs a Secret is only accepted when secrets are enabled —
     // fail at submit, not silently at approval.
@@ -226,27 +374,6 @@ export async function createRouter(
       secretEnc = cipher.encrypt(JSON.stringify(values));
     }
 
-    // Service callers (the Scaffolder action) create on behalf of a named user;
-    // user callers create for themselves and must hold the create permission.
-    const credentials = await httpAuth.credentials(req, {
-      allow: ['user', 'service'],
-    });
-    let requester: string;
-    if (credentials.principal.type === 'service') {
-      if (!onBehalf) {
-        throw new InputError('service callers must set `requester`');
-      }
-      requester = onBehalf;
-    } else {
-      requester = actorId(credentials.principal.userEntityRef);
-      const [decision] = await permissions.authorize(
-        [{ permission: requestCreatePermission }],
-        { credentials },
-      );
-      if (decision.result !== AuthorizeResult.ALLOW) {
-        throw new NotAllowedError('Not allowed to create requests');
-      }
-    }
     // A batch stores the joined names as its resourceName: every list, search
     // and notification renders that one string, so joining keeps them all
     // working without a branch, and searching a member name still finds it.
@@ -387,8 +514,37 @@ export async function createRouter(
   });
 
   // Resolved resource data (ref'd file or spec.resourceData) for the tab + edit.
+  //
+  // `resolveResource` reads the entity with the backend's own service
+  // credentials — it has to, because the provisioning path that shares it runs
+  // without a user. That makes this route the one read of ours the catalog does
+  // not filter, so it re-asks the catalog as the caller before answering:
+  // otherwise a user in no group could curl the entity and its data for a
+  // resource the catalog hides from them, and the visibility feature would be
+  // advisory.
+  //
+  // 404, never 403: a 403 confirms the resource exists, which is itself the
+  // leak on a route whose job is hiding it. Invisible and absent must be
+  // indistinguishable from outside.
   router.get('/resources/:name/data', async (req, res) => {
-    await httpAuth.credentials(req, { allow: ['user', 'service'] });
+    const credentials = await httpAuth.credentials(req, {
+      allow: ['user', 'service'],
+    });
+    // Service callers are the provisioning path (see `resolveResource`), which
+    // legitimately acts without a user and is already trusted by the credential
+    // check above.
+    if (credentials.principal.type === 'user') {
+      const visible = await (options.resourceVisibleTo?.(
+        credentials,
+        req.params.name,
+      ) ?? false);
+      if (!visible) {
+        res
+          .status(404)
+          .json({ error: `resource '${req.params.name}' not found` });
+        return;
+      }
+    }
     const data = options.resourceDataFor
       ? await options.resourceDataFor(req.params.name)
       : {};
@@ -832,6 +988,28 @@ export async function createRouter(
 
   router.post('/requests/:id/approve', decide('approve'));
   router.post('/requests/:id/reject', decide('reject'));
+
+  /**
+   * Whether new submissions are being refused.
+   *
+   * Readable by any authenticated caller because the frontend has to know
+   * whether to show the request form or the maintenance page. Writable only by
+   * admins — and that check is here, not in the UI, because hiding a switch is
+   * not the same as refusing to flip it.
+   */
+  router.get('/maintenance', async (req, res) => {
+    await httpAuth.credentials(req, { allow: ['user', 'service'] });
+    res.json({ enabled: (await store.getSetting('maintenance')) === 'true' });
+  });
+
+  router.put('/maintenance', async (req, res) => {
+    const credentials = await httpAuth.credentials(req, { allow: ['user'] });
+    const { isAdmin } = await principalResolver(credentials);
+    if (!isAdmin) throw new NotAllowedError('Only platform admins may change maintenance mode');
+    const enabled = Boolean(req.body?.enabled);
+    await store.setSetting('maintenance', enabled ? 'true' : 'false');
+    res.json({ enabled });
+  });
 
   return router;
 }

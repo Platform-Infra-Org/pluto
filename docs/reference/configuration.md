@@ -47,12 +47,24 @@ app:
 ```
 
 Optional, frontend-visible. `fantasy` renames **sidebar screens only** —
-Requests → Quests, Create → Summon, Catalog → Atlas.
+Requests → Quests, New Request → Summon, Catalog → Atlas.
 
 Request **states are never renamed**, whatever this is set to. A label naming a
 screen is decoration and someone who cannot find "Requests" finds it one click
 later; a label naming a state is a record, and `QUEST FAILED` in an audit trail
 is a support ticket.
+
+### The potion a first-time visitor gets
+
+```yaml
+app:
+  branding:
+    defaultScheme: greek
+```
+
+An id from the scheme shelf. A visitor's own pick always wins — this decides the
+first visit only, so setting it never overrides a choice someone has made.
+Missing or unknown falls back to `obsidian`.
 
 ## `platform.rbac`
 
@@ -62,7 +74,7 @@ platform:
     adminGroups: [group:default/platform-admins]     # default
     auditorGroups: [group:default/platform-auditors]  # default
 ```
-Frontend-visible (the approve button uses `adminGroups`). Multiple groups allowed.
+Frontend-visible (the approve button uses `adminGroups`). Multiple groups allowed. See **[Configure admins & per-team approval](../how-to/configure-rbac.md)** and **[Pause the platform](../how-to/pause-the-platform.md)**.
 
 ## `platform.argo`
 
@@ -116,7 +128,8 @@ platform:
       - standingRequests    # your requests still in flight
       - pendingApprovals    # requests you may decide
       - recentlyVisited     # pages you opened, newest first
-      - favouriteTemplates  # templates you starred on Create
+      - favouriteTemplates  # templates you starred on New Request
+      - pluto               # decoration only — fills the grid's spare cell
     maxItems: 8
 ```
 
@@ -127,7 +140,7 @@ favourites 6 regardless, because a longer list stops being either.
 
 `recentlyVisited` and `favouriteTemplates` are stored per **user** in the
 user-settings backend, so they follow the person across browsers and machines.
-Favourites are the same stars the Create page already writes — nothing extra to
+Favourites are the same stars the New Request page already writes — nothing extra to
 enable. See **[Customise the home page](../how-to/customise-the-home-page.md)**.
 
 ## `platform.secrets`

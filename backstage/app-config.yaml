@@ -25,6 +25,10 @@ app:
     # Requests -> Quests, Create -> Summon, Catalog -> Atlas. Request states
     # are records and are never renamed. Omit for the literal names.
     # flavour: fantasy
+    # Which potion a first-time visitor gets. A stored pick always wins, so
+    # clear localStorage (or use a fresh profile) to see this take effect.
+    # Missing or unknown → obsidian.
+    defaultScheme: github
   baseUrl: http://localhost:3000
 
   # Enable all packages by default, this will discover packages from packages/app/package.json
@@ -45,6 +49,10 @@ app:
     - theme:app/dark: false
     # Disable the default relations graph card (replaced by our shadcn one).
     - entity-card:catalog-graph/relations: false
+    # NOTE: do NOT disable `app/layout` here. platform-ui's `appLayout`
+    # registers under that same id, so a module override already replaces the
+    # built-in — and a `false` entry disables the replacement along with it,
+    # leaving app/root with no children and rendering a blank page.
     # Our React Flow graph replaces it at the same path. The built-in one could
     # not pan at the default zoom, could not align its background with the
     # nodes, and gave the rooted node no marker of its own — so clicking a node
@@ -279,6 +287,7 @@ platform:
       - pendingApprovals
       - recentlyVisited
       - favouriteTemplates
+      - pluto
     maxItems: 8
   # An existing Grafana dashboard, embedded on /dashboard and on request pages
   # (scoped to that request's own time window). See

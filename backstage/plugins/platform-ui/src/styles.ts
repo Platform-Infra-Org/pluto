@@ -31,6 +31,25 @@ export const SHADCN_CSS = `
   font-style: normal;
   font-display: swap;
 }
+/* Hebrew. Clash Grotesk carries none, so every Hebrew glyph fell back to
+   whatever the OS offered — which is what made the one Hebrew line in the app
+   look pasted in from somewhere else.
+
+   Heebo is a neo-grotesque Hebrew drawn as Roboto's companion: closed
+   apertures, even stroke contrast, proportions near enough to Clash Grotesk to
+   sit in the same sentence. SIL OFL, see public/fonts/HEEBO-LICENSE.txt.
+
+   Attached by unicode-range rather than appended as a fallback: the browser
+   pulls this face ONLY for these codepoints, so Latin never leaves Clash
+   Grotesk and no rule has to know which script it is rendering. */
+@font-face {
+  font-family: 'Heebo';
+  src: url('/fonts/heebo.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0590-05FF, U+FB1D-FB4F;
+}
 .sc, .sc * { box-sizing: border-box; }
 /* The host for the animated mode ornaments — SchemeRoot mounts it once, and a
    mode sheet turns on the child it wants. Hidden by default and pointer-events
@@ -55,12 +74,12 @@ export const SHADCN_CSS = `
   --sc-field-x: 10px;
   --sc-border-w: 2px;
   --sc-shadow: 3px 3px 0 hsl(var(--sc-fg) / .16);
-  --sc-font-ui: 'Clash Grotesk', Inter, system-ui, -apple-system, sans-serif;
+  --sc-font-ui: 'Clash Grotesk', 'Heebo', Inter, system-ui, -apple-system, sans-serif;
   /* Titles take the grotesque, everything else keeps the pixel face. Held as
      its own variable so a mode can move the two independently — the pixel font
      is still the app's voice, but a heading is where a face has room to be
      read rather than decoded. */
-  --sc-font-title: 'Clash Grotesk', Inter, system-ui, -apple-system, sans-serif;
+  --sc-font-title: 'Clash Grotesk', 'Heebo', Inter, system-ui, -apple-system, sans-serif;
   --sc-unit: 4px;
   --sc-nav-w: 240px;
   --sc-bg: 240 10% 98%;
@@ -809,13 +828,30 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
     0 -2px 0 hsl(240 12% 6% / .95),
     3px 3px 0 hsl(240 12% 6% / .8);
   margin: 0;
-  /* Takes the space the actions leave and gives it back when the name is long:
-     min-width 0 is what lets a flex item shrink below its content width at all,
-     and break-word is the last resort for a single unbreakable token. */
-  flex: 1 1 auto;
+  /* flex-basis 0, NOT auto. This is the whole fix, and the reason a previous
+     attempt at it did nothing.
+
+     A wrapping flex container decides its lines from each item's *hypothetical
+     main size*, and for flex-basis: auto that is the item's max-content
+     width — the title as one unwrapped line. A long name therefore filled the
+     row on its own and the actions were pushed to a second line before any
+     shrinking was considered. overflow-wrap cannot help: it lowers
+     min-content, which governs how far an item may shrink once it is already
+     on the line, not which line it lands on.
+
+     With basis 0 the title's hypothetical size is 0, so it always shares the
+     row; flex-grow then hands it whatever the actions leave. Measured in
+     Chromium at a 320px card with a 52-char name: basis auto put the actions
+     at y=63, basis 0 keeps them at y=10 beside a 260px title.
+
+     min-width: 0 and overflow-wrap: anywhere stay for the remaining case — a
+     single unbreakable token longer than the space the actions leave. The
+     container keeps wrap: the catch-all that forces every other header child
+     onto its own full-width row depends on it. */
+  flex: 1 1 0;
   min-width: 0;
   text-align: left;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 /* The h3 holds ONE child, CardHeader's subtitleWrapper, and that wrapper holds
    two: the type text, then the detail + favourite buttons. Only the type text
@@ -1210,6 +1246,47 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-empty-title { font-family: var(--sc-font-ui); text-transform: uppercase;
   font-size: 13px; color: hsl(var(--sc-fg)); }
 .sc-empty-hint { font-size: 12px; max-width: 32ch; }
+
+/* [maintenance] The pause screen fills the content area instead of sitting as
+   a short card under the header — it is the whole answer to "can I file a
+   request right now", not a notice pinned above something else. Centred in
+   what is left of the viewport after Backstage's own header and padding. */
+.sc-maint { display: grid; place-items: center; min-height: calc(100vh - 220px);
+  padding: 24px 0; }
+.sc-maint-card { width: 100%; max-width: 560px; }
+.sc-maint-empty { gap: 14px; padding: 44px 28px; border-style: solid; }
+.sc-maint-empty .sc-empty-title { font-size: 16px; letter-spacing: .06em; }
+/* The Hebrew line is the punchline, so it carries the weight the title would
+   in an ordinary empty state. */
+.sc-maint-empty [lang="he"] { font-size: 20px; color: hsl(var(--sc-fg)); }
+
+/* Pluto. A photograph keeps colours of its own — it is a photograph's
+   subject, not a themed surface — but everything laid over it answers to the
+   scheme. image-rendering: pixelated is what makes a real photo belong in an
+   8-bit interface: the 72px source is drawn back up on the same chunky grid
+   the sprites live on, so no rule has to fake a texture. */
+.sc-pluto { position: relative; width: 168px; height: 168px; flex: 0 0 auto; }
+.sc-pluto-disc { width: 100%; height: 100%; display: block;
+  image-rendering: pixelated; }
+/* The same scanline layer .sc-page::before lays over the whole app, clipped to
+   the disc. Texture, not motion, so it survives reduced-motion. */
+.sc-pluto::after { content: ''; position: absolute; inset: 0; border-radius: 50%;
+  pointer-events: none;
+  background: repeating-linear-gradient(0deg,
+    hsl(var(--sc-fg) / .05) 0 1px, transparent 1px 3px); }
+.sc-pluto-glyph { position: absolute; inset: 0; width: 100%; height: 100%;
+  fill: hsl(var(--sc-primary));
+  /* A hairline keyline, not the 2.5 the blockier fork carried: these blades
+     taper to nothing, and a fat outline blunts the tips into blobs. The halo
+     is what actually separates the mark from the photograph behind it. */
+  stroke: hsl(var(--sc-bg)); stroke-width: 1.2; stroke-linejoin: round;
+  filter: drop-shadow(0 0 3px hsl(var(--sc-bg) / .85)); }
+/* The home page's decorative cell: no card, no edge, no ground. The planet
+   floats in the grid the way the scanline layer floats over the page —
+   ornament that the layout flows around rather than a panel holding content.
+   Held back so it never competes with the cards it sits beside. */
+.sc-pluto-block { display: grid; place-items: center; min-height: 200px;
+  opacity: .55; pointer-events: none; }
 
 /* [suspend] The mid-workflow approval gate. Yellow edge, matching the node in
    the graph and the request badge: one signal, three places. */
@@ -1984,6 +2061,9 @@ h1, h2, h3, h4, h5, h6,
   }
   @keyframes sc-caret { 50% { opacity: 0; } }
   .sc-empty .sc-state-ic { animation: sc-bob 1.2s steps(2) infinite; }
+  /* Slower and gentler than the empty-state bob: this one is a planet
+     drifting, not a sprite hopping. steps(), like everything else here. */
+  .sc-pluto-glyph { animation: sc-bob 3.2s steps(4) infinite; }
   .sc-press-start { animation: sc-caret 1s steps(1) infinite; }
   .sc-qs-box::after { animation: sc-caret 1s steps(1) infinite; }
 

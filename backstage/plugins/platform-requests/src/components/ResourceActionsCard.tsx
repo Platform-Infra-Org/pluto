@@ -4,9 +4,18 @@ import { Link } from '@backstage/core-components';
 import { useEntity } from '@backstage/plugin-catalog-react';
 import {
   Card, CardHeader, CardBody, Button, Dialog, JsonTree, JsonEditTree,
-  leavesOf, mergeDeepEdits, pathKey, type Leaf,
+  leavesOf, mergeDeepEdits, pathKey, useMaintenance, useIsAdmin, type Leaf,
 } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
+
+// `RequestsClient.create` throws `Error('${status}: ${body}')` on a non-ok
+// response (see `api.ts`'s `json()`). The pre-flight `blocked` check above is
+// only ever an optimisation — this is the actual source of truth, since it
+// reads the response the backend just sent for *this* request, not a flag
+// fetched once whenever the page happened to load.
+function isMaintenance503(e: unknown): boolean {
+  return e instanceof Error && e.message.startsWith('503');
+}
 
 /**
  * Entity card (Resource pages): raise an edit/delete request for the current
@@ -26,6 +35,18 @@ export function ResourceActionsCard() {
   const [leaves, setLeaves] = useState<Leaf[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<number>();
+  const [maint, setMaint] = useState(false);
+
+  const maintenance = useMaintenance();
+  const isAdmin = useIsAdmin();
+  // Same rule as MaintenanceGate: undefined (still loading) behaves like
+  // non-admin, so nothing is submitted into the 503 while identity resolves.
+  // This is only ever a pre-flight optimisation to skip a pointless round
+  // trip — `useMaintenance` fetches once on mount and never refetches, so a
+  // page left open across someone else flipping the switch would have a
+  // stale `false` here. The backend's actual 503 (caught below, in
+  // `submitEdit`/`submitDelete`) is what the dialog really depends on.
+  const blocked = Boolean(maintenance) && !isAdmin;
 
   const type = (entity.spec?.type as string) ?? 'resource';
   const name = entity.metadata.name;
@@ -44,30 +65,60 @@ export function ResourceActionsCard() {
   };
 
   const submitEdit = async () => {
+    if (blocked) {
+      setEdit(false);
+      setMaint(true);
+      return;
+    }
     const { data, errors: problems } = mergeDeepEdits(original, leaves, fields);
     if (Object.keys(problems).length) {
       setErrors(problems);
       return;
     }
-    const req = await requests.create({
-      kind: 'UPDATE',
-      resourceType: type,
-      resourceName: name,
-      params: data,
-    });
-    setEdit(false);
-    setNotice(req.id);
+    try {
+      const req = await requests.create({
+        kind: 'UPDATE',
+        resourceType: type,
+        resourceName: name,
+        params: data,
+      });
+      setEdit(false);
+      setNotice(req.id);
+    } catch (e) {
+      // Only a 503 gets a dialog. Anything else is left exactly as it was
+      // before this fix existed — this card has never had a general error
+      // display, so there is nothing new to show for it — but caught rather
+      // than left as an unhandled rejection, same as `getResourceData`
+      // above.
+      if (isMaintenance503(e)) {
+        setEdit(false);
+        setMaint(true);
+      }
+    }
   };
 
   const submitDelete = async () => {
-    const req = await requests.create({
-      kind: 'DELETE',
-      resourceType: type,
-      resourceName: name,
-      params: {},
-    });
-    setDel(false);
-    setNotice(req.id);
+    if (blocked) {
+      setDel(false);
+      setMaint(true);
+      return;
+    }
+    try {
+      const req = await requests.create({
+        kind: 'DELETE',
+        resourceType: type,
+        resourceName: name,
+        params: {},
+      });
+      setDel(false);
+      setNotice(req.id);
+    } catch (e) {
+      // See submitEdit's catch — only a 503 gets a dialog.
+      if (isMaintenance503(e)) {
+        setDel(false);
+        setMaint(true);
+      }
+    }
   };
 
   return (
@@ -156,6 +207,19 @@ export function ResourceActionsCard() {
           This raises a delete request for approval. On approval the workflow
           runs and the resource is removed from the catalog.
         </div>
+      </Dialog>
+
+      <Dialog
+        open={maint}
+        onClose={() => setMaint(false)}
+        title="Maintenance"
+        footer={<Button onClick={() => setMaint(false)}>Close</Button>}
+      >
+        {/* Same copy as MaintenancePage — the two surfaces must agree. */}
+        <p className="sc-muted">
+          New requests are paused while the platform is being worked on.
+          Anything already filed is unaffected.
+        </p>
       </Dialog>
     </Card>
   );

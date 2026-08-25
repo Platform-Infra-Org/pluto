@@ -9,7 +9,14 @@ export {
   resourceRef,
   userRef,
   catalogPath,
+  normalizeEntityRef,
 } from './refs';
+
+export {
+  serviceOwnerMap,
+  serviceOwnedTypes,
+  type ServiceOwnerMap,
+} from './resourceOwnership';
 
 /** Lifecycle states of a resource request. */
 export type RequestState =

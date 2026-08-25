@@ -194,12 +194,15 @@ describe('SHADCN_CSS', () => {
     expect(block![1]).not.toMatch(/overflow:\s*visible/);
   });
 
-  it('serves exactly one typeface', () => {
-    // One family, differentiated by weight, size and case. A second @font-face
-    // would mean the consolidation had quietly come undone.
+  it('serves exactly one Latin typeface, plus Heebo for Hebrew', () => {
+    // One Latin family, differentiated by weight, size and case, plus the
+    // unicode-range-scoped Hebrew companion. A THIRD @font-face -- or a second
+    // one not scoped to Hebrew -- would mean the consolidation had quietly
+    // come undone.
     const faces = Array.from(SHADCN_CSS.matchAll(/@font-face\s*\{([^}]*)\}/g), m => m[1]);
-    expect(faces.length).toBe(1);
+    expect(faces.length).toBe(2);
     expect(faces[0]).toMatch(/Clash Grotesk/);
+    expect(faces[1]).toMatch(/Heebo/);
     expect(SHADCN_CSS).not.toMatch(/Pixelify Sans|Anton/);
   });
 
@@ -622,11 +625,13 @@ describe('SHADCN_CSS', () => {
 
     // Flush left, sharing the header's top line with the action icons.
     expect(body).toMatch(/text-align:\s*left/);
-    // The title is the flexible half of that line. min-width 0 is the part
-    // that is easy to drop and impossible to notice: without it a flex item
-    // refuses to shrink below its content width, so a long name pushes the
-    // icons off the card instead of wrapping underneath itself.
-    expect(body).toMatch(/flex:\s*1 1 auto/);
+    // The title is the flexible half of that line, and the basis must be 0
+    // rather than auto — see "keeps the template card actions on the title
+    // row" below for why auto is what pushed the icons onto a second line.
+    // min-width 0 is the companion that is easy to drop and impossible to
+    // notice: without it a flex item refuses to shrink below its content
+    // width at all.
+    expect(body).toMatch(/flex:\s*1 1 0/);
     expect(body).toMatch(/min-width:\s*0/);
   });
 
@@ -741,5 +746,61 @@ describe('SHADCN_CSS', () => {
       .filter(block => /left:\s*var\(--sc-field-x\)/.test(block))
       .filter(block => /MuiInputLabel-root|MuiFormLabel-root/.test(block));
     expect(offenders).toEqual([]);
+  });
+
+  it('keeps the template card actions on the title row', () => {
+    // This rule shipped once already, asserting `overflow-wrap: anywhere` —
+    // which was green while the bug was still on screen, because overflow-wrap
+    // is not what decides this. A wrapping flex container picks its lines from
+    // each item's HYPOTHETICAL MAIN SIZE, and for `flex-basis: auto` that is
+    // the title's max-content width. A long name filled the row alone and the
+    // actions were pushed to a second line before shrinking was ever
+    // considered; overflow-wrap only lowers min-content, which governs how far
+    // an item shrinks once it is already on the line.
+    //
+    // Measured in Chromium, 320px card, 52-char name: `flex: 1 1 auto` put the
+    // actions at y=63, `flex: 1 1 0` keeps them at y=10. So basis is what this
+    // pins. jsdom has no layout engine, so the declaration is as close as a
+    // unit test gets — the real proof is the measurement above.
+    const start = SHADCN_CSS.indexOf(
+      '.sc-route-create [class*="MuiCard-root"] > .MuiBox-root:first-child > h4 {',
+    );
+    expect(start).toBeGreaterThan(-1);
+    const titleRule = SHADCN_CSS.slice(start, SHADCN_CSS.indexOf('\n}', start));
+
+    expect(titleRule).toContain('flex: 1 1 0;');
+    expect(titleRule).not.toContain('flex: 1 1 auto');
+    expect(titleRule).toContain('min-width: 0');
+    // Still needed, for the one case basis 0 cannot solve: a single
+    // unbreakable token wider than the space the actions leave.
+    expect(titleRule).toContain('overflow-wrap: anywhere');
+  });
+});
+
+describe('Hebrew type', () => {
+  it('serves Heebo from our own origin', () => {
+    // The CSP is font-src 'self'. A CDN reference does not load, and fails
+    // silently into a system fallback that looks nearly right.
+    expect(SHADCN_CSS).toContain("src: url('/fonts/heebo.woff2')");
+    expect(SHADCN_CSS).not.toMatch(/@font-face[^}]*https?:\/\//);
+  });
+
+  it('scopes Heebo to the Hebrew blocks', () => {
+    // unicode-range is what makes this a fix rather than a fallback: Latin
+    // never leaves Clash Grotesk, and no rule has to know which script it is
+    // rendering.
+    const face = SHADCN_CSS.slice(SHADCN_CSS.indexOf("font-family: 'Heebo'"));
+    const block = face.slice(0, face.indexOf('}'));
+    expect(block).toContain('unicode-range');
+    expect(block).toContain('U+0590-05FF');
+  });
+
+  it('lists Heebo in both font stacks', () => {
+    for (const token of ['--sc-font-ui', '--sc-font-title']) {
+      const decl = SHADCN_CSS.slice(SHADCN_CSS.indexOf(`${token}:`));
+      expect(`${token}:${decl.slice(0, decl.indexOf(';')).includes('Heebo')}`).toBe(
+        `${token}:true`,
+      );
+    }
   });
 });
