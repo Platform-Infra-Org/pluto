@@ -182,6 +182,9 @@ platform:
       - pendingApprovals
       - recentlyVisited
       - favouriteTemplates
+      # Decoration, filling the grid's spare cell. Drop it and the cell is
+      # simply empty — nothing else moves.
+      - pluto
     maxItems: 8
   # Existing Grafana dashboard, embedded on /dashboard and on request pages
   # (scoped to that request's own time window). Empty by default — with no
