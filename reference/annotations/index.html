@@ -536,6 +536,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../how-to/pause-the-platform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pause the platform
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../how-to/rebrand-the-portal/" class="md-nav__link">
         
   
@@ -1129,6 +1157,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../explanation/who-sees-what/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Who sees a resource
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../explanation/workflows-and-git/" class="md-nav__link">
         
   
@@ -1381,7 +1437,7 @@
 <tr>
 <td><code>platform.io/resource-type</code></td>
 <td>string</td>
-<td>The resource's type (maps back to its template/owner).</td>
+<td>The resource's type (maps back to its template/owner). <strong>Decides visibility:</strong> admins, the resource's owner, and the type's service-owner may see it; everyone else sees nothing. A Resource without this annotation is not narrowed by the visibility policy.</td>
 </tr>
 <tr>
 <td><code>platform.io/resource-data</code></td>

@@ -536,6 +536,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../how-to/pause-the-platform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pause the platform
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../how-to/rebrand-the-portal/" class="md-nav__link">
         
   
@@ -909,6 +937,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#the-potion-a-first-time-visitor-gets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The potion a first-time visitor gets
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1256,6 +1295,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../explanation/who-sees-what/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Who sees a resource
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../explanation/workflows-and-git/" class="md-nav__link">
         
   
@@ -1422,6 +1489,17 @@
     <span class="md-ellipsis">
       
         app.branding.flavour
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-potion-a-first-time-visitor-gets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The potion a first-time visitor gets
       
     </span>
   </a>
@@ -1627,11 +1705,21 @@ from the accent. See
 <span class="w">    </span><span class="nt">flavour</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">fantasy</span><span class="w">   </span><span class="c1"># omit for the literal names</span>
 </code></pre></div></td></tr></table></div>
 <p>Optional, frontend-visible. <code>fantasy</code> renames <strong>sidebar screens only</strong> —
-Requests → Quests, Create → Summon, Catalog → Atlas.</p>
+Requests → Quests, New Request → Summon, Catalog → Atlas.</p>
 <p>Request <strong>states are never renamed</strong>, whatever this is set to. A label naming a
 screen is decoration and someone who cannot find "Requests" finds it one click
 later; a label naming a state is a record, and <code>QUEST FAILED</code> in an audit trail
 is a support ticket.</p>
+<h3 id="the-potion-a-first-time-visitor-gets">The potion a first-time visitor gets<a class="headerlink" href="#the-potion-a-first-time-visitor-gets" title="Permanent link">&para;</a></h3>
+<div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
+<span class="normal">2</span>
+<span class="normal">3</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">app</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">branding</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">defaultScheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">greek</span>
+</code></pre></div></td></tr></table></div>
+<p>An id from the scheme shelf. A visitor's own pick always wins — this decides the
+first visit only, so setting it never overrides a choice someone has made.
+Missing or unknown falls back to <code>obsidian</code>.</p>
 <h2 id="platformrbac"><code>platform.rbac</code><a class="headerlink" href="#platformrbac" title="Permanent link">&para;</a></h2>
 <p><div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
@@ -1641,7 +1729,7 @@ is a support ticket.</p>
 <span class="w">    </span><span class="nt">adminGroups</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">group</span><span class="p p-Indicator">:</span><span class="nv">default/platform-admins</span><span class="p p-Indicator">]</span><span class="w">     </span><span class="c1"># default</span>
 <span class="w">    </span><span class="nt">auditorGroups</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">group</span><span class="p p-Indicator">:</span><span class="nv">default/platform-auditors</span><span class="p p-Indicator">]</span><span class="w">  </span><span class="c1"># default</span>
 </code></pre></div></td></tr></table></div>
-Frontend-visible (the approve button uses <code>adminGroups</code>). Multiple groups allowed.</p>
+Frontend-visible (the approve button uses <code>adminGroups</code>). Multiple groups allowed. See <strong><a href="../../how-to/configure-rbac/">Configure admins &amp; per-team approval</a></strong> and <strong><a href="../../how-to/pause-the-platform/">Pause the platform</a></strong>.</p>
 <h2 id="platformargo"><code>platform.argo</code><a class="headerlink" href="#platformargo" title="Permanent link">&para;</a></h2>
 <p><div class="language-yaml highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span>
 <span class="normal">2</span>
@@ -1693,7 +1781,8 @@ full entityRefs and already carry their namespace inline
 <span class="normal"> 9</span>
 <span class="normal">10</span>
 <span class="normal">11</span>
-<span class="normal">12</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">platform</span><span class="p">:</span>
+<span class="normal">12</span>
+<span class="normal">13</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nt">platform</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">home</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">title</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Welcome</span>
 <span class="w">    </span><span class="nt">subtitle</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">…</span>
@@ -1703,7 +1792,8 @@ full entityRefs and already carry their namespace inline
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">standingRequests</span><span class="w">    </span><span class="c1"># your requests still in flight</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pendingApprovals</span><span class="w">    </span><span class="c1"># requests you may decide</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">recentlyVisited</span><span class="w">     </span><span class="c1"># pages you opened, newest first</span>
-<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">favouriteTemplates</span><span class="w">  </span><span class="c1"># templates you starred on Create</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">favouriteTemplates</span><span class="w">  </span><span class="c1"># templates you starred on New Request</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">pluto</span><span class="w">               </span><span class="c1"># decoration only — fills the grid&#39;s spare cell</span>
 <span class="w">    </span><span class="nt">maxItems</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8</span>
 </code></pre></div></td></tr></table></div>
 <p>Frontend-visible. <code>sections</code> is an explicit list: <strong>a section absent from it is
@@ -1712,7 +1802,7 @@ upgrading. <code>maxItems</code> caps the table sections; recently-visited shows
 favourites 6 regardless, because a longer list stops being either.</p>
 <p><code>recentlyVisited</code> and <code>favouriteTemplates</code> are stored per <strong>user</strong> in the
 user-settings backend, so they follow the person across browsers and machines.
-Favourites are the same stars the Create page already writes — nothing extra to
+Favourites are the same stars the New Request page already writes — nothing extra to
 enable. See <strong><a href="../../how-to/customise-the-home-page/">Customise the home page</a></strong>.</p>
 <h2 id="platformsecrets"><code>platform.secrets</code><a class="headerlink" href="#platformsecrets" title="Permanent link">&para;</a></h2>
 <p><code>enabled</code>, <code>namespace</code> (where per-request Secrets and Workflows live — must match

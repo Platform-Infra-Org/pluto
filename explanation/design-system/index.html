@@ -536,6 +536,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../how-to/pause-the-platform/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pause the platform
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../how-to/rebrand-the-portal/" class="md-nav__link">
         
   
@@ -1018,6 +1046,34 @@
     
   
     Per-team RBAC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../who-sees-what/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Who sees a resource
   
 
     
@@ -1625,14 +1681,14 @@ cartouche holds one ankh rather than a name. <code>sprites.ts</code> says so bes
 grids, because the obvious later "fix" is to make it read. Malachite is
 confined to the sign-in page — it sits 16° from the success status hue, and
 green ornament beside a badge turns decoration into state;
-<code>egyptian.test.ts</code> fails if it appears anywhere else.</p>
-</li>
-</ul>
-<p>The mechanism is specificity alone. The injected accent sheet writes <code>:root</code>,
+<code>egyptian.test.ts</code> fails if it appears anywhere else.
+The mechanism is specificity alone. The injected accent sheet writes <code>:root</code>,
 which is (0,1,0); <code>:root.sc-greek</code> is (0,2,0) and wins whatever the injection
 order, and <code>:root.sc-greek.sc-dark</code> is (0,3,0) and settles the dark register
 over both. <code>sc-konami</code> has always worked this way — the mode potion is the same
 mechanism, persisted instead of thrown away on reload.</p>
+</li>
+</ul>
 <p>Each sheet lives in its own file, not in <code>styles.ts</code>. That is not tidiness:
 <code>styles.ts</code> is a single template literal that a stray backtick has silently
 truncated twice, and a whole art direction inline makes a known hazard worse.
