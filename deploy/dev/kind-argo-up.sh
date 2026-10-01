@@ -47,8 +47,9 @@ kubectl -n argo rollout status deployment/argo-server --timeout=180s >/dev/null
 kubectl -n argo rollout status deployment/workflow-controller --timeout=180s >/dev/null
 
 echo "  - applying seed WorkflowTemplates"
-kubectl apply -f "$HERE/argo/function-blocks.yaml" >/dev/null
-kubectl apply -f "$HERE/argo/git-ops.yaml" >/dev/null
+# The whole directory: every seed Scaffolder template points at one of these,
+# and a template whose WorkflowTemplate is missing fails at submit with a 404.
+kubectl apply -f "$HERE/argo/" >/dev/null
 
 echo "  - port-forwarding argo-server -> localhost:2746"
 if [ -f "$REPO_ROOT/.argo-pf.pid" ] && kill -0 "$(cat "$REPO_ROOT/.argo-pf.pid")" 2>/dev/null; then
