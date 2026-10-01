@@ -816,6 +816,73 @@ describe('createRouter', () => {
       expect(resumeNode).toHaveBeenCalled();
     });
 
+    describe('gate teams in the lists', () => {
+      const ids = (res: request.Response) =>
+        res.body.map((r: PlatformRequest) => r.id);
+
+      it('queues a gate for its team only while it waits, and keeps it visible after', async () => {
+        const principal = { isAdmin: false, groups: [FINANCE] };
+        const { app, id } = await seedSuspended(
+          [gate('cost', FINANCE), gate('schema', DBA)],
+          principal,
+        );
+        const pending = (await request(app).post('/requests').send(NEW_REQUEST))
+          .body.id as number;
+
+        // The gate team: its step is waiting on it; the pending request is not.
+        expect(ids(await request(app).get('/requests?scope=actionable'))).toEqual(
+          [id],
+        );
+        expect(ids(await request(app).get('/requests?scope=approval'))).toEqual([
+          id,
+        ]);
+
+        // The owning team: approves the pending one, cannot answer either gate.
+        principal.groups = [OWNER];
+        expect(ids(await request(app).get('/requests?scope=actionable'))).toEqual(
+          [pending],
+        );
+
+        // Answered: off the gate team's queue (schema is DBA's), still in its
+        // lists.
+        principal.groups = [FINANCE];
+        expect((await resume(app, id, 'node-cost')).status).toBe(200);
+        expect(ids(await request(app).get('/requests?scope=actionable'))).toEqual(
+          [],
+        );
+        expect(ids(await request(app).get('/requests?scope=approval'))).toEqual([
+          id,
+        ]);
+        expect(
+          ids(
+            await request(app)
+              .get('/requests')
+              .set('Authorization', mockCredentials.user.header('user:default/pat')),
+          ),
+        ).toEqual([id]);
+
+        // An admin's queue is both waiting states, whole.
+        principal.isAdmin = true;
+        principal.groups = [];
+        expect(ids(await request(app).get('/requests?scope=actionable'))).toEqual(
+          [id, pending],
+        );
+      });
+
+      it('leaves a gate it has not seen for the poll to cache and announce', async () => {
+        const nodes = [gate('cost', FINANCE)];
+        const { app, id } = await seedSuspended(nodes, {
+          isAdmin: false,
+          groups: [FINANCE],
+        });
+        // A later gate opened after the last poll.
+        nodes.push(gate('schema', DBA));
+        expect((await resume(app, id, 'node-cost')).status).toBe(200);
+        const got = await request(app).get(`/requests/${id}`);
+        expect(got.body.suspendedNodes).toEqual([]);
+      });
+    });
+
     describe('stopping', () => {
       // Argo cannot stop one node -- /stop ends the run -- so refusing a gate
       // and abandoning the request are the same call, told apart by nodeId and

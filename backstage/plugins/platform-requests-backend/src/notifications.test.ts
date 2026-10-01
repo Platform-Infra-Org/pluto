@@ -115,3 +115,56 @@ describe('requester recipients honour the configured namespace', () => {
     expect(send).not.toHaveBeenCalled();
   });
 });
+
+describe('gateNeeded recipients', () => {
+  const node = (name: string, approverGroup?: string) =>
+    ({ id: name, name, approverGroup, inputs: [], suppliedOutputs: [] } as any);
+  /** recipient -> title, one entry per send. */
+  const sends = (send: jest.Mock) =>
+    Object.fromEntries(
+      send.mock.calls.map(([c]) => [c.recipients.entityRef, c.payload.title]),
+    );
+
+  it('tells each gate team only about its own step, and not the owner', async () => {
+    const { send, notify } = notifierWith();
+    await notify.gateNeeded(request({ ownerGroup: 'group:default/checkout' }), [
+      node('approve-cost', 'group:default/payments'),
+      node('approve-schema', ' group:default/search '),
+    ]);
+    expect(sends(send)).toEqual({
+      'group:default/platform-admins':
+        'Input needed: approve-cost, approve-schema on request #1',
+      'group:default/payments': 'Input needed: approve-cost on request #1',
+      'group:default/search': 'Input needed: approve-schema on request #1',
+    });
+  });
+
+  it('sends an unannotated step to the owner and an empty one to admins only', async () => {
+    const { send, notify } = notifierWith();
+    await notify.gateNeeded(request({ ownerGroup: 'group:default/checkout' }), [
+      node('review'),
+      node('broken', '  '),
+    ]);
+    expect(sends(send)).toEqual({
+      'group:default/platform-admins':
+        'Input needed: review, broken on request #1',
+      'group:default/checkout': 'Input needed: review on request #1',
+    });
+  });
+
+  it('sends nothing when no gate is new', async () => {
+    const { send, notify } = notifierWith();
+    await notify.gateNeeded(request(), []);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('keeps going when one send fails', async () => {
+    const { send, notify } = notifierWith();
+    send.mockRejectedValueOnce(new Error('down'));
+    await notify.gateNeeded(request(), [node('a', 'group:default/payments')]);
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.stringContaining('notify gateNeeded failed for 1'),
+    );
+  });
+});

@@ -23,6 +23,7 @@ import { createCipher } from './crypto';
 import { createResourceResolver, createSubmitWorkflow } from './provisioning';
 import { planRetention, readRetentionConfig } from './retention';
 import { isAdminRef } from './maintenance';
+import { newGates } from './suspend';
 
 /**
  * States whose workflow may still need the request's Secret: running,
@@ -391,7 +392,10 @@ export const platformRequestsPlugin = createBackendPlugin({
           if (!phase) {
             return { state: r.state, changed: false, reason: 'workflow-gone' };
           }
+          // Read before the write below replaces the cache it compares to.
+          const opened = newGates(r.suspendedNodes, suspendedNodes);
           await store.setWorkflow(r.id, { phase, suspendedNodes });
+          await notify.gateNeeded(r, opened);
           // A resubmit runs under a NEW name but copies the request-id label,
           // so follow whichever workflow is authoritative now.
           if (name && name !== r.workflowName) {
@@ -403,7 +407,6 @@ export const platformRequestsPlugin = createBackendPlugin({
           // indefinitely, looking healthy.
           if (suspendedNodes.length > 0 && r.state !== 'AWAITING_INPUT') {
             await store.setState(r.id, 'AWAITING_INPUT');
-            await notify.approvalNeeded(r);
             logger.info(
               `request ${r.id}: workflow suspended at ${suspendedNodes
                 .map(n => n.name)

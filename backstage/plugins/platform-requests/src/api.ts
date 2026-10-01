@@ -54,7 +54,7 @@ export interface RequestsApi {
   list(opts?: {
     state?: string;
     mine?: boolean;
-    scope?: 'approval';
+    scope?: 'approval' | 'actionable';
   }): Promise<Request[]>;
   get(id: number): Promise<Request>;
   create(body: NewRequest): Promise<Request>;
@@ -113,7 +113,7 @@ export class RequestsClient implements RequestsApi {
   async list(opts?: {
     state?: string;
     mine?: boolean;
-    scope?: 'approval';
+    scope?: 'approval' | 'actionable';
   }): Promise<Request[]> {
     const q = new URLSearchParams();
     if (opts?.state) q.set('state', opts.state);

@@ -571,8 +571,44 @@ export async function createRouter(
     if (mine) {
       // The caller's own requests.
       res.json(await store.list({ state, requester: actor }));
+    } else if (scope === 'actionable') {
+      // What is waiting on the caller: requests they may approve, plus requests
+      // parked at a suspend step they may resume. Decided with the same rules
+      // the approve and resume routes enforce, so the queue cannot offer
+      // something the click would refuse. `state` is ignored: the scope is
+      // defined by the two waiting states.
+      const [pending, gated] = await Promise.all([
+        store.list(
+          isAdmin
+            ? { state: 'PENDING_APPROVAL' }
+            : { state: 'PENDING_APPROVAL', ownerGroups: groups },
+        ),
+        store.list(
+          isAdmin
+            ? { state: 'AWAITING_INPUT' }
+            : { state: 'AWAITING_INPUT', ownerGroups: groups },
+        ),
+      ]);
+      const mayDecide = (r: PlatformRequest) =>
+        isAdmin || (!!r.ownerGroup && groups.includes(r.ownerGroup));
+      const mayAnswer = (r: PlatformRequest) =>
+        (r.suspendedNodes ?? []).some(
+          n =>
+            mayResumeNode({
+              isAdmin,
+              groups,
+              ownerGroup: r.ownerGroup,
+              approverGroup: n.approverGroup,
+            }).allowed,
+        );
+      res.json(
+        [...pending.filter(mayDecide), ...gated.filter(mayAnswer)].sort(
+          (a, b) => a.id - b.id,
+        ),
+      );
     } else if (scope === 'approval') {
-      // Requests the caller may approve: admin → all; else their teams' only.
+      // The caller's teams' requests — owned, or gated by one of their teams
+      // (`store.list`'s ownerGroups): admin → all.
       res.json(
         await store.list(isAdmin ? { state } : { state, ownerGroups: groups }),
       );
@@ -710,10 +746,18 @@ export async function createRouter(
       request.workflowName,
       request.workflowNamespace,
     );
+    // What this route may write back to the cache: the cached gates Argo still
+    // has, never a gate it has not cached yet. A new gate is the poll's to
+    // record, because the poll notifies a gate's team on first sight; caching
+    // it here would mean nobody ever hears about it.
+    const cachedIds = new Set((request.suspendedNodes ?? []).map(n => n.id));
+    const known = (nodes: SuspendedNode[]) =>
+      nodes.filter(n => cachedIds.has(n.id));
+
     const node = live.find(n => n.id === parsed.data.nodeId);
     if (!node) {
       // Somebody else got there first, which is the outcome the caller wanted.
-      await store.setWorkflow(request.id, { suspendedNodes: live });
+      await store.setWorkflow(request.id, { suspendedNodes: known(live) });
       if (live.length === 0 && request.state === 'AWAITING_INPUT') {
         await store.setState(request.id, 'IN_PROGRESS');
       }
@@ -778,7 +822,7 @@ export async function createRouter(
     });
 
     const remaining = live.filter(n => n.id !== node.id);
-    await store.setWorkflow(request.id, { suspendedNodes: remaining });
+    await store.setWorkflow(request.id, { suspendedNodes: known(remaining) });
     if (remaining.length === 0) await store.setState(request.id, 'IN_PROGRESS');
 
     res.json({

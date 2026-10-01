@@ -112,6 +112,14 @@ released by its own team and neither by the other, so the page renders a verdict
 per step instead of one banner. And a viewer who can answer no gate at all still
 sees every gate — hiding them would leave nobody knowing whom to chase.
 
+A named team has to **find** the gate as well as be allowed to release it. The
+request is not theirs — they neither filed nor own it — so every group a gate
+names is recorded on the request, and that team's lists include it from then
+on: "For approval" while its step waits, "All" afterwards, so it can look back
+at what it released. The record is append-only; the cached suspended-step list
+empties on resume and cannot serve. Each newly opened gate notifies the people
+who may answer it (below), not the owner.
+
 An empty or unresolvable group falls to admins rather than back to the owner,
 which is the same instinct as the absent-`ownerGroup` rule above: a typo in a
 group ref stalls the workflow visibly instead of quietly widening who may move
@@ -262,8 +270,12 @@ watch/webhook would be the optimization if it grew.
 
 The requester is alerted on every meaningful transition — approved (workflow
 running), rejected, and the terminal succeeded/failed (with the created resource
-ref). Approvers are alerted when a new request needs a decision. Notifications are
-best-effort and never block the flow.
+ref). Approvers are alerted when a new request needs a decision. Each suspend
+step is announced once, the first time a poll sees it — keyed on the step, not
+on the move to `AWAITING_INPUT`, so a gate that opens while another is already
+waiting is not missed. It goes to admins and to whoever may resume that step:
+the named group, the owner for an unannotated step, nobody else for an empty
+annotation. Notifications are best-effort and never block the flow.
 
 ## A request may name more than one resource
 

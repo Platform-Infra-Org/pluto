@@ -3,6 +3,7 @@ import { NotificationService } from '@backstage/plugin-notifications-node';
 import {
   DEFAULT_NAMESPACE,
   Request as PlatformRequest,
+  SuspendedNode,
   userRef,
 } from '@internal/plugin-platform-common';
 
@@ -52,6 +53,57 @@ export function createNotifier(
         });
       } catch (e) {
         logger.warn(`notify approvalNeeded failed for ${r.id}: ${e}`);
+      }
+    },
+
+    /**
+     * A workflow stopped at one or more suspend steps. Each step goes to the
+     * people `mayResumeNode` would let answer it: a named approver group, the
+     * owning team for an unannotated step, nobody beyond admins for an empty
+     * annotation. The owning team is deliberately not told about a step another
+     * team answers — it cannot act on it.
+     *
+     * One send per recipient group, and nothing dedupes across sends: an admin
+     * who is also on a gate team gets two. ponytail: accepted — resolve groups
+     * to users and fold per user if that becomes noise.
+     */
+    async gateNeeded(
+      r: {
+        id: number;
+        resourceType: string;
+        resourceName: string;
+        ownerGroup?: string;
+      },
+      nodes: SuspendedNode[],
+    ) {
+      // recipient -> the steps they may answer. Admins may answer every step;
+      // each team is told only about its own, so a parallel gate for another
+      // team does not read as work for this one.
+      const steps = new Map<string, string[]>();
+      const add = (who: string | undefined, step: string) => {
+        if (who) steps.set(who, [...(steps.get(who) ?? []), step]);
+      };
+      for (const n of nodes) {
+        for (const admin of adminGroups) add(admin, n.name);
+        add(
+          n.approverGroup === undefined ? r.ownerGroup : n.approverGroup.trim(),
+          n.name,
+        );
+      }
+      for (const [who, names] of steps) {
+        try {
+          await notifications.send({
+            recipients: { type: 'entity', entityRef: who },
+            payload: {
+              title: `Input needed: ${[...new Set(names)].join(', ')} on request #${r.id}`,
+              description: `${r.resourceType}/${r.resourceName}`,
+              link: `/requests/${r.id}`,
+              severity: 'normal',
+            },
+          });
+        } catch (e) {
+          logger.warn(`notify gateNeeded failed for ${r.id} → ${who}: ${e}`);
+        }
       }
     },
 

@@ -119,19 +119,36 @@ export class RequestsStore {
     state?: RequestState;
     /** Exact requester (the caller's own requests). */
     requester?: string;
-    /** ownerGroup ∈ these groups (the caller's approval scope). */
+    /**
+     * The caller's teams' requests: ownerGroup ∈ these groups, or one of the
+     * request's suspend steps named one of them as its approver group.
+     */
     ownerGroups?: string[];
-    /** requester = X OR ownerGroup ∈ groups (own + team-owned). */
+    /** requester = X OR the `ownerGroups` match above (own + team scope). */
     visibleTo?: { requester: string; ownerGroups: string[] };
   }): Promise<Request[]> {
+    // A gate team is in scope the same way the owning team is: it has to find
+    // the request to answer its step, and to look back at what it answered.
+    const teamScope = (b: Knex.QueryBuilder, groups: string[]) =>
+      b
+        .whereIn('owner_group', groups)
+        .orWhereIn(
+          'id',
+          this.db('platform_request_gate_groups')
+            .select('request_id')
+            .whereIn('group_ref', groups),
+        );
     let q = this.db<RequestRow>('platform_requests');
     if (filter?.state) q = q.where('state', filter.state);
     if (filter?.requester) q = q.where('requester', filter.requester);
-    if (filter?.ownerGroups) q = q.whereIn('owner_group', filter.ownerGroups);
+    if (filter?.ownerGroups) {
+      const groups = filter.ownerGroups;
+      q = q.where(b => teamScope(b, groups));
+    }
     if (filter?.visibleTo) {
       const { requester, ownerGroups } = filter.visibleTo;
       q = q.where(b =>
-        b.where('requester', requester).orWhereIn('owner_group', ownerGroups),
+        b.where('requester', requester).orWhere(t => teamScope(t, ownerGroups)),
       );
     }
     const rows = await q.orderBy('id', 'asc');
@@ -192,6 +209,24 @@ export class RequestsStore {
       update.suspended_nodes = JSON.stringify(patch.suspendedNodes);
     }
     await this.db('platform_requests').where({ id }).update(update);
+
+    // Record named gate groups for list visibility. Trimmed the way
+    // `mayResumeNode` trims, so the list and the gate agree on who the team
+    // is. Unannotated steps belong to the owner (already in scope) and an
+    // empty annotation is admin-only, so neither adds a row.
+    const named = [
+      ...new Set(
+        (patch.suspendedNodes ?? [])
+          .map(n => n.approverGroup?.trim())
+          .filter((g): g is string => !!g),
+      ),
+    ];
+    if (named.length > 0) {
+      await this.db('platform_request_gate_groups')
+        .insert(named.map(group_ref => ({ request_id: id, group_ref })))
+        .onConflict(['request_id', 'group_ref'])
+        .ignore();
+    }
   }
 
   /** The request's encrypted provided-secret blob, if any (approval-only read). */
@@ -244,8 +279,11 @@ export class RequestsStore {
     const ids = rows.map(r => r.id);
     if (ids.length === 0) return 0;
 
-    // Approvals first: the FK points at the request.
+    // Children first: their FKs point at the request.
     await this.db('platform_approvals').whereIn('request_id', ids).del();
+    await this.db('platform_request_gate_groups')
+      .whereIn('request_id', ids)
+      .del();
     return this.db('platform_requests').whereIn('id', ids).del();
   }
 
@@ -260,6 +298,9 @@ export class RequestsStore {
    */
   async deleteById(id: number): Promise<number> {
     await this.db('platform_approvals').where({ request_id: id }).del();
+    await this.db('platform_request_gate_groups')
+      .where({ request_id: id })
+      .del();
     return this.db('platform_requests').where({ id }).del();
   }
 

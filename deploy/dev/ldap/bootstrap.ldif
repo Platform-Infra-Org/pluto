@@ -44,6 +44,25 @@ sn: Checkout
 mail: sam@platform.dev
 userPassword: sam
 
+# pat and quinn answer the team-gates workflow's two gates (payments' cost,
+# search's schema) without owning the request — the shape that went untested
+# while neither gate team had a person in it.
+dn: uid=pat,ou=people,dc=platform,dc=local
+objectClass: inetOrgPerson
+uid: pat
+cn: Pat Payments
+sn: Payments
+mail: pat@platform.dev
+userPassword: pat
+
+dn: uid=quinn,ou=people,dc=platform,dc=local
+objectClass: inetOrgPerson
+uid: quinn
+cn: Quinn Search
+sn: Search
+mail: quinn@platform.dev
+userPassword: quinn
+
 # ---- groups (groupOfNames; member = full user DN) ----
 dn: cn=platform-admins,ou=groups,dc=platform,dc=local
 objectClass: groupOfNames
@@ -65,9 +84,14 @@ objectClass: groupOfNames
 cn: checkout
 member: uid=sam,ou=people,dc=platform,dc=local
 
-# payments has no people yet (structural member = the directory admin, which is
-# not a person, so it maps to zero Backstage members → database is admin-only).
+# payments owns the database templates and answers team-gates' cost gate.
 dn: cn=payments,ou=groups,dc=platform,dc=local
 objectClass: groupOfNames
 cn: payments
-member: cn=admin,dc=platform,dc=local
+member: uid=pat,ou=people,dc=platform,dc=local
+
+# search answers team-gates' schema gate and owns nothing.
+dn: cn=search,ou=groups,dc=platform,dc=local
+objectClass: groupOfNames
+cn: search
+member: uid=quinn,ou=people,dc=platform,dc=local

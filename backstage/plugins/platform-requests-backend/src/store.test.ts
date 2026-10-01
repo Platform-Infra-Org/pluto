@@ -292,4 +292,78 @@ describe('RequestsStore', () => {
       expect((await store.get(r.id))?.error).toBe('boom');
     },
   );
+
+  it.each(databases.eachSupportedId())(
+    'puts gate teams in team scope, and keeps them there after resume, %p',
+    async databaseId => {
+      const store = await createStore(databaseId);
+      const payments = 'group:default/payments';
+      const node = (id: string, approverGroup?: string) => ({
+        id,
+        name: id,
+        approverGroup,
+        inputs: [],
+        suppliedOutputs: [],
+      });
+      const gated = await store.create({
+        kind: 'CREATE',
+        resourceType: 'team-gates',
+        resourceName: 'g',
+        requester: 'sam',
+        ownerGroup: 'group:default/checkout',
+      });
+      const other = await store.create({
+        kind: 'CREATE',
+        resourceType: 'team-gates',
+        resourceName: 'o',
+        requester: 'sam',
+        ownerGroup: 'group:default/checkout',
+      });
+      const ids = (rs: { id: number }[]) => rs.map(r => r.id);
+
+      expect(ids(await store.list({ ownerGroups: [payments] }))).toEqual([]);
+
+      // Named (trimmed, deduped), unannotated and empty-annotated gates:
+      // only the named one puts a team in scope.
+      await store.setWorkflow(gated.id, {
+        suspendedNodes: [
+          node('a', ` ${payments} `),
+          node('b', payments),
+          node('c'),
+          node('d', ''),
+        ],
+      });
+      expect(ids(await store.list({ ownerGroups: [payments] }))).toEqual([
+        gated.id,
+      ]);
+      expect(
+        ids(
+          await store.list({
+            visibleTo: { requester: 'pat', ownerGroups: [payments] },
+          }),
+        ),
+      ).toEqual([gated.id]);
+      // The owning team still sees both; the gate does not narrow it.
+      expect(
+        ids(await store.list({ ownerGroups: ['group:default/checkout'] })),
+      ).toEqual([gated.id, other.id]);
+
+      // Resumed: the cache empties, the team keeps the request.
+      await store.setWorkflow(gated.id, { suspendedNodes: [] });
+      expect(ids(await store.list({ ownerGroups: [payments] }))).toEqual([
+        gated.id,
+      ]);
+
+      // Both delete paths take the gate rows with them (the FK would refuse
+      // the request delete otherwise).
+      await store.setWorkflow(other.id, { suspendedNodes: [node('x', payments)] });
+      await expect(store.deleteById(gated.id)).resolves.toBe(1);
+      await store.setState(other.id, 'SUCCEEDED');
+      await store.testOnlySetUpdatedAt(other.id, '2000-01-01T00:00:00.000Z');
+      await expect(
+        store.deleteTerminalBefore('SUCCEEDED', '2001-01-01T00:00:00.000Z', 10),
+      ).resolves.toBe(1);
+      expect(ids(await store.list({ ownerGroups: [payments] }))).toEqual([]);
+    },
+  );
 });

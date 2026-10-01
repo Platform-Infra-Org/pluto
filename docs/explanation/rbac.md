@@ -39,8 +39,12 @@ was a 1:1 rename of two groups and bought nothing.
 ## Visibility follows the same rule
 
 `GET /requests` is scoped server-side: admins see everything; others see their own
-requests plus requests owned by their teams. The three request tabs (My / For
-approval / All) are views over that scoping.
+requests plus their teams' — owned by the team, or carrying a suspend step that
+named the team as its `platform.io/approver-group`. The three request tabs are
+views over that scoping: **My** is the caller's own; **All** is the team scope;
+**For approval** (`scope=actionable`, also the home card) is what is waiting on
+the caller — pending requests they may approve and suspend steps they may
+resume, decided by the same functions the approve and resume routes enforce.
 
 ## Notifications follow the same rule
 
@@ -51,8 +55,10 @@ plugin start and handed to the notifier, so the recipients cannot drift away
 from the gate by being read from config twice.
 
 An admin-only request (no owning template found) has no `ownerGroup`, so it
-notifies the admin groups alone. Decisions and terminal outcomes go to the
-requester only.
+notifies the admin groups alone. A suspend step notifies admins and whoever may
+resume it — its named group, or the owner if it names none — and the owner is
+not told about a step another team answers. Decisions and terminal outcomes go
+to the requester only.
 
 Notifications are **best-effort**: a failure is logged and never breaks the
 request flow. That is worth knowing when they appear not to arrive — check the
