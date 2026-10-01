@@ -225,10 +225,9 @@ function PendingApprovals({ max }: { max: number }) {
   const [rows, setRows] = useState<Request[]>();
 
   useEffect(() => {
-    // Only what this user may approve (admin: all; service owner: their teams').
-    requests
-      .list({ scope: 'approval', state: 'PENDING_APPROVAL' })
-      .then(setRows);
+    // What is waiting on this user: requests they may approve and suspend
+    // steps they may answer (admin: all).
+    requests.list({ scope: 'actionable' }).then(setRows);
   }, [requests]);
 
   // One call per card, over the rows this card actually shows.
@@ -251,6 +250,7 @@ function PendingApprovals({ max }: { max: number }) {
               <th>#</th>
               <th>Resource</th>
               <th>Requester</th>
+              <th>State</th>
             </tr>
           </thead>
           <tbody>
@@ -265,6 +265,7 @@ function PendingApprovals({ max }: { max: number }) {
                   {r.resourceType}/{titleOf(r.resourceName, titles)}
                 </td>
                 <td className="sc-muted">{r.requester}</td>
+                <td>{stateBadge(r.state)}</td>
               </tr>
             ))}
           </tbody>

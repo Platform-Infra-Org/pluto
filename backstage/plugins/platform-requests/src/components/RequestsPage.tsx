@@ -70,11 +70,16 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'all', label: 'All requests' },
 ];
 
-// What each tab fetches. `approval` is always PENDING_APPROVAL; `all` is every
-// state in the caller's scope (admin: everything; owner: their teams').
-const FETCH: Record<Tab, { mine?: boolean; scope?: 'approval'; state?: string }> = {
+// What each tab fetches. `approval` is what is waiting on the caller: requests
+// they may approve, and requests parked at a suspend step they may answer
+// (`scope=actionable`); `all` is every state in the caller's scope (admin:
+// everything; otherwise their teams' — owned, or gated by the team).
+const FETCH: Record<
+  Tab,
+  { mine?: boolean; scope?: 'approval' | 'actionable'; state?: string }
+> = {
   mine: { mine: true },
-  approval: { scope: 'approval', state: 'PENDING_APPROVAL' },
+  approval: { scope: 'actionable' },
   all: { scope: 'approval' },
 };
 
@@ -107,7 +112,7 @@ export function RequestsPage() {
     api.list(FETCH[tab]).then(setRows).catch(e => setError(String(e)));
   }, [api, tab]);
 
-  // The "For approval" tab is pending-only, so it has no state filter.
+  // The "For approval" tab is two fixed states, so it has no state filter.
   const stateFilterEnabled = tab !== 'approval';
 
   // Fed from `rows`, not `displayed`: the filter reads titles, so looking them

@@ -115,6 +115,8 @@ Sign in with Keycloak, using one of the LDAP fixtures:
 |---|---|---|
 | `admin` | `admin` | approve anything (member of `platform-admins`) |
 | `sam` | `sam` | raise requests; approve only their team's |
+| `pat` | `pat` | payments: approve payments' requests; answer its gates |
+| `quinn` | `quinn` | search: answer search's gates (owns nothing) |
 | `requester` | `requester` | raise requests |
 
 ### 4. Try the loop

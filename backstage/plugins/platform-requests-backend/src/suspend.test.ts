@@ -1,5 +1,5 @@
 import { SuspendedNode, SuppliedOutput } from '@internal/plugin-platform-common';
-import { filterSuppliedOutputs } from './suspend';
+import { filterSuppliedOutputs, newGates } from './suspend';
 
 const node = (suppliedOutputs: SuppliedOutput[]): SuspendedNode => ({
   id: 'n1',
@@ -121,5 +121,25 @@ describe('filterSuppliedOutputs', () => {
     });
     expect(r.invalid).toHaveLength(1);
     expect(r.missing).toEqual([]);
+  });
+});
+
+describe('newGates', () => {
+  const n = (id: string) =>
+    ({ id, name: id, inputs: [], suppliedOutputs: [] } as SuspendedNode);
+
+  it('is every live gate on first sight', () => {
+    expect(newGates(undefined, [n('a'), n('b')]).map(g => g.id)).toEqual([
+      'a',
+      'b',
+    ]);
+  });
+
+  it('is only the gate that opened while the request was already waiting', () => {
+    expect(newGates([n('a')], [n('a'), n('b')]).map(g => g.id)).toEqual(['b']);
+  });
+
+  it('is nothing when the same gates are polled again', () => {
+    expect(newGates([n('a'), n('b')], [n('b'), n('a')])).toEqual([]);
   });
 });

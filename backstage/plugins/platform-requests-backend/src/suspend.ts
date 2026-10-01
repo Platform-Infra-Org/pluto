@@ -64,3 +64,18 @@ export function filterSuppliedOutputs(
 
   return { accepted, rejected, missing, invalid };
 }
+
+/**
+ * The live suspend steps that were not in the cached list: gates opened since
+ * the last poll, whose teams have not been told yet. Keyed on node id rather
+ * than on the request moving to AWAITING_INPUT, because a second gate can open
+ * while the request is already waiting (parallel gates, or a later one before
+ * the poll saw the first released).
+ */
+export function newGates(
+  cached: SuspendedNode[] | undefined,
+  live: SuspendedNode[],
+): SuspendedNode[] {
+  const seen = new Set((cached ?? []).map(n => n.id));
+  return live.filter(n => !seen.has(n.id));
+}

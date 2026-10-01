@@ -176,7 +176,9 @@ people:
   the request at the start; a cost gate means little if the team spending the
   money can release it. A request its own owner filed can therefore reach a gate
   its owner cannot answer — the step stays visible on the request page, naming
-  the team, so they know whom to chase.
+  the team, so they know whom to chase. The named team is notified, and the
+  request appears in its **For approval** tab while the step waits and in
+  **All** afterwards.
 - **The decision is per step, not per request.** Two gates in the same step
   group suspend at the same time and are answered independently by two different
   teams, in either order.
