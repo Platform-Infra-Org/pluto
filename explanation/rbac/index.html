@@ -1482,8 +1482,12 @@ sourced from LDAP. We deliberately removed a separate "role" indirection because
 was a 1:1 rename of two groups and bought nothing.</p>
 <h2 id="visibility-follows-the-same-rule">Visibility follows the same rule<a class="headerlink" href="#visibility-follows-the-same-rule" title="Permanent link">&para;</a></h2>
 <p><code>GET /requests</code> is scoped server-side: admins see everything; others see their own
-requests plus requests owned by their teams. The three request tabs (My / For
-approval / All) are views over that scoping.</p>
+requests plus their teams' — owned by the team, or carrying a suspend step that
+named the team as its <code>platform.io/approver-group</code>. The three request tabs are
+views over that scoping: <strong>My</strong> is the caller's own; <strong>All</strong> is the team scope;
+<strong>For approval</strong> (<code>scope=actionable</code>, also the home card) is what is waiting on
+the caller — pending requests they may approve and suspend steps they may
+resume, decided by the same functions the approve and resume routes enforce.</p>
 <h2 id="notifications-follow-the-same-rule">Notifications follow the same rule<a class="headerlink" href="#notifications-follow-the-same-rule" title="Permanent link">&para;</a></h2>
 <p>"Approval needed" goes to <strong>everyone the gate would let approve</strong>: the configured
 <code>platform.rbac.adminGroups</code> plus the request's <code>ownerGroup</code>, deduped — an admin
@@ -1491,8 +1495,10 @@ who is also on the owning team is notified once. The list is resolved once at
 plugin start and handed to the notifier, so the recipients cannot drift away
 from the gate by being read from config twice.</p>
 <p>An admin-only request (no owning template found) has no <code>ownerGroup</code>, so it
-notifies the admin groups alone. Decisions and terminal outcomes go to the
-requester only.</p>
+notifies the admin groups alone. A suspend step notifies admins and whoever may
+resume it — its named group, or the owner if it names none — and the owner is
+not told about a step another team answers. Decisions and terminal outcomes go
+to the requester only.</p>
 <p>Notifications are <strong>best-effort</strong>: a failure is logged and never breaks the
 request flow. That is worth knowing when they appear not to arrive — check the
 backend log, not the request state.</p>
