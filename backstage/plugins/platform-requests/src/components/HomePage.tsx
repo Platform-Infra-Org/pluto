@@ -210,7 +210,7 @@ function StandingRequests({ max }: { max: number }) {
                 <td className="sc-cell-ellip" title={r.resourceName}>
                   {r.resourceType}/{titleOf(r.resourceName, titles)}
                 </td>
-                <td>{stateBadge(r.state)}</td>
+                <td>{stateBadge(r.state, r.ownerGroup)}</td>
               </tr>
             ))}
           </tbody>
@@ -265,7 +265,7 @@ function PendingApprovals({ max }: { max: number }) {
                   {r.resourceType}/{titleOf(r.resourceName, titles)}
                 </td>
                 <td className="sc-muted">{r.requester}</td>
-                <td>{stateBadge(r.state)}</td>
+                <td>{stateBadge(r.state, r.ownerGroup)}</td>
               </tr>
             ))}
           </tbody>

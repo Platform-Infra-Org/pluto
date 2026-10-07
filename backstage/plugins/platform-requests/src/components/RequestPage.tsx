@@ -266,7 +266,7 @@ export function RequestPage() {
           request.resourceName,
           titles,
         )}`}
-        actions={stateBadge(request.state)}
+        actions={stateBadge(request.state, request.ownerGroup)}
       />
       {request.state === 'SUCCEEDED' && resultRefs.length > 0 && (
         <div className="sc-notice" style={{ marginBottom: 12 }}>

@@ -25,9 +25,13 @@ export const formatTs = (iso: string) =>
  * badge text — never instead of it, so the accessible name is unchanged. The
  * gear spins while a workflow is actually running.
  */
-export function stateBadge(s: RequestState) {
+export function stateBadge(s: RequestState, ownerGroup?: string) {
+  // ownerGroup is copied from the catalog Template's spec.owner at creation.
+  const approverTeam = ownerGroup
+    ?.split('/').pop()?.replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, letter => letter.toUpperCase()) ?? 'Admins';
   const label: Record<RequestState, string> = {
-    PENDING_APPROVAL: 'Pending approval',
+    PENDING_APPROVAL: `Pending Approval by ${approverTeam}`,
     APPROVED: 'Approved',
     IN_PROGRESS: 'In progress',
     SUCCEEDED: 'Succeeded',
@@ -225,7 +229,7 @@ export function RequestsPage() {
                 </td>
                 <td>{r.requester}</td>
                 <td className="sc-muted">{formatTs(r.createdAt)}</td>
-                <td>{stateBadge(r.state)}</td>
+                <td>{stateBadge(r.state, r.ownerGroup)}</td>
               </tr>
             ))}
           </tbody>
