@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added feature to see who the requester waiting for
 
+### Changed
+
+- Blank space
+
 ## [1.6.2] - 2026-10-01
 
 ### Fixed
