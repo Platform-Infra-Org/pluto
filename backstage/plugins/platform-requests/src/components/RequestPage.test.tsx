@@ -191,3 +191,25 @@ describe('RequestPage — failure row', () => {
     await waitFor(() => expect(screen.getByText(/boom/)).toBeInTheDocument());
   });
 });
+
+describe('RequestPage — pending approver team', () => {
+  it.each(['platform-team', 'cloudcore-team'])(
+    'names the owning team (%s) in the pending status',
+    async team => {
+      renderWith({}, {
+        state: 'PENDING_APPROVAL',
+        ownerGroup: `group:default/${team}`,
+        workflowName: undefined,
+      });
+      const name = team === 'platform-team' ? 'Platform Team' : 'Cloudcore Team';
+      expect(await screen.findByText(`Pending Approval by ${name}`))
+        .toBeInTheDocument();
+    },
+  );
+
+  it('names admins when no owning team is available', async () => {
+    renderWith({}, { state: 'PENDING_APPROVAL', workflowName: undefined });
+    expect(await screen.findByText('Pending Approval by Admins'))
+      .toBeInTheDocument();
+  });
+});
