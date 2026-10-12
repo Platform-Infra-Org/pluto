@@ -29,6 +29,7 @@
     "@backstage/plugin-app-react": "*",
     "@backstage/plugin-catalog-graph": "*",
     "@backstage/plugin-catalog-react": "*",
+    "@backstage/plugin-notifications": "^0.5.19",
     "@backstage/plugin-scaffolder-react": "^2.0.2",
     "@backstage/theme": "*",
     "@dagrejs/dagre": "^1.1.8",

@@ -7,6 +7,13 @@ import {
   userRef,
 } from '@internal/plugin-platform-common';
 
+const displayName = (value: string) =>
+  value
+    .split('/')
+    .pop()!
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, letter => letter.toUpperCase());
+
 /**
  * Native Backstage notifications for the request flow: approvers on new
  * requests, the requester on decisions + terminal outcomes. Best-effort — a
@@ -22,6 +29,8 @@ export function createNotifier(
   logger: LoggerService,
   adminGroups: string[],
   namespace: string = DEFAULT_NAMESPACE,
+  requesterDisplayName: (requester: string) => Promise<string | undefined> =
+    async () => undefined,
 ) {
   return {
     async approvalNeeded(r: {
@@ -40,13 +49,18 @@ export function createNotifier(
         (x): x is string => !!x,
       );
       try {
+        const requester =
+          (await requesterDisplayName(r.requester)) ?? displayName(r.requester);
         await notifications.send({
           // `entityRef` takes an array (plugin-notifications-node), so this
           // stays a single send.
           recipients: { type: 'entity', entityRef: recipients },
           payload: {
-            title: `Approval needed: ${r.kind} ${r.resourceType}/${r.resourceName}`,
-            description: `Requested by ${r.requester}`,
+            title: `Approval required · ${displayName(r.resourceType)}`,
+            description:
+              `Request #${r.id} · ${r.resourceName} · ` +
+              `Requested by ${requester} · ` +
+              `Waiting for ${displayName(r.ownerGroup ?? 'platform-admins')}`,
             link: `/requests/${r.id}`,
             severity: 'normal',
           },
@@ -95,8 +109,11 @@ export function createNotifier(
           await notifications.send({
             recipients: { type: 'entity', entityRef: who },
             payload: {
-              title: `Input needed: ${[...new Set(names)].join(', ')} on request #${r.id}`,
-              description: `${r.resourceType}/${r.resourceName}`,
+              title: `Input required · ${displayName(r.resourceType)}`,
+              description:
+                `Request #${r.id} · ${r.resourceName} · ` +
+                `Step: ${[...new Set(names)].map(displayName).join(', ')} · ` +
+                `Waiting for ${displayName(who)}`,
               link: `/requests/${r.id}`,
               severity: 'normal',
             },
@@ -115,10 +132,13 @@ export function createNotifier(
         { title: string; sev: 'normal' | 'high' } | undefined
       > = {
         IN_PROGRESS: {
-          title: `Request #${r.id} approved — workflow running`,
+          title: `Request approved · ${displayName(r.resourceType)}`,
           sev: 'normal',
         },
-        REJECTED: { title: `Request #${r.id} was rejected`, sev: 'high' },
+        REJECTED: {
+          title: `Request rejected · ${displayName(r.resourceType)}`,
+          sev: 'high',
+        },
       };
       const m = map[r.state];
       if (!m) return; // still pending (e.g. partial N_OF_M) — no alert
@@ -130,7 +150,9 @@ export function createNotifier(
           },
           payload: {
             title: m.title,
-            description: `${r.resourceType}/${r.resourceName}`,
+            description: `Request #${r.id} · ${r.resourceName} · ${
+              r.state === 'IN_PROGRESS' ? 'Workflow started' : 'Review the request'
+            }`,
             link: `/requests/${r.id}`,
             severity: m.sev,
           },
@@ -157,10 +179,14 @@ export function createNotifier(
             entityRef: userRef(namespace, r.requester),
           },
           payload: {
-            title: `Request #${r.id} ${ok ? 'succeeded' : 'failed'}`,
+            title: `Request ${ok ? 'completed' : 'failed'} · ${displayName(
+              r.resourceType,
+            )}`,
             description: resultRef
-              ? `${r.resourceType}/${r.resourceName} → ${resultRef}`
-              : `${r.resourceType}/${r.resourceName}`,
+              ? `Request #${r.id} · ${r.resourceName} · Result: ${resultRef}`
+              : `Request #${r.id} · ${r.resourceName} · ${
+                  ok ? 'Resource created successfully' : 'Review the request'
+                }`,
             link: `/requests/${r.id}`,
             severity: ok ? 'normal' : 'high',
           },

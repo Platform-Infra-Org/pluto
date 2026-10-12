@@ -33,7 +33,11 @@ import {
 import { RefreshResult, requestsApiRef } from '../api';
 import { requestRouteRef } from '../routes';
 import { useCatalogNamespace } from '../useCatalogNamespace';
-import { titleOf, useResourceTitles } from '../useResourceTitles';
+import {
+  titleOf,
+  useResourceTitles,
+  useUserDisplayNames,
+} from '../useResourceTitles';
 import { parseResultRefs } from '../resultRefs';
 import { argoWorkflowUrl } from '../argoUrl';
 import { WorkflowGraph } from './WorkflowGraph';
@@ -213,6 +217,9 @@ export function RequestPage() {
   const resourceNames =
     request?.resourceNames ?? (request ? [request.resourceName] : []);
   const titles = useResourceTitles([...resourceNames, ...resultRefs]);
+  const requesterNames = useUserDisplayNames(
+    request ? [request.requester] : [],
+  );
 
   /**
    * A result ref as a link: the catalog entity page for a bare name, the URL
@@ -266,7 +273,11 @@ export function RequestPage() {
           request.resourceName,
           titles,
         )}`}
-        actions={stateBadge(request.state, request.ownerGroup)}
+        actions={stateBadge(
+          request.state,
+          request.ownerGroup,
+          request.suspendedNodes?.[0]?.approverGroup,
+        )}
       />
       {request.state === 'SUCCEEDED' && resultRefs.length > 0 && (
         <div className="sc-notice" style={{ marginBottom: 12 }}>
@@ -354,7 +365,9 @@ export function RequestPage() {
                 )}
               </dd>
               <dt>Requester</dt>
-              <dd>{request.requester}</dd>
+              <dd title={request.requester}>
+                {requesterNames.get(request.requester) ?? request.requester}
+              </dd>
               <dt>Owner team</dt>
               <dd>
                 {request.ownerGroup

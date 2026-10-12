@@ -15,40 +15,14 @@ import { egyptianCss } from './egyptian';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
-/* The app's one typeface. Self-hosted because the CSP is font-src 'self', so a
-   CDN reference would simply not load — and the failure is silent, the page
-   falling back to something that looks nearly right. The variable file covers
-   200-700 in a single asset. ITF Free Font License, see public/fonts/LICENSE.txt.
-
-   It replaced the pixel face as the base. Differentiation now comes from
-   weight, size and case rather than from a second family: the scale below is
-   what an outline grotesque needs, where the pixel face wanted uppercase chrome
-   and a hard 12px floor to stay legible. */
-@font-face {
-  font-family: 'Clash Grotesk';
-  src: url('/fonts/clash-grotesk.woff2') format('woff2');
-  font-weight: 200 700;
-  font-style: normal;
-  font-display: swap;
-}
-/* Hebrew. Clash Grotesk carries none, so every Hebrew glyph fell back to
-   whatever the OS offered — which is what made the one Hebrew line in the app
-   look pasted in from somewhere else.
-
-   Heebo is a neo-grotesque Hebrew drawn as Roboto's companion: closed
-   apertures, even stroke contrast, proportions near enough to Clash Grotesk to
-   sit in the same sentence. SIL OFL, see public/fonts/HEEBO-LICENSE.txt.
-
-   Attached by unicode-range rather than appended as a fallback: the browser
-   pulls this face ONLY for these codepoints, so Latin never leaves Clash
-   Grotesk and no rule has to know which script it is rendering. */
+/* One clear, self-hosted family for the whole app. Heebo covers both Latin and
+   Hebrew, so mixed-language screens keep the same proportions and weight. */
 @font-face {
   font-family: 'Heebo';
   src: url('/fonts/heebo.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
-  unicode-range: U+0590-05FF, U+FB1D-FB4F;
 }
 .sc, .sc * { box-sizing: border-box; }
 /* The host for the animated mode ornaments — SchemeRoot mounts it once, and a
@@ -74,12 +48,12 @@ export const SHADCN_CSS = `
   --sc-field-x: 10px;
   --sc-border-w: 2px;
   --sc-shadow: 3px 3px 0 hsl(var(--sc-fg) / .16);
-  --sc-font-ui: 'Clash Grotesk', 'Heebo', Inter, system-ui, -apple-system, sans-serif;
+  --sc-font-ui: 'Heebo', Inter, system-ui, -apple-system, sans-serif;
   /* Titles take the grotesque, everything else keeps the pixel face. Held as
      its own variable so a mode can move the two independently — the pixel font
      is still the app's voice, but a heading is where a face has room to be
      read rather than decoded. */
-  --sc-font-title: 'Clash Grotesk', 'Heebo', Inter, system-ui, -apple-system, sans-serif;
+  --sc-font-title: 'Heebo', Inter, system-ui, -apple-system, sans-serif;
   --sc-unit: 4px;
   --sc-nav-w: 240px;
   --sc-bg: 240 10% 98%;
@@ -308,7 +282,7 @@ ${egyptianCss()}
 [data-variant="primary"][class*="bui-Button"] { background-color: hsl(var(--sc-primary)) !important; color: hsl(var(--sc-primary-fg)) !important; }
 [data-variant="primary"][class*="bui-Button"]:hover { background-color: hsl(var(--sc-primary) / 0.9) !important; }
 [class*="bui-ButtonLink"], [class*="bui-Button"] { border-radius: var(--sc-radius) !important; }
-body { background: hsl(var(--sc-bg)); } /* BackstageContent bg moved to theme.tsx (BackstageContent.styleOverrides.root) */
+body { background: hsl(var(--sc-bg)); font-size: 17px; line-height: 1.5; } /* BackstageContent bg moved to theme.tsx (BackstageContent.styleOverrides.root) */
 /* cards / surfaces */
 /* cards/surfaces via stable MUI classes. The InfoCard header is styled in the
    theme (BackstageInfoCard.styleOverrides.header). */
@@ -727,7 +701,9 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* The canvas wrapper carries the space colour. It sits BELOW react-flow's
    background svg, which is what makes the stars visible — see the note on the
    .react-flow rule below. */
-.sc-graph-canvas { background: ${STARFIELD.bg}; border-radius: var(--sc-radius); }
+.sc-graph-canvas { background: ${
+  STARFIELD.bg
+}; border-radius: var(--sc-radius); }
 /* Transparent, NOT the space colour. React Flow renders its dot pattern into an
    svg with z-index:-1, which paints behind its parent's own background — so an
    opaque colour here hid the stars completely (the old grey ones too). The
@@ -989,7 +965,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* page + layout */
 .sc-page { padding: 28px 32px; background: hsl(var(--sc-bg)); min-height: 100%; }
 .sc-h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; margin: 0; color: hsl(var(--sc-fg)); }
-.sc-sub { color: hsl(var(--sc-muted-fg)); margin-top: 4px; font-size: 14px; }
+.sc-sub { color: hsl(var(--sc-muted-fg)); margin-top: 4px; font-size: 16px; }
 .sc-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
 .sc-grid { display: grid; gap: 16px; }
 /* Home's cards are a grid of equals: stretch rather than start, so every box
@@ -1002,16 +978,61 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   grid-auto-rows: 1fr;
   align-items: stretch; }
 .sc-grid-2 > .sc-card { height: 100%; display: flex; flex-direction: column; }
+.sc-grid-2 > .sc-card > .sc-card-h .sc-card-title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+}
+.sc-grid-2 > .sc-card > .sc-card-h {
+  padding-top: 17px;
+  padding-bottom: 14px;
+}
 /* A card asked to take two places does so, and its row still lines up because
    the row height is uniform. */
 .sc-grid-2 > .sc-card.sc-span-2 { grid-column: span 2; }
 /* The body takes the slack, so headers line up across the row. */
 .sc-grid-2 > .sc-card > .sc-card-b { flex: 1 1 auto; }
+.sc-team-action {
+  border-color: color-mix(in srgb, hsl(var(--sc-primary)) 44%, hsl(var(--sc-border)));
+  background: color-mix(in srgb, hsl(var(--sc-primary)) 8%, hsl(var(--sc-card)));
+}
+.sc-team-action-link {
+  min-height: 116px;
+  padding: 20px 22px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 18px;
+  color: hsl(var(--sc-fg));
+  text-decoration: none;
+}
+.sc-team-action-link:hover, .sc-team-action-link:focus-visible {
+  color: hsl(var(--sc-fg));
+  text-decoration: none;
+  background: hsl(var(--sc-primary) / .07);
+}
+.sc-team-action-count {
+  min-width: 64px;
+  font-size: 42px;
+  line-height: 1;
+  font-weight: 800;
+  color: hsl(var(--sc-primary));
+  text-align: center;
+}
+.sc-team-action-title { font-size: 20px; line-height: 1.25; font-weight: 700; }
+.sc-team-action-hint { margin-top: 5px; color: hsl(var(--sc-muted-fg)); font-size: 14px; }
+.sc-team-action-arrow { color: hsl(var(--sc-primary)); font-size: 28px; font-weight: 700; }
 .sc-action { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: var(--sc-radius);
-  border: var(--sc-border-w) solid hsl(var(--sc-border)); text-decoration: none; transition: background .12s, border-color .12s; }
-.sc-action:hover { background: hsl(var(--sc-primary) / .06); border-color: hsl(var(--sc-primary) / .4); }
+  background: color-mix(in srgb, hsl(var(--sc-bg)) 90%, hsl(var(--sc-primary)) 10%);
+  border: var(--sc-border-w) solid color-mix(in srgb, hsl(var(--sc-border)) 80%, hsl(var(--sc-primary)) 20%);
+  text-decoration: none; transition: background .12s, border-color .12s; }
+.sc-action:hover, .sc-action:focus-visible {
+  background: color-mix(in srgb, hsl(var(--sc-bg)) 82%, hsl(var(--sc-primary)) 18%);
+  border-color: hsl(var(--sc-primary) / .55);
+}
 .sc-action-l { font-weight: 600; color: hsl(var(--sc-fg)); }
-.sc-action-h { font-size: 12px; }
+.sc-action-h { font-size: 14px; }
 
 /* card */
 .sc-card { background: hsl(var(--sc-card)); color: hsl(var(--sc-card-fg));
@@ -1084,9 +1105,9 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 /* Title and its optional action share a row; the action keeps to the right and
    never squeezes the title, which wraps first. */
 .sc-card-hrow { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.sc-card-action { flex: 0 0 auto; font-size: 13px; }
+.sc-card-action { flex: 0 0 auto; font-size: 15px; }
 .sc-card-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
-.sc-card-desc { color: hsl(var(--sc-muted-fg)); font-size: 13px; margin-top: 2px; }
+.sc-card-desc { color: hsl(var(--sc-muted-fg)); font-size: 15px; margin-top: 2px; }
 .sc-card-b { padding: 18px 20px; }
 
 /* buttons */
@@ -1118,7 +1139,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-btn-sm { height: 30px; padding: 0 10px; font-size: 12.5px; }
 
 /* badge */
-.sc-badge { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px;
+.sc-badge { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px;
   border-radius: var(--sc-radius); font-size: 12px; font-weight: 600; border: 1px solid transparent;
   white-space: nowrap; max-width: 100%; }
 .sc-dot { width: 7px; height: 7px; border-radius: var(--sc-radius); background: currentColor; }
@@ -1148,24 +1169,37 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-badge-destructive { --sc-cell: hsl(var(--sc-destructive) / .24); color: hsl(var(--sc-on-destructive)); }
 
 /* table */
-.sc-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.sc-table { width: 100%; border-collapse: collapse; font-size: 17px; }
 /* A row rule is a separator, not an edge. At full strength it is the same
    weight as the card's own border, and on a dark ground that reads as a bright
    line every row -- literally white in Slush, whose border token IS 0 0% 100%,
    and near-white in Foudre. The MUI table this sits beside already draws its
    rules at a quarter, so matching it also stops one card's table looking
    heavier than the next. */
-.sc-table th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600;
+.sc-table th { text-align: left; padding: 10px 14px; font-size: 13px; font-weight: 600;
   text-transform: uppercase; letter-spacing: .05em; color: hsl(var(--sc-muted-fg));
   border-bottom: 1px solid hsl(var(--sc-border) / .25); }
 .sc-table td { padding: 12px 14px; border-bottom: 1px solid hsl(var(--sc-border) / .25); color: hsl(var(--sc-fg)); }
 .sc-cell-ellip { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sc-table-action { width: 52px; text-align: center; }
+.sc-icon-link { display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: var(--sc-radius-sm);
+  color: hsl(var(--sc-muted-fg)); }
+.sc-icon-link:hover, .sc-icon-link:focus-visible {
+  color: hsl(var(--sc-primary)); background: hsl(var(--sc-accent)); }
 /* Horizontal scroll for tables too wide for their card (card still clips to its corners). */
 .sc-table-wrap { overflow-x: auto; max-width: 100%; }
+.sc-home-requests-table { max-height: 300px; overflow: auto; }
+.sc-home-requests-table .sc-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: hsl(var(--sc-card));
+}
 /* tabs */
 .sc-tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid hsl(var(--sc-border)); }
 .sc-tab { appearance: none; background: none; border: none; cursor: pointer; font: inherit;
-  padding: 9px 14px; color: hsl(var(--sc-muted-fg)); font-weight: 600; font-size: 14px;
+  padding: 9px 14px; color: hsl(var(--sc-muted-fg)); font-weight: 600; font-size: 16px;
   border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .sc-tab:hover { color: hsl(var(--sc-fg)); }
 .sc-tab.active { color: hsl(var(--sc-primary)); border-bottom-color: hsl(var(--sc-primary)); }
@@ -1296,7 +1330,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-suspend-msg { margin: 0 0 10px; color: hsl(var(--sc-muted-fg)); font-size: 13px; }
 .sc-suspend-inputs { margin-bottom: 12px; }
 .sc-req { color: hsl(var(--sc-warning)); }
-.sc-help { margin: 4px 0 10px; font-size: 12px; color: hsl(var(--sc-muted-fg)); }
+.sc-help { margin: 4px 0 10px; font-size: 14px; color: hsl(var(--sc-muted-fg)); }
 
 /* [quickstart] A dialogue box in the corner, not a modal per step: the point
    is to show people the app, and a modal hides the app. The ring is drawn as a
@@ -1510,13 +1544,13 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    every mode by construction — there is no second token left to disagree — and
    it is what the catalog and search fields already do. The edge, the radius
    and the focus ring are what make it read as a field. */
-.sc-input, .sc-select { height: 36px; width: 100%; padding: 0 10px; font-size: 14px;
+.sc-input, .sc-select { height: 40px; width: 100%; padding: 0 10px; font-size: 17px;
   border-radius: var(--sc-radius); border: 1px solid hsl(var(--sc-input));
   background: transparent; color: hsl(var(--sc-fg)); outline: none; font-family: inherit; }
 .sc-input:focus, .sc-select:focus { border-color: hsl(var(--sc-ring)); outline: var(--sc-border-w) solid hsl(var(--sc-ring)); outline-offset: 2px; box-shadow: none; }
 .sc-textarea { height: auto; min-height: 92px; padding: 8px 10px; line-height: 1.45;
   font-family: var(--sc-font-mono, ui-monospace, monospace); resize: vertical; }
-.sc-label { font-size: 13px; font-weight: 500; color: hsl(var(--sc-fg)); display: block; margin-bottom: 6px; }
+.sc-label { font-size: 14px; font-weight: 500; color: hsl(var(--sc-fg)); display: block; margin-bottom: 6px; }
 .sc-field { margin-bottom: 14px; }
 .sc-link { color: hsl(var(--sc-primary)); text-decoration: none; font-weight: 500; }
 .sc-link:hover { text-decoration: underline; }
@@ -1529,7 +1563,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
    ponytail: the sibling <select> needs nothing — GraphDirection already gives
    it .sc-select, which is the token ground/border/radius this would add. */
 .sc-row input[type="checkbox"] { accent-color: hsl(var(--sc-primary)); }
-.sc-kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 16px; font-size: 14px; }
+.sc-kv { display: grid; grid-template-columns: 140px 1fr; gap: 6px 16px; font-size: 16px; }
 .sc-kv dt { color: hsl(var(--sc-muted-fg)); }
 /* min-width:0 so a long value scrolls inside its own cell. A grid item defaults
    to min-width:auto, so one unbreakable line widens the whole column and the
@@ -2216,21 +2250,21 @@ h1, h2, h3, h4, h5, h6,
 .sc-h1 { font-size: 30px; font-weight: 600; line-height: 1.15; letter-spacing: -0.025em; }
 .sc-login-title { font-size: 22px; font-weight: 700; line-height: 1.2; }
 .sc-dialog-h { font-size: 16px; font-weight: 600; line-height: 1.3; }
-.sc-card-title { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.sc-card-title { font-size: 18px; font-weight: 600; line-height: 1.3; }
 .sc-nav-word { font-size: 16px; font-weight: 700; }
-.sc-btn { font-size: 13px; font-weight: 500; letter-spacing: 0; }
-.sc-nav-tx { font-size: 13px; font-weight: 500; }
-.sc-badge { font-size: 12px; font-weight: 500; letter-spacing: 0; }
+.sc-btn { font-size: 16px; font-weight: 500; letter-spacing: 0; }
+.sc-nav-tx { font-size: 16px; font-weight: 500; }
+.sc-badge { font-size: 15px; font-weight: 500; letter-spacing: 0; }
 /* The one uppercase left standing, and the only one with positive tracking. */
 .sc-label {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 /* Table headers are labels by another name. */
 .MuiTableCell-head, .sc-table th {
-  font-size: 12px !important;
+  font-size: 13px !important;
   font-weight: 600 !important;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -2258,6 +2292,61 @@ h1, h2, h3, h4, h5, h6,
   border-radius: var(--sc-radius-sm); }
 .sc-input, .sc-select { border-width: var(--sc-border-w); box-shadow: none;
   border-radius: var(--sc-radius-sm); }
+
+/* Global notifications affordance. It stays above page content and uses the
+   same tokens in every colour scheme. */
+.sc-notification-bell {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--sc-fg));
+  background: hsl(var(--sc-surface));
+  border: var(--sc-border-w) solid hsl(var(--sc-fg) / .75);
+  border-radius: 50%;
+  box-shadow: var(--sc-shadow);
+  text-decoration: none;
+}
+.sc-app-topbar {
+  min-height: 72px;
+  padding: 12px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: hsl(var(--sc-bg));
+  border-bottom: 1px solid hsl(var(--sc-border) / .45);
+}
+.sc-notification-bell:hover,
+.sc-notification-bell:focus-visible {
+  color: hsl(var(--sc-primary));
+  background: hsl(var(--sc-accent));
+  outline: var(--sc-border-w) solid hsl(var(--sc-ring));
+  outline-offset: 2px;
+}
+.sc-notification-bell svg { font-size: 28px; }
+.sc-notification-count {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  background: hsl(var(--sc-destructive));
+  border: 2px solid hsl(var(--sc-bg));
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+@media (max-width: 600px) {
+  .sc-app-topbar { min-height: 64px; padding: 8px 16px; }
+}
 
 /* The resize handle: a 6px hit area straddling the nav's right edge, showing a
    2px accent line on hover/focus. Wider than it looks, because a 2px target is

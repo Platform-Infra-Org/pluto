@@ -5738,6 +5738,7 @@ __metadata:
     "@backstage/plugin-app-react": "npm:*"
     "@backstage/plugin-catalog-graph": "npm:*"
     "@backstage/plugin-catalog-react": "npm:*"
+    "@backstage/plugin-notifications": "npm:^0.5.19"
     "@backstage/plugin-scaffolder-react": "npm:^2.0.2"
     "@backstage/test-utils": "npm:*"
     "@backstage/theme": "npm:*"

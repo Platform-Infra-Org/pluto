@@ -102,28 +102,28 @@ export const pageThemes = {
  * introspectable.
  */
 export const GRAPH_OVERRIDES = {
-    BackstageDependencyGraphNode: {
-      styleOverrides: {
-        node: { fill: 'hsl(var(--sc-card))', stroke: 'hsl(var(--sc-border))' },
+  BackstageDependencyGraphNode: {
+    styleOverrides: {
+      node: { fill: 'hsl(var(--sc-card))', stroke: 'hsl(var(--sc-border))' },
+    },
+  },
+  BackstageDependencyGraphDefaultNode: {
+    styleOverrides: {
+      node: {
+        fill: 'hsl(var(--sc-card))',
+        stroke: 'hsl(var(--sc-border))',
+        rx: 8,
+        ry: 8,
       },
+      text: { fill: 'hsl(var(--sc-fg))' },
     },
-    BackstageDependencyGraphDefaultNode: {
-      styleOverrides: {
-        node: {
-          fill: 'hsl(var(--sc-card))',
-          stroke: 'hsl(var(--sc-border))',
-          rx: 8,
-          ry: 8,
-        },
-        text: { fill: 'hsl(var(--sc-fg))' },
-      },
-    },
-    BackstageDependencyGraphDefaultLabel: {
-      styleOverrides: { text: { fill: 'hsl(var(--sc-fg))' } },
-    },
-    BackstageDependencyGraphEdge: {
-      styleOverrides: { path: { stroke: 'hsl(var(--sc-border) / .55)' } },
-    },
+  },
+  BackstageDependencyGraphDefaultLabel: {
+    styleOverrides: { text: { fill: 'hsl(var(--sc-fg))' } },
+  },
+  BackstageDependencyGraphEdge: {
+    styleOverrides: { path: { stroke: 'hsl(var(--sc-border) / .55)' } },
+  },
 };
 
 function makeTheme(mode: 'light' | 'dark', t: Tone) {
@@ -148,204 +148,204 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
     // with default light-blue nodes on a dark page.
     ...GRAPH_OVERRIDES,
     BackstageHeader: {
-        styleOverrides: {
-          header: {
-            // The hook a mode potion fills; `none` keeps every other scheme
-            // byte-identical. A CSS selector cannot reach this element —
-            // BackstageHeader-* becomes jss<n> in a production build.
-            backgroundImage: 'var(--sc-header-art, none)',
-            // The band needs more than an image to be a band: a repeating
-            // ornament has to be sized, tiled on one axis and pinned to an
-            // edge. Four hooks rather than one, each inert by default so every
-            // other scheme renders exactly as it did before.
-            backgroundSize: 'var(--sc-header-art-size, auto)',
-            backgroundRepeat: 'var(--sc-header-art-repeat, repeat)',
-            backgroundPosition: 'var(--sc-header-art-pos, 0 0)',
-            backgroundColor: 'hsl(var(--sc-card))',
-            boxShadow: 'none',
-            borderBottom: '1px solid hsl(var(--sc-border))',
-            paddingTop: 16,
-            paddingBottom: 14,
-            minHeight: 0,
+      styleOverrides: {
+        header: {
+          // The hook a mode potion fills; `none` keeps every other scheme
+          // byte-identical. A CSS selector cannot reach this element —
+          // BackstageHeader-* becomes jss<n> in a production build.
+          backgroundImage: 'var(--sc-header-art, none)',
+          // The band needs more than an image to be a band: a repeating
+          // ornament has to be sized, tiled on one axis and pinned to an
+          // edge. Four hooks rather than one, each inert by default so every
+          // other scheme renders exactly as it did before.
+          backgroundSize: 'var(--sc-header-art-size, auto)',
+          backgroundRepeat: 'var(--sc-header-art-repeat, repeat)',
+          backgroundPosition: 'var(--sc-header-art-pos, 0 0)',
+          backgroundColor: 'hsl(var(--sc-card))',
+          boxShadow: 'none',
+          borderBottom: '1px solid hsl(var(--sc-border))',
+          paddingTop: 16,
+          paddingBottom: 14,
+          minHeight: 0,
+        },
+        title: {
+          color: 'hsl(var(--sc-fg))',
+          fontFamily: 'var(--sc-font-title) !important',
+          textTransform: 'uppercase',
+          fontWeight: 400,
+          // 18px/1.35 was a separate class*="BackstageContentHeader-title"
+          // rule in styles.ts, folded in here — same slot, same production
+          // build hazard as the caret below.
+          fontSize: '18px !important',
+          lineHeight: '1.35 !important',
+          // The block caret (see .sc-h1::after in styles.ts for the sibling
+          // selectors this can't share, since a hashed class fragment
+          // doesn't survive a production build).
+          '&::after': {
+            content: "'\\258C' / ''",
+            marginLeft: 4,
+            color: 'hsl(var(--sc-primary))',
           },
-          title: {
-            color: 'hsl(var(--sc-fg))',
-            fontFamily: 'var(--sc-font-title) !important',
-            textTransform: 'uppercase',
-            fontWeight: 400,
-            // 18px/1.35 was a separate class*="BackstageContentHeader-title"
-            // rule in styles.ts, folded in here — same slot, same production
-            // build hazard as the caret below.
-            fontSize: '18px !important',
-            lineHeight: '1.35 !important',
-            // The block caret (see .sc-h1::after in styles.ts for the sibling
-            // selectors this can't share, since a hashed class fragment
-            // doesn't survive a production build).
+          '@media (prefers-reduced-motion: no-preference)': {
             '&::after': {
-              content: "'\\258C' / ''",
-              marginLeft: 4,
-              color: 'hsl(var(--sc-primary))',
-            },
-            '@media (prefers-reduced-motion: no-preference)': {
-              '&::after': {
-                animation: 'sc-caret 1s steps(1) infinite',
-              },
-            },
-          },
-          subtitle: { color: 'hsl(var(--sc-muted-fg))' },
-          type: { color: 'hsl(var(--sc-muted-fg))' },
-        },
-      },
-      BackstageHeaderLabel: {
-        styleOverrides: { label: { color: 'hsl(var(--sc-muted-fg))' } },
-      },
-      BackstageContent: {
-        styleOverrides: {
-          root: { background: 'hsl(var(--sc-bg))' },
-        },
-      },
-      BackstageContentHeader: {
-        styleOverrides: {
-          title: {
-            fontFamily: 'var(--sc-font-ui) !important',
-            textTransform: 'uppercase !important',
-            letterSpacing: '0 !important',
-            fontWeight: '400 !important',
-          },
-        },
-      },
-      BackstageInfoCard: {
-        styleOverrides: {
-          header: {
-            backgroundColor: 'hsl(var(--sc-card))',
-            color: 'hsl(var(--sc-fg))',
-            borderBottom: '1px solid hsl(var(--sc-border))',
-            '& *': { fontSize: '19px !important' },
-          },
-        },
-      },
-      BackstageItemCardHeader: {
-        styleOverrides: {
-          // No title/subtitle slot: the title is a plain Typography child, so
-          // font/text-transform on root reaches it by inheritance. The
-          // pixel-art background gradient stays in styles.ts (CSS is simpler
-          // than a style object for that part), keyed off a stable class.
-          root: {
-            fontFamily: 'var(--sc-font-ui) !important',
-            textTransform: 'uppercase !important',
-            letterSpacing: '0 !important',
-            fontWeight: '400 !important',
-          },
-        },
-      },
-      // BackstageAutocomplete isn't part of BackstageComponentsNameToClassKey
-      // (it ships from @backstage/plugin-catalog-react, not core-components) —
-      // see the comment on componentOverrides above for how this avoids TS2353.
-      BackstageAutocomplete: {
-        styleOverrides: {
-          label: {
-            fontFamily: 'var(--sc-font-ui) !important',
-            textTransform: 'uppercase !important',
-            letterSpacing: '0 !important',
-            fontWeight: '400 !important',
-          },
-        },
-      },
-      // Input geometry lives here, not in styles.ts: MUI publishes these slots,
-      // and createUnifiedTheme runs transformV5ComponentThemesToV4 over every
-      // Mui* key, so a v5-shaped override reaches the MUI v4 scaffolder form.
-      // The outlined/notchedOutline corrections below are app-wide on purpose
-      // (slot-scoped, not route-scoped) — that is what makes them cover
-      // EntityPicker/OwnedEntityPicker/RepoUrlPicker wherever a template uses
-      // one, not just on the create route.
-      MuiInputLabel: {
-        styleOverrides: {
-          // `formControl` is NOT the standard variant only: MUI v4 puts that
-          // class on every label inside a FormControl, so an outlined label
-          // carries both formControl and outlined. What separates them is
-          // cascade order — MUI declares `outlined` after `formControl` in its
-          // own styles object, that key order survives the theme merge, and at
-          // equal specificity the later rule wins. Hence the explicit reset in
-          // the outlined slot below.
-          //
-          // The `var(--sc-field-x)` inset itself is nested under
-          // `.sc-route-create &`, not applied bare: it exists only to align
-          // with the boxed standard-variant field
-          // (`.sc-route-create [class*="MuiInput-root"]` in styles.ts, padding
-          // `3px var(--sc-field-x)`) that exists on the scaffolder create route
-          // and nowhere else. Applied bare it shifted every standard MUI label
-          // in the app — catalog filters, the import page, table pagination —
-          // by 10px, none of which was ever measured against this box.
-          formControl: {
-            // Standard-variant labels only. The :not() pair is load-bearing:
-            // this selector is (0,2,0) and the `outlined` reset below is
-            // (0,1,0), so without them the inset wins on the create route and
-            // an outlined label sits 10px right of the notch that was cut for
-            // it. Matched by substring because MUI v4 suffixes its class names
-            // (MuiInputLabel-outlined-234), the same reason styles.ts uses
-            // [class*=] throughout.
-            '.sc-route-create &:not([class*="MuiInputLabel-outlined"]):not([class*="MuiInputLabel-filled"])':
-              {
-                left: 'var(--sc-field-x)',
-              },
-          },
-          shrink: {
-            paddingInlineEnd: '4px',
-          },
-          outlined: {
-            // left: 0 is load-bearing, not redundant. It cancels the
-            // .sc-route-create standard-variant inset that formControl above
-            // also applies to this label there; delete it and the label
-            // desyncs from its <legend> notch again on that route, which is
-            // the exact bug this block exists to fix. The shrunk state then
-            // gets one more pixel of clearance than MUI's -6px, which assumes
-            // a 1px border where ours is 2px. This correction stays app-wide
-            // — it is corrective (undoing the create-route inset), not
-            // decorative, so every outlined label needs it, not just create's.
-            left: '0',
-            '&.MuiInputLabel-shrink': {
-              paddingInlineEnd: '0',
-              transform: 'translate(14px, -7px) scale(0.75)',
+              animation: 'sc-caret 1s steps(1) infinite',
             },
           },
         },
+        subtitle: { color: 'hsl(var(--sc-muted-fg))' },
+        type: { color: 'hsl(var(--sc-muted-fg))' },
       },
-      MuiOutlinedInput: {
-        styleOverrides: {
-          notchedOutline: {
-            // The label is uppercased (styles.ts) but the <legend> MUI generates
-            // from the raw title is not, so the notch was cut too narrow for the
-            // text sitting in it.
-            // MUI already sizes the notch to the label: legendLabelled is
-            // width:auto at fontSize .75em, matching the label's scale(.75)
-            // (NotchedOutline.js). It only fits if the legend renders the same
-            // string with the same metrics — so every property styles.ts forces
-            // on the label has to be mirrored here, or the two measure
-            // differently and the error grows with the title's length.
-            '& legend': {
-              textTransform: 'uppercase',
-              fontFamily: 'var(--sc-font-ui)',
-              letterSpacing: 0,
-              fontWeight: 400,
+    },
+    BackstageHeaderLabel: {
+      styleOverrides: { label: { color: 'hsl(var(--sc-muted-fg))' } },
+    },
+    BackstageContent: {
+      styleOverrides: {
+        root: { background: 'hsl(var(--sc-bg))' },
+      },
+    },
+    BackstageContentHeader: {
+      styleOverrides: {
+        title: {
+          fontFamily: 'var(--sc-font-ui) !important',
+          textTransform: 'uppercase !important',
+          letterSpacing: '0 !important',
+          fontWeight: '400 !important',
+        },
+      },
+    },
+    BackstageInfoCard: {
+      styleOverrides: {
+        header: {
+          backgroundColor: 'hsl(var(--sc-card))',
+          color: 'hsl(var(--sc-fg))',
+          borderBottom: '1px solid hsl(var(--sc-border))',
+          '& *': { fontSize: '19px !important' },
+        },
+      },
+    },
+    BackstageItemCardHeader: {
+      styleOverrides: {
+        // No title/subtitle slot: the title is a plain Typography child, so
+        // font/text-transform on root reaches it by inheritance. The
+        // pixel-art background gradient stays in styles.ts (CSS is simpler
+        // than a style object for that part), keyed off a stable class.
+        root: {
+          fontFamily: 'var(--sc-font-ui) !important',
+          textTransform: 'uppercase !important',
+          letterSpacing: '0 !important',
+          fontWeight: '400 !important',
+        },
+      },
+    },
+    // BackstageAutocomplete isn't part of BackstageComponentsNameToClassKey
+    // (it ships from @backstage/plugin-catalog-react, not core-components) —
+    // see the comment on componentOverrides above for how this avoids TS2353.
+    BackstageAutocomplete: {
+      styleOverrides: {
+        label: {
+          fontFamily: 'var(--sc-font-ui) !important',
+          textTransform: 'uppercase !important',
+          letterSpacing: '0 !important',
+          fontWeight: '400 !important',
+        },
+      },
+    },
+    // Input geometry lives here, not in styles.ts: MUI publishes these slots,
+    // and createUnifiedTheme runs transformV5ComponentThemesToV4 over every
+    // Mui* key, so a v5-shaped override reaches the MUI v4 scaffolder form.
+    // The outlined/notchedOutline corrections below are app-wide on purpose
+    // (slot-scoped, not route-scoped) — that is what makes them cover
+    // EntityPicker/OwnedEntityPicker/RepoUrlPicker wherever a template uses
+    // one, not just on the create route.
+    MuiInputLabel: {
+      styleOverrides: {
+        // `formControl` is NOT the standard variant only: MUI v4 puts that
+        // class on every label inside a FormControl, so an outlined label
+        // carries both formControl and outlined. What separates them is
+        // cascade order — MUI declares `outlined` after `formControl` in its
+        // own styles object, that key order survives the theme merge, and at
+        // equal specificity the later rule wins. Hence the explicit reset in
+        // the outlined slot below.
+        //
+        // The `var(--sc-field-x)` inset itself is nested under
+        // `.sc-route-create &`, not applied bare: it exists only to align
+        // with the boxed standard-variant field
+        // (`.sc-route-create [class*="MuiInput-root"]` in styles.ts, padding
+        // `3px var(--sc-field-x)`) that exists on the scaffolder create route
+        // and nowhere else. Applied bare it shifted every standard MUI label
+        // in the app — catalog filters, the import page, table pagination —
+        // by 10px, none of which was ever measured against this box.
+        formControl: {
+          // Standard-variant labels only. The :not() pair is load-bearing:
+          // this selector is (0,2,0) and the `outlined` reset below is
+          // (0,1,0), so without them the inset wins on the create route and
+          // an outlined label sits 10px right of the notch that was cut for
+          // it. Matched by substring because MUI v4 suffixes its class names
+          // (MuiInputLabel-outlined-234), the same reason styles.ts uses
+          // [class*=] throughout.
+          '.sc-route-create &:not([class*="MuiInputLabel-outlined"]):not([class*="MuiInputLabel-filled"])':
+            {
+              left: 'var(--sc-field-x)',
             },
+        },
+        shrink: {
+          paddingInlineEnd: '4px',
+        },
+        outlined: {
+          // left: 0 is load-bearing, not redundant. It cancels the
+          // .sc-route-create standard-variant inset that formControl above
+          // also applies to this label there; delete it and the label
+          // desyncs from its <legend> notch again on that route, which is
+          // the exact bug this block exists to fix. The shrunk state then
+          // gets one more pixel of clearance than MUI's -6px, which assumes
+          // a 1px border where ours is 2px. This correction stays app-wide
+          // — it is corrective (undoing the create-route inset), not
+          // decorative, so every outlined label needs it, not just create's.
+          left: '0',
+          '&.MuiInputLabel-shrink': {
+            paddingInlineEnd: '0',
+            transform: 'translate(14px, -7px) scale(0.75)',
           },
         },
       },
-      BackstageSidebarPage: {
-        styleOverrides: {
-          root: {
-            // !important is load-bearing here: SidebarPage sets its own
-            // padding-left (224px, its default sidebar width) inside a
-            // breakpoint, which otherwise wins and misaligns the content
-            // against our 240px nav.
-            paddingLeft: 'var(--sc-nav-w) !important',
-            transition: 'padding-left .16s ease',
-            '@media (max-width: 600px)': {
-              paddingLeft: '0 !important',
-            },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        notchedOutline: {
+          // The label is uppercased (styles.ts) but the <legend> MUI generates
+          // from the raw title is not, so the notch was cut too narrow for the
+          // text sitting in it.
+          // MUI already sizes the notch to the label: legendLabelled is
+          // width:auto at fontSize .75em, matching the label's scale(.75)
+          // (NotchedOutline.js). It only fits if the legend renders the same
+          // string with the same metrics — so every property styles.ts forces
+          // on the label has to be mirrored here, or the two measure
+          // differently and the error grows with the title's length.
+          '& legend': {
+            textTransform: 'uppercase',
+            fontFamily: 'var(--sc-font-ui)',
+            letterSpacing: 0,
+            fontWeight: 400,
           },
         },
       },
+    },
+    BackstageSidebarPage: {
+      styleOverrides: {
+        root: {
+          // !important is load-bearing here: SidebarPage sets its own
+          // padding-left (224px, its default sidebar width) inside a
+          // breakpoint, which otherwise wins and misaligns the content
+          // against our 240px nav.
+          paddingLeft: 'var(--sc-nav-w) !important',
+          transition: 'padding-left .16s ease',
+          '@media (max-width: 600px)': {
+            paddingLeft: '0 !important',
+          },
+        },
+      },
+    },
   };
   return createUnifiedTheme({
     fontFamily: FONT,
@@ -367,6 +367,7 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
     components: componentOverrides,
     typography: {
       fontFamily: FONT,
+      fontSize: 17,
       h1: { fontWeight: 700, letterSpacing: '-0.02em' },
       h2: { fontWeight: 700, letterSpacing: '-0.02em' },
       h3: { fontWeight: 700 },
@@ -386,7 +387,12 @@ function makeTheme(mode: 'light' | 'dark', t: Tone) {
 export const platformLight = makeTheme('light', LIGHT);
 const platformDark = makeTheme('dark', DARK);
 
-function themeExt(id: string, title: string, variant: 'light' | 'dark', theme: unknown) {
+function themeExt(
+  id: string,
+  title: string,
+  variant: 'light' | 'dark',
+  theme: unknown,
+) {
   return ThemeBlueprint.make({
     name: id,
     params: {
@@ -406,8 +412,18 @@ function themeExt(id: string, title: string, variant: 'light' | 'dark', theme: u
   });
 }
 
-const lightTheme = themeExt('platform-light', 'Platform Light', 'light', platformLight);
-const darkTheme = themeExt('platform-dark', 'Platform Dark', 'dark', platformDark);
+const lightTheme = themeExt(
+  'platform-light',
+  'Platform Light',
+  'light',
+  platformLight,
+);
+const darkTheme = themeExt(
+  'platform-dark',
+  'Platform Dark',
+  'dark',
+  platformDark,
+);
 
 const schemeRoot = AppRootElementBlueprint.make({
   name: 'scheme-root',

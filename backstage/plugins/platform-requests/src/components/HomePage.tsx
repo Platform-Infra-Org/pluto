@@ -20,12 +20,17 @@ import {
 } from '@internal/plugin-platform-ui';
 import { requestsApiRef } from '../api';
 import { useCatalogNamespace } from '../useCatalogNamespace';
-import { titleOf, useResourceTitles } from '../useResourceTitles';
+import {
+  titleOf,
+  useResourceTitles,
+  useUserDisplayNames,
+} from '../useResourceTitles';
 import { stateBadge } from './RequestsPage';
 import { RecentlyVisited } from './HomeVisits';
 import { FavouriteTemplates } from './HomeFavourites';
 
 type Section =
+  | 'teamAction'
   | 'quickActions'
   | 'ownedResources'
   | 'standingRequests'
@@ -44,9 +49,21 @@ const cap = <T,>(items: T[], max: number): T[] =>
   max > 0 ? items.slice(0, max) : items;
 
 const ACTIONS = [
-  { to: '/create', label: 'Create a resource', hint: 'Run a software template' },
-  { to: '/catalog', label: 'Browse resources', hint: 'Edit or delete from an entity page' },
-  { to: '/requests', label: 'All requests', hint: 'Track approvals and workflows' },
+  {
+    to: '/create',
+    label: 'Create a resource',
+    hint: 'Run a software template',
+  },
+  {
+    to: '/catalog',
+    label: 'Browse resources',
+    hint: 'Edit or delete from an entity page',
+  },
+  {
+    to: '/requests',
+    label: 'All requests',
+    hint: 'Track approvals and workflows',
+  },
 ];
 
 /**
@@ -94,6 +111,39 @@ function QuickActions() {
   );
 }
 
+function TeamAction() {
+  const requests = useApi(requestsApiRef);
+  const [count, setCount] = useState<number>();
+
+  useEffect(() => {
+    requests
+      .list({ scope: 'actionable' })
+      .then(rows => setCount(rows.length))
+      .catch(() => setCount(0));
+  }, [requests]);
+
+  return (
+    <Card className="sc-team-action">
+      <Link to="/requests?tab=approval" className="sc-team-action-link">
+        <div className="sc-team-action-count">{count ?? '…'}</div>
+        <div>
+          <div className="sc-team-action-title">
+            {count === 1
+              ? 'request needs your team'
+              : 'requests need your team'}
+          </div>
+          <div className="sc-team-action-hint">
+            Review approvals and workflow inputs
+          </div>
+        </div>
+        <span className="sc-team-action-arrow" aria-hidden="true">
+          →
+        </span>
+      </Link>
+    </Card>
+  );
+}
+
 function OwnedResources({ max }: { max: number }) {
   const catalog = useApi(catalogApiRef);
   const identity = useApi(identityApiRef);
@@ -128,43 +178,86 @@ function OwnedResources({ max }: { max: number }) {
       </div>
       {!rows && <div className="sc-card-b sc-muted">Loading…</div>}
       {rows && rows.length === 0 && (
-        <div className="sc-card-b sc-muted">You don't own any resources yet.</div>
+        <div className="sc-card-b sc-muted">
+          You don't own any resources yet.
+        </div>
       )}
       {rows && rows.length > 0 && (
-        <div className="sc-table-wrap"><table className="sc-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Type</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cap(rows, max).map(r => (
-              <tr key={r.name}>
-                <td>
-                  {/* `title` because the name is the addressable id — it is
+        <div className="sc-table-wrap">
+          <table className="sc-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cap(rows, max).map(r => (
+                <tr key={r.name}>
+                  <td>
+                    {/* `title` because the name is the addressable id — it is
                       what appears in Argo logs and tickets, and the title that
                       replaces it here is not. The href stays name-based:
                       titles are neither unique nor routable. */}
-                  <Link
-                    to={catalogPath(namespace, 'resource', r.name)}
-                    className="sc-link"
-                    title={r.name}
-                  >
-                    {r.title ?? r.name}
-                  </Link>
-                </td>
-                <td className="sc-muted">{r.type}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table></div>
+                    <Link
+                      to={catalogPath(namespace, 'resource', r.name)}
+                      className="sc-link"
+                      title={r.name}
+                    >
+                      {r.title ?? r.name}
+                    </Link>
+                  </td>
+                  <td className="sc-muted">{r.type}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </Card>
   );
 }
 
-function StandingRequests({ max }: { max: number }) {
+function useTemplateTitles(): ReadonlyMap<string, string> {
+  const catalog = useApi(catalogApiRef);
+  const [templateTitles, setTemplateTitles] = useState<ReadonlyMap<string, string>>(
+    new Map(),
+  );
+
+  useEffect(() => {
+    let live = true;
+    catalog
+      .getEntities({ filter: { kind: 'Template' } })
+      .then(({ items }) => {
+        if (!live) return;
+        setTemplateTitles(
+          new Map(
+            items.map(entity => [
+              entity.metadata.annotations?.['platform.io/resource-type'] ??
+                entity.metadata.name,
+              entity.metadata.title ?? entity.metadata.name,
+            ]),
+          ),
+        );
+      })
+      .catch(() => {
+        if (live) setTemplateTitles(new Map());
+      });
+    return () => {
+      live = false;
+    };
+  }, [catalog]);
+
+  return templateTitles;
+}
+
+function StandingRequests({
+  max,
+  templateTitles,
+}: {
+  max: number;
+  templateTitles: ReadonlyMap<string, string>;
+}) {
   const requests = useApi(requestsApiRef);
   const [rows, setRows] = useState<Request[]>();
 
@@ -179,7 +272,7 @@ function StandingRequests({ max }: { max: number }) {
   const titles = useResourceTitles(shown.map(r => r.resourceName));
 
   return (
-    <Card className="sc-span-2">
+    <Card className="sc-home-requests">
       <div className="sc-card-h">
         <div className="sc-card-title">Standing requests</div>
       </div>
@@ -188,39 +281,54 @@ function StandingRequests({ max }: { max: number }) {
         <div className="sc-card-b sc-muted">No open requests.</div>
       )}
       {rows && rows.length > 0 && (
-        <div className="sc-table-wrap"><table className="sc-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Resource</th>
-              <th>State</th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.map(r => (
-              <tr key={r.id}>
-                <td>
-                  <Link to={`/requests/${r.id}`} className="sc-link">
-                    #{r.id}
-                  </Link>
-                </td>
-                {/* sc-cell-ellip caps the column at 220px, so a long title
+        <div className="sc-table-wrap sc-home-requests-table">
+          <table className="sc-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Resource</th>
+                <th>State</th>
+              </tr>
+            </thead>
+            <tbody>
+              {shown.map(r => (
+                <tr key={r.id}>
+                  <td>
+                    <Link to={`/requests/${r.id}`} className="sc-link">
+                      #{r.id}
+                    </Link>
+                  </td>
+                  {/* sc-cell-ellip caps the column at 220px, so a long title
                     ellipsises instead of widening the table; the tooltip keeps
                     the addressable name reachable. */}
-                <td className="sc-cell-ellip" title={r.resourceName}>
-                  {r.resourceType}/{titleOf(r.resourceName, titles)}
-                </td>
-                <td>{stateBadge(r.state, r.ownerGroup)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table></div>
+                  <td className="sc-cell-ellip" title={r.resourceName}>
+                    {templateTitles.get(r.resourceType) ?? r.resourceType} /{' '}
+                    {titleOf(r.resourceName, titles)}
+                  </td>
+                  <td>
+                    {stateBadge(
+                      r.state,
+                      r.ownerGroup,
+                      r.suspendedNodes?.[0]?.approverGroup,
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </Card>
   );
 }
 
-function PendingApprovals({ max }: { max: number }) {
+function PendingApprovals({
+  max,
+  templateTitles,
+}: {
+  max: number;
+  templateTitles: ReadonlyMap<string, string>;
+}) {
   const requests = useApi(requestsApiRef);
   const [rows, setRows] = useState<Request[]>();
 
@@ -233,9 +341,10 @@ function PendingApprovals({ max }: { max: number }) {
   // One call per card, over the rows this card actually shows.
   const shown = cap(rows ?? [], max);
   const titles = useResourceTitles(shown.map(r => r.resourceName));
+  const requesterNames = useUserDisplayNames(shown.map(r => r.requester));
 
   return (
-    <Card>
+    <Card className="sc-home-requests">
       <div className="sc-card-h">
         <div className="sc-card-title">Awaiting approval</div>
       </div>
@@ -244,32 +353,43 @@ function PendingApprovals({ max }: { max: number }) {
         <div className="sc-card-b sc-muted">Nothing waiting for approval.</div>
       )}
       {rows && rows.length > 0 && (
-        <div className="sc-table-wrap"><table className="sc-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Resource</th>
-              <th>Requester</th>
-              <th>State</th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.map(r => (
-              <tr key={r.id}>
-                <td>
-                  <Link to={`/requests/${r.id}`} className="sc-link">
-                    #{r.id}
-                  </Link>
-                </td>
-                <td className="sc-cell-ellip" title={r.resourceName}>
-                  {r.resourceType}/{titleOf(r.resourceName, titles)}
-                </td>
-                <td className="sc-muted">{r.requester}</td>
-                <td>{stateBadge(r.state, r.ownerGroup)}</td>
+        <div className="sc-table-wrap sc-home-requests-table">
+          <table className="sc-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Resource</th>
+                <th>Requester</th>
+                <th>State</th>
               </tr>
-            ))}
-          </tbody>
-        </table></div>
+            </thead>
+            <tbody>
+              {shown.map(r => (
+                <tr key={r.id}>
+                  <td>
+                    <Link to={`/requests/${r.id}`} className="sc-link">
+                      #{r.id}
+                    </Link>
+                  </td>
+                  <td className="sc-cell-ellip" title={r.resourceName}>
+                    {templateTitles.get(r.resourceType) ?? r.resourceType} /{' '}
+                    {titleOf(r.resourceName, titles)}
+                  </td>
+                  <td className="sc-muted" title={r.requester}>
+                    {requesterNames.get(r.requester) ?? r.requester}
+                  </td>
+                  <td>
+                    {stateBadge(
+                      r.state,
+                      r.ownerGroup,
+                      r.suspendedNodes?.[0]?.approverGroup,
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </Card>
   );
@@ -299,6 +419,7 @@ function PlutoBlock() {
 
 export function HomePage() {
   const config = useApi(configApiRef);
+  const templateTitles = useTemplateTitles();
   const home = config.getOptionalConfig('platform.home');
 
   const title = home?.getOptionalString('title') ?? 'Home';
@@ -307,6 +428,7 @@ export function HomePage() {
   const sections = (home?.getOptionalStringArray('sections') as
     | Section[]
     | undefined) ?? [
+    'teamAction',
     'quickActions',
     'ownedResources',
     'standingRequests',
@@ -323,14 +445,28 @@ export function HomePage() {
       <div className="sc-grid-2">
         {sections.map(s => {
           switch (s) {
+            case 'teamAction':
+              return <TeamAction key={s} />;
             case 'quickActions':
               return <QuickActions key={s} />;
             case 'ownedResources':
               return <OwnedResources key={s} max={maxItems} />;
             case 'standingRequests':
-              return <StandingRequests key={s} max={maxItems} />;
+              return (
+                <StandingRequests
+                  key={s}
+                  max={maxItems}
+                  templateTitles={templateTitles}
+                />
+              );
             case 'pendingApprovals':
-              return <PendingApprovals key={s} max={maxItems} />;
+              return (
+                <PendingApprovals
+                  key={s}
+                  max={maxItems}
+                  templateTitles={templateTitles}
+                />
+              );
             case 'recentlyVisited':
               // 5, not maxItems: a longer list stops being "recent".
               return <RecentlyVisited key={s} max={5} />;
