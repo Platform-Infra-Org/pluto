@@ -28,7 +28,7 @@
  * The primary action darkens the blue to 43% so it can carry white at 5.53:1;
  * the sticker blue keeps its published value for fills, where black sits on it.
  *
- * Typeface is unchanged: Clash Grotesk, the app's one family. The reference
+ * Typeface is unchanged: Mona Sans, the app's primary family. The reference
  * sets Aeonik Pro with Lateral for display — neither is licensable here, and
  * the weight range covers the same job.
  */

@@ -15,12 +15,14 @@ import { egyptianCss } from './egyptian';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
-/* Clash is a quiet step up from a system sans for the English UI. Heebo stays
-   directly behind it so Hebrew keeps full glyph coverage and matching weight. */
+/* GitHub's product typeface is bundled locally so every Pluto installation
+   renders consistently. Heebo supplies the Hebrew glyphs Mona Sans lacks. */
 @font-face {
-  font-family: 'Clash Grotesk';
-  src: url('/fonts/clash-grotesk.woff2') format('woff2');
-  font-weight: 200 700;
+  font-family: 'Mona Sans VF';
+  src: url('/fonts/mona-sans-vf.woff2') format('woff2 supports variations'),
+       url('/fonts/mona-sans-vf.woff2') format('woff2-variations');
+  font-weight: 200 900;
+  font-stretch: 75% 125%;
   font-style: normal;
   font-display: swap;
 }
@@ -55,10 +57,10 @@ export const SHADCN_CSS = `
   --sc-field-x: 10px;
   --sc-border-w: 2px;
   --sc-shadow: 3px 3px 0 hsl(var(--sc-fg) / .16);
-  --sc-font-ui: 'Clash Grotesk', 'Heebo', Inter, system-ui, -apple-system, sans-serif;
+  --sc-font-ui: 'Mona Sans VF', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Backtick Fix', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
   /* Keep a separate title token so a visual mode can tune headings without
      changing the readable application font used by controls and body copy. */
-  --sc-font-title: 'Clash Grotesk', 'Heebo', Inter, system-ui, -apple-system, sans-serif;
+  --sc-font-title: 'Mona Sans VF', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Backtick Fix', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
   --sc-unit: 4px;
   --sc-nav-w: 240px;
   --sc-bg: 240 10% 98%;
@@ -373,6 +375,7 @@ body { background: hsl(var(--sc-bg)); font-size: 17px; line-height: 1.5; } /* Ba
 body, body *, input, select, textarea, button, optgroup {
   font-family: var(--sc-font-ui) !important;
 }
+body { font-optical-sizing: auto; }
 /* Icon fonts are glyph lookups, not text — leave them alone or every icon
    turns into a letter. */
 .material-icons, .material-icons-outlined, .MuiIcon-root, [class*="material-icons"],

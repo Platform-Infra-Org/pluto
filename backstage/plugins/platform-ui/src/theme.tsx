@@ -32,7 +32,7 @@ const ACCENT = '#8b5cf6';
 // typography at theme construction, so a static string here would leave every
 // native Backstage surfaces on a stale font while our own pages changed.
 const FONT =
-  "var(--sc-font-ui, 'Clash Grotesk', 'Heebo', Inter, system-ui, sans-serif)";
+  "var(--sc-font-ui, 'Mona Sans VF', 'Heebo', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif)";
 
 type Tone = {
   primary: string;

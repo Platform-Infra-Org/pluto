@@ -207,9 +207,10 @@ describe('SHADCN_CSS', () => {
       m => m[1],
     );
     expect(faces).toHaveLength(2);
-    expect(faces[0]).toMatch(/Clash Grotesk/);
+    expect(faces[0]).toMatch(/Mona Sans VF/);
+    expect(faces[0]).toContain("url('/fonts/mona-sans-vf.woff2')");
     expect(faces[1]).toMatch(/Heebo/);
-    expect(SHADCN_CSS).not.toMatch(/Pixelify Sans|Anton/);
+    expect(SHADCN_CSS).not.toMatch(/Clash Grotesk|Pixelify Sans|Anton/);
   });
 
   it('leaves uppercase to the micro-label alone', () => {
@@ -799,11 +800,11 @@ describe('Hebrew type', () => {
     expect(block).not.toContain('unicode-range');
   });
 
-  it('lists Clash first and Heebo as fallback in both font stacks', () => {
+  it('lists Mona Sans first and Heebo as fallback in both font stacks', () => {
     for (const token of ['--sc-font-ui', '--sc-font-title']) {
       const decl = SHADCN_CSS.slice(SHADCN_CSS.indexOf(`${token}:`));
       const value = decl.slice(0, decl.indexOf(';'));
-      expect(value.indexOf('Clash Grotesk')).toBeLessThan(
+      expect(value.indexOf('Mona Sans VF')).toBeLessThan(
         value.indexOf('Heebo'),
       );
     }

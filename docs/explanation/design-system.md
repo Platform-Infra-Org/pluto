@@ -286,10 +286,11 @@ Nothing conveys state through motion alone.
 - Contrast is measured, not eyeballed. The dither pass found every badge
   variant already below WCAG AA — the worst at 1.84:1 — and fixed them; the
   check samples the rendered pixel against its text in every scheme.
-- **One primary typeface.** Clash Grotesk is the app's Latin family, self-hosted because
+- **GitHub typography.** Mona Sans VF is the app's Latin family, matching
+  GitHub's Primer font stack. It is self-hosted because
   the CSP is `font-src 'self'` — a CDN reference fails silently, the page
   falling back to something that looks nearly right. Differentiation comes from
-  weight, size and case. Heebo follows it in the same stack so Hebrew remains
+  weight, size and case. Heebo follows it in the stack so Hebrew remains
   clear and visually balanced. A mode can change the whole voice by moving one
   variable.
 

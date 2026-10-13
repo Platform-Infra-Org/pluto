@@ -26,7 +26,7 @@
  * (`57 88% 58%` for both). The published accent stays on `--sc-primary`, which
  * is where it belongs; contrast.test.ts pins the separation.
  *
- * Typeface is never set here. Clash Grotesk is the app's only family and these
+ * Typeface is never set here. Mona Sans is the app's primary family and these
  * modes differentiate by weight, size and case.
  */
 
