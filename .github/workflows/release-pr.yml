@@ -151,15 +151,35 @@ jobs:
 
       - name: Compute release version
         id: ver
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          # git-cliff drops the v prefix when there are no tags yet; keep tags uniform.
+          latest="$(git describe --tags --abbrev=0 2>/dev/null || echo 'v0.0.0')"
           version="$(git-cliff --config cliff.toml --bumped-version)"
-          echo "version=v${version#v}" >> "$GITHUB_OUTPUT"
+          version="v${version#v}"
+
+          # With merge commits, git-cliff can see a releasing change in the
+          # graph but still skip every candidate while calculating the bump.
+          # It then returns the existing tag. Derive the bump from the PR title,
+          # which is already enforced as a Conventional Commit by checks.yml.
+          if [ "$version" = "$latest" ] || git rev-parse -q --verify "refs/tags/$version" >/dev/null; then
+            current="${latest#v}"
+            IFS=. read -r major minor patch <<< "$current"
+            if echo "$PR_TITLE" | grep -qE '^[a-z]+(\([^)]*\))?!:'; then
+              major=$((major + 1)); minor=0; patch=0
+            elif echo "$PR_TITLE" | grep -qE '^feat(\([^)]*\))?:'; then
+              minor=$((minor + 1)); patch=0
+            else
+              patch=$((patch + 1))
+            fi
+            version="v${major}.${minor}.${patch}"
+            echo "::notice::git-cliff returned existing tag ${latest}; using PR-title bump ${version}."
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
           # Release only if a version-bumping commit landed since the last tag.
           # Docs-only and ci-only merges refresh the changelog's [Unreleased]
           # section but don't cut a release — the image would be byte-identical.
           # `build` stays a releasing type (it can change what ships).
-          latest="$(git describe --tags --abbrev=0 2>/dev/null || echo '')"
           range="${latest:+${latest}..}HEAD"
           rel='^(feat|fix|perf|refactor|revert|build)(\(.+\))?!?:|^[a-z]+(\(.+\))?!:'
           if git log "$range" --format='%s' | grep -qE "$rel"; then
@@ -172,8 +192,9 @@ jobs:
       - name: Update CHANGELOG
         run: |
           if [ "${{ steps.ver.outputs.release }}" = "true" ]; then
-            # --bump moves the "Unreleased" entries under the new vX.Y.Z heading + date.
-            git-cliff --config cliff.toml --bump -o CHANGELOG.md
+            # Use the validated version explicitly. This keeps CHANGELOG and
+            # the tag aligned when the merge-commit fallback selected it.
+            git-cliff --config cliff.toml --tag "${{ steps.ver.outputs.version }}" -o CHANGELOG.md
           else
             git-cliff --config cliff.toml -o CHANGELOG.md
           fi
@@ -187,6 +208,10 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
           if [ "$RELEASE" = "true" ]; then
+            if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+              echo "::error::Refusing to overwrite existing tag $VERSION"
+              exit 1
+            fi
             # No-op safe: only commit if git-cliff actually changed the file.
             git diff --staged --quiet || git commit -m "chore(release): ${VERSION} [skip ci]"
             git tag -a "${VERSION}" -m "Release ${VERSION}"
