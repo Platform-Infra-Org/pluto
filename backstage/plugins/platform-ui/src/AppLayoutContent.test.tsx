@@ -7,6 +7,12 @@ import { useIsAdmin } from './useIsAdmin';
 
 jest.mock('./useMaintenance');
 jest.mock('./useIsAdmin');
+jest.mock('./NotificationBell', () => ({
+  NotificationBell: () => <a href="/notifications">Notifications</a>,
+}));
+jest.mock('./SignOutButton', () => ({
+  SignOutButton: () => <button type="button">Sign out</button>,
+}));
 
 const mockMaintenance = useMaintenance as jest.MockedFunction<
   typeof useMaintenance

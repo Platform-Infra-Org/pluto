@@ -1,6 +1,8 @@
 import { ReactNode } from 'react';
 import { SidebarPage } from '@backstage/core-components';
 import { MaintenanceGate } from './MaintenanceGate';
+import { NotificationBell } from './NotificationBell';
+import { SignOutButton } from './SignOutButton';
 
 /**
  * The app shell: nav plus content, content alone gated by maintenance mode.
@@ -22,6 +24,10 @@ export function AppLayoutContent({
   return (
     <SidebarPage>
       {nav}
+      <div className="sc sc-app-topbar">
+        <NotificationBell />
+        <SignOutButton />
+      </div>
       <MaintenanceGate>{content}</MaintenanceGate>
     </SidebarPage>
   );

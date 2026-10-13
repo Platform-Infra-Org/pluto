@@ -11,6 +11,7 @@ import {
   RequestState,
   ServiceOwnerMap,
   resourceRef,
+  userRef as catalogUserRef,
   serviceOwnerMap,
 } from '@internal/plugin-platform-common';
 import { createMayDeleteLookup } from './ownership';
@@ -134,6 +135,26 @@ export const platformRequestsPlugin = createBackendPlugin({
           config.getOptionalString('platform.catalog.namespace') ??
           DEFAULT_NAMESPACE;
 
+        const requesterDisplayName = async (requester: string) => {
+          try {
+            const entity = await catalog.getEntityByRef(
+              catalogUserRef(catalogNamespace, requester),
+              { credentials: await auth.getOwnServiceCredentials() },
+            );
+            const profile = entity?.spec?.profile as
+              | { displayName?: unknown }
+              | undefined;
+            return typeof profile?.displayName === 'string'
+              ? profile.displayName
+              : undefined;
+          } catch (e) {
+            logger.warn(
+              `requesterDisplayName failed for '${requester}': ${e}`,
+            );
+            return undefined;
+          }
+        };
+
         // Native Backstage notifications (approvers on new requests, requester
         // on decisions + terminal outcomes) — best-effort, see notifications.ts.
         const notify = createNotifier(
@@ -141,6 +162,7 @@ export const platformRequestsPlugin = createBackendPlugin({
           logger,
           adminGroups,
           catalogNamespace,
+          requesterDisplayName,
         );
 
         // Per-request Secret provisioning (TechDocs: Explanation -> Secret lifecycle). Disabled

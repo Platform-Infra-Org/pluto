@@ -63,6 +63,16 @@ sn: Search
 mail: quinn@platform.dev
 userPassword: quinn
 
+# A user outside every approval group, used to verify that approval actions
+# and counters stay hidden for teams that cannot answer the request.
+dn: uid=casey,ou=people,dc=platform,dc=local
+objectClass: inetOrgPerson
+uid: casey
+cn: Casey Clients
+sn: Clients
+mail: casey@platform.dev
+userPassword: casey
+
 # ---- groups (groupOfNames; member = full user DN) ----
 dn: cn=platform-admins,ou=groups,dc=platform,dc=local
 objectClass: groupOfNames
@@ -95,3 +105,8 @@ dn: cn=search,ou=groups,dc=platform,dc=local
 objectClass: groupOfNames
 cn: search
 member: uid=quinn,ou=people,dc=platform,dc=local
+
+dn: cn=clients,ou=groups,dc=platform,dc=local
+objectClass: groupOfNames
+cn: clients
+member: uid=casey,ou=people,dc=platform,dc=local

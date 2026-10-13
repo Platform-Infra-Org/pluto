@@ -213,3 +213,20 @@ describe('RequestPage — pending approver team', () => {
       .toBeInTheDocument();
   });
 });
+
+describe('RequestPage — suspended input team', () => {
+  it('names the workflow step approver in the awaiting-input status', async () => {
+    renderWith({}, {
+      state: 'AWAITING_INPUT',
+      suspendedNodes: [{
+        id: 'await-approval',
+        name: 'await-approval',
+        approverGroup: 'group:default/cloudcore',
+        inputs: [],
+        suppliedOutputs: [],
+      }],
+    });
+    expect(await screen.findByText('Awaiting Input by Cloudcore'))
+      .toBeInTheDocument();
+  });
+});

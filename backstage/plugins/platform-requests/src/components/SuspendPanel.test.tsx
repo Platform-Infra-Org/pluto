@@ -57,7 +57,7 @@ const step = (id: string) =>
 describe('SuspendPanel gating', () => {
   it('lets the owning team answer an unannotated step, and says so', () => {
     show([node('deploy')], { groups: [OWNER] });
-    expect(step('deploy').getByText(`Answered by ${OWNER}, the owning team`))
+    expect(step('deploy').getByText('Answered by Team A, the owning team'))
       .toBeInTheDocument();
     expect(step('deploy').getByRole('button', { name: /Resume/ })).toBeEnabled();
   });
@@ -65,7 +65,7 @@ describe('SuspendPanel gating', () => {
   it('excludes the owning team from a step that names another team, while still showing it', () => {
     show([node('approve-cost', FINANCE)], { groups: [OWNER] });
     // Visible — that is how the owner learns whom to chase.
-    expect(step('approve-cost').getByText(`Answered by ${FINANCE}`))
+    expect(step('approve-cost').getByText('Answered by Finance'))
       .toBeInTheDocument();
     expect(step('approve-cost').getByRole('button', { name: /Resume/ }))
       .toBeDisabled();

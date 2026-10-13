@@ -20,11 +20,21 @@ const request = (extra: Record<string, unknown> = {}) =>
     ...extra,
   } as any);
 
-const notifierWith = (adminGroups = DEFAULT_ADMINS, namespace?: string) => {
+const notifierWith = (
+  adminGroups = DEFAULT_ADMINS,
+  namespace?: string,
+  requesterDisplayName?: (requester: string) => Promise<string | undefined>,
+) => {
   const send = jest.fn().mockResolvedValue(undefined);
   return {
     send,
-    notify: createNotifier({ send } as any, logger, adminGroups, namespace),
+    notify: createNotifier(
+      { send } as any,
+      logger,
+      adminGroups,
+      namespace,
+      requesterDisplayName,
+    ),
   };
 };
 
@@ -65,6 +75,23 @@ describe('approvalNeeded recipients', () => {
       'group:default/platform-admins',
       'group:default/team-a',
     ]);
+    expect(send.mock.calls[0][0].payload).toMatchObject({
+      title: 'Approval required · Postgres',
+      description:
+        'Request #1 · db-a · Requested by Alice · Waiting for Team A',
+    });
+  });
+
+  it('uses the requester catalog display name in the notification', async () => {
+    const { send, notify } = notifierWith(
+      DEFAULT_ADMINS,
+      undefined,
+      async () => 'Alice Example',
+    );
+    await notify.approvalNeeded(request());
+    expect(send.mock.calls[0][0].payload.description).toContain(
+      'Requested by Alice Example',
+    );
   });
 
   it('sends once to an owning team that is also an admin group', async () => {
@@ -133,10 +160,13 @@ describe('gateNeeded recipients', () => {
     ]);
     expect(sends(send)).toEqual({
       'group:default/platform-admins':
-        'Input needed: approve-cost, approve-schema on request #1',
-      'group:default/payments': 'Input needed: approve-cost on request #1',
-      'group:default/search': 'Input needed: approve-schema on request #1',
+        'Input required · Postgres',
+      'group:default/payments': 'Input required · Postgres',
+      'group:default/search': 'Input required · Postgres',
     });
+    expect(send.mock.calls[1][0].payload.description).toBe(
+      'Request #1 · db-a · Step: Approve Cost · Waiting for Payments',
+    );
   });
 
   it('sends an unannotated step to the owner and an empty one to admins only', async () => {
@@ -147,8 +177,8 @@ describe('gateNeeded recipients', () => {
     ]);
     expect(sends(send)).toEqual({
       'group:default/platform-admins':
-        'Input needed: review, broken on request #1',
-      'group:default/checkout': 'Input needed: review on request #1',
+        'Input required · Postgres',
+      'group:default/checkout': 'Input required · Postgres',
     });
   });
 

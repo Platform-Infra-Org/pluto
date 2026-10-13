@@ -15,6 +15,7 @@ import {
   mayResumeNode,
 } from '@internal/plugin-platform-common';
 import { requestsApiRef } from '../api';
+import { teamName } from './RequestsPage';
 
 /** Initial values: whatever the step declared as its defaults. */
 function initialAnswers(nodes: SuspendedNode[]): Record<string, string> {
@@ -89,12 +90,12 @@ function gateOwnerOf(
 ): string {
   if (approverGroup === undefined) {
     return ownerGroup
-      ? `Answered by ${ownerGroup}, the owning team`
+      ? `Answered by ${teamName(ownerGroup)}, the owning team`
       : 'Answered by admins — this request names no owning team';
   }
   return approverGroup.trim() === ''
     ? 'Approver group unresolved — this step names a team that could not be resolved, so only an admin can answer it'
-    : `Answered by ${approverGroup.trim()}`;
+    : `Answered by ${teamName(approverGroup.trim())}`;
 }
 
 /**

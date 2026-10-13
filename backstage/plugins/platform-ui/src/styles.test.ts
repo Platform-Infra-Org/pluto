@@ -59,7 +59,9 @@ describe('SHADCN_CSS', () => {
     // lopsided at dpr 1, so it read as a Windows-only rendering bug. Any
     // integer multiple is correct on every screen.
     const sizes = Array.from(
-      SHADCN_CSS.matchAll(/\.sc-state-ic[^{}]*\{[^}]*?width:\s*(\d+(?:\.\d+)?)px/g),
+      SHADCN_CSS.matchAll(
+        /\.sc-state-ic[^{}]*\{[^}]*?width:\s*(\d+(?:\.\d+)?)px/g,
+      ),
       m => parseFloat(m[1]),
     );
     expect(sizes.length).toBeGreaterThan(0);
@@ -95,7 +97,9 @@ describe('SHADCN_CSS', () => {
     // min-width:auto, so without it overflow-x never engages and a long param
     // value is clipped at the window edge with no scrollbar to reach it.
     expect(SHADCN_CSS).toMatch(/\.sc-json-body\s*\{[^}]*min-width:\s*0/);
-    expect(SHADCN_CSS).toMatch(/\.sc-json-string[^{]*\{[^}]*overflow-wrap:\s*anywhere/);
+    expect(SHADCN_CSS).toMatch(
+      /\.sc-json-string[^{]*\{[^}]*overflow-wrap:\s*anywhere/,
+    );
   });
 
   it('falls back to antialiasing at fractional device pixel ratios', () => {
@@ -168,7 +172,10 @@ describe('SHADCN_CSS', () => {
     // right. Both faces are files this app serves.
     // Every face, whatever the count. The app is down to one family; the rule
     // is that whatever it serves, it serves itself.
-    const faces = Array.from(SHADCN_CSS.matchAll(/@font-face\s*\{([^}]*)\}/g), m => m[1]);
+    const faces = Array.from(
+      SHADCN_CSS.matchAll(/@font-face\s*\{([^}]*)\}/g),
+      m => m[1],
+    );
     expect(faces.length).toBeGreaterThanOrEqual(1);
     for (const face of faces) {
       const url = /url\('([^']+)'\)/.exec(face);
@@ -194,16 +201,16 @@ describe('SHADCN_CSS', () => {
     expect(block![1]).not.toMatch(/overflow:\s*visible/);
   });
 
-  it('serves exactly one Latin typeface, plus Heebo for Hebrew', () => {
-    // One Latin family, differentiated by weight, size and case, plus the
-    // unicode-range-scoped Hebrew companion. A THIRD @font-face -- or a second
-    // one not scoped to Hebrew -- would mean the consolidation had quietly
-    // come undone.
-    const faces = Array.from(SHADCN_CSS.matchAll(/@font-face\s*\{([^}]*)\}/g), m => m[1]);
-    expect(faces.length).toBe(2);
-    expect(faces[0]).toMatch(/Clash Grotesk/);
+  it('self-hosts the Latin face and its Hebrew fallback', () => {
+    const faces = Array.from(
+      SHADCN_CSS.matchAll(/@font-face\s*\{([^}]*)\}/g),
+      m => m[1],
+    );
+    expect(faces).toHaveLength(2);
+    expect(faces[0]).toMatch(/Mona Sans VF/);
+    expect(faces[0]).toContain("url('/fonts/mona-sans-vf.woff2')");
     expect(faces[1]).toMatch(/Heebo/);
-    expect(SHADCN_CSS).not.toMatch(/Pixelify Sans|Anton/);
+    expect(SHADCN_CSS).not.toMatch(/Clash Grotesk|Pixelify Sans|Anton/);
   });
 
   it('leaves uppercase to the micro-label alone', () => {
@@ -422,7 +429,9 @@ describe('SHADCN_CSS', () => {
       .flatMap(chunk => chunk.split('}').pop()!.split(','))
       .filter(sel => !sel.includes('.sc-'));
     for (const cls of SUFFIXED) {
-      expect(`${cls}:${rules.includes(`[class*="${cls}"]`)}`).toBe(`${cls}:true`);
+      expect(`${cls}:${rules.includes(`[class*="${cls}"]`)}`).toBe(
+        `${cls}:true`,
+      );
       const bare = new RegExp(`\\.${cls}(?![A-Za-z0-9_-])`);
       const offenders = selectors.filter(sel => bare.test(sel));
       expect(`${cls}:${offenders.join('|')}`).toBe(`${cls}:`);
@@ -477,7 +486,9 @@ describe('SHADCN_CSS', () => {
     // to the route was dead there. Without that census these two assertions
     // look like a style preference; they are the fix.
     expect(SHADCN_CSS).not.toMatch(/\.sc-route-import\s+\.Mui/);
-    expect(SHADCN_CSS).toContain('.sc-route-import [class*="MuiStepIcon-root"]');
+    expect(SHADCN_CSS).toContain(
+      '.sc-route-import [class*="MuiStepIcon-root"]',
+    );
   });
 
   it('pairs ink with the surface it actually sits on', () => {
@@ -567,9 +578,7 @@ describe('SHADCN_CSS', () => {
     // under the box. That shipped, and it read as three stray underlines.
     // Ground and ink inherit down that tree harmlessly; an edge does not.
     const rules = SHADCN_CSS.replace(/\/\*[\s\S]*?\*\//g, '');
-    const block = rules.match(
-      /\[class\*="bui-PluginHeader"\]\s*\{([^}]*)\}/,
-    );
+    const block = rules.match(/\[class\*="bui-PluginHeader"\]\s*\{([^}]*)\}/);
     expect(block).toBeTruthy();
     expect(block![1]).not.toMatch(/border/);
   });
@@ -785,21 +794,18 @@ describe('Hebrew type', () => {
     expect(SHADCN_CSS).not.toMatch(/@font-face[^}]*https?:\/\//);
   });
 
-  it('scopes Heebo to the Hebrew blocks', () => {
-    // unicode-range is what makes this a fix rather than a fallback: Latin
-    // never leaves Clash Grotesk, and no rule has to know which script it is
-    // rendering.
+  it('does not restrict Heebo to a partial unicode range', () => {
     const face = SHADCN_CSS.slice(SHADCN_CSS.indexOf("font-family: 'Heebo'"));
     const block = face.slice(0, face.indexOf('}'));
-    expect(block).toContain('unicode-range');
-    expect(block).toContain('U+0590-05FF');
+    expect(block).not.toContain('unicode-range');
   });
 
-  it('lists Heebo in both font stacks', () => {
+  it('lists Mona Sans first and Heebo as fallback in both font stacks', () => {
     for (const token of ['--sc-font-ui', '--sc-font-title']) {
       const decl = SHADCN_CSS.slice(SHADCN_CSS.indexOf(`${token}:`));
-      expect(`${token}:${decl.slice(0, decl.indexOf(';')).includes('Heebo')}`).toBe(
-        `${token}:true`,
+      const value = decl.slice(0, decl.indexOf(';'));
+      expect(value.indexOf('Mona Sans VF')).toBeLessThan(
+        value.indexOf('Heebo'),
       );
     }
   });

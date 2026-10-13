@@ -38,7 +38,7 @@
  *    `--sc-hairline` keeps the original for dividers, which is its job on the
  *    site too.
  *
- * The display voice is Clash Grotesk at 700, not a second family. The site sets
+ * The display voice is Mona Sans at 700, not a second family. The site sets
  * its headlines in Beni Black, which has no free licence, and the app has since
  * consolidated onto one typeface — so the display job is done by weight, size,
  * case and a 0.70 line-height instead. That ratio is the part of the reference's

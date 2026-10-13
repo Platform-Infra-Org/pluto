@@ -57,6 +57,54 @@ export function useResourceTitles(
   }, [byRef, names, namespace]);
 }
 
+/** Catalog profile display names for bare requester names, keyed by name. */
+export function useUserDisplayNames(
+  names: string[],
+): ReadonlyMap<string, string> {
+  const namespace = useCatalogNamespace();
+  const catalog = useApi(catalogApiRef);
+  const [displayNames, setDisplayNames] = useState(EMPTY);
+  const key = useMemo(
+    () => [...new Set(names.filter(Boolean))].sort().join('\n'),
+    [names],
+  );
+
+  useEffect(() => {
+    if (!key) {
+      setDisplayNames(EMPTY);
+      return undefined;
+    }
+    const wanted = key.split('\n');
+    let live = true;
+    catalog
+      .getEntitiesByRefs({
+        entityRefs: wanted.map(name => `user:${namespace}/${name}`),
+        fields: ['metadata.name', 'spec.profile.displayName'],
+      })
+      .then(({ items }) => {
+        if (!live) return;
+        const next = new Map<string, string>();
+        items.forEach((entity, i) => {
+          const profile = entity?.spec?.profile as
+            | { displayName?: unknown }
+            | undefined;
+          if (typeof profile?.displayName === 'string') {
+            next.set(wanted[i], profile.displayName);
+          }
+        });
+        setDisplayNames(next);
+      })
+      .catch(() => {
+        if (live) setDisplayNames(EMPTY);
+      });
+    return () => {
+      live = false;
+    };
+  }, [catalog, key, namespace]);
+
+  return displayNames;
+}
+
 /**
  * Catalog titles for a batch of full entity refs, keyed by ref.
  *

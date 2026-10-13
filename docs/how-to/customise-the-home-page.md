@@ -34,9 +34,10 @@ That includes new cards after an upgrade: add the key or it will not appear.
 | `favouriteTemplates` | templates you starred on New Request (6) |
 | `pluto` | decoration — the planet, filling the grid's spare cell. Says nothing, links nowhere |
 
-Order in the list is the order on the page. Cards are all one size, so a row
-stays aligned however many you enable; `standingRequests` deliberately takes
-two cells because its table is the widest.
+Order in the list is the order on the page. Cards use a responsive grid and
+stay aligned as the available width changes. Team approval work is available
+from the Requests page's **For approval** tab, including both initial approvals
+and suspended workflow inputs the current user may handle.
 
 ## Recently visited and favourites
 

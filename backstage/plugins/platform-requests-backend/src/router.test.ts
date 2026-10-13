@@ -843,6 +843,13 @@ describe('createRouter', () => {
           [pending],
         );
 
+        // An unrelated team sees neither the owner's approval nor another
+        // team's workflow input in its actionable queue.
+        principal.groups = ['group:default/clients'];
+        expect(ids(await request(app).get('/requests?scope=actionable'))).toEqual(
+          [],
+        );
+
         // Answered: off the gate team's queue (schema is DBA's), still in its
         // lists.
         principal.groups = [FINANCE];

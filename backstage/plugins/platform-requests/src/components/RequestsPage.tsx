@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useApi } from '@backstage/core-plugin-api';
 import { Link } from '@backstage/core-components';
+import { catalogApiRef } from '@backstage/plugin-catalog-react';
+import ReplayIcon from '@material-ui/icons/Replay';
+import { useSearchParams } from 'react-router-dom';
 import {
   Page,
   PageHeader,
@@ -10,8 +13,13 @@ import {
   STATE_SPRITES,
 } from '@internal/plugin-platform-ui';
 import { Request, RequestState } from '@internal/plugin-platform-common';
+import { Entity } from '@backstage/catalog-model';
 import { requestsApiRef } from '../api';
-import { titleOf, useResourceTitles } from '../useResourceTitles';
+import {
+  titleOf,
+  useResourceTitles,
+  useUserDisplayNames,
+} from '../useResourceTitles';
 
 /** ISO string -> locale date + time (e.g. "Jul 26, 2026, 3:04 PM"). */
 export const formatTs = (iso: string) =>
@@ -25,11 +33,22 @@ export const formatTs = (iso: string) =>
  * badge text — never instead of it, so the accessible name is unchanged. The
  * gear spins while a workflow is actually running.
  */
-export function stateBadge(s: RequestState, ownerGroup?: string) {
+export const teamName = (group?: string) =>
+  group
+    ?.split('/')
+    .pop()
+    ?.replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, letter => letter.toUpperCase()) || 'Admins';
+
+export function stateBadge(
+  s: RequestState,
+  ownerGroup?: string,
+  inputGroup?: string,
+) {
   // ownerGroup is copied from the catalog Template's spec.owner at creation.
-  const approverTeam = ownerGroup
-    ?.split('/').pop()?.replace(/[-_]/g, ' ')
-    .replace(/\b\w/g, letter => letter.toUpperCase()) ?? 'Admins';
+  // inputGroup comes from the suspended WorkflowTemplate's approver annotation.
+  const approverTeam = teamName(ownerGroup);
+  const inputTeam = teamName(inputGroup ?? ownerGroup);
   const label: Record<RequestState, string> = {
     PENDING_APPROVAL: `Pending Approval by ${approverTeam}`,
     APPROVED: 'Approved',
@@ -37,10 +56,13 @@ export function stateBadge(s: RequestState, ownerGroup?: string) {
     SUCCEEDED: 'Succeeded',
     FAILED: 'Failed',
     REJECTED: 'Rejected',
-    AWAITING_INPUT: 'Awaiting input',
+    AWAITING_INPUT: `Awaiting Input by ${inputTeam}`,
     EXPIRED: 'Expired',
   };
-  const tone: Record<RequestState, 'warning' | 'primary' | 'success' | 'destructive' | 'muted'> = {
+  const tone: Record<
+    RequestState,
+    'warning' | 'primary' | 'success' | 'destructive' | 'muted'
+  > = {
     PENDING_APPROVAL: 'warning',
     APPROVED: 'primary',
     IN_PROGRESS: 'primary',
@@ -99,11 +121,119 @@ const STATES: RequestState[] = [
 const human = (s: string) =>
   s.charAt(0) + s.slice(1).toLowerCase().replace(/_/g, ' ');
 
+export function startOverPath(
+  templatePath: string,
+  params: Record<string, unknown>,
+) {
+  const query = new URLSearchParams({ formData: JSON.stringify(params) });
+  return `${templatePath}?${query.toString()}`;
+}
+
+type ReplayTemplate = {
+  path: string;
+  resourceType: string;
+  parameterPaths: ReadonlyMap<string, string>;
+  resourceNamePath?: string;
+  resourceNamesPath?: string;
+};
+
+const parameterPath = (value: unknown) => {
+  if (typeof value !== 'string') return undefined;
+  return /^\s*\$\{\{\s*parameters\.([\w.-]+)\s*\}\}\s*$/.exec(value)?.[1];
+};
+
+const setPath = (
+  target: Record<string, unknown>,
+  path: string,
+  value: unknown,
+) => {
+  const parts = path.split('.');
+  let current = target;
+  for (const part of parts.slice(0, -1)) {
+    const next = current[part];
+    if (!next || typeof next !== 'object' || Array.isArray(next)) {
+      current[part] = {};
+    }
+    current = current[part] as Record<string, unknown>;
+  }
+  current[parts[parts.length - 1]] = value;
+};
+
+/** Read the reverse form mapping from a Template's request-submit step. */
+export function replayTemplate(entity: Entity): ReplayTemplate | undefined {
+  const spec = entity.spec as { steps?: unknown[] } | undefined;
+  const step = spec?.steps?.find(candidate => {
+    const value = candidate as { action?: unknown };
+    return value?.action === 'platform:request:submit';
+  }) as { input?: Record<string, unknown> } | undefined;
+  if (!step?.input) return undefined;
+
+  const input = step.input;
+  const resourceType =
+    entity.metadata.annotations?.['platform.io/resource-type'] ??
+    (typeof input.resourceType === 'string' && !parameterPath(input.resourceType)
+      ? input.resourceType
+      : entity.metadata.name);
+  const mappings = new Map<string, string>();
+  if (input.params && typeof input.params === 'object') {
+    for (const [storedKey, expression] of Object.entries(input.params)) {
+      const path = parameterPath(expression);
+      if (path) mappings.set(storedKey, path);
+    }
+  }
+  const namespace = entity.metadata.namespace ?? 'default';
+  return {
+    path: `/create/templates/${encodeURIComponent(
+      namespace,
+    )}/${encodeURIComponent(entity.metadata.name)}`,
+    resourceType,
+    parameterPaths: mappings,
+    resourceNamePath: parameterPath(input.resourceName),
+    resourceNamesPath: parameterPath(input.resourceNames),
+  };
+}
+
+/** Pick the closest Template when several templates submit one resource type. */
+export function replayForRequest(
+  request: Request,
+  candidates: readonly ReplayTemplate[],
+) {
+  const keys = Object.keys(request.params);
+  const score = (candidate: ReplayTemplate) => {
+    const mapped = keys.filter(key => candidate.parameterPaths.has(key)).length;
+    const unknown = keys.length - mapped;
+    return mapped * 10 - unknown + (candidate.resourceNamePath ? 1 : 0);
+  };
+  return [...candidates].sort((a, b) => score(b) - score(a))[0];
+}
+
+export function startOverData(request: Request, template?: ReplayTemplate) {
+  const data: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(request.params)) {
+    setPath(data, template?.parameterPaths.get(key) ?? key, value);
+  }
+  if (template?.resourceNamePath) {
+    setPath(data, template.resourceNamePath, request.resourceName);
+  }
+  if (template?.resourceNamesPath && request.resourceNames) {
+    setPath(data, template.resourceNamesPath, request.resourceNames);
+  }
+  return data;
+}
+
 export function RequestsPage() {
   const api = useApi(requestsApiRef);
-  const [tab, setTab] = useState<Tab>('mine');
+  const catalog = useApi(catalogApiRef);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const tab: Tab = TABS.some(t => t.id === requestedTab)
+    ? (requestedTab as Tab)
+    : 'mine';
   const [rows, setRows] = useState<Request[]>();
   const [error, setError] = useState<string>();
+  const [replayTemplates, setReplayTemplates] = useState<
+    ReadonlyMap<string, ReplayTemplate[]>
+  >(new Map());
 
   // Filters / sort (client-side, shared across tabs).
   const [search, setSearch] = useState('');
@@ -113,8 +243,39 @@ export function RequestsPage() {
   useEffect(() => {
     setRows(undefined);
     setError(undefined);
-    api.list(FETCH[tab]).then(setRows).catch(e => setError(String(e)));
+    api
+      .list(FETCH[tab])
+      .then(setRows)
+      .catch(e => setError(String(e)));
   }, [api, tab]);
+
+  // Resolve the same resource-type annotation the backend uses to find a
+  // request's owning Template. This keeps Start Over generic when the Template
+  // name and resource type differ.
+  useEffect(() => {
+    let live = true;
+    catalog
+      .getEntities({ filter: { kind: 'Template' } })
+      .then(({ items }) => {
+        if (!live) return;
+        const templates = new Map<string, ReplayTemplate[]>();
+        for (const entity of items) {
+          const replay = replayTemplate(entity);
+          if (!replay) continue;
+          templates.set(replay.resourceType, [
+            ...(templates.get(replay.resourceType) ?? []),
+            replay,
+          ]);
+        }
+        setReplayTemplates(templates);
+      })
+      .catch(() => {
+        if (live) setReplayTemplates(new Map());
+      });
+    return () => {
+      live = false;
+    };
+  }, [catalog]);
 
   // The "For approval" tab is two fixed states, so it has no state filter.
   const stateFilterEnabled = tab !== 'approval';
@@ -122,9 +283,15 @@ export function RequestsPage() {
   // Fed from `rows`, not `displayed`: the filter reads titles, so looking them
   // up from the filtered set would make the two circular.
   const titles = useResourceTitles((rows ?? []).map(r => r.resourceName));
+  const requesterNames = useUserDisplayNames(
+    (rows ?? []).map(r => r.requester),
+  );
 
   const displayed = (rows ?? [])
-    .filter(r => !stateFilterEnabled || stateFilter === 'ALL' || r.state === stateFilter)
+    .filter(
+      r =>
+        !stateFilterEnabled || stateFilter === 'ALL' || r.state === stateFilter,
+    )
     .filter(r => {
       if (!search.trim()) return true;
       const q = search.toLowerCase();
@@ -139,7 +306,8 @@ export function RequestsPage() {
         r.resourceType.toLowerCase().includes(q) ||
         r.resourceName.toLowerCase().includes(q) ||
         (titles.get(r.resourceName)?.toLowerCase().includes(q) ?? false) ||
-        r.requester.toLowerCase().includes(q)
+        r.requester.toLowerCase().includes(q) ||
+        (requesterNames.get(r.requester)?.toLowerCase().includes(q) ?? false)
       );
     })
     .sort((a, b) => (sort === 'newest' ? b.id - a.id : a.id - b.id));
@@ -159,7 +327,9 @@ export function RequestsPage() {
             key={t.id}
             type="button"
             className={`sc-tab${tab === t.id ? ' active' : ''}`}
-            onClick={() => setTab(t.id)}
+            onClick={() =>
+              setSearchParams(t.id === 'mine' ? {} : { tab: t.id })
+            }
           >
             {t.label}
           </button>
@@ -177,7 +347,9 @@ export function RequestsPage() {
           <select
             className="sc-select"
             value={stateFilter}
-            onChange={e => setStateFilter(e.target.value as 'ALL' | RequestState)}
+            onChange={e =>
+              setStateFilter(e.target.value as 'ALL' | RequestState)
+            }
           >
             <option value="ALL">All states</option>
             {STATES.map(s => (
@@ -198,42 +370,72 @@ export function RequestsPage() {
       </div>
 
       <Card>
-        <div className="sc-table-wrap"><table className="sc-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Kind</th>
-              <th>Type</th>
-              <th>Resource</th>
-              <th>Requester</th>
-              <th>Created</th>
-              <th>State</th>
-            </tr>
-          </thead>
-          <tbody>
-            {displayed.map(r => (
-              <tr key={r.id}>
-                <td>
-                  <Link to={`/requests/${r.id}`} className="sc-link">
-                    #{r.id}
-                  </Link>
-                </td>
-                <td>{r.kind}</td>
-                <td>{r.resourceType}</td>
-                {/* The tooltip keeps the name reachable: it is the row's only
-                    remaining exposure of the addressable id. */}
-                <td title={r.resourceName}>
-                  {r.resourceNames
-                    ? `${r.resourceNames.length} resources`
-                    : titleOf(r.resourceName, titles)}
-                </td>
-                <td>{r.requester}</td>
-                <td className="sc-muted">{formatTs(r.createdAt)}</td>
-                <td>{stateBadge(r.state, r.ownerGroup)}</td>
+        <div className="sc-table-wrap">
+          <table className="sc-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Kind</th>
+                <th>Type</th>
+                <th>Resource</th>
+                <th>Requester</th>
+                <th>Created</th>
+                <th>State</th>
+                <th aria-label="Actions" />
               </tr>
-            ))}
-          </tbody>
-        </table></div>
+            </thead>
+            <tbody>
+              {displayed.map(r => (
+                <tr key={r.id}>
+                  <td>
+                    <Link to={`/requests/${r.id}`} className="sc-link">
+                      #{r.id}
+                    </Link>
+                  </td>
+                  <td>{r.kind}</td>
+                  <td>{r.resourceType}</td>
+                  {/* The tooltip keeps the name reachable: it is the row's only
+                    remaining exposure of the addressable id. */}
+                  <td title={r.resourceName}>
+                    {r.resourceNames
+                      ? `${r.resourceNames.length} resources`
+                      : titleOf(r.resourceName, titles)}
+                  </td>
+                  <td title={r.requester}>
+                    {requesterNames.get(r.requester) ?? r.requester}
+                  </td>
+                  <td className="sc-muted">{formatTs(r.createdAt)}</td>
+                  <td>
+                    {stateBadge(
+                      r.state,
+                      r.ownerGroup,
+                      r.suspendedNodes?.[0]?.approverGroup,
+                    )}
+                  </td>
+                  <td className="sc-table-action">
+                    <Link
+                      to={(() => {
+                        const replay = replayForRequest(
+                          r,
+                          replayTemplates.get(r.resourceType) ?? [],
+                        );
+                        return startOverPath(
+                          replay?.path ?? '/create',
+                          startOverData(r, replay),
+                        );
+                      })()}
+                      className="sc-icon-link"
+                      aria-label={`Start over request #${r.id}`}
+                      title="Start over"
+                    >
+                      <ReplayIcon fontSize="small" />
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {error && <div className="sc-card-b sc-muted">{error}</div>}
         {rows && displayed.length === 0 && (
           <div className="sc-card-b sc-muted">
