@@ -124,9 +124,9 @@ platform:
     subtitle: …
     sections:
       - quickActions        # links, plus the "Take the tour" button
-      - ownedResources      # resources owned by your groups
       - standingRequests    # your requests still in flight
       - pendingApprovals    # requests you may decide
+      - ownedResources      # resources owned by your groups
       - recentlyVisited     # pages you opened, newest first
       - favouriteTemplates  # templates you starred on New Request
       - pluto               # decoration only — fills the grid's spare cell

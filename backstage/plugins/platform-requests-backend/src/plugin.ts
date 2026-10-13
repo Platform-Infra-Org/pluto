@@ -155,6 +155,26 @@ export const platformRequestsPlugin = createBackendPlugin({
           }
         };
 
+        const resourceTypeDisplayName = async (resourceType: string) => {
+          try {
+            const { items } = await catalog.getEntities(
+              { filter: { kind: 'template' } },
+              { credentials: await auth.getOwnServiceCredentials() },
+            );
+            const template = items.find(
+              entity =>
+                entity.metadata.annotations?.['platform.io/resource-type'] ===
+                  resourceType || entity.metadata.name === resourceType,
+            );
+            return template?.metadata.title ?? template?.metadata.name;
+          } catch (e) {
+            logger.warn(
+              `resourceTypeDisplayName failed for '${resourceType}': ${e}`,
+            );
+            return undefined;
+          }
+        };
+
         // Native Backstage notifications (approvers on new requests, requester
         // on decisions + terminal outcomes) — best-effort, see notifications.ts.
         const notify = createNotifier(
@@ -163,6 +183,7 @@ export const platformRequestsPlugin = createBackendPlugin({
           adminGroups,
           catalogNamespace,
           requesterDisplayName,
+          resourceTypeDisplayName,
         );
 
         // Per-request Secret provisioning (TechDocs: Explanation -> Secret lifecycle). Disabled

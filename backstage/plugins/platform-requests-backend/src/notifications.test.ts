@@ -24,6 +24,9 @@ const notifierWith = (
   adminGroups = DEFAULT_ADMINS,
   namespace?: string,
   requesterDisplayName?: (requester: string) => Promise<string | undefined>,
+  resourceTypeDisplayName?: (
+    resourceType: string,
+  ) => Promise<string | undefined>,
 ) => {
   const send = jest.fn().mockResolvedValue(undefined);
   return {
@@ -34,6 +37,7 @@ const notifierWith = (
       adminGroups,
       namespace,
       requesterDisplayName,
+      resourceTypeDisplayName,
     ),
   };
 };
@@ -78,7 +82,7 @@ describe('approvalNeeded recipients', () => {
     expect(send.mock.calls[0][0].payload).toMatchObject({
       title: 'Approval required · Postgres',
       description:
-        'Request #1 · db-a · Requested by Alice · Waiting for Team A',
+        'Request #1 · Postgres · Requested by Alice · Waiting for Team A',
     });
   });
 
@@ -91,6 +95,25 @@ describe('approvalNeeded recipients', () => {
     await notify.approvalNeeded(request());
     expect(send.mock.calls[0][0].payload.description).toContain(
       'Requested by Alice Example',
+    );
+  });
+
+  it('uses the catalog template title instead of the stored resource name', async () => {
+    const { send, notify } = notifierWith(
+      DEFAULT_ADMINS,
+      undefined,
+      undefined,
+      async () => 'No OS Virtual Machine',
+    );
+    await notify.approvalNeeded(
+      request({
+        resourceType: 'no-os-virtual-machine',
+        resourceName: 'no-os-virtual-machine-group:default/platform',
+        ownerGroup: 'group:default/cloudcore',
+      }),
+    );
+    expect(send.mock.calls[0][0].payload.description).toBe(
+      'Request #1 · No OS Virtual Machine · Requested by Alice · Waiting for Cloudcore',
     );
   });
 
@@ -165,7 +188,10 @@ describe('gateNeeded recipients', () => {
       'group:default/search': 'Input required · Postgres',
     });
     expect(send.mock.calls[1][0].payload.description).toBe(
-      'Request #1 · db-a · Step: Approve Cost · Waiting for Payments',
+      'Request #1 · Postgres · Step: Approve Cost · Waiting for Payments',
+    );
+    expect(send.mock.calls[0][0].payload.description).toContain(
+      'Waiting for Payments, Search',
     );
   });
 

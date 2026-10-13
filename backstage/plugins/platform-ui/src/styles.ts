@@ -996,12 +996,28 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-grid-2 > .sc-card.sc-span-2 { grid-column: span 2; }
 /* The body takes the slack, so headers line up across the row. */
 .sc-grid-2 > .sc-card > .sc-card-b { flex: 1 1 auto; }
+.sc-home-quick { align-self: start; height: auto !important; }
+.sc-home-owned { grid-column: span 2; align-self: start; height: auto !important; }
+/* The operations room uses 1920x1080 displays. At that width, reserve most of
+   the first row for the two request tables so Resource and State stay visible;
+   Quick actions remains a compact launcher at the left. */
+@media (min-width: 1500px) {
+  .sc-home-grid {
+    grid-template-columns:
+      minmax(250px, .72fr)
+      minmax(500px, 1.1fr)
+      minmax(620px, 1.35fr);
+    grid-auto-rows: auto;
+  }
+  .sc-home-requests .sc-table { min-width: 500px; }
+  .sc-home-owned { grid-column: 1 / span 2; }
+}
 .sc-action { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: var(--sc-radius);
   background: color-mix(in srgb, hsl(var(--sc-bg)) 90%, hsl(var(--sc-primary)) 10%);
   border: var(--sc-border-w) solid color-mix(in srgb, hsl(var(--sc-border)) 80%, hsl(var(--sc-primary)) 20%);
   text-decoration: none; transition: background .12s, border-color .12s; }
 .sc-action:hover, .sc-action:focus-visible {
-  background: color-mix(in srgb, hsl(var(--sc-bg)) 82%, hsl(var(--sc-primary)) 18%);
+  background: hsl(var(--sc-primary) / .14) !important;
   border-color: hsl(var(--sc-primary) / .55);
 }
 .sc-action-l { font-weight: 600; color: hsl(var(--sc-fg)); }
@@ -1160,6 +1176,7 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
   color: hsl(var(--sc-muted-fg)); }
 .sc-icon-link:hover, .sc-icon-link:focus-visible {
   color: hsl(var(--sc-primary)); background: hsl(var(--sc-accent)); }
+.sc-icon-link-disabled { opacity: .38; cursor: wait; }
 /* Horizontal scroll for tables too wide for their card (card still clips to its corners). */
 .sc-table-wrap { overflow-x: auto; max-width: 100%; }
 .sc-home-requests-table { max-height: 300px; overflow: auto; }
