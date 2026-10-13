@@ -5,11 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.1] - 2026-10-13
+
+### Fixed
+
+- Avoid existing version tags (#25)
+
 ## [1.8.0] - 2026-10-13
 
 ### Added
 
+- Adjusted UI to be more friendly, changed font, bigger font, notfication bell, adjusted requester on requests page to display the display name instead of name, added start-over button on the requests page, reformated the way the notifcation is built, added support for 'awiting input' to diplsay the team name
+- Improve request navigation and repeat workflows
+- Changed font, added new styles and links
 - Added new UI Features (#23)
+
+### Fixed
+
+- Register notifications frontend plugin
+- Clarify approvals and improve home dashboard
 
 ## [1.7.0] - 2026-10-08
 
