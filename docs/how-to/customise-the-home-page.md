@@ -12,9 +12,9 @@ platform:
     subtitle: Your resources and open requests at a glance
     sections:
       - quickActions
-      - ownedResources
       - standingRequests
       - pendingApprovals
+      - ownedResources
       - recentlyVisited
       - favouriteTemplates
       - pluto

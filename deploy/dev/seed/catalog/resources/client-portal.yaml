@@ -1,0 +1,23 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: client-portal
+  title: Client Portal VM
+  description: Development virtual machine for the platform operations team
+  annotations:
+    platform.io/resource-type: virtual-machine
+    platform.io/created-at: "2026-10-13T09:30:00+03:00"
+spec:
+  type: virtual-machine
+  owner: "group:default/platform-admins"
+  resourceData:
+    apiVersion: platform/v1
+    kind: VirtualMachine
+    metadata:
+      name: client-portal
+      ownerTeam: platform-admins
+    spec:
+      provider: vsphere
+      cpu: 4
+      memoryGiB: 8
+      environment: development

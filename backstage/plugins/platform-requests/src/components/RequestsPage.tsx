@@ -232,8 +232,8 @@ export function RequestsPage() {
   const [rows, setRows] = useState<Request[]>();
   const [error, setError] = useState<string>();
   const [replayTemplates, setReplayTemplates] = useState<
-    ReadonlyMap<string, ReplayTemplate[]>
-  >(new Map());
+    ReadonlyMap<string, ReplayTemplate[]> | undefined
+  >();
 
   // Filters / sort (client-side, shared across tabs).
   const [search, setSearch] = useState('');
@@ -413,23 +413,43 @@ export function RequestsPage() {
                     )}
                   </td>
                   <td className="sc-table-action">
-                    <Link
-                      to={(() => {
-                        const replay = replayForRequest(
-                          r,
-                          replayTemplates.get(r.resourceType) ?? [],
+                    {(() => {
+                      const replay = replayForRequest(
+                        r,
+                        replayTemplates?.get(r.resourceType) ?? [],
+                      );
+                      if (!replay) {
+                        return (
+                          <span
+                            className="sc-icon-link sc-icon-link-disabled"
+                            aria-label={`Start over request #${r.id} unavailable`}
+                            title={
+                              replayTemplates
+                                ? 'Template unavailable'
+                                : 'Loading template…'
+                            }
+                          >
+                            <ReplayIcon fontSize="small" />
+                          </span>
                         );
-                        return startOverPath(
-                          replay?.path ?? '/create',
-                          startOverData(r, replay),
-                        );
-                      })()}
-                      className="sc-icon-link"
-                      aria-label={`Start over request #${r.id}`}
-                      title="Start over"
-                    >
-                      <ReplayIcon fontSize="small" />
-                    </Link>
+                      }
+                      /* A full navigation is intentional. Backstage's Stepper
+                         reads formData only when it mounts; SPA reuse can keep
+                         the empty state from the previous create route. */
+                      return (
+                        <a
+                          href={startOverPath(
+                            replay.path,
+                            startOverData(r, replay),
+                          )}
+                          className="sc-icon-link"
+                          aria-label={`Start over request #${r.id}`}
+                          title="Start over with saved values"
+                        >
+                          <ReplayIcon fontSize="small" />
+                        </a>
+                      );
+                    })()}
                   </td>
                 </tr>
               ))}

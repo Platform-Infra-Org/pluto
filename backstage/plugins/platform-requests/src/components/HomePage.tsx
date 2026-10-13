@@ -42,7 +42,25 @@ interface OwnedResource {
   name: string;
   title?: string;
   type: string;
+  owner: string;
+  description?: string;
+  createdAt?: string;
 }
+
+const displayEntityRef = (ref: string): string =>
+  ref.replace(/^group:default\//, '').replace(/^user:default\//, '');
+
+const formatResourceDate = (value?: string): string => {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? '—'
+    : new Intl.DateTimeFormat(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      }).format(date);
+};
 
 const cap = <T,>(items: T[], max: number): T[] =>
   max > 0 ? items.slice(0, max) : items;
@@ -94,7 +112,7 @@ function TourButton() {
 
 function QuickActions() {
   return (
-    <Card>
+    <Card className="sc-home-quick">
       <div className="sc-card-h">
         <div className="sc-card-title">Quick actions</div>
       </div>
@@ -132,13 +150,16 @@ function OwnedResources({ max }: { max: number }) {
             name: e.metadata.name,
             title: e.metadata.title,
             type: (e.spec?.type as string) ?? 'resource',
+            owner: String(e.spec?.owner ?? ''),
+            description: e.metadata.description,
+            createdAt: e.metadata.annotations?.['platform.io/created-at'],
           })),
       );
     })();
   }, [catalog, identity]);
 
   return (
-    <Card>
+    <Card className="sc-home-owned">
       <div className="sc-card-h">
         <div className="sc-card-title">Your resources</div>
       </div>
@@ -155,6 +176,9 @@ function OwnedResources({ max }: { max: number }) {
               <tr>
                 <th>Name</th>
                 <th>Type</th>
+                <th>Owner</th>
+                <th>Created</th>
+                <th>Description</th>
               </tr>
             </thead>
             <tbody>
@@ -174,6 +198,9 @@ function OwnedResources({ max }: { max: number }) {
                     </Link>
                   </td>
                   <td className="sc-muted">{r.type}</td>
+                  <td className="sc-muted">{displayEntityRef(r.owner)}</td>
+                  <td className="sc-muted">{formatResourceDate(r.createdAt)}</td>
+                  <td className="sc-muted">{r.description ?? '—'}</td>
                 </tr>
               ))}
             </tbody>
@@ -395,9 +422,9 @@ export function HomePage() {
     | Section[]
     | undefined) ?? [
     'quickActions',
-    'ownedResources',
     'standingRequests',
     'pendingApprovals',
+    'ownedResources',
     'recentlyVisited',
     'favouriteTemplates',
     'pluto',
@@ -407,7 +434,7 @@ export function HomePage() {
   return (
     <Page>
       <PageHeader title={title} subtitle={subtitle} actions={<TourButton />} />
-      <div className="sc-grid-2">
+      <div className="sc-grid-2 sc-home-grid">
         {sections.map(s => {
           switch (s) {
             case 'quickActions':
