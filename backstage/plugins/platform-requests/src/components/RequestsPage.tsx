@@ -13,6 +13,7 @@ import {
   STATE_SPRITES,
 } from '@internal/plugin-platform-ui';
 import { Request, RequestState } from '@internal/plugin-platform-common';
+import { Entity } from '@backstage/catalog-model';
 import { requestsApiRef } from '../api';
 import {
   titleOf,
@@ -128,6 +129,98 @@ export function startOverPath(
   return `${templatePath}?${query.toString()}`;
 }
 
+type ReplayTemplate = {
+  path: string;
+  resourceType: string;
+  parameterPaths: ReadonlyMap<string, string>;
+  resourceNamePath?: string;
+  resourceNamesPath?: string;
+};
+
+const parameterPath = (value: unknown) => {
+  if (typeof value !== 'string') return undefined;
+  return /^\s*\$\{\{\s*parameters\.([\w.-]+)\s*\}\}\s*$/.exec(value)?.[1];
+};
+
+const setPath = (
+  target: Record<string, unknown>,
+  path: string,
+  value: unknown,
+) => {
+  const parts = path.split('.');
+  let current = target;
+  for (const part of parts.slice(0, -1)) {
+    const next = current[part];
+    if (!next || typeof next !== 'object' || Array.isArray(next)) {
+      current[part] = {};
+    }
+    current = current[part] as Record<string, unknown>;
+  }
+  current[parts[parts.length - 1]] = value;
+};
+
+/** Read the reverse form mapping from a Template's request-submit step. */
+export function replayTemplate(entity: Entity): ReplayTemplate | undefined {
+  const spec = entity.spec as { steps?: unknown[] } | undefined;
+  const step = spec?.steps?.find(candidate => {
+    const value = candidate as { action?: unknown };
+    return value?.action === 'platform:request:submit';
+  }) as { input?: Record<string, unknown> } | undefined;
+  if (!step?.input) return undefined;
+
+  const input = step.input;
+  const resourceType =
+    entity.metadata.annotations?.['platform.io/resource-type'] ??
+    (typeof input.resourceType === 'string' && !parameterPath(input.resourceType)
+      ? input.resourceType
+      : entity.metadata.name);
+  const mappings = new Map<string, string>();
+  if (input.params && typeof input.params === 'object') {
+    for (const [storedKey, expression] of Object.entries(input.params)) {
+      const path = parameterPath(expression);
+      if (path) mappings.set(storedKey, path);
+    }
+  }
+  const namespace = entity.metadata.namespace ?? 'default';
+  return {
+    path: `/create/templates/${encodeURIComponent(
+      namespace,
+    )}/${encodeURIComponent(entity.metadata.name)}`,
+    resourceType,
+    parameterPaths: mappings,
+    resourceNamePath: parameterPath(input.resourceName),
+    resourceNamesPath: parameterPath(input.resourceNames),
+  };
+}
+
+/** Pick the closest Template when several templates submit one resource type. */
+export function replayForRequest(
+  request: Request,
+  candidates: readonly ReplayTemplate[],
+) {
+  const keys = Object.keys(request.params);
+  const score = (candidate: ReplayTemplate) => {
+    const mapped = keys.filter(key => candidate.parameterPaths.has(key)).length;
+    const unknown = keys.length - mapped;
+    return mapped * 10 - unknown + (candidate.resourceNamePath ? 1 : 0);
+  };
+  return [...candidates].sort((a, b) => score(b) - score(a))[0];
+}
+
+export function startOverData(request: Request, template?: ReplayTemplate) {
+  const data: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(request.params)) {
+    setPath(data, template?.parameterPaths.get(key) ?? key, value);
+  }
+  if (template?.resourceNamePath) {
+    setPath(data, template.resourceNamePath, request.resourceName);
+  }
+  if (template?.resourceNamesPath && request.resourceNames) {
+    setPath(data, template.resourceNamesPath, request.resourceNames);
+  }
+  return data;
+}
+
 export function RequestsPage() {
   const api = useApi(requestsApiRef);
   const catalog = useApi(catalogApiRef);
@@ -138,8 +231,8 @@ export function RequestsPage() {
     : 'mine';
   const [rows, setRows] = useState<Request[]>();
   const [error, setError] = useState<string>();
-  const [templatePaths, setTemplatePaths] = useState<
-    ReadonlyMap<string, string>
+  const [replayTemplates, setReplayTemplates] = useState<
+    ReadonlyMap<string, ReplayTemplate[]>
   >(new Map());
 
   // Filters / sort (client-side, shared across tabs).
@@ -165,25 +258,19 @@ export function RequestsPage() {
       .getEntities({ filter: { kind: 'Template' } })
       .then(({ items }) => {
         if (!live) return;
-        const paths = new Map<string, string>();
+        const templates = new Map<string, ReplayTemplate[]>();
         for (const entity of items) {
-          const resourceType =
-            entity.metadata.annotations?.['platform.io/resource-type'] ??
-            entity.metadata.name;
-          const namespace = entity.metadata.namespace ?? 'default';
-          if (!paths.has(resourceType)) {
-            paths.set(
-              resourceType,
-              `/create/templates/${encodeURIComponent(
-                namespace,
-              )}/${encodeURIComponent(entity.metadata.name)}`,
-            );
-          }
+          const replay = replayTemplate(entity);
+          if (!replay) continue;
+          templates.set(replay.resourceType, [
+            ...(templates.get(replay.resourceType) ?? []),
+            replay,
+          ]);
         }
-        setTemplatePaths(paths);
+        setReplayTemplates(templates);
       })
       .catch(() => {
-        if (live) setTemplatePaths(new Map());
+        if (live) setReplayTemplates(new Map());
       });
     return () => {
       live = false;
@@ -327,10 +414,16 @@ export function RequestsPage() {
                   </td>
                   <td className="sc-table-action">
                     <Link
-                      to={startOverPath(
-                        templatePaths.get(r.resourceType) ?? '/create',
-                        r.params,
-                      )}
+                      to={(() => {
+                        const replay = replayForRequest(
+                          r,
+                          replayTemplates.get(r.resourceType) ?? [],
+                        );
+                        return startOverPath(
+                          replay?.path ?? '/create',
+                          startOverData(r, replay),
+                        );
+                      })()}
                       className="sc-icon-link"
                       aria-label={`Start over request #${r.id}`}
                       title="Start over"

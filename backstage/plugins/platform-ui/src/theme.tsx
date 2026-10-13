@@ -27,13 +27,12 @@ import { AppLayoutContent } from './AppLayoutContent';
 const PRIMARY = '#6366f1';
 const PRIMARY_DARK = '#818cf8';
 const ACCENT = '#8b5cf6';
-// Full arcade: the MUI theme's base face is the pixel one, so native Backstage
-// components inherit it rather than falling back to Inter.
+// Give native Backstage components the same font stack as custom surfaces.
 // Read through a variable so a mode potion can change the face. MUI freezes
 // typography at theme construction, so a static string here would leave every
-// native Backstage surface in the pixel font while our own pages changed.
+// native Backstage surfaces on a stale font while our own pages changed.
 const FONT =
-  "var(--sc-font-ui, 'Pixelify Sans', ui-monospace, SFMono-Regular, monospace)";
+  "var(--sc-font-ui, 'Clash Grotesk', 'Heebo', Inter, system-ui, sans-serif)";
 
 type Tone = {
   primary: string;

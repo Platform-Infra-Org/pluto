@@ -123,7 +123,6 @@ platform:
     title: Welcome
     subtitle: …
     sections:
-      - teamAction          # count of items actionable by your teams
       - quickActions        # links, plus the "Take the tour" button
       - ownedResources      # resources owned by your groups
       - standingRequests    # your requests still in flight

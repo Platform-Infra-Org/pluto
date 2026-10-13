@@ -201,14 +201,15 @@ describe('SHADCN_CSS', () => {
     expect(block![1]).not.toMatch(/overflow:\s*visible/);
   });
 
-  it('serves one typeface for both Latin and Hebrew', () => {
+  it('self-hosts the Latin face and its Hebrew fallback', () => {
     const faces = Array.from(
       SHADCN_CSS.matchAll(/@font-face\s*\{([^}]*)\}/g),
       m => m[1],
     );
-    expect(faces).toHaveLength(1);
-    expect(faces[0]).toMatch(/Heebo/);
-    expect(SHADCN_CSS).not.toMatch(/Clash Grotesk|Pixelify Sans|Anton/);
+    expect(faces).toHaveLength(2);
+    expect(faces[0]).toMatch(/Clash Grotesk/);
+    expect(faces[1]).toMatch(/Heebo/);
+    expect(SHADCN_CSS).not.toMatch(/Pixelify Sans|Anton/);
   });
 
   it('leaves uppercase to the micro-label alone', () => {
@@ -792,18 +793,19 @@ describe('Hebrew type', () => {
     expect(SHADCN_CSS).not.toMatch(/@font-face[^}]*https?:\/\//);
   });
 
-  it('uses Heebo for Latin and Hebrew alike', () => {
+  it('does not restrict Heebo to a partial unicode range', () => {
     const face = SHADCN_CSS.slice(SHADCN_CSS.indexOf("font-family: 'Heebo'"));
     const block = face.slice(0, face.indexOf('}'));
     expect(block).not.toContain('unicode-range');
   });
 
-  it('lists Heebo in both font stacks', () => {
+  it('lists Clash first and Heebo as fallback in both font stacks', () => {
     for (const token of ['--sc-font-ui', '--sc-font-title']) {
       const decl = SHADCN_CSS.slice(SHADCN_CSS.indexOf(`${token}:`));
-      expect(
-        `${token}:${decl.slice(0, decl.indexOf(';')).includes('Heebo')}`,
-      ).toBe(`${token}:true`);
+      const value = decl.slice(0, decl.indexOf(';'));
+      expect(value.indexOf('Clash Grotesk')).toBeLessThan(
+        value.indexOf('Heebo'),
+      );
     }
   });
 });

@@ -281,7 +281,6 @@ platform:
     title: Welcome to Platform
     subtitle: Your resources and open requests at a glance
     sections:
-      - teamAction
       - quickActions
       - ownedResources
       - standingRequests

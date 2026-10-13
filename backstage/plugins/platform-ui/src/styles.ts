@@ -15,8 +15,15 @@ import { egyptianCss } from './egyptian';
 import { STARFIELD } from './starfield';
 
 export const SHADCN_CSS = `
-/* One clear, self-hosted family for the whole app. Heebo covers both Latin and
-   Hebrew, so mixed-language screens keep the same proportions and weight. */
+/* Clash is a quiet step up from a system sans for the English UI. Heebo stays
+   directly behind it so Hebrew keeps full glyph coverage and matching weight. */
+@font-face {
+  font-family: 'Clash Grotesk';
+  src: url('/fonts/clash-grotesk.woff2') format('woff2');
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
 @font-face {
   font-family: 'Heebo';
   src: url('/fonts/heebo.woff2') format('woff2');
@@ -48,12 +55,10 @@ export const SHADCN_CSS = `
   --sc-field-x: 10px;
   --sc-border-w: 2px;
   --sc-shadow: 3px 3px 0 hsl(var(--sc-fg) / .16);
-  --sc-font-ui: 'Heebo', Inter, system-ui, -apple-system, sans-serif;
-  /* Titles take the grotesque, everything else keeps the pixel face. Held as
-     its own variable so a mode can move the two independently — the pixel font
-     is still the app's voice, but a heading is where a face has room to be
-     read rather than decoded. */
-  --sc-font-title: 'Heebo', Inter, system-ui, -apple-system, sans-serif;
+  --sc-font-ui: 'Clash Grotesk', 'Heebo', Inter, system-ui, -apple-system, sans-serif;
+  /* Keep a separate title token so a visual mode can tune headings without
+     changing the readable application font used by controls and body copy. */
+  --sc-font-title: 'Clash Grotesk', 'Heebo', Inter, system-ui, -apple-system, sans-serif;
   --sc-unit: 4px;
   --sc-nav-w: 240px;
   --sc-bg: 240 10% 98%;
@@ -96,11 +101,7 @@ ${nightshadeCss()}
 ${rimefastCss()}
 ${egyptianCss()}
 .sc, .sc * {
-  /* Full arcade: the pixel face is the base font everywhere, not only on
-     chrome. 12px is the floor — kept as a legibility choice, not because
-     an outline grotesque loses no strokes at small sizes the way a bitmap face
-     would. Nobody has checked by eye whether the
-     floor still earns its keep at this face's proportions, so it stays. */
+  /* Use the same readable font stack throughout the application. */
   font-family: var(--sc-font-ui);
   color: hsl(var(--sc-fg));
 }
@@ -367,9 +368,8 @@ body { background: hsl(var(--sc-bg)); font-size: 17px; line-height: 1.5; } /* Ba
   background: hsl(var(--sc-primary));
   border: var(--sc-border-w) solid hsl(var(--sc-fg) / .35);
 }
-/* Every native surface takes the pixel face too — headings, body, table cells,
-   inputs, menus, tooltips. The universal selector is deliberate: the goal is
-   that no regular-font text survives anywhere in the app. */
+/* Apply the application font to native surfaces too: headings, body, table
+   cells, inputs, menus and tooltips. */
 body, body *, input, select, textarea, button, optgroup {
   font-family: var(--sc-font-ui) !important;
 }
@@ -483,7 +483,7 @@ body, body *, input, select, textarea, button, optgroup {
   .sc-route-api-docs [class*="bui-HeaderBottom"] {
     max-width: none; margin-inline: 0; padding-inline: 24px; }
 }
-/* Heading scale for the pixel face.
+/* Heading scale for the application face.
    Sized by measurement, not by eye: the body face advances 'n' at ~0.55em,
    a third narrower than the old face's 0.875em, so each size below is the
    one at which a real page title occupies the same pixel width the old face
@@ -993,36 +993,6 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-grid-2 > .sc-card.sc-span-2 { grid-column: span 2; }
 /* The body takes the slack, so headers line up across the row. */
 .sc-grid-2 > .sc-card > .sc-card-b { flex: 1 1 auto; }
-.sc-team-action {
-  border-color: color-mix(in srgb, hsl(var(--sc-primary)) 44%, hsl(var(--sc-border)));
-  background: color-mix(in srgb, hsl(var(--sc-primary)) 8%, hsl(var(--sc-card)));
-}
-.sc-team-action-link {
-  min-height: 116px;
-  padding: 20px 22px;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 18px;
-  color: hsl(var(--sc-fg));
-  text-decoration: none;
-}
-.sc-team-action-link:hover, .sc-team-action-link:focus-visible {
-  color: hsl(var(--sc-fg));
-  text-decoration: none;
-  background: hsl(var(--sc-primary) / .07);
-}
-.sc-team-action-count {
-  min-width: 64px;
-  font-size: 42px;
-  line-height: 1;
-  font-weight: 800;
-  color: hsl(var(--sc-primary));
-  text-align: center;
-}
-.sc-team-action-title { font-size: 20px; line-height: 1.25; font-weight: 700; }
-.sc-team-action-hint { margin-top: 5px; color: hsl(var(--sc-muted-fg)); font-size: 14px; }
-.sc-team-action-arrow { color: hsl(var(--sc-primary)); font-size: 28px; font-weight: 700; }
 .sc-action { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: var(--sc-radius);
   background: color-mix(in srgb, hsl(var(--sc-bg)) 90%, hsl(var(--sc-primary)) 10%);
   border: var(--sc-border-w) solid color-mix(in srgb, hsl(var(--sc-border)) 80%, hsl(var(--sc-primary)) 20%);
@@ -2295,7 +2265,7 @@ h1, h2, h3, h4, h5, h6,
 
 /* Global notifications affordance. It stays above page content and uses the
    same tokens in every colour scheme. */
-.sc-notification-bell {
+.sc-topbar-action {
   position: relative;
   width: 48px;
   height: 48px;
@@ -2308,6 +2278,9 @@ h1, h2, h3, h4, h5, h6,
   border-radius: 50%;
   box-shadow: var(--sc-shadow);
   text-decoration: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
 }
 .sc-app-topbar {
   min-height: 72px;
@@ -2315,18 +2288,19 @@ h1, h2, h3, h4, h5, h6,
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 12px;
   background: hsl(var(--sc-bg));
   border-bottom: 1px solid hsl(var(--sc-border) / .45);
 }
-.sc-notification-bell:hover,
-.sc-notification-bell:focus-visible {
+.sc-topbar-action:hover,
+.sc-topbar-action:focus-visible {
   color: hsl(var(--sc-primary));
   background: hsl(var(--sc-accent));
   outline: var(--sc-border-w) solid hsl(var(--sc-ring));
   outline-offset: 2px;
 }
-.sc-notification-bell svg { font-size: 28px; }
-.sc-notification-count {
+.sc-topbar-action svg { font-size: 28px; }
+.sc-topbar-count {
   position: absolute;
   top: -7px;
   right: -7px;

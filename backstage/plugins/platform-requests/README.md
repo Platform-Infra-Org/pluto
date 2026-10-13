@@ -23,10 +23,10 @@ views on those hooks rather than fetching one entity per row.
 
 ## Home and navigation
 
-The home page is controlled by `platform.home.sections`. The `teamAction`
-section counts `scope=actionable` requests and links to
-`/requests?tab=approval`; this includes both initial approvals and suspended
-workflow inputs the signed-in user's groups may handle.
+The home page is controlled by `platform.home.sections`. Requests that the
+signed-in user's groups may handle are available under the Requests page's
+`For approval` tab; this includes both initial approvals and suspended workflow
+inputs. Users outside the relevant owner or gate group receive an empty list.
 
 The top application bar contains a notification bell backed by Backstage's
 Notifications API. Its badge is the unread count and the bell links to

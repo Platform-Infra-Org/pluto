@@ -30,7 +30,6 @@ import { RecentlyVisited } from './HomeVisits';
 import { FavouriteTemplates } from './HomeFavourites';
 
 type Section =
-  | 'teamAction'
   | 'quickActions'
   | 'ownedResources'
   | 'standingRequests'
@@ -107,39 +106,6 @@ function QuickActions() {
           </Link>
         ))}
       </div>
-    </Card>
-  );
-}
-
-function TeamAction() {
-  const requests = useApi(requestsApiRef);
-  const [count, setCount] = useState<number>();
-
-  useEffect(() => {
-    requests
-      .list({ scope: 'actionable' })
-      .then(rows => setCount(rows.length))
-      .catch(() => setCount(0));
-  }, [requests]);
-
-  return (
-    <Card className="sc-team-action">
-      <Link to="/requests?tab=approval" className="sc-team-action-link">
-        <div className="sc-team-action-count">{count ?? '…'}</div>
-        <div>
-          <div className="sc-team-action-title">
-            {count === 1
-              ? 'request needs your team'
-              : 'requests need your team'}
-          </div>
-          <div className="sc-team-action-hint">
-            Review approvals and workflow inputs
-          </div>
-        </div>
-        <span className="sc-team-action-arrow" aria-hidden="true">
-          →
-        </span>
-      </Link>
     </Card>
   );
 }
@@ -428,7 +394,6 @@ export function HomePage() {
   const sections = (home?.getOptionalStringArray('sections') as
     | Section[]
     | undefined) ?? [
-    'teamAction',
     'quickActions',
     'ownedResources',
     'standingRequests',
@@ -445,8 +410,6 @@ export function HomePage() {
       <div className="sc-grid-2">
         {sections.map(s => {
           switch (s) {
-            case 'teamAction':
-              return <TeamAction key={s} />;
             case 'quickActions':
               return <QuickActions key={s} />;
             case 'ownedResources':

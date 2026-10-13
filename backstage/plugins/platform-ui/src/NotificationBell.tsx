@@ -40,13 +40,13 @@ export function NotificationBell() {
   return (
     <Link
       to="/notifications"
-      className="sc-notification-bell"
+      className="sc-topbar-action sc-notification-bell"
       aria-label={`Notifications, ${accessibleCount}`}
       title="Notifications"
     >
       <NotificationsNoneIcon aria-hidden="true" />
       {unread > 0 && (
-        <span className="sc-notification-count" aria-hidden="true">
+        <span className="sc-topbar-count" aria-hidden="true">
           {unread > 99 ? '99+' : unread}
         </span>
       )}

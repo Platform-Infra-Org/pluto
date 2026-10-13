@@ -55,7 +55,6 @@ export interface Config {
        * @visibility frontend
        */
       sections?: (
-        | 'teamAction'
         | 'quickActions'
         | 'ownedResources'
         | 'standingRequests'
