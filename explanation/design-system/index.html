@@ -1752,11 +1752,13 @@ smudge.</p>
   variant already below WCAG AA — the worst at 1.84:1 — and fixed them; the
   check samples the rendered pixel against its text in every scheme.</li>
 <li>
-<p><strong>One typeface.</strong> Clash Grotesk is the app's only family, self-hosted because
+<p><strong>GitHub typography.</strong> Mona Sans VF is the app's Latin family, matching
+  GitHub's Primer font stack. It is self-hosted because
   the CSP is <code>font-src 'self'</code> — a CDN reference fails silently, the page
   falling back to something that looks nearly right. Differentiation comes from
-  weight, size and case rather than from a second family, which is also what
-  lets a mode change the whole voice by moving one variable.</p>
+  weight, size and case. Heebo follows it in the stack so Hebrew remains
+  clear and visually balanced. A mode can change the whole voice by moving one
+  variable.</p>
 <p>It replaced a pixel face, and the type scale changed with it. The arcade
 treatment uppercased every piece of chrome and held a hard 12px floor: both
 were right for a bitmap-derived face and wrong for an outline grotesque, where
