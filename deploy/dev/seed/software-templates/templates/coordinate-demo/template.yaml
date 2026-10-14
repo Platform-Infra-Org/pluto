@@ -6,8 +6,8 @@ metadata:
   description: >
     Exercises the cascading DynamicSelect: space -> network -> region -> island
     -> environment, all five reading ONE endpoint that returns the whole tree.
-    Pick a space and watch the next field fill; change it and watch every field
-    below it clear. Creates nothing.
+    Every level picks its first value automatically; changing region refreshes
+    island and environment from the selected branch. Creates nothing.
   tags:
     - platform
     - demo
