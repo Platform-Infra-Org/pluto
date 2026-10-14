@@ -153,7 +153,17 @@ function OwnedResources({ max }: { max: number }) {
             owner: String(e.spec?.owner ?? ''),
             description: e.metadata.description,
             createdAt: e.metadata.annotations?.['platform.io/created-at'],
-          })),
+          }))
+          .sort((a, b) => {
+            const aTime = a.createdAt ? Date.parse(a.createdAt) : Number.NaN;
+            const bTime = b.createdAt ? Date.parse(b.createdAt) : Number.NaN;
+            if (Number.isFinite(aTime) && Number.isFinite(bTime)) {
+              return bTime - aTime;
+            }
+            if (Number.isFinite(aTime)) return -1;
+            if (Number.isFinite(bTime)) return 1;
+            return (a.title ?? a.name).localeCompare(b.title ?? b.name);
+          }),
       );
     })();
   }, [catalog, identity]);

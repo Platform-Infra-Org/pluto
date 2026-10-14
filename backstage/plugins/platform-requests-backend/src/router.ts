@@ -172,6 +172,7 @@ const newRequestSchema = z.object({
   resourceName: z.string().optional(),
   resourceNames: z.array(z.string().min(1)).min(1).optional(),
   params: z.record(z.unknown()).optional(),
+  scaffolderTaskId: z.string().optional(),
   policy: policySchema.optional(),
   // Loose: the spec is validated/normalized when building the Argo submit body.
   argoSubmit: z.record(z.any()).optional(),

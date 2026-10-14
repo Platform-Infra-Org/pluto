@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useApi } from '@backstage/core-plugin-api';
+import {
+  discoveryApiRef,
+  fetchApiRef,
+  useApi,
+} from '@backstage/core-plugin-api';
 import { Link } from '@backstage/core-components';
 import { catalogApiRef } from '@backstage/plugin-catalog-react';
 import ReplayIcon from '@material-ui/icons/Replay';
@@ -224,6 +228,8 @@ export function startOverData(request: Request, template?: ReplayTemplate) {
 export function RequestsPage() {
   const api = useApi(requestsApiRef);
   const catalog = useApi(catalogApiRef);
+  const discovery = useApi(discoveryApiRef);
+  const fetchApi = useApi(fetchApiRef);
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get('tab');
   const tab: Tab = TABS.some(t => t.id === requestedTab)
@@ -437,17 +443,36 @@ export function RequestsPage() {
                          reads formData only when it mounts; SPA reuse can keep
                          the empty state from the previous create route. */
                       return (
-                        <a
-                          href={startOverPath(
-                            replay.path,
-                            startOverData(r, replay),
-                          )}
+                        <button
+                          type="button"
                           className="sc-icon-link"
                           aria-label={`Start over request #${r.id}`}
                           title="Start over with saved values"
+                          onClick={async () => {
+                            let data = startOverData(r, replay);
+                            if (r.scaffolderTaskId) {
+                              try {
+                                const base = await discovery.getBaseUrl('scaffolder');
+                                const response = await fetchApi.fetch(
+                                  `${base}/v2/tasks/${encodeURIComponent(
+                                    r.scaffolderTaskId,
+                                  )}`,
+                                );
+                                if (response.ok) {
+                                  const task = (await response.json()) as {
+                                    spec?: { parameters?: Record<string, unknown> };
+                                  };
+                                  data = task.spec?.parameters ?? data;
+                                }
+                              } catch {
+                                // Older/removed tasks still use request.params.
+                              }
+                            }
+                            window.location.assign(startOverPath(replay.path, data));
+                          }}
                         >
                           <ReplayIcon fontSize="small" />
-                        </a>
+                        </button>
                       );
                     })()}
                   </td>

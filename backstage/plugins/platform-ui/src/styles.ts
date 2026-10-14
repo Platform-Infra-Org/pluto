@@ -1178,7 +1178,8 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-table-action { width: 52px; text-align: center; }
 .sc-icon-link { display: inline-flex; align-items: center; justify-content: center;
   width: 34px; height: 34px; border-radius: var(--sc-radius-sm);
-  color: hsl(var(--sc-muted-fg)); }
+  color: hsl(var(--sc-muted-fg)); border: 0; padding: 0;
+  background: transparent; cursor: pointer; font: inherit; }
 .sc-icon-link:hover, .sc-icon-link:focus-visible {
   color: hsl(var(--sc-primary)); background: hsl(var(--sc-accent)); }
 .sc-icon-link-disabled { opacity: .38; cursor: wait; }
