@@ -177,9 +177,9 @@ platform:
     subtitle: Your resources and open requests at a glance
     sections:
       - quickActions
-      - ownedResources
       - standingRequests
       - pendingApprovals
+      - ownedResources
       - recentlyVisited
       - favouriteTemplates
       # Decoration, filling the grid's spare cell. Drop it and the cell is

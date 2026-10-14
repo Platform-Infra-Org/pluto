@@ -265,7 +265,7 @@ function StandingRequests({
   const titles = useResourceTitles(shown.map(r => r.resourceName));
 
   return (
-    <Card className="sc-home-requests">
+    <Card className="sc-home-requests sc-home-standing">
       <div className="sc-card-h">
         <div className="sc-card-title">Standing requests</div>
       </div>
@@ -337,7 +337,7 @@ function PendingApprovals({
   const requesterNames = useUserDisplayNames(shown.map(r => r.requester));
 
   return (
-    <Card className="sc-home-requests">
+    <Card className="sc-home-requests sc-home-approvals">
       <div className="sc-card-h">
         <div className="sc-card-title">Awaiting approval</div>
       </div>
