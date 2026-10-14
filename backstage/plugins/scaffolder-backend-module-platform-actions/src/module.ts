@@ -218,6 +218,7 @@ export function createRequestSubmitAction(services: {
             ? { resourceName: ctx.input.resourceName }
             : { resourceNames: names }),
           params: ctx.input.params ?? {},
+          scaffolderTaskId: ctx.task.id,
           ...(ctx.input.argoSubmit ? { argoSubmit: ctx.input.argoSubmit } : {}),
           ...(ctx.input.resultOutput
             ? { resultOutput: ctx.input.resultOutput }

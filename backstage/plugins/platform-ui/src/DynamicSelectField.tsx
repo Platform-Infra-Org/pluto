@@ -39,6 +39,8 @@ interface UiOptions {
    * when someone reorders the form.
    */
   dependsOn?: string[];
+  /** Pick the first returned option while the field is empty. */
+  autoSelectFirst?: boolean;
 }
 
 /**
@@ -106,6 +108,9 @@ export function DynamicSelectFieldComponent(props: any) {
     .split('_')
     .slice(0, -1)
     .join('.');
+  const autoSelectFirst =
+    opts.autoSelectFirst ??
+    (parentPath === 'metadata' || parentPath.startsWith('metadata.'));
   const scope = (pickPath(formContext?.formData, parentPath || undefined) ??
     formContext?.formData) as Record<string, unknown> | undefined;
   const ancestors: string[] = (opts.dependsOn ?? []).map(
@@ -176,10 +181,16 @@ export function DynamicSelectFieldComponent(props: any) {
   // cannot fire again for the same level.
   const autoSelect = useCallback(
     (values: string[] | undefined) => {
-      if (!values || values.length !== 1 || formData) return;
+      if (
+        !values?.length ||
+        (!autoSelectFirst && values.length !== 1) ||
+        formData
+      ) {
+        return;
+      }
       onChange(values[0]);
     },
-    [formData, onChange],
+    [autoSelectFirst, formData, onChange],
   );
 
   useEffect(() => {

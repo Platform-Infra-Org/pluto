@@ -27,6 +27,7 @@ type RequestRow = {
   resource_name: string;
   resource_names: string | null;
   params: string;
+  scaffolder_task_id: string | null;
   state: string;
   policy: string;
   requester: string;
@@ -87,6 +88,7 @@ export class RequestsStore {
           ? JSON.stringify(input.resourceNames)
           : null,
         params: JSON.stringify(input.params ?? {}),
+        scaffolder_task_id: input.scaffolderTaskId ?? null,
         state: 'PENDING_APPROVAL',
         policy: JSON.stringify(input.policy ?? { mode: 'SINGLE' }),
         requester: input.requester,
@@ -354,6 +356,7 @@ function assemble(row: RequestRow, approvals: ApprovalRow[]): Request {
       ? (JSON.parse(row.resource_names) as string[])
       : undefined,
     params: JSON.parse(row.params),
+    scaffolderTaskId: row.scaffolder_task_id ?? undefined,
     state: row.state as RequestState,
     policy: JSON.parse(row.policy) as ApprovalPolicy,
     requester: row.requester,

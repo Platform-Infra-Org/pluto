@@ -1,7 +1,7 @@
 // toBeDisabled/toHaveTextContent are jest-dom matchers; this plugin has no global setup.
 import '@testing-library/jest-dom';
 import { useState } from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { TestApiProvider } from '@backstage/test-utils';
 import { discoveryApiRef, fetchApiRef } from '@backstage/core-plugin-api';
 import Form from '@rjsf/core';
@@ -137,6 +137,23 @@ describe('DynamicSelectFieldComponent', () => {
     });
     await screen.findByRole('option', { name: 'core' });
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('picks the first option for a field nested under metadata', async () => {
+    const onChange = jest.fn();
+    renderField({
+      ...base,
+      onChange,
+      idSchema: { $id: 'root_metadata_space' },
+      uiSchema: {
+        'ui:options': {
+          proxyPath: '/infra/coordinate-tree',
+          treePath: 'coordinates',
+        },
+      },
+      formContext: { formData: { metadata: {} } },
+    });
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith('prod'));
   });
 
   it('never overrides a value the reader already chose', async () => {
@@ -315,5 +332,40 @@ describe('the whole cascade, through a real form', () => {
       { metadata: levelsUiSchema },
     );
     await expectCascaded();
+  });
+
+  it('fills island and environment when region is selected later', async () => {
+    const uiSchema = {
+      metadata: {
+        ...levelsUiSchema,
+        region: {
+          ...levelsUiSchema.region,
+          'ui:options': {
+            ...levelsUiSchema.region['ui:options'],
+            // Keep the branching region empty so this test can reproduce a
+            // reader choosing it after the earlier levels have settled.
+            autoSelectFirst: false,
+          },
+        },
+      },
+    };
+
+    renderForm(
+      { type: 'object', properties: { metadata: levelsSchema } },
+      uiSchema,
+    );
+
+    const boxes = await screen.findAllByRole('combobox');
+    await waitFor(() => expect(boxes[0]).toHaveValue('operational'));
+    await waitFor(() => expect(boxes[1]).toHaveValue('eu-west'));
+    await waitFor(() => expect(boxes[2]).not.toBeDisabled());
+    expect(boxes[2]).toHaveValue('');
+    expect(boxes[3]).toBeDisabled();
+    expect(boxes[4]).toBeDisabled();
+
+    fireEvent.change(boxes[2], { target: { value: 'paris' } });
+
+    await waitFor(() => expect(boxes[3]).toHaveValue('island'));
+    await waitFor(() => expect(boxes[4]).toHaveValue('dev'));
   });
 });

@@ -197,6 +197,8 @@ export interface Request {
    */
   resourceNames?: string[];
   params: Record<string, unknown>;
+  /** Scaffolder task that captured the complete original form parameters. */
+  scaffolderTaskId?: string;
   state: RequestState;
   policy: ApprovalPolicy;
   requester: string;
@@ -254,6 +256,7 @@ export interface NewRequest {
   /** Bulk requests: every resource acted on. Server derives `resourceName`. */
   resourceNames?: string[];
   params?: Record<string, unknown>;
+  scaffolderTaskId?: string;
   policy?: ApprovalPolicy;
   argoSubmit?: ArgoSubmitSpec;
   resultOutput?: string;

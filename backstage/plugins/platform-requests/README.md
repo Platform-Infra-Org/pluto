@@ -42,11 +42,12 @@ approver group even when the recipient is a platform admin.
 ## Start over
 
 The Requests table has a dedicated Actions column. Its replay button opens the
-same Scaffolder Template with the original request's `params` encoded in the
-`formData` query parameter. Fields the template no longer defines are ignored
-by Scaffolder, so this remains compatible as templates evolve. The action waits
-for the Template mapping and performs a full navigation because the Scaffolder
-Stepper reads query form data when it mounts.
+same Scaffolder Template using the originating Scaffolder task's complete
+`spec.parameters`, matching Backstage's native Task → Start Over behavior.
+Requests created before task IDs were persisted fall back to reconstructing
+the form from request `params`. Fields the template no longer defines are
+ignored by Scaffolder. The action performs a full navigation because the
+Scaffolder Stepper reads query form data when it mounts.
 
 ## Styling
 
