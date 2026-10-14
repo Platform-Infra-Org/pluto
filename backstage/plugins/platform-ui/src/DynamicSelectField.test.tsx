@@ -139,6 +139,23 @@ describe('DynamicSelectFieldComponent', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('picks the first option for a field nested under metadata', async () => {
+    const onChange = jest.fn();
+    renderField({
+      ...base,
+      onChange,
+      idSchema: { $id: 'root_metadata_space' },
+      uiSchema: {
+        'ui:options': {
+          proxyPath: '/infra/coordinate-tree',
+          treePath: 'coordinates',
+        },
+      },
+      formContext: { formData: { metadata: {} } },
+    });
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith('prod'));
+  });
+
   it('never overrides a value the reader already chose', async () => {
     // Auto-select fires only into an empty field, so a deliberate pick stands
     // even where the level has since narrowed to one option.
