@@ -19,15 +19,29 @@ import { test, expect } from '@playwright/test';
 test('App should render the welcome page', async ({ page }) => {
   await page.goto('/');
 
-  const enterButton = page.getByRole('button', { name: 'Enter' });
-  await expect(enterButton).toBeVisible();
-  await enterButton.click();
+  const signInButton = page.getByRole('button', {
+    name: 'Sign in with Keycloak',
+  });
+  await expect(signInButton).toBeVisible();
 
-  const nav = page.getByRole('navigation', { name: 'sidebar nav' });
+  const popupPromise = page.waitForEvent('popup');
+  await signInButton.click();
+  const popup = await popupPromise;
+  await popup.getByLabel('Username or email').fill('admin');
+  await popup.getByRole('textbox', { name: 'Password' }).fill('admin');
+  await popup.getByRole('button', { name: 'Sign In' }).click();
+  await popup.waitForEvent('close');
+
   await expect(
-    nav.getByRole('link', { name: 'Catalog', exact: true }),
+    page.getByRole('link', { name: 'Catalog', exact: true }),
   ).toBeVisible();
   await expect(
     page.getByRole('link', { name: 'APIs', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: /Notifications/ })).toContainText(
+    '5',
+  );
+  await expect(
+    page.getByRole('button', { name: 'Sign out', exact: true }),
   ).toBeVisible();
 });

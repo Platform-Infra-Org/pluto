@@ -1,0 +1,1116 @@
+/* Platform AI 1.1 — clean interface, scoped to the global assistant.
+ * Colors follow Pluto's live HSL tokens, not hard-coded theme modes.
+ * The drawer is an opaque surface. Nothing here changes platform-ui styles.ts.
+ */
+.platform-ai-widget {
+  --ai-bg: hsl(var(--sc-bg, 230 26% 8%));
+  --ai-surface: hsl(var(--sc-card, 230 21% 11%));
+  --ai-fg: hsl(var(--sc-fg, 220 17% 94%));
+  --ai-muted: hsl(var(--sc-muted-fg, 223 11% 64%));
+  --ai-primary: hsl(var(--sc-primary, 40 92% 54%));
+  --ai-primary-ink: hsl(var(--sc-primary-fg, 226 22% 10%));
+  --ai-border: hsl(var(--sc-border, 228 16% 26%) / 0.78);
+  --ai-soft: hsl(var(--sc-muted, 226 17% 17%) / 0.5);
+  --ai-card: hsl(var(--sc-card, 230 21% 11%));
+  --ai-ok: #36b592;
+  font-family: var(
+    --sc-font-ui,
+    'Heebo',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif
+  );
+  color: var(--ai-fg);
+}
+.platform-ai-widget *,
+.platform-ai-widget *::before,
+.platform-ai-widget *::after {
+  box-sizing: border-box;
+}
+.platform-ai-widget button,
+.platform-ai-widget textarea,
+.platform-ai-widget input,
+.platform-ai-widget select {
+  font-family: inherit;
+}
+.platform-ai-widget button {
+  cursor: pointer;
+}
+.platform-ai-widget button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.platform-ai-widget button:focus-visible,
+.platform-ai-widget textarea:focus-visible,
+.platform-ai-widget input:focus-visible,
+.platform-ai-widget select:focus-visible {
+  outline: 2px solid var(--ai-primary);
+  outline-offset: 2px;
+}
+.platform-ai-launcher {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 1390;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 11px;
+  height: 50px;
+  padding: 0 17px;
+  border: 1px solid var(--ai-border);
+  border-radius: 14px;
+  background: var(--ai-surface);
+  color: var(--ai-fg);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.21), 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  transition: transform 0.16s ease, border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+.platform-ai-launcher:hover {
+  transform: translateY(-2px);
+  border-color: var(--ai-primary);
+  box-shadow: 0 17px 38px rgba(0, 0, 0, 0.24);
+}
+.platform-ai-launcher svg {
+  color: var(--ai-primary);
+}
+.platform-ai-launcher-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ai-ok);
+}
+.platform-ai-drawer {
+  position: fixed;
+  z-index: 1400;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(472px, 100vw);
+  display: flex;
+  flex-direction: column;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateX(101%);
+  border-inline-start: 1px solid var(--ai-border);
+  background: var(--ai-surface);
+  color: var(--ai-fg);
+  box-shadow: -16px 0 64px rgba(0, 0, 0, 0.23);
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.24s cubic-bezier(0.2, 0.85, 0.25, 1), visibility 0.24s;
+}
+.platform-ai-drawer.is-open {
+  transform: translateX(0);
+  visibility: visible;
+  pointer-events: auto;
+}
+.platform-ai-drawer-top {
+  direction: rtl;
+  flex: 0 0 auto;
+  min-height: 82px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 22px;
+  background: var(--ai-surface);
+  border-bottom: 1px solid var(--ai-border);
+}
+/* Pluto's actual mark: identical source to sidebar and generated favicon.
+   These are live CSS variables, so switching color scheme repaints all tiles. */
+.platform-ai-brand-tile {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 12px;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--sc-primary, 40 92% 54%)),
+    hsl(var(--sc-primary, 40 92% 54%) / 0.65)
+  );
+  box-shadow: var(--sc-shadow, 0 3px 12px rgba(0, 0, 0, 0.12));
+  line-height: 0;
+}
+.platform-ai-brand-tile > img,
+.platform-ai-brand-tile > svg {
+  display: block;
+  width: 65%;
+  height: 65%;
+  object-fit: contain;
+  color: hsl(var(--sc-primary-fg, 226 22% 10%));
+}
+.platform-ai-brand-tile--header {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+}
+.platform-ai-brand-tile--avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+}
+.platform-ai-brand-tile--empty {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  margin-bottom: 26px;
+}
+.platform-ai-brand-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.platform-ai-brand-copy strong {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  direction: ltr;
+  text-align: right;
+}
+.platform-ai-brand-copy > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--ai-muted);
+  font-size: 11px;
+}
+.platform-ai-status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--ai-ok);
+  border-radius: 50%;
+}
+.platform-ai-icon-button {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-content: center;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ai-muted);
+}
+.platform-ai-icon-button:hover {
+  background: var(--ai-soft);
+  border-color: var(--ai-border);
+  color: var(--ai-fg);
+}
+.platform-ai-close {
+  margin-inline-start: auto;
+}
+
+.platform-ai.platform-ai-compact {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  color: var(--ai-fg);
+  background: var(--ai-surface);
+}
+.platform-ai-view-tabs {
+  flex: 0 0 auto;
+  min-height: 52px;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 22px;
+  background: var(--ai-surface);
+  border-bottom: 1px solid var(--ai-border);
+}
+.platform-ai-tab-list {
+  display: flex;
+  align-items: stretch;
+  gap: 25px;
+}
+.platform-ai-tab-list button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ai-muted);
+}
+.platform-ai-tab-list button.active {
+  color: var(--ai-fg);
+}
+.platform-ai-tab-list button.active::after {
+  content: '';
+  position: absolute;
+  height: 2px;
+  background: var(--ai-primary);
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  border-radius: 2px 2px 0 0;
+}
+.platform-ai-tab-dot {
+  display: block;
+  width: 5px;
+  height: 5px;
+  background: var(--ai-primary);
+  border-radius: 50%;
+}
+.platform-ai-new-chat {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  align-self: center;
+  border: 1px solid var(--ai-border);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ai-muted);
+  padding: 7px 9px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.platform-ai-new-chat:hover {
+  background: var(--ai-soft);
+  color: var(--ai-fg);
+}
+.platform-ai-context-strip {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  column-gap: 8px;
+  row-gap: 4px;
+  padding: 10px 22px;
+  color: var(--ai-muted);
+  background: var(--ai-bg);
+  border-bottom: 1px solid var(--ai-border);
+  font-size: 11px;
+  line-height: 1.5;
+}
+.platform-ai-context-label {
+  direction: ltr;
+  color: var(--ai-primary);
+  border: 1px solid var(--ai-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 9px;
+  font-family: ui-monospace, 'SFMono-Regular', monospace;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+.platform-ai-workspace {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  background: var(--ai-bg);
+}
+.platform-ai-transcript,
+.platform-ai-draft {
+  position: absolute;
+  inset: 0;
+  padding: 22px 22px 24px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-color: var(--ai-border) transparent;
+  scrollbar-width: thin;
+  display: none;
+}
+.platform-ai-transcript.is-active,
+.platform-ai-draft.is-active {
+  display: block;
+}
+.platform-ai-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: min(12vh, 82px) 2px 20px;
+  max-width: 390px;
+}
+.platform-ai-empty-overline {
+  color: var(--ai-primary);
+  font: 600 10px ui-monospace, monospace;
+  letter-spacing: 0.15em;
+  direction: ltr;
+  text-align: right;
+  margin-bottom: 9px;
+}
+.platform-ai-empty h2 {
+  font-size: 27px;
+  line-height: 1.3;
+  font-weight: 740;
+  letter-spacing: -0.045em;
+  color: var(--ai-fg);
+  margin: 0 0 11px;
+}
+.platform-ai-empty p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--ai-muted);
+  max-width: 340px;
+}
+.platform-ai-suggestions {
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  margin-top: 26px;
+}
+.platform-ai-suggestion {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 47px;
+  padding: 10px 14px;
+  border: 1px solid var(--ai-border);
+  border-radius: 11px;
+  background: var(--ai-surface);
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ai-fg);
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+.platform-ai-suggestion svg {
+  color: var(--ai-muted);
+}
+.platform-ai-suggestion:hover {
+  border-color: var(--ai-primary);
+  background: var(--ai-soft);
+}
+.platform-ai-message {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  width: 100%;
+  margin: 0 0 25px;
+}
+.platform-ai-message-body {
+  min-width: 0;
+  max-width: calc(100% - 41px);
+}
+.platform-ai-message-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ai-muted);
+  margin-bottom: 8px;
+  direction: ltr;
+  text-align: right;
+}
+.platform-ai-bubble {
+  padding: 0;
+  border: 0;
+  color: var(--ai-fg);
+  font-size: 13px;
+  line-height: 1.85;
+  font-weight: 420;
+  overflow-wrap: anywhere;
+}
+.platform-ai-prose-line {
+  margin-bottom: 3px;
+  white-space: pre-wrap;
+}
+.platform-ai-prose-line:last-child {
+  margin-bottom: 0;
+}
+.platform-ai-prose strong {
+  font-weight: 740;
+}
+.platform-ai-prose code {
+  font: 12px ui-monospace, 'SFMono-Regular', monospace;
+  border: 1px solid var(--ai-border);
+  border-radius: 5px;
+  background: var(--ai-soft);
+  padding: 2px 5px;
+  overflow-wrap: anywhere;
+}
+.platform-ai-prose-line.is-bullet {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+.platform-ai-list-marker {
+  flex: 0 0 5px;
+  align-self: center;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ai-primary);
+}
+.platform-ai-paragraph-gap {
+  height: 11px;
+}
+.platform-ai-user {
+  justify-content: flex-start;
+}
+.platform-ai-user .platform-ai-message-body {
+  margin-inline-start: auto;
+  max-width: 91%;
+}
+.platform-ai-user .platform-ai-message-name {
+  text-align: left;
+}
+.platform-ai-user .platform-ai-bubble {
+  background: var(--ai-surface);
+  border: 1px solid var(--ai-border);
+  border-radius: 13px 13px 4px 13px;
+  padding: 11px 13px;
+}
+.platform-ai-tools {
+  margin-top: 10px;
+  color: var(--ai-muted);
+  font-size: 10px;
+}
+.platform-ai-tools summary {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  list-style: none;
+}
+.platform-ai-tools summary::-webkit-details-marker {
+  display: none;
+}
+.platform-ai-tools summary svg {
+  color: var(--ai-ok);
+}
+.platform-ai-tools > div {
+  color: var(--ai-muted);
+  margin-top: 5px;
+  font: 10px ui-monospace, monospace;
+  word-break: break-word;
+}
+.platform-ai-thinking {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--ai-muted);
+  font-size: 12px;
+  padding: 8px 0 20px;
+}
+.platform-ai-thinking-dots {
+  display: flex;
+  gap: 4px;
+}
+.platform-ai-thinking-dots i {
+  width: 5px;
+  height: 5px;
+  background: var(--ai-primary);
+  border-radius: 50%;
+  animation: ai-thinking 1.2s infinite ease-in-out;
+  opacity: 0.4;
+}
+.platform-ai-thinking-dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.platform-ai-thinking-dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes ai-thinking {
+  0%,
+  70%,
+  100% {
+    opacity: 0.3;
+  }
+  35% {
+    opacity: 1;
+  }
+}
+.platform-ai-error {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 12px 18px 0;
+  background: hsl(0 50% 45% / 0.1);
+  border: 1px solid hsl(0 55% 55% / 0.35);
+  border-radius: 9px;
+  color: var(--ai-fg);
+  padding: 11px 13px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.platform-ai-error button {
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font-size: 20px;
+}
+.platform-ai-composer {
+  flex: 0 0 auto;
+  background: var(--ai-surface);
+  padding: 16px 20px 10px;
+  border-top: 1px solid var(--ai-border);
+}
+.platform-ai-composer-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ai-muted);
+  margin: 0 3px 8px;
+}
+.platform-ai-input-shell {
+  border: 1px solid var(--ai-border);
+  border-radius: 13px;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 9px;
+  background: var(--ai-bg);
+  transition: border-color 0.15s ease;
+}
+.platform-ai-input-shell:focus-within {
+  border-color: var(--ai-primary);
+}
+.platform-ai-input-shell textarea {
+  flex: 1;
+  min-width: 0;
+  height: 56px;
+  min-height: 56px;
+  max-height: 135px;
+  resize: vertical;
+  background: transparent;
+  border: 0;
+  outline: 0 !important;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ai-fg);
+  padding: 5px 3px;
+}
+.platform-ai-input-shell textarea::placeholder {
+  color: var(--ai-muted);
+  opacity: 0.86;
+}
+.platform-ai-submit {
+  flex: 0 0 auto;
+  width: 37px;
+  height: 37px;
+  display: grid;
+  place-content: center;
+  border: 0;
+  border-radius: 10px;
+  background: var(--ai-primary);
+  color: var(--ai-primary-ink);
+  transition: transform 0.15s ease;
+}
+.platform-ai-submit:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+.platform-ai-composer-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 7px;
+  margin: 8px 2px 0;
+  font-size: 10px;
+  color: var(--ai-muted);
+}
+.platform-ai-bottom-notice {
+  flex: 0 0 auto;
+  text-align: center;
+  background: var(--ai-surface);
+  font-size: 10px;
+  color: var(--ai-muted);
+  line-height: 1.5;
+  padding: 4px 12px 11px;
+}
+
+/* Draft panel — intentionally shares the same visual language as the transcript. */
+.platform-ai-draft-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 19px;
+  border-bottom: 1px solid var(--ai-border);
+}
+.platform-ai-draft-eyebrow {
+  font: 700 10px ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  color: var(--ai-primary);
+  direction: ltr;
+  display: block;
+  text-align: right;
+  margin-bottom: 7px;
+}
+.platform-ai-draft-head h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.03em;
+}
+.platform-ai-draft-state {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 7px;
+  border: 1px solid var(--ai-border);
+  padding: 5px 8px;
+  color: var(--ai-muted);
+  font-size: 11px;
+}
+.platform-ai-draft-state.ready {
+  color: var(--ai-ok);
+  border-color: currentColor;
+}
+.platform-ai-draft-empty {
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+  gap: 10px;
+  color: var(--ai-muted);
+}
+.platform-ai-draft-empty-icon {
+  font-size: 38px;
+  font-weight: 300;
+  color: var(--ai-primary);
+}
+.platform-ai-draft-empty strong {
+  color: var(--ai-fg);
+  font-size: 16px;
+}
+.platform-ai-draft-empty p {
+  max-width: 280px;
+  line-height: 1.8;
+  font-size: 12px;
+  margin: 0;
+}
+.platform-ai-draft-empty button {
+  color: var(--ai-primary);
+  font-size: 12px;
+  border: 0;
+  background: transparent;
+  padding: 8px;
+}
+.platform-ai-template-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px solid var(--ai-border);
+  border-radius: 12px;
+  padding: 14px 15px;
+  margin: 18px 0;
+  background: var(--ai-surface);
+}
+.platform-ai-template-summary > span {
+  color: var(--ai-muted);
+  font: 600 10px ui-monospace, monospace;
+  direction: ltr;
+  text-align: right;
+}
+.platform-ai-template-summary strong {
+  font-size: 15px;
+}
+.platform-ai-template-summary small {
+  font: 10px ui-monospace, monospace;
+  color: var(--ai-muted);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.platform-ai-draft-fields {
+  display: grid;
+  gap: 8px;
+}
+.platform-ai-draft-field {
+  border: 1px solid var(--ai-border);
+  background: var(--ai-surface);
+  border-radius: 11px;
+  padding: 13px 15px;
+}
+.platform-ai-draft-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.platform-ai-draft-field-head strong {
+  font-size: 12px;
+  color: var(--ai-fg);
+}
+.platform-ai-draft-field-head span {
+  font-size: 10px;
+  color: var(--ai-muted);
+}
+.platform-ai-draft-value {
+  font-size: 14px;
+  font-weight: 680;
+  line-height: 1.5;
+  margin: 11px 0 5px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.platform-ai-draft-field small {
+  color: var(--ai-muted);
+  font: 10px ui-monospace, monospace;
+  display: block;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.platform-ai-edit-button {
+  color: var(--ai-primary);
+  font-size: 11px !important;
+  font-weight: 700;
+  padding: 5px 0;
+  margin-top: 10px;
+  border: 0;
+  background: transparent;
+}
+.platform-ai-edit-button:hover {
+  text-decoration: underline;
+}
+.platform-ai-edit-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 13px;
+}
+.platform-ai-edit-form input,
+.platform-ai-edit-form select {
+  width: 100%;
+  min-width: 0;
+  border-radius: 9px;
+  border: 1px solid var(--ai-border);
+  background: var(--ai-bg);
+  color: var(--ai-fg);
+  padding: 9px;
+  font-size: 12px;
+}
+.platform-ai-edit-form option {
+  background: var(--ai-card);
+  color: var(--ai-fg);
+}
+.platform-ai-edit-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.platform-ai-edit-actions button {
+  border: 1px solid var(--ai-border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: var(--ai-surface);
+  color: var(--ai-fg);
+  font-size: 11px;
+  font-weight: 650;
+}
+.platform-ai-edit-actions button:first-child {
+  background: var(--ai-primary);
+  color: var(--ai-primary-ink);
+  border-color: transparent;
+}
+.platform-ai-edit-error {
+  color: #f29a95;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.platform-ai-draft-summary,
+.platform-ai-draft-warning {
+  padding: 12px 14px;
+  border: 1px solid var(--ai-border);
+  border-radius: 10px;
+  margin-top: 12px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--ai-muted);
+}
+.platform-ai-draft-summary b,
+.platform-ai-draft-warning b {
+  color: var(--ai-fg);
+}
+.platform-ai-draft-warning {
+  border-color: hsl(8 65% 58% / 0.5);
+}
+.platform-ai-draft-summary p,
+.platform-ai-draft-warning p {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+.platform-ai-review-button {
+  width: 100%;
+  display: block;
+  padding: 13px;
+  margin-top: 14px;
+  border-radius: 10px;
+  border: 0;
+  background: var(--ai-primary);
+  color: var(--ai-primary-ink);
+  font-weight: 730 !important;
+  font-size: 12px !important;
+}
+.platform-ai-review-done {
+  border-radius: 10px;
+  border: 1px solid hsl(156 50% 44% / 0.5);
+  padding: 13px;
+  margin-top: 14px;
+  color: var(--ai-ok);
+  font-size: 12px;
+  line-height: 1.7;
+}
+.platform-ai-submit-request {
+  width: 100%;
+  display: block;
+  margin-top: 11px;
+  border: 1px solid var(--ai-border);
+  background: var(--ai-surface);
+  color: var(--ai-fg);
+  padding: 13px;
+  border-radius: 10px;
+  font-weight: 650 !important;
+}
+.platform-ai-inline-confirm {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid var(--ai-border);
+  border-radius: 12px;
+  background: var(--ai-surface);
+  display: grid;
+  gap: 10px;
+  line-height: 1.7;
+  font-size: 12px;
+}
+.platform-ai-inline-confirm p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.platform-ai-submission-success {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid hsl(156 50% 44% / 0.5);
+  border-radius: 12px;
+  color: var(--ai-fg);
+  line-height: 1.7;
+  font-size: 12px;
+}
+.platform-ai-submission-success p {
+  margin: 7px 0;
+}
+.platform-ai-submission-success a {
+  color: var(--ai-primary);
+  text-decoration: underline;
+}
+.platform-ai-task-id {
+  font: 10px ui-monospace, monospace;
+  overflow-wrap: anywhere;
+  margin-top: 8px;
+}
+.platform-ai-draft-privacy {
+  margin-top: 20px;
+  border-top: 1px solid var(--ai-border);
+  padding-top: 12px;
+  line-height: 1.8;
+  font-size: 11px;
+  color: var(--ai-muted);
+}
+@media (max-width: 520px) {
+  .platform-ai-drawer {
+    width: 100vw;
+  }
+  .platform-ai-launcher {
+    right: 12px;
+    bottom: 12px;
+  }
+  .platform-ai-drawer-top {
+    padding: 12px 16px;
+    min-height: 70px;
+  }
+  .platform-ai-view-tabs {
+    padding: 0 16px;
+  }
+  .platform-ai-context-strip {
+    padding: 9px 16px;
+  }
+  .platform-ai-transcript,
+  .platform-ai-draft {
+    padding: 18px 16px;
+  }
+  .platform-ai-composer {
+    padding: 12px 14px 8px;
+  }
+  .platform-ai-empty {
+    padding-top: 42px;
+  }
+}
+@media (max-height: 650px) {
+  .platform-ai-empty {
+    padding-top: 26px;
+  }
+  .platform-ai-drawer-top {
+    min-height: 68px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .platform-ai-drawer,
+  .platform-ai-launcher,
+  .platform-ai-submit,
+  .platform-ai-thinking-dots i {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* v1.2 — progressive, in-chat field collection; no second permanent layout. */
+.platform-ai-guide {
+  margin: 8px 0 24px;
+  padding: 15px;
+  border: 1px solid var(--ai-border);
+  border-radius: 14px;
+  background: var(--ai-surface);
+  color: var(--ai-fg);
+  box-shadow: 0 2px 15px hsl(0 0% 0% / 0.05);
+}
+.platform-ai-guide-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.platform-ai-guide-head > div {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+.platform-ai-guide-eyebrow {
+  color: var(--ai-primary);
+  font: 600 10px ui-monospace, monospace;
+  letter-spacing: 0.08em;
+  direction: ltr;
+  text-align: right;
+}
+.platform-ai-guide-head strong {
+  font-size: 14px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.platform-ai-guide-count {
+  border: 1px solid var(--ai-border);
+  border-radius: 7px;
+  padding: 5px 9px;
+  font: 12px ui-monospace, monospace;
+  color: var(--ai-muted);
+}
+.platform-ai-guide-track {
+  height: 4px;
+  border-radius: 30px;
+  overflow: hidden;
+  background: var(--ai-soft);
+  margin: 14px 0 17px;
+}
+.platform-ai-guide-track span {
+  display: block;
+  height: 100%;
+  background: var(--ai-primary);
+  transition: width 0.2s ease;
+}
+.platform-ai-guide-form {
+  display: grid;
+  gap: 10px;
+}
+.platform-ai-guide-form label {
+  font-size: 13px;
+  color: var(--ai-fg);
+  font-weight: 700;
+}
+.platform-ai-guide-form label span {
+  font-weight: 400;
+  color: var(--ai-muted);
+  font-size: 11px;
+}
+.platform-ai-guide-form input,
+.platform-ai-guide-form select {
+  width: 100%;
+  min-width: 0;
+  background: var(--ai-bg);
+  border: 1px solid var(--ai-border);
+  border-radius: 9px;
+  padding: 11px 12px;
+  color: var(--ai-fg);
+  font-size: 13px;
+  font-family: inherit;
+}
+.platform-ai-guide-form input:focus,
+.platform-ai-guide-form select:focus {
+  outline: 2px solid var(--ai-primary);
+  outline-offset: 1px;
+}
+.platform-ai-guide-form option {
+  background: var(--ai-card);
+  color: var(--ai-fg);
+}
+.platform-ai-guide-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.platform-ai-guide-actions button,
+.platform-ai-guide-complete button {
+  cursor: pointer;
+  padding: 9px 13px;
+  border: 1px solid var(--ai-border);
+  border-radius: 9px;
+  color: var(--ai-fg);
+  background: transparent;
+  font-size: 11px;
+  font-weight: 650;
+}
+.platform-ai-guide-actions .platform-ai-guide-primary {
+  border-color: transparent;
+  background: var(--ai-primary);
+  color: var(--ai-primary-ink);
+}
+.platform-ai-guide-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.platform-ai-guide-error {
+  margin: 0;
+  padding: 9px;
+  background: hsl(0 60% 50% / 0.1);
+  border-radius: 8px;
+  color: var(--ai-fg);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.platform-ai-guide-path {
+  font: 10px ui-monospace, monospace;
+  color: var(--ai-muted);
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+.platform-ai-guide-complete {
+  display: grid;
+  gap: 9px;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.platform-ai-guide-complete strong {
+  font-size: 13px;
+}
+.platform-ai-guide-complete p {
+  margin: 0;
+  color: var(--ai-muted);
+  overflow-wrap: anywhere;
+}
+.platform-ai-guide-complete button {
+  justify-self: start;
+  border-color: var(--ai-primary);
+  color: var(--ai-primary);
+}

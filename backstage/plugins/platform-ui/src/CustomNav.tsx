@@ -18,6 +18,8 @@ import { screenName, Flavour } from './flavour';
 import { navItemVisible } from './navVisibility';
 import { useIsAdmin } from './useIsAdmin';
 import { isGrafanaConfigured } from './grafana';
+import { NotificationBadge } from './NotificationBell';
+import { SignOutButton } from './SignOutButton';
 
 // The nav renders outside react-router's context, so derive the active path
 // from the browser location + history events rather than useLocation().
@@ -27,8 +29,7 @@ export function useCurrentPath(): string {
     const update = () => setPath(window.location.pathname);
     window.addEventListener('popstate', update);
     const { pushState, replaceState } = window.history;
-    const wrap =
-      (fn: typeof pushState) =>
+    const wrap = (fn: typeof pushState) =>
       function (this: History, ...args: Parameters<typeof pushState>) {
         const r = fn.apply(this, args);
         update();
@@ -65,7 +66,7 @@ const clampNavWidth = (px: number) =>
  * the layout's reserved gutter (content padding forced to match in styles.ts).
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CustomNav({ navItems }: { navItems: any }) {
+export function CustomNav({ navItems }: { navItems: any }) {
   const pathname = useCurrentPath();
   const [collapsed, setCollapsed] = useState(
     () =>
@@ -93,7 +94,9 @@ function CustomNav({ navItems }: { navItems: any }) {
     // The docked colour picker hides while the rail is collapsed. An attribute
     // rather than a CSS sibling selector: the nav and the picker mount from
     // different trees, so they are never siblings in the DOM.
-    document.documentElement.dataset.navCollapsed = collapsed ? 'true' : 'false';
+    document.documentElement.dataset.navCollapsed = collapsed
+      ? 'true'
+      : 'false';
     try {
       localStorage.setItem('platform-nav-collapsed', collapsed ? '1' : '0');
       localStorage.setItem('platform-nav-w', String(width));
@@ -161,6 +164,7 @@ function CustomNav({ navItems }: { navItems: any }) {
             plus the row gap, which is what knocked them off the logo's line. */}
         <span className="sc-nav-ic">{item.icon}</span>
         <span className="sc-nav-tx">{label}</span>
+        {item.href === '/notifications' && <NotificationBadge />}
         {/* Non-breaking space when inactive so rows never shift horizontally. */}
         <span className="sc-nav-cursor" aria-hidden="true">
           {active ? '\u25B6' : '\u00A0'}
@@ -171,7 +175,9 @@ function CustomNav({ navItems }: { navItems: any }) {
 
   return (
     <aside
-      className={`sc sc-nav${collapsed ? ' collapsed' : ''}${dragging ? ' dragging' : ''}`}
+      className={`sc sc-nav${collapsed ? ' collapsed' : ''}${
+        dragging ? ' dragging' : ''
+      }`}
       aria-label="Main"
     >
       <div className="sc-nav-top">
@@ -196,6 +202,9 @@ function CustomNav({ navItems }: { navItems: any }) {
         {bag.take('page:platform-requests/home')}
         {bag.rest({ sortBy: 'title' })}
       </nav>
+      <div className="sc-nav-footer">
+        <SignOutButton />
+      </div>
       {!collapsed && (
         <div
           className="sc-nav-resize"
@@ -221,5 +230,7 @@ function CustomNav({ navItems }: { navItems: any }) {
 
 export const navContent = NavContentBlueprint.make({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  params: { component: ({ navItems }: any) => <CustomNav navItems={navItems} /> },
+  params: {
+    component: ({ navItems }: any) => <CustomNav navItems={navItems} />,
+  },
 });

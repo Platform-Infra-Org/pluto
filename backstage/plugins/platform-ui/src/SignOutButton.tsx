@@ -8,12 +8,15 @@ export function SignOutButton() {
   return (
     <button
       type="button"
-      className="sc-topbar-action sc-sign-out"
+      className="sc-nav-item sc-nav-signout"
       aria-label="Sign out"
       title="Sign out"
       onClick={() => identityApi.signOut()}
     >
-      <ExitToAppIcon aria-hidden="true" />
+      <span className="sc-nav-ic">
+        <ExitToAppIcon aria-hidden="true" />
+      </span>
+      <span className="sc-nav-tx">Sign out</span>
     </button>
   );
 }

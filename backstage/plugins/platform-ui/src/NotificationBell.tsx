@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useApi } from '@backstage/core-plugin-api';
 import { notificationsApiRef } from '@backstage/plugin-notifications';
-import NotificationsNoneIcon from '@material-ui/icons/NotificationsNone';
-import { Link } from 'react-router-dom';
 
 const REFRESH_INTERVAL_MS = 30_000;
 
-export function NotificationBell() {
+export function NotificationBadge() {
   const notificationsApi = useApi(notificationsApiRef);
   const [unread, setUnread] = useState(0);
 
@@ -34,22 +32,15 @@ export function NotificationBell() {
     };
   }, [notificationsApi]);
 
+  if (unread === 0) {
+    return <span data-testid="notification-badge-empty" />;
+  }
+
   const accessibleCount =
     unread === 1 ? '1 unread notification' : `${unread} unread notifications`;
-
   return (
-    <Link
-      to="/notifications"
-      className="sc-topbar-action sc-notification-bell"
-      aria-label={`Notifications, ${accessibleCount}`}
-      title="Notifications"
-    >
-      <NotificationsNoneIcon aria-hidden="true" />
-      {unread > 0 && (
-        <span className="sc-topbar-count" aria-hidden="true">
-          {unread > 99 ? '99+' : unread}
-        </span>
-      )}
-    </Link>
+    <span className="sc-nav-count" aria-label={accessibleCount}>
+      {unread > 99 ? '99+' : unread}
+    </span>
   );
 }

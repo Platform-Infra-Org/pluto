@@ -39,6 +39,7 @@
     "@backstage/plugin-signals-backend": "^0.3.17",
     "@backstage/plugin-techdocs-backend": "^2.2.2",
     "@backstage/plugin-user-settings-backend": "^0.4.5",
+    "@internal/backstage-plugin-ai-chat-backend": "workspace:^",
     "@internal/backstage-plugin-permission-backend-module-platform-rbac": "workspace:^",
     "@internal/backstage-plugin-platform-requests-backend": "workspace:^",
     "@internal/backstage-plugin-scaffolder-backend-module-platform-actions": "workspace:^",

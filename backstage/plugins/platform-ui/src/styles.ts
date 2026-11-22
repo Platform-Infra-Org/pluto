@@ -1606,11 +1606,36 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-nav-toggle:focus-visible {
   outline: var(--sc-border-w) solid hsl(var(--sc-ring)); outline-offset: 2px; }
 .sc-nav-list { display: flex; flex-direction: column; gap: 2px; }
+.sc-nav-footer { margin-top: auto; }
 .sc-nav-item { position: relative; display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: var(--sc-radius);
   text-decoration: none; font-size: 14px; font-weight: 500; transition: background .12s, color .12s; white-space: nowrap; }
 .sc-nav-ic { display: flex; align-items: center; color: hsl(var(--sc-muted-fg)); flex: 0 0 auto; }
 .sc-nav-ic svg { width: 19px; height: 19px; }
 .sc-nav-tx { color: hsl(var(--sc-muted-fg)); overflow: hidden; text-overflow: ellipsis; }
+.sc-nav-count {
+  min-width: 22px;
+  height: 22px;
+  margin-left: auto;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: hsl(var(--sc-primary-fg));
+  background: hsl(var(--sc-primary));
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+.sc-nav-signout {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: hsl(var(--sc-muted-fg));
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
 .sc-nav-item:hover { background: hsl(var(--sc-accent)); }
 .sc-nav-item:hover .sc-nav-tx, .sc-nav-item:hover .sc-nav-ic { color: hsl(var(--sc-fg)); }
 /* active: subtle pill + left accent bar; only the LETTERS take the accent color. */
@@ -1639,6 +1664,15 @@ button[class*="bui-Button"]:active, a[class*="bui-Button"]:active {
 .sc-nav.collapsed .sc-nav-brand { padding-left: 0; }
 .sc-nav.collapsed .sc-nav-item { border-left-width: 0; }
 .sc-nav.collapsed .sc-nav-cursor { display: none; }
+.sc-nav.collapsed .sc-nav-count {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  font-size: 10px;
+}
 /* Collapsed, the brand mark and the toggle stack instead of sitting side by
    side. The arithmetic is why: the rail is 68px, less .sc-nav's 24px of padding
    and .sc-nav-top's 12px leaves a 32px row — and it was being asked to hold a
@@ -2289,64 +2323,9 @@ h1, h2, h3, h4, h5, h6,
 .sc-input, .sc-select { border-width: var(--sc-border-w); box-shadow: none;
   border-radius: var(--sc-radius-sm); }
 
-/* Global notifications affordance. It stays above page content and uses the
-   same tokens in every colour scheme. */
-.sc-topbar-action {
-  position: relative;
-  width: 48px;
-  height: 48px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: hsl(var(--sc-fg));
-  background: hsl(var(--sc-surface));
-  border: var(--sc-border-w) solid hsl(var(--sc-fg) / .75);
-  border-radius: 50%;
-  box-shadow: var(--sc-shadow);
-  text-decoration: none;
-  padding: 0;
-  font: inherit;
-  cursor: pointer;
-}
-.sc-app-topbar {
-  min-height: 72px;
-  padding: 12px 32px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  background: hsl(var(--sc-bg));
-  border-bottom: 1px solid hsl(var(--sc-border) / .45);
-}
-.sc-topbar-action:hover,
-.sc-topbar-action:focus-visible {
-  color: hsl(var(--sc-primary));
-  background: hsl(var(--sc-accent));
-  outline: var(--sc-border-w) solid hsl(var(--sc-ring));
-  outline-offset: 2px;
-}
-.sc-topbar-action svg { font-size: 28px; }
-.sc-topbar-count {
-  position: absolute;
-  top: -7px;
-  right: -7px;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 5px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  background: hsl(var(--sc-destructive));
-  border: 2px solid hsl(var(--sc-bg));
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1;
-}
-@media (max-width: 600px) {
-  .sc-app-topbar { min-height: 64px; padding: 8px 16px; }
-}
+/* The sidebar owns global navigation; hide the whole Backstage header wrapper
+   so its padding and margin cannot leave an empty strip behind. */
+[class~="bui-PluginHeader"] { display: none !important; }
 
 /* The resize handle: a 6px hit area straddling the nav's right edge, showing a
    2px accent line on hover/focus. Wider than it looks, because a 2px target is
@@ -2445,4 +2424,54 @@ h1, h2, h3, h4, h5, h6,
    structure still reads at a glance. */
 .sc-json-key, .sc-json-toggle { font-family: var(--sc-font-ui); font-size: 12px; }
 .sc-json-body { font-family: var(--sc-font-ui); font-size: 12px; }
+
+/* Platform AI v0.9.1: restore visible settings section navigation.
+   This belongs to the app shell (not the AI drawer) and follows its theme. */
+.sc-settings-navigation {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 26px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  max-width: 100%;
+  background: hsl(var(--sc-bg));
+  color: hsl(var(--sc-fg));
+  border-bottom: 1px solid hsl(var(--sc-border) / .6);
+}
+.sc-settings-navigation-link,
+.sc-settings-navigation-link:visited {
+  box-sizing: border-box;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  text-decoration: none !important;
+  font: inherit;
+  font-size: 13px;
+  color: hsl(var(--sc-muted-fg)) !important;
+  white-space: nowrap;
+}
+.sc-settings-navigation-link:hover,
+.sc-settings-navigation-link:focus-visible {
+  background: hsl(var(--sc-accent));
+  color: hsl(var(--sc-fg)) !important;
+}
+.sc-settings-navigation-link.is-active,
+.sc-settings-navigation-link.is-active:visited {
+  color: hsl(var(--sc-primary)) !important;
+  border-color: hsl(var(--sc-primary) / .45);
+  background: hsl(var(--sc-primary) / .10);
+  font-weight: 700;
+}
+@media(max-width: 600px) {
+  .sc-settings-navigation { padding: 8px 12px; gap: 3px; }
+  .sc-settings-navigation-link { padding: 8px 10px; }
+}
 `;

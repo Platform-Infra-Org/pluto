@@ -45,9 +45,7 @@ backend.add(import('@backstage/plugin-catalog-backend-module-ldap'));
 backend.add(import('@backstage/plugin-permission-backend'));
 // Platform RBAC policy (approve → platform-admins; create → non-auditors).
 backend.add(
-  import(
-    '@internal/backstage-plugin-permission-backend-module-platform-rbac'
-  ),
+  import('@internal/backstage-plugin-permission-backend-module-platform-rbac'),
 );
 
 // search plugin
@@ -75,5 +73,11 @@ backend.add(import('@backstage/plugin-signals-backend'));
 backend.add(import('@backstage/plugin-mcp-actions-backend'));
 
 backend.add(import('@internal/backstage-plugin-platform-requests-backend'));
-backend.add(import('@internal/backstage-plugin-scaffolder-backend-module-platform-actions'));
+backend.add(
+  import(
+    '@internal/backstage-plugin-scaffolder-backend-module-platform-actions'
+  ),
+);
+backend.add(import('@internal/backstage-plugin-ai-chat-backend'));
+
 backend.start();

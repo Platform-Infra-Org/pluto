@@ -1,3 +1,4 @@
+import { aiChatUiModule } from '@internal/plugin-ai-chat';
 import { createApp } from '@backstage/frontend-defaults';
 import catalogPlugin from '@backstage/plugin-catalog/alpha';
 import techdocsPlugin from '@backstage/plugin-techdocs/alpha';
@@ -22,6 +23,7 @@ setBrandingImages(BRANDING_IMAGES);
 export default createApp({
   features: [
     catalogPlugin,
+    aiChatUiModule,
     // Docs-like-code: renders each entity's Markdown docs (Docs tab + /docs).
     techdocsPlugin,
     // Provides /notifications and the Notifications API used by the top bar bell.

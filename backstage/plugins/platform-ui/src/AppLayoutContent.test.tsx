@@ -7,12 +7,6 @@ import { useIsAdmin } from './useIsAdmin';
 
 jest.mock('./useMaintenance');
 jest.mock('./useIsAdmin');
-jest.mock('./NotificationBell', () => ({
-  NotificationBell: () => <a href="/notifications">Notifications</a>,
-}));
-jest.mock('./SignOutButton', () => ({
-  SignOutButton: () => <button type="button">Sign out</button>,
-}));
 
 const mockMaintenance = useMaintenance as jest.MockedFunction<
   typeof useMaintenance
@@ -53,5 +47,19 @@ describe('AppLayoutContent', () => {
     await renderLayout();
     expect(screen.getByText('the sidebar')).toBeInTheDocument();
     expect(screen.getByText('the form')).toBeInTheDocument();
+  });
+
+  it('does not render a global top action row', async () => {
+    mockMaintenance.mockReturnValue(false);
+    mockIsAdmin.mockReturnValue(false);
+    await renderLayout();
+
+    expect(document.querySelector('.sc-app-topbar')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: 'Home' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Sign out' }),
+    ).not.toBeInTheDocument();
   });
 });

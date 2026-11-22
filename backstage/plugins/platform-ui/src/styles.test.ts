@@ -10,6 +10,14 @@ import { STARFIELD } from './starfield';
  * this is the guard.
  */
 describe('SHADCN_CSS', () => {
+  it('contains no obsolete global topbar styles', () => {
+    expect(SHADCN_CSS).not.toMatch(/\.sc-(?:app-)?topbar/);
+    expect(SHADCN_CSS).not.toContain('bui-PluginHeaderToolbarContent');
+    expect(SHADCN_CSS).toMatch(
+      /\[class~="bui-PluginHeader"\]\s*\{[^}]*display:\s*none/,
+    );
+  });
+
   it('is not truncated', () => {
     expect(SHADCN_CSS.length).toBeGreaterThan(5000);
   });

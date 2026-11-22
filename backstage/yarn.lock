@@ -5641,6 +5641,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@internal/backstage-plugin-ai-chat-backend@workspace:^, @internal/backstage-plugin-ai-chat-backend@workspace:plugins/ai-chat-backend":
+  version: 0.0.0-use.local
+  resolution: "@internal/backstage-plugin-ai-chat-backend@workspace:plugins/ai-chat-backend"
+  dependencies:
+    "@backstage/backend-plugin-api": "npm:^1.9.3"
+    "@backstage/cli": "npm:^0.36.4"
+    "@backstage/plugin-catalog-node": "npm:^2.2.3"
+    "@backstage/plugin-permission-common": "npm:^0.9.9"
+    "@internal/plugin-platform-common": "workspace:^"
+    "@types/express": "npm:^4.17.6"
+    express: "npm:^4.14.0"
+    knex: "npm:^3.0.0"
+  languageName: unknown
+  linkType: soft
+
 "@internal/backstage-plugin-permission-backend-module-platform-rbac@workspace:^, @internal/backstage-plugin-permission-backend-module-platform-rbac@workspace:plugins/permission-backend-module-platform-rbac":
   version: 0.0.0-use.local
   resolution: "@internal/backstage-plugin-permission-backend-module-platform-rbac@workspace:plugins/permission-backend-module-platform-rbac"
@@ -5692,6 +5707,19 @@ __metadata:
     "@backstage/backend-test-utils": "npm:^1.11.5"
     "@backstage/cli": "npm:^0.36.4"
     "@backstage/plugin-scaffolder-node": "npm:^0.13.5"
+  languageName: unknown
+  linkType: soft
+
+"@internal/plugin-ai-chat@workspace:^, @internal/plugin-ai-chat@workspace:plugins/ai-chat":
+  version: 0.0.0-use.local
+  resolution: "@internal/plugin-ai-chat@workspace:plugins/ai-chat"
+  dependencies:
+    "@backstage/cli": "npm:^0.36.4"
+    "@backstage/core-plugin-api": "npm:*"
+    "@backstage/frontend-plugin-api": "npm:*"
+    "@internal/plugin-platform-ui": "workspace:^"
+    "@material-ui/icons": "npm:^4.9.1"
+    react: "npm:^18.0.2"
   languageName: unknown
   linkType: soft
 
@@ -13004,6 +13032,7 @@ __metadata:
     "@backstage/plugin-user-settings": "npm:^0.9.5"
     "@backstage/test-utils": "npm:^1.7.21"
     "@backstage/ui": "npm:^0.17.0"
+    "@internal/plugin-ai-chat": "workspace:^"
     "@internal/plugin-platform-requests": "workspace:^"
     "@internal/plugin-platform-ui": "workspace:^"
     "@material-ui/core": "npm:^4.12.2"
@@ -13620,6 +13649,7 @@ __metadata:
     "@backstage/plugin-signals-backend": "npm:^0.3.17"
     "@backstage/plugin-techdocs-backend": "npm:^2.2.2"
     "@backstage/plugin-user-settings-backend": "npm:^0.4.5"
+    "@internal/backstage-plugin-ai-chat-backend": "workspace:^"
     "@internal/backstage-plugin-permission-backend-module-platform-rbac": "workspace:^"
     "@internal/backstage-plugin-platform-requests-backend": "workspace:^"
     "@internal/backstage-plugin-scaffolder-backend-module-platform-actions": "workspace:^"
